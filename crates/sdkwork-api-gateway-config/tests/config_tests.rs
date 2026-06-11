@@ -1478,6 +1478,74 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
 }
 
 #[test]
+fn sdkwork_workspace_dependencies_are_referenced_by_member_manifests() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let workspace_toml_path = root.join("Cargo.toml");
+    let workspace_toml = fs::read_to_string(&workspace_toml_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read workspace manifest {}: {error}",
+            workspace_toml_path.display()
+        )
+    });
+    let workspace: toml::Value = toml::from_str(&workspace_toml).expect("workspace TOML parses");
+
+    let workspace_dependencies = workspace
+        .get("workspace")
+        .and_then(|workspace| workspace.get("dependencies"))
+        .and_then(toml::Value::as_table)
+        .expect("workspace dependencies are declared");
+    let members = workspace
+        .get("workspace")
+        .and_then(|workspace| workspace.get("members"))
+        .and_then(toml::Value::as_array)
+        .expect("workspace members are declared");
+
+    let mut member_dependency_tables = Vec::new();
+    for member in members {
+        let member = member.as_str().expect("workspace member is a string");
+        let member_toml_path = root.join(member).join("Cargo.toml");
+        let member_toml = fs::read_to_string(&member_toml_path).unwrap_or_else(|error| {
+            panic!(
+                "failed to read member manifest {}: {error}",
+                member_toml_path.display()
+            )
+        });
+        let member_manifest: toml::Value =
+            toml::from_str(&member_toml).expect("member manifest TOML parses");
+        member_dependency_tables.push(member_manifest);
+    }
+
+    for (dependency_name, dependency_config) in workspace_dependencies {
+        let is_sdkwork_sibling = dependency_config
+            .get("path")
+            .and_then(toml::Value::as_str)
+            .is_some_and(|path| path.starts_with("../sdkwork-"));
+        if !is_sdkwork_sibling {
+            continue;
+        }
+
+        let referenced = member_dependency_tables.iter().any(|manifest| {
+            ["dependencies", "dev-dependencies", "build-dependencies"]
+                .iter()
+                .filter_map(|table| manifest.get(*table).and_then(toml::Value::as_table))
+                .any(|dependencies| {
+                    dependencies
+                        .get(dependency_name)
+                        .and_then(toml::Value::as_table)
+                        .and_then(|dependency| dependency.get("workspace"))
+                        .and_then(toml::Value::as_bool)
+                        == Some(true)
+                })
+        });
+
+        assert!(
+            referenced,
+            "SDKWork workspace dependency {dependency_name} must be referenced by a member manifest or removed"
+        );
+    }
+}
+
+#[test]
 fn gateway_runtime_source_is_split_by_endpoint_responsibility() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let gateway_src = root.join("crates/sdkwork-api-gateway/src");

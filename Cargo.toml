@@ -36,5 +36,4 @@ sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observa
 sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
 sdkwork-api-gateway = { path = "crates/sdkwork-api-gateway" }
 
-sdkwork_http_context = { path = "../sdkwork-appbase/packages/native-rust/foundation/sdkwork-http-context-rust" }
 sdkwork_iam_http = { path = "../sdkwork-appbase/packages/native-rust/iam/sdkwork-iam-http-rust" }
