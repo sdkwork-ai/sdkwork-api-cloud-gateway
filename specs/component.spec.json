@@ -83,6 +83,7 @@
       "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_registry",
       "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_embedded_routers",
       "sdkwork_api_gateway_api_server::load_gateway_config",
+      "package.json#scripts.dev",
       "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway"
     ],
     "routeManifest": null,

@@ -1800,6 +1800,47 @@ fn agent_entrypoints_follow_sdkwork_standard() {
 }
 
 #[test]
+fn package_dev_entrypoint_is_declared_in_component_spec() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let package_json_path = root.join("package.json");
+    let package_json: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(&package_json_path).unwrap_or_else(|error| {
+            panic!(
+                "failed to read package manifest {}: {error}",
+                package_json_path.display()
+            )
+        }),
+    )
+    .expect("package.json parses");
+    assert_eq!(
+        package_json["scripts"]["dev"].as_str(),
+        Some(
+            "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway -- --config configs/sdkwork-api-gateway.development.toml.example"
+        ),
+        "package.json must keep pnpm dev as the standard independent startup entrypoint"
+    );
+
+    let spec_path = root.join("specs/component.spec.json");
+    let spec: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&spec_path).unwrap_or_else(|error| {
+            panic!(
+                "failed to read component spec {}: {error}",
+                spec_path.display()
+            )
+        }))
+        .expect("component spec parses");
+    let runtime_entrypoints = spec["contracts"]["runtimeEntrypoints"]
+        .as_array()
+        .expect("component spec declares runtime entrypoints");
+    assert!(
+        runtime_entrypoints
+            .iter()
+            .any(|entrypoint| entrypoint.as_str() == Some("package.json#scripts.dev")),
+        "component spec must declare package.json#scripts.dev as the pnpm dev startup entrypoint"
+    );
+}
+
+#[test]
 fn workspace_crates_have_module_readmes() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let workspace_toml_path = root.join("Cargo.toml");
