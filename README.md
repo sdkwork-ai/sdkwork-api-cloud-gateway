@@ -18,13 +18,13 @@ safe diagnostics inventory. `runtime.rs` remains the gateway assembly and proxy 
 
 ## Root Layout
 
-This repository is a narrow Rust backend application root. It keeps the full SDKWork project-root
-directory dictionary represented with tracked content so active and inactive capabilities are easy
-to identify:
+This repository is a narrow Rust backend application root. Its root layout follows
+`../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md` and keeps the full SDKWork project-root directory dictionary
+represented with tracked content so active and inactive capabilities are easy to identify:
 
 | Directory | Status | Purpose |
 | --- | --- | --- |
-| `apis/` | placeholder | Gateway-owned API contract inputs when this application owns new API authorities. |
+| `apis/` | placeholder | Gateway-owned authored API contract inputs when this application owns new API authorities. |
 | `apps/` | placeholder | Secondary app surfaces; the repository root is the primary application root. |
 | `crates/` | active | Rust gateway, config, registry, observability, and API server crates. |
 | `sdks/` | active placeholder | SDK family workspace for gateway-owned API authorities. |

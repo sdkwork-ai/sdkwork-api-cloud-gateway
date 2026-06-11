@@ -1632,6 +1632,35 @@ fn sdkwork_workspace_readmes_follow_repository_workspace_standard() {
 }
 
 #[test]
+fn root_readme_documents_standard_workspace_layout() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let readme_path = root.join("README.md");
+    let readme = fs::read_to_string(&readme_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read root README {}: {error}",
+            readme_path.display()
+        )
+    });
+
+    for required_phrase in [
+        "## Root Layout",
+        "../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md",
+        "full SDKWork project-root directory dictionary",
+        "`apis/`",
+        "`sdks/`",
+        "authored API contract inputs",
+        "SDK family workspace",
+        "`.sdkwork/plugins/`",
+        "Package-local Rust unit and integration tests remain under each crate's `tests/` directory",
+    ] {
+        assert!(
+            readme.contains(required_phrase),
+            "root README must document workspace layout phrase {required_phrase}"
+        );
+    }
+}
+
+#[test]
 fn agent_entrypoints_follow_sdkwork_standard() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let agents_path = root.join("AGENTS.md");
