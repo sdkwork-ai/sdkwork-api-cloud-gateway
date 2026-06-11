@@ -1277,6 +1277,77 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         spec["gatewayIntegration"]["catalogPolicy"].as_str(),
         Some("no-dedicated-gateway-catalog")
     );
+    assert_eq!(
+        spec["kind"].as_str(),
+        Some("sdkwork.component.spec"),
+        "component spec must declare the SDKWork component spec kind"
+    );
+    assert_eq!(
+        spec["component"]["name"].as_str(),
+        Some("sdkwork-api-gateway"),
+        "component spec must declare standard component.name"
+    );
+    assert_eq!(
+        spec["component"]["root"].as_str(),
+        Some("."),
+        "component spec must declare repository-root component.root"
+    );
+    assert_eq!(
+        spec["component"]["domain"].as_str(),
+        Some("platform"),
+        "component spec must declare canonical platform domain"
+    );
+    assert_eq!(
+        spec["component"]["capability"].as_str(),
+        Some("api-gateway"),
+        "component spec must declare api-gateway capability"
+    );
+    let languages = spec["component"]["languages"]
+        .as_array()
+        .expect("component spec declares component.languages");
+    for language in ["rust", "javascript", "node"] {
+        assert!(
+            languages
+                .iter()
+                .any(|candidate| candidate.as_str() == Some(language)),
+            "component spec must declare authored language {language}"
+        );
+    }
+    let canonical_specs = spec["canonicalSpecs"]
+        .as_array()
+        .expect("component spec declares canonicalSpecs");
+    for required_spec in [
+        "CODE_STYLE_SPEC.md",
+        "NAMING_SPEC.md",
+        "RUST_CODE_SPEC.md",
+        "TYPESCRIPT_CODE_SPEC.md",
+        "COMPONENT_SPEC.md",
+        "GITHUB_WORKFLOW_SPEC.md",
+    ] {
+        assert!(
+            canonical_specs
+                .iter()
+                .any(|entry| entry["file"].as_str() == Some(required_spec)
+                    && entry["path"]
+                        .as_str()
+                        .is_some_and(|path| path.ends_with(required_spec))),
+            "component spec must link canonical spec {required_spec}"
+        );
+    }
+    assert!(
+        spec["contracts"]["publicExports"]
+            .as_array()
+            .expect("contracts.publicExports is declared")
+            .iter()
+            .any(|export| export.as_str() == Some("sdkwork-api-gateway")),
+        "component spec must declare public crate export"
+    );
+    assert!(
+        spec["contracts"]["dependencyApiExports"]
+            .as_array()
+            .is_some_and(|exports| exports.is_empty()),
+        "gateway must explicitly default to no dependency API re-export"
+    );
 
     let verification_commands = spec["verification"]["commands"]
         .as_array()

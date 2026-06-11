@@ -1,5 +1,112 @@
 {
   "schemaVersion": 1,
+  "kind": "sdkwork.component.spec",
+  "component": {
+    "name": "sdkwork-api-gateway",
+    "displayName": "SDKWork API Gateway",
+    "version": "0.1.0",
+    "type": "web-backend-service",
+    "root": ".",
+    "domain": "platform",
+    "capability": "api-gateway",
+    "surface": "backend",
+    "languages": ["rust", "javascript", "node"],
+    "generated": false,
+    "manifests": [
+      "Cargo.toml",
+      "package.json",
+      "sdkwork.app.config.json",
+      "sdkwork.workflow.json",
+      "specs/component.spec.json"
+    ]
+  },
+  "canonicalSpecs": [
+    {
+      "file": "CODE_STYLE_SPEC.md",
+      "path": "../sdkwork-specs/CODE_STYLE_SPEC.md",
+      "purpose": "Focused authored code boundaries and generated output handling."
+    },
+    {
+      "file": "NAMING_SPEC.md",
+      "path": "../sdkwork-specs/NAMING_SPEC.md",
+      "purpose": "Canonical component, crate, package, API, and artifact naming."
+    },
+    {
+      "file": "RUST_CODE_SPEC.md",
+      "path": "../sdkwork-specs/RUST_CODE_SPEC.md",
+      "purpose": "Rust crate responsibility naming, router builders, and module shape."
+    },
+    {
+      "file": "TYPESCRIPT_CODE_SPEC.md",
+      "path": "../sdkwork-specs/TYPESCRIPT_CODE_SPEC.md",
+      "purpose": "Node tooling and package script boundaries."
+    },
+    {
+      "file": "COMPONENT_SPEC.md",
+      "path": "../sdkwork-specs/COMPONENT_SPEC.md",
+      "purpose": "Component contract shape and dependency API surface declaration."
+    },
+    {
+      "file": "APP_SDK_INTEGRATION_SPEC.md",
+      "path": "../sdkwork-specs/APP_SDK_INTEGRATION_SPEC.md",
+      "purpose": "Dependency SDK/API composition and gateway integration rules."
+    },
+    {
+      "file": "CONFIG_SPEC.md",
+      "path": "../sdkwork-specs/CONFIG_SPEC.md",
+      "purpose": "Typed runtime config, dependency base URLs, and environment boundaries."
+    },
+    {
+      "file": "GITHUB_WORKFLOW_SPEC.md",
+      "path": "../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md",
+      "purpose": "Reusable GitHub packaging workflow integration."
+    },
+    {
+      "file": "DEPLOYMENT_SPEC.md",
+      "path": "../sdkwork-specs/DEPLOYMENT_SPEC.md",
+      "purpose": "SaaS, private, local, and server package runtime behavior."
+    },
+    {
+      "file": "TEST_SPEC.md",
+      "path": "../sdkwork-specs/TEST_SPEC.md",
+      "purpose": "Executable verification requirements for gateway surfaces and release packaging."
+    }
+  ],
+  "contracts": {
+    "publicExports": [
+      "sdkwork-api-gateway",
+      "sdkwork-api-gateway-api-server"
+    ],
+    "runtimeEntrypoints": [
+      "sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router",
+      "sdkwork_api_gateway::build_sdkwork_api_gateway_router",
+      "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_registry",
+      "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_embedded_routers",
+      "sdkwork_api_gateway_api_server::load_gateway_config",
+      "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway"
+    ],
+    "routeManifest": null,
+    "sdkClients": [],
+    "sdkDependencies": [
+      {
+        "source": "dependencies",
+        "policy": "Top-level dependencies[] is the explicit dependency SDK family contract for this gateway."
+      }
+    ],
+    "dependencyApiExports": [],
+    "dependencyApiSurfaces": [
+      {
+        "source": "apiSurfaces",
+        "policy": "Top-level apiSurfaces[] plus dependencies[] are the explicit dependency API surface contract."
+      }
+    ],
+    "events": [],
+    "configKeys": [
+      "sdkwork.app.config.json#envBindings.variables",
+      "configs/*.toml.example",
+      "sdkwork.workflow.json"
+    ]
+  },
   "componentId": "sdkwork-api-gateway",
   "componentType": "backend-service",
   "runtime": "rust-axum",
