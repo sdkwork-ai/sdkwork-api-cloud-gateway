@@ -39,6 +39,8 @@ to identify:
 | `tests/` | placeholder | Repository-level static, contract, integration, and e2e tests. |
 
 Package-local Rust unit and integration tests remain under each crate's `tests/` directory.
+`docs/superpowers/` contains historical agent execution records only; current gateway standards live
+in this README, `AGENTS.md`, `specs/component.spec.json`, and `../sdkwork-specs/`.
 
 ## Foundation API Integration Standard
 
@@ -369,5 +371,5 @@ use sdkwork_api_gateway::{
 };
 ```
 
-The service crate exposes `load_gateway_config` for callers that want the same manifest/config/env
+The API server crate exposes `load_gateway_config` for callers that want the same manifest/config/env
 resolution used by the binary.

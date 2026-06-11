@@ -1420,3 +1420,29 @@ fn gateway_runtime_source_is_split_by_endpoint_responsibility() {
         );
     }
 }
+
+#[test]
+fn superpowers_docs_are_marked_as_historical_execution_records() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let readme_path = root.join("docs/superpowers/README.md");
+    let readme = fs::read_to_string(&readme_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read superpowers docs README {}: {error}",
+            readme_path.display()
+        )
+    });
+
+    for required_phrase in [
+        "historical execution records",
+        "not the current source of truth",
+        "../../README.md",
+        "../../AGENTS.md",
+        "../../specs/component.spec.json",
+        "../../../sdkwork-specs/README.md",
+    ] {
+        assert!(
+            readme.contains(required_phrase),
+            "superpowers docs README must clarify {required_phrase}"
+        );
+    }
+}
