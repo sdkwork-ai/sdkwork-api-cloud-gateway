@@ -1565,6 +1565,73 @@ fn local_specs_readme_documents_component_contract_boundary() {
 }
 
 #[test]
+fn sdkwork_workspace_readmes_follow_repository_workspace_standard() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+
+    for relative_path in [
+        ".sdkwork/README.md",
+        ".sdkwork/skills/README.md",
+        ".sdkwork/plugins/README.md",
+    ] {
+        let readme_path = root.join(relative_path);
+        let readme = fs::read_to_string(&readme_path).unwrap_or_else(|error| {
+            panic!(
+                "failed to read SDKWork workspace README {}: {error}",
+                readme_path.display()
+            )
+        });
+
+        for required_phrase in [
+            "Purpose:",
+            "Owner:",
+            "Allowed content:",
+            "Forbidden content:",
+            "Related specs:",
+            "Verification:",
+            "SDKWORK_WORKSPACE_SPEC.md",
+        ] {
+            assert!(
+                readme.contains(required_phrase),
+                "{relative_path} must document SDKWork workspace phrase {required_phrase}"
+            );
+        }
+    }
+
+    let workspace_readme_path = root.join(".sdkwork/README.md");
+    let workspace_readme = fs::read_to_string(&workspace_readme_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read SDKWork workspace README {}: {error}",
+            workspace_readme_path.display()
+        )
+    });
+    for required_phrase in [
+        "AGENTS.md",
+        "../sdkwork-specs/SOUL.md",
+        "source-controlled SDKWork workspace metadata",
+        "not runtime state",
+    ] {
+        assert!(
+            workspace_readme.contains(required_phrase),
+            ".sdkwork/README.md must document workspace boundary phrase {required_phrase}"
+        );
+    }
+
+    let gitignore_path = root.join(".sdkwork/.gitignore");
+    let gitignore = fs::read_to_string(&gitignore_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read SDKWork workspace gitignore {}: {error}",
+            gitignore_path.display()
+        )
+    });
+    for ignored_path in ["local/", "tmp/", "cache/", "secrets/", "state/", "*.local"] {
+        assert!(
+            gitignore.contains(ignored_path),
+            ".sdkwork/.gitignore must ignore {ignored_path}"
+        );
+    }
+}
+
+#[test]
 fn agent_entrypoints_follow_sdkwork_standard() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let agents_path = root.join("AGENTS.md");
