@@ -1,4 +1,4 @@
-﻿use std::{collections::HashMap, fs, path::PathBuf, process::Command};
+use std::{collections::HashMap, fs, path::PathBuf, process::Command};
 
 use sdkwork_api_gateway_config::{
     DependencyRuntimeMode, GatewayMode, GatewayPolicyRuleConfig, GatewayRuntimeConfig,
@@ -1443,6 +1443,77 @@ fn superpowers_docs_are_marked_as_historical_execution_records() {
         assert!(
             readme.contains(required_phrase),
             "superpowers docs README must clarify {required_phrase}"
+        );
+    }
+}
+
+#[test]
+fn agent_entrypoints_follow_sdkwork_standard() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let agents_path = root.join("AGENTS.md");
+    let agents = fs::read_to_string(&agents_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read agent guide {}: {error}",
+            agents_path.display()
+        )
+    });
+
+    assert!(
+        agents.starts_with("# Repository Guidelines"),
+        "AGENTS.md must use the SDKWork standard title"
+    );
+    for required_section in [
+        "## SDKWORK Soul",
+        "## SDKWORK Standards",
+        "## Application Identity",
+        "## Local Dictionary Structure",
+        "## Spec Resolution Order",
+        "## Required Specs By Task Type",
+        "## Code Style Rules",
+        "## Build, Test, and Verification",
+        "## Agent Execution Rules",
+        "## Human Review Rules",
+    ] {
+        assert!(
+            agents.contains(required_section),
+            "AGENTS.md must include standard section {required_section}"
+        );
+    }
+    for required_reference in [
+        "../sdkwork-specs/README.md",
+        "../sdkwork-specs/SOUL.md",
+        "../sdkwork-specs/AGENTS_SPEC.md",
+        "../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md",
+    ] {
+        assert!(
+            agents.contains(required_reference),
+            "AGENTS.md must cite {required_reference}"
+        );
+    }
+
+    for shim in ["CLAUDE.md", "GEMINI.md", "CODEX.md"] {
+        let shim_path = root.join(shim);
+        let content = fs::read_to_string(&shim_path)
+            .unwrap_or_else(|error| panic!("failed to read shim {}: {error}", shim_path.display()));
+        assert!(
+            content.contains("AGENTS.md"),
+            "{shim} must point to same-root AGENTS.md"
+        );
+        assert!(
+            content.contains("../sdkwork-specs/README.md"),
+            "{shim} must cite the relative SDKWork standards entrypoint"
+        );
+        assert!(
+            content.contains("../sdkwork-specs/SOUL.md"),
+            "{shim} must cite the SDKWork soul path"
+        );
+        assert!(
+            content.contains("../sdkwork-specs/AGENTS_SPEC.md"),
+            "{shim} must cite the agent standard path"
+        );
+        assert!(
+            content.contains("Do not duplicate or override SDKWork rules here."),
+            "{shim} must stay a compatibility shim instead of a second rule body"
         );
     }
 }
