@@ -12,6 +12,10 @@ embedded into another Rust service through public router builders.
   split-mode HTTP/WebSocket proxying.
 - `crates/sdkwork-api-gateway-api-server`: independent binary entrypoint and tested service config loader.
 
+Within the gateway crate, endpoint responsibilities are split into focused modules: `health.rs` owns
+`/healthz` and `/readyz`, `openapi.rs` owns OpenAPI metadata responses, and `diagnostics.rs` owns the
+safe diagnostics inventory. `runtime.rs` remains the gateway assembly and proxy execution layer.
+
 ## Root Layout
 
 This repository is a narrow Rust backend application root. It keeps the full SDKWork project-root
@@ -354,9 +358,6 @@ Standalone service startup uses:
 ```rust
 use sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router;
 ```
-
-`build_sdkwork_api_gateway_service_router` remains exported as a compatibility alias for existing
-embedded callers and delegates to the standard API server builder.
 
 Third-party embedding can use:
 

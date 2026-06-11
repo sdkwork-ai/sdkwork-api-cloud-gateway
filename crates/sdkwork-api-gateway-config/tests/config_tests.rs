@@ -1288,6 +1288,29 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         "component spec must verify gateway Cargo metadata instead of a separate gateway catalog"
     );
 
+    let runtime_exports = spec["entrypoints"]
+        .as_array()
+        .expect("component spec declares entrypoints")
+        .iter()
+        .find(|entrypoint| {
+            entrypoint["kind"].as_str() == Some("library")
+                && entrypoint["path"].as_str() == Some("crates/sdkwork-api-gateway")
+        })
+        .and_then(|entrypoint| entrypoint["exports"].as_array())
+        .expect("component spec declares gateway library exports");
+    assert!(
+        runtime_exports
+            .iter()
+            .any(|export| export.as_str() == Some("build_sdkwork_api_gateway_api_server_router")),
+        "component spec must declare the canonical api-server router builder"
+    );
+    assert!(
+        runtime_exports
+            .iter()
+            .all(|export| export.as_str() != Some("build_sdkwork_api_gateway_service_router")),
+        "component spec must not preserve the legacy service router alias"
+    );
+
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let metadata_output = Command::new(cargo)
         .current_dir(&root)
@@ -1366,6 +1389,34 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             cargo_dependency_entry["optional"].as_bool(),
             Some(true),
             "embedded foundation dependency {cargo_dependency} must be optional and feature-gated"
+        );
+    }
+}
+
+#[test]
+fn gateway_runtime_source_is_split_by_endpoint_responsibility() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let gateway_src = root.join("crates/sdkwork-api-gateway/src");
+
+    for module in ["health.rs", "openapi.rs", "diagnostics.rs"] {
+        assert!(
+            gateway_src.join(module).is_file(),
+            "gateway endpoint responsibility must live in {module}"
+        );
+    }
+
+    let runtime_source = fs::read_to_string(gateway_src.join("runtime.rs"))
+        .expect("runtime source should be readable");
+    for forbidden_inline_endpoint in [
+        "async fn healthz",
+        "async fn readyz",
+        "async fn openapi_index",
+        "async fn openapi_document",
+        "async fn diagnostics_endpoint",
+    ] {
+        assert!(
+            !runtime_source.contains(forbidden_inline_endpoint),
+            "runtime.rs must not keep inline endpoint handler {forbidden_inline_endpoint}"
         );
     }
 }

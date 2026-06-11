@@ -3032,11 +3032,11 @@ async fn split_mode_preserves_websocket_close_frame_details() {
 }
 
 #[tokio::test]
-async fn service_router_auto_mounts_appbase_when_running_embedded() {
+async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
     let config = embedded_config_without_upstreams();
 
-    let app =
-        build_sdkwork_api_gateway_api_server_router(config).expect("service router mounts appbase");
+    let app = build_sdkwork_api_gateway_api_server_router(config)
+        .expect("api-server router mounts appbase");
     let response = app
         .oneshot(
             Request::builder()

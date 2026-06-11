@@ -1,7 +1,10 @@
-﻿//! Runtime router builders for the SDKWork API Gateway.
+//! Runtime router builders for the SDKWork API Gateway.
 
+mod diagnostics;
 mod error;
+mod health;
 mod metrics;
+mod openapi;
 mod policy;
 mod resilience;
 mod runtime;
@@ -18,8 +21,7 @@ pub use runtime::{
 pub use runtime::{
     build_sdkwork_api_gateway_api_server_router, build_sdkwork_api_gateway_router,
     build_sdkwork_api_gateway_router_with_embedded_routers,
-    build_sdkwork_api_gateway_router_with_registry, build_sdkwork_api_gateway_service_router,
-    GatewayRuntime,
+    build_sdkwork_api_gateway_router_with_registry, GatewayRuntime,
 };
 #[cfg(feature = "foundation-appbase")]
 pub use sdkwork_iam_http::SdkworkAppbaseLocalIamRuntimeContext;

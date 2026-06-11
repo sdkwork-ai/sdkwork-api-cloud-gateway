@@ -1,4 +1,4 @@
-﻿use std::{
+use std::{
     collections::HashMap,
     error::Error as StdError,
     fmt, io,
@@ -22,7 +22,7 @@ use axum::{
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
-    Json, Router,
+    Router,
 };
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use http_body_util::LengthLimitError;
@@ -56,7 +56,10 @@ use tower::ServiceExt;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
-use crate::{metrics::GatewayMetrics, policy, resilience, security, traffic, GatewayRuntimeError};
+use crate::{
+    diagnostics, health, metrics::GatewayMetrics, openapi, policy, resilience, security, traffic,
+    GatewayRuntimeError,
+};
 
 static REQUEST_ID_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 
@@ -83,14 +86,14 @@ pub struct GatewayRuntime {
 }
 
 #[derive(Clone)]
-struct GatewayState {
-    config: GatewayRuntimeConfig,
-    registry: GatewayRouteRegistry,
-    embedded_routers: HashMap<String, Router>,
-    client: Client,
-    metrics: GatewayMetrics,
-    resilience: resilience::GatewayResilienceState,
-    traffic: traffic::GatewayTrafficState,
+pub(crate) struct GatewayState {
+    pub(crate) config: GatewayRuntimeConfig,
+    pub(crate) registry: GatewayRouteRegistry,
+    pub(crate) embedded_routers: HashMap<String, Router>,
+    pub(crate) client: Client,
+    pub(crate) metrics: GatewayMetrics,
+    pub(crate) resilience: resilience::GatewayResilienceState,
+    pub(crate) traffic: traffic::GatewayTrafficState,
 }
 
 impl GatewayRuntime {
@@ -155,16 +158,19 @@ impl GatewayRuntime {
         });
 
         let mut router = Router::new()
-            .route("/healthz", get(healthz))
-            .route("/readyz", get(readyz))
-            .route("/openapi/index.json", get(openapi_index))
-            .route("/openapi.json", get(openapi_document))
+            .route("/healthz", get(health::healthz))
+            .route("/readyz", get(health::readyz))
+            .route("/openapi/index.json", get(openapi::openapi_index))
+            .route("/openapi.json", get(openapi::openapi_document))
             .fallback(gateway_fallback);
         if metrics_enabled {
             router = router.route(metrics_path.as_str(), get(metrics_endpoint));
         }
         if diagnostics_enabled {
-            router = router.route(diagnostics_path.as_str(), get(diagnostics_endpoint));
+            router = router.route(
+                diagnostics_path.as_str(),
+                get(diagnostics::diagnostics_endpoint),
+            );
         }
 
         router
@@ -225,12 +231,6 @@ pub fn build_sdkwork_api_gateway_api_server_router(
     build_sdkwork_api_gateway_router(config)
 }
 
-pub fn build_sdkwork_api_gateway_service_router(
-    config: GatewayRuntimeConfig,
-) -> Result<Router, GatewayRuntimeError> {
-    build_sdkwork_api_gateway_api_server_router(config)
-}
-
 pub fn build_sdkwork_api_gateway_router_with_registry(
     config: GatewayRuntimeConfig,
     registry: GatewayRouteRegistry,
@@ -281,155 +281,6 @@ pub fn build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(
     sdkwork_iam_http::build_sdkwork_appbase_app_api_router_with_runtime_context(runtime_context)
 }
 
-async fn healthz() -> Json<serde_json::Value> {
-    Json(json!({
-        "status": "ok",
-        "service": "sdkwork-api-gateway"
-    }))
-}
-
-async fn readyz(State(state): State<Arc<GatewayState>>) -> Response {
-    let upstream_checks = if state.config.readiness.check_upstreams {
-        check_required_upstreams(&state).await
-    } else {
-        Vec::new()
-    };
-    let degraded = upstream_checks
-        .iter()
-        .any(|check| check["status"] == "unavailable");
-    let status = if degraded {
-        StatusCode::SERVICE_UNAVAILABLE
-    } else {
-        StatusCode::OK
-    };
-
-    (
-        status,
-        Json(json!({
-            "status": if degraded { "degraded" } else { "ok" },
-            "service": state.config.service.name,
-            "mode": state.config.mode,
-            "routeCount": state.registry.routes().len(),
-            "upstreams": state.config.upstreams,
-            "upstreamChecks": upstream_checks,
-            "dependencies": state.config.dependency_surfaces
-        })),
-    )
-        .into_response()
-}
-
-async fn check_required_upstreams(state: &GatewayState) -> Vec<serde_json::Value> {
-    let upstreams = state
-        .config
-        .upstreams
-        .iter()
-        .filter(|upstream| upstream.required)
-        .cloned()
-        .collect::<Vec<_>>();
-    let mut checks = Vec::with_capacity(upstreams.len());
-
-    for upstream in upstreams {
-        let url = upstream_readiness_url(&upstream);
-        let result = state
-            .client
-            .get(url.as_str())
-            .timeout(Duration::from_millis(state.config.readiness.timeout_ms))
-            .send()
-            .await;
-
-        let check = match result {
-            Ok(response) if response.status().is_success() => json!({
-                "serviceId": upstream.service_id,
-                "status": "ok",
-                "statusCode": response.status().as_u16(),
-                "url": url
-            }),
-            Ok(response) => json!({
-                "serviceId": upstream.service_id,
-                "status": "unavailable",
-                "statusCode": response.status().as_u16(),
-                "url": url
-            }),
-            Err(error) => json!({
-                "serviceId": upstream.service_id,
-                "status": "unavailable",
-                "error": error.to_string(),
-                "url": url
-            }),
-        };
-        checks.push(check);
-    }
-
-    checks
-}
-
-fn upstream_readiness_url(upstream: &ServiceUpstreamConfig) -> String {
-    let path = upstream.readiness_path.trim();
-    let path = if path.is_empty() {
-        "/"
-    } else if path.starts_with('/') {
-        path
-    } else {
-        return format!(
-            "{}/{}",
-            upstream.base_url.trim_end_matches('/'),
-            path.trim_start_matches('/')
-        );
-    };
-
-    format!("{}{}", upstream.base_url.trim_end_matches('/'), path)
-}
-
-async fn openapi_index(State(state): State<Arc<GatewayState>>) -> Json<serde_json::Value> {
-    Json(json!({
-        "service": state.config.service.name,
-        "mode": state.config.mode,
-        "routes": state.registry.routes(),
-        "dependencies": state.config.dependency_surfaces
-    }))
-}
-
-async fn openapi_document(State(state): State<Arc<GatewayState>>) -> Json<serde_json::Value> {
-    Json(json!({
-        "openapi": "3.1.0",
-        "info": {
-            "title": "SDKWork API Gateway",
-            "version": env!("CARGO_PKG_VERSION")
-        },
-        "paths": {
-            "/healthz": {
-                "get": {
-                    "operationId": "getGatewayHealth",
-                    "responses": {
-                        "200": { "description": "Gateway health" }
-                    }
-                }
-            },
-            "/readyz": {
-                "get": {
-                    "operationId": "getGatewayReadiness",
-                    "responses": {
-                        "200": { "description": "Gateway readiness" }
-                    }
-                }
-            },
-            "/openapi/index.json": {
-                "get": {
-                    "operationId": "listGatewayApiDependencies",
-                    "responses": {
-                        "200": { "description": "Gateway route and dependency index" }
-                    }
-                }
-            }
-        },
-        "x-sdkwork-gateway": {
-            "mode": state.config.mode,
-            "routes": state.registry.routes(),
-            "dependencies": state.config.dependency_surfaces
-        }
-    }))
-}
-
 async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
     Response::builder()
         .status(StatusCode::OK)
@@ -441,10 +292,6 @@ async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
             state.metrics.render(state.config.service.name.as_str()),
         ))
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
-}
-
-async fn diagnostics_endpoint(State(state): State<Arc<GatewayState>>) -> Json<serde_json::Value> {
-    Json(diagnostics_snapshot(state.as_ref()))
 }
 
 async fn security_middleware(
@@ -1541,84 +1388,6 @@ fn gateway_route_path(path: &str, fallback: &str) -> String {
         return path.to_string();
     }
     format!("/{path}")
-}
-
-fn diagnostics_snapshot(state: &GatewayState) -> serde_json::Value {
-    let config = &state.config;
-    let mut snapshot = serde_json::Map::new();
-
-    snapshot.insert(
-        "service".to_string(),
-        json!({
-            "name": config.service.name,
-            "environment": config.service.environment,
-            "mode": config.mode,
-        }),
-    );
-    snapshot.insert(
-        "dependencySurfaces".to_string(),
-        json!({
-            "count": config.dependency_surfaces.len(),
-        }),
-    );
-
-    let route_items = if config.diagnostics.include_route_inventory {
-        state
-            .registry
-            .routes()
-            .iter()
-            .map(|route| {
-                json!({
-                    "serviceId": route.service_id,
-                    "pathPattern": route.path_pattern,
-                    "apiPrefix": route.api_prefix,
-                    "surface": route.surface,
-                    "executionTarget": route.execution_target,
-                    "methods": route.methods,
-                })
-            })
-            .collect::<Vec<_>>()
-    } else {
-        Vec::new()
-    };
-    snapshot.insert(
-        "routes".to_string(),
-        json!({
-            "count": state.registry.routes().len(),
-            "items": route_items,
-        }),
-    );
-
-    let policy_rules = if config.diagnostics.include_policy_inventory {
-        config
-            .policy
-            .rules
-            .iter()
-            .map(|rule| {
-                json!({
-                    "id": rule.id,
-                    "matchServiceId": rule.match_service_id,
-                    "matchPathPrefix": rule.match_path_prefix,
-                    "allowedMethods": rule.allowed_methods,
-                    "hasMaxBodyBytes": rule.max_body_bytes.is_some(),
-                    "hasTimeoutMs": rule.timeout_ms.is_some(),
-                })
-            })
-            .collect::<Vec<_>>()
-    } else {
-        Vec::new()
-    };
-    snapshot.insert(
-        "policy".to_string(),
-        json!({
-            "enabled": config.policy.enabled,
-            "dryRun": config.policy.dry_run,
-            "ruleCount": config.policy.rules.len(),
-            "rules": policy_rules,
-        }),
-    );
-
-    serde_json::Value::Object(snapshot)
 }
 
 fn record_gateway_request(

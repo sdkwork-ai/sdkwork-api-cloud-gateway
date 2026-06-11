@@ -20,7 +20,6 @@
       "path": "crates/sdkwork-api-gateway",
       "exports": [
         "build_sdkwork_api_gateway_api_server_router",
-        "build_sdkwork_api_gateway_service_router",
         "build_sdkwork_api_gateway_router",
         "build_sdkwork_api_gateway_router_with_registry",
         "build_sdkwork_api_gateway_router_with_embedded_routers",

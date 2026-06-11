@@ -1,3 +1,6 @@
-state/
+local/
 tmp/
+cache/
+secrets/
+state/
 *.local
