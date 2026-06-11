@@ -18,14 +18,15 @@ use axum::{
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
+use sdkwork_api_gateway::{
+    build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
+    build_sdkwork_api_gateway_api_server_router, build_sdkwork_api_gateway_router,
+    build_sdkwork_api_gateway_router_with_embedded_routers, GatewayRuntime,
+    SdkworkAppbaseLocalIamRuntimeContext,
+};
 use sdkwork_api_gateway_config::{
     DependencyApiSurfaceConfig, DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig,
     RateLimitRuleConfig, ServiceUpstreamConfig,
-};
-use sdkwork_api_gateway_runtime::{
-    build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
-    build_sdkwork_api_gateway_router, build_sdkwork_api_gateway_router_with_embedded_routers,
-    build_sdkwork_api_gateway_service_router, GatewayRuntime, SdkworkAppbaseLocalIamRuntimeContext,
 };
 use tokio_tungstenite::{
     connect_async,
@@ -2719,6 +2720,7 @@ async fn split_mode_proxies_manifest_craw_chat_foundation_surfaces_with_route_pr
 async fn split_mode_proxies_workspace_foundation_surfaces_with_route_precedence() {
     let memory_app_upstream = spawn_foundation_echo_upstream("/app/v3/api/memory").await;
     let drive_backend_upstream = spawn_foundation_echo_upstream("/backend/v3/api/drive").await;
+    let knowledgebase_open_upstream = spawn_foundation_echo_upstream("/knowledge/v3/api").await;
     let news_open_upstream = spawn_foundation_echo_upstream("/open/v3/api/news").await;
     let drive_admin_upstream = spawn_foundation_echo_upstream("/admin/v3/api/drive").await;
     let community_app_upstream = spawn_foundation_echo_upstream("/app/v3/api/community").await;
@@ -2731,6 +2733,10 @@ async fn split_mode_proxies_workspace_foundation_surfaces_with_route_precedence(
     env.insert(
         "SDKWORK_DRIVE_BACKEND_API_BASE_URL".to_string(),
         drive_backend_upstream,
+    );
+    env.insert(
+        "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL".to_string(),
+        knowledgebase_open_upstream,
     );
     env.insert(
         "SDKWORK_NEWS_OPEN_API_BASE_URL".to_string(),
@@ -2760,6 +2766,11 @@ async fn split_mode_proxies_workspace_foundation_surfaces_with_route_precedence(
             "/backend/v3/api/drive/probe?dependency=drive-backend",
             "drive-backend",
             "hello-drive-backend",
+        ),
+        (
+            "/knowledge/v3/api/probe?dependency=knowledgebase-open",
+            "knowledgebase-open",
+            "hello-knowledgebase-open",
         ),
         (
             "/open/v3/api/news/probe?dependency=news-open",
@@ -3025,7 +3036,7 @@ async fn service_router_auto_mounts_appbase_when_running_embedded() {
     let config = embedded_config_without_upstreams();
 
     let app =
-        build_sdkwork_api_gateway_service_router(config).expect("service router mounts appbase");
+        build_sdkwork_api_gateway_api_server_router(config).expect("service router mounts appbase");
     let response = app
         .oneshot(
             Request::builder()

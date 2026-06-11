@@ -1,11 +1,11 @@
-[workspace]
+﻿[workspace]
 resolver = "2"
 members = [
     "crates/sdkwork-api-gateway-config",
     "crates/sdkwork-api-gateway-registry",
     "crates/sdkwork-api-gateway-observability",
-    "crates/sdkwork-api-gateway-runtime",
-    "services/sdkwork-api-gateway",
+    "crates/sdkwork-api-gateway",
+    "crates/sdkwork-api-gateway-api-server",
 ]
 
 [workspace.package]
@@ -34,7 +34,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 sdkwork-api-gateway-config = { path = "crates/sdkwork-api-gateway-config" }
 sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observability" }
 sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
-sdkwork-api-gateway-runtime = { path = "crates/sdkwork-api-gateway-runtime" }
+sdkwork-api-gateway = { path = "crates/sdkwork-api-gateway" }
 
 sdkwork_http_context = { path = "../sdkwork-appbase/packages/native-rust/foundation/sdkwork-http-context-rust" }
 sdkwork_iam_http = { path = "../sdkwork-appbase/packages/native-rust/iam/sdkwork-iam-http-rust" }

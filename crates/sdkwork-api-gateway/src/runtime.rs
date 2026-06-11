@@ -1,4 +1,4 @@
-use std::{
+﻿use std::{
     collections::HashMap,
     error::Error as StdError,
     fmt, io,
@@ -203,7 +203,7 @@ pub fn build_sdkwork_api_gateway_router(
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub fn build_sdkwork_api_gateway_service_router(
+pub fn build_sdkwork_api_gateway_api_server_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     match config.mode {
@@ -219,10 +219,16 @@ pub fn build_sdkwork_api_gateway_service_router(
 }
 
 #[cfg(not(feature = "foundation-appbase"))]
-pub fn build_sdkwork_api_gateway_service_router(
+pub fn build_sdkwork_api_gateway_api_server_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     build_sdkwork_api_gateway_router(config)
+}
+
+pub fn build_sdkwork_api_gateway_service_router(
+    config: GatewayRuntimeConfig,
+) -> Result<Router, GatewayRuntimeError> {
+    build_sdkwork_api_gateway_api_server_router(config)
 }
 
 pub fn build_sdkwork_api_gateway_router_with_registry(

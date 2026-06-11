@@ -259,6 +259,11 @@
         "tracked": false
       },
       {
+        "name": "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
         "name": "SDKWORK_NEWS_APP_API_BASE_URL",
         "required": false,
         "tracked": false
@@ -504,6 +509,12 @@
       "prefix": "/backend/v3/api/knowledge",
       "owner": "dependency",
       "serviceId": "sdkwork-knowledgebase-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/knowledge/v3/api",
+      "owner": "dependency",
+      "serviceId": "sdkwork-knowledgebase-open-api"
     },
     {
       "surface": "app",
@@ -938,6 +949,17 @@
       "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL",
       "coverage": "knowledgebase-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-knowledgebase-open-api",
+      "workspace": "sdkwork-knowledgebase",
+      "sdkFamily": "sdkwork-knowledgebase-sdk",
+      "apiAuthority": "sdkwork-knowledgebase.open",
+      "surface": "open",
+      "apiPrefix": "/knowledge/v3/api",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
+      "coverage": "knowledgebase-open-api-upstream-routes"
     },
     {
       "serviceId": "sdkwork-news-app-api",

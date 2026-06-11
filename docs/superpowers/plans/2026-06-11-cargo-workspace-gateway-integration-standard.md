@@ -1,4 +1,4 @@
-# Cargo Workspace Gateway Integration Standard Implementation Plan
+﻿# Cargo Workspace Gateway Integration Standard Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -14,9 +14,9 @@
 
 **Files:**
 - Modify: `Cargo.toml`
-- Modify: `crates/sdkwork-api-gateway-runtime/Cargo.toml`
-- Modify: `crates/sdkwork-api-gateway-runtime/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway-runtime/src/runtime.rs`
+- Modify: `crates/sdkwork-api-gateway/Cargo.toml`
+- Modify: `crates/sdkwork-api-gateway/src/lib.rs`
+- Modify: `crates/sdkwork-api-gateway/src/runtime.rs`
 
 - [ ] **Step 1: Run a red static check**
 
@@ -25,7 +25,7 @@ Expected: FAIL before editing because the feature is not declared.
 
 - [ ] **Step 2: Add the feature**
 
-Declare `foundation-appbase` in `sdkwork-api-gateway-runtime`, make `sdkwork_iam_http` optional there, and keep it in default features.
+Declare `foundation-appbase` in `sdkwork-api-gateway`, make `sdkwork_iam_http` optional there, and keep it in default features.
 
 - [ ] **Step 3: Gate appbase embedded exports**
 

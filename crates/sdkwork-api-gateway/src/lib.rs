@@ -1,4 +1,4 @@
-//! Runtime router builders for the SDKWork API Gateway.
+﻿//! Runtime router builders for the SDKWork API Gateway.
 
 mod error;
 mod metrics;
@@ -16,7 +16,8 @@ pub use runtime::{
     build_sdkwork_api_gateway_router_with_embedded_appbase,
 };
 pub use runtime::{
-    build_sdkwork_api_gateway_router, build_sdkwork_api_gateway_router_with_embedded_routers,
+    build_sdkwork_api_gateway_api_server_router, build_sdkwork_api_gateway_router,
+    build_sdkwork_api_gateway_router_with_embedded_routers,
     build_sdkwork_api_gateway_router_with_registry, build_sdkwork_api_gateway_service_router,
     GatewayRuntime,
 };

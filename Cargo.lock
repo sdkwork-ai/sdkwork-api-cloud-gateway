@@ -958,6 +958,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
+name = "sdkwork-api-gateway"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bytes",
+ "futures-util",
+ "http-body-util",
+ "reqwest",
+ "sdkwork-api-gateway-config",
+ "sdkwork-api-gateway-observability",
+ "sdkwork-api-gateway-registry",
+ "sdkwork_iam_http",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-tungstenite",
+ "tower",
+ "tower-http",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-api-gateway-api-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "sdkwork-api-gateway",
+ "sdkwork-api-gateway-config",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "sdkwork-api-gateway-config"
 version = "0.1.0"
 dependencies = [
@@ -982,42 +1018,6 @@ version = "0.1.0"
 dependencies = [
  "sdkwork-api-gateway-config",
  "serde",
-]
-
-[[package]]
-name = "sdkwork-api-gateway-runtime"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bytes",
- "futures-util",
- "http-body-util",
- "reqwest",
- "sdkwork-api-gateway-config",
- "sdkwork-api-gateway-observability",
- "sdkwork-api-gateway-registry",
- "sdkwork_iam_http",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "tokio-tungstenite",
- "tower",
- "tower-http",
- "tracing",
-]
-
-[[package]]
-name = "sdkwork-api-gateway-service"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "sdkwork-api-gateway-config",
- "sdkwork-api-gateway-runtime",
- "tokio",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

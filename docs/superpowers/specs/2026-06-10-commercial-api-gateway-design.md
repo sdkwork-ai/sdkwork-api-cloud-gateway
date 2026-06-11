@@ -1,4 +1,4 @@
-# Commercial API Gateway Design
+﻿# Commercial API Gateway Design
 
 ## Goal
 
@@ -6,8 +6,8 @@ Bring `sdkwork-api-gateway` from a working SDKWork dependency gateway to a comme
 foundation with observable, secure, traffic-controlled, resilient, and performant runtime behavior
 while preserving both startup modes:
 
-- standalone service through `services/sdkwork-api-gateway`
-- same-process embedding through `sdkwork-api-gateway-runtime` router builders
+- standalone service through `crates/sdkwork-api-gateway-api-server`
+- same-process embedding through `sdkwork-api-gateway` router builders
 
 ## Constraints
 

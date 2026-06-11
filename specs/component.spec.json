@@ -7,18 +7,19 @@
     "authority": "cargo-workspace",
     "catalogPolicy": "no-dedicated-gateway-catalog",
     "cargoWorkspaceRoot": "Cargo.toml",
-    "runtimeFeatureAuthority": "crates/sdkwork-api-gateway-runtime/Cargo.toml"
+    "runtimeFeatureAuthority": "crates/sdkwork-api-gateway/Cargo.toml"
   },
   "entrypoints": [
     {
       "kind": "binary",
-      "path": "services/sdkwork-api-gateway",
+      "path": "crates/sdkwork-api-gateway-api-server",
       "name": "sdkwork-api-gateway"
     },
     {
       "kind": "library",
-      "path": "crates/sdkwork-api-gateway-runtime",
+      "path": "crates/sdkwork-api-gateway",
       "exports": [
+        "build_sdkwork_api_gateway_api_server_router",
         "build_sdkwork_api_gateway_service_router",
         "build_sdkwork_api_gateway_router",
         "build_sdkwork_api_gateway_router_with_registry",
@@ -31,7 +32,7 @@
     },
     {
       "kind": "library",
-      "path": "services/sdkwork-api-gateway",
+      "path": "crates/sdkwork-api-gateway-api-server",
       "exports": [
         "load_gateway_config",
         "config_path_from_args"
@@ -176,6 +177,13 @@
       "prefix": "/backend/v3/api/knowledge",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-knowledgebase-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/knowledge/v3/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-knowledgebase-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -632,6 +640,16 @@
       "embeddedStatus": "split-only-until-knowledgebase-exposes-a-complete-compatible-public-router-builder"
     },
     {
+      "serviceId": "sdkwork-knowledgebase-open-api",
+      "workspace": "sdkwork-knowledgebase",
+      "apiAuthority": "sdkwork-knowledgebase.open",
+      "sdkFamily": "sdkwork-knowledgebase-sdk",
+      "runtimeModes": ["split"],
+      "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
+      "coverage": "knowledgebase-open-api-upstream-routes",
+      "embeddedStatus": "split-only-until-knowledgebase-exposes-a-complete-compatible-public-router-builder"
+    },
+    {
       "serviceId": "sdkwork-news-app-api",
       "workspace": "sdkwork-news",
       "apiAuthority": "sdkwork-news.app",
@@ -962,7 +980,7 @@
     "commands": [
       "cargo metadata --no-deps --format-version 1",
       "cargo test -p sdkwork-api-gateway-config",
-      "cargo test -p sdkwork-api-gateway-runtime",
+      "cargo test -p sdkwork-api-gateway",
       "cargo fmt --all -- --check",
       "cargo test --workspace"
     ]

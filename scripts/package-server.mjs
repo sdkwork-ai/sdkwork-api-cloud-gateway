@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -253,7 +253,7 @@ async function packageServer(context) {
 }
 
 function runCargoBuild(context) {
-  const args = ['build', '--release', '-p', 'sdkwork-api-gateway-service', '--bin', BINARY_NAME];
+  const args = ['build', '--release', '-p', 'sdkwork-api-gateway-api-server', '--bin', BINARY_NAME];
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
   }
@@ -261,7 +261,7 @@ function runCargoBuild(context) {
 }
 
 async function copyConfigExamples(stageRoot) {
-  const configRoot = path.join(appRoot, 'config');
+  const configRoot = path.join(appRoot, 'configs');
   const files = await readdir(configRoot);
   for (const file of files.filter((item) => item.endsWith('.toml.example')).sort()) {
     await copyFile(path.join(configRoot, file), path.join(stageRoot, 'config', file));

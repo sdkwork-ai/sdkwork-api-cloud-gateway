@@ -1,4 +1,4 @@
-# SDKWork API Gateway
+﻿# SDKWork API Gateway
 
 SDKWork API Gateway is a Rust/Axum gateway application. It can run as an independent service or be
 embedded into another Rust service through public router builders.
@@ -8,9 +8,33 @@ embedded into another Rust service through public router builders.
 - `sdkwork-api-gateway-config`: typed runtime configuration.
 - `sdkwork-api-gateway-registry`: SDKWork route metadata and executable dependency routing rules.
 - `sdkwork-api-gateway-observability`: startup and route summaries.
-- `sdkwork-api-gateway-runtime`: Axum router builders, preflight validation, embedded routing, and
+- `sdkwork-api-gateway`: Axum router builders, preflight validation, embedded routing, and
   split-mode HTTP/WebSocket proxying.
-- `services/sdkwork-api-gateway`: independent binary entrypoint and tested service config loader.
+- `crates/sdkwork-api-gateway-api-server`: independent binary entrypoint and tested service config loader.
+
+## Root Layout
+
+This repository is a narrow Rust backend application root. It keeps the full SDKWork project-root
+directory dictionary represented with tracked content so active and inactive capabilities are easy
+to identify:
+
+| Directory | Status | Purpose |
+| --- | --- | --- |
+| `apis/` | placeholder | Gateway-owned API contract inputs when this application owns new API authorities. |
+| `apps/` | placeholder | Secondary app surfaces; the repository root is the primary application root. |
+| `crates/` | active | Rust gateway, config, registry, observability, and API server crates. |
+| `sdks/` | active placeholder | SDK family workspace for gateway-owned API authorities. |
+| `jobs/` | placeholder | Schedules, queue bindings, batch descriptors, and maintenance runbooks. |
+| `tools/` | placeholder | Reusable validators, generators, migration tools, and operator utilities. |
+| `plugins/` | placeholder | Application/runtime plugin source packages. Agent plugins stay in `.sdkwork/plugins/`. |
+| `examples/` | placeholder | Runnable and copyable consumer examples. |
+| `configs/` | active | Safe TOML config templates and non-secret runtime defaults. |
+| `deployments/` | placeholder | Deployment descriptors, topology, and release handoff documents. |
+| `scripts/` | active | Thin command entrypoints for packaging and workflow integration. |
+| `docs/` | active | Design notes, implementation plans, runbooks, and architecture records. |
+| `tests/` | placeholder | Repository-level static, contract, integration, and e2e tests. |
+
+Package-local Rust unit and integration tests remain under each crate's `tests/` directory.
 
 ## Foundation API Integration Standard
 
@@ -26,7 +50,8 @@ Current foundation integrations:
 | --- | --- | --- | --- |
 | `foundation-appbase` | `sdkwork_iam_http` | `sdkwork-appbase-app-api` | `sdkwork_iam_http::build_sdkwork_appbase_app_api_router` |
 
-Current split upstream foundation surfaces:
+Representative split upstream foundation surfaces. The complete machine-readable list is
+`sdkwork.app.config.json` plus `specs/component.spec.json`:
 
 | SDKWork service | SDK family | API prefix | Base URL key |
 | --- | --- | --- | --- |
@@ -42,6 +67,19 @@ Current split upstream foundation surfaces:
 | `sdkwork-agent-open-api` | `sdkwork-agent-sdk` | `/agent/v3/api` | `SDKWORK_AGENT_OPEN_API_BASE_URL` |
 | `sdkwork-aiot-app-api` | `sdkwork-aiot-app-sdk` | `/app/v3/api/iot` | `SDKWORK_AIOT_APP_API_BASE_URL` |
 | `sdkwork-aiot-backend-api` | `sdkwork-aiot-backend-sdk` | `/backend/v3/api/iot` | `SDKWORK_AIOT_BACKEND_API_BASE_URL` |
+| `sdkwork-drive-backend-api` | `sdkwork-drive-backend-sdk` | `/backend/v3/api/drive` | `SDKWORK_DRIVE_BACKEND_API_BASE_URL` |
+| `sdkwork-drive-open-api` | `sdkwork-drive-sdk` | `/open/v3/api/drive` | `SDKWORK_DRIVE_OPEN_API_BASE_URL` |
+| `sdkwork-drive-admin-storage-api` | `sdkwork-drive-admin-storage-sdk` | `/admin/v3/api/drive` | `SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL` |
+| `sdkwork-memory-app-api` | `sdkwork-memory-app-sdk` | `/app/v3/api/memory` | `SDKWORK_MEMORY_APP_API_BASE_URL` |
+| `sdkwork-memory-backend-api` | `sdkwork-memory-backend-sdk` | `/backend/v3/api/memory` | `SDKWORK_MEMORY_BACKEND_API_BASE_URL` |
+| `sdkwork-memory-open-api` | `sdkwork-memory-sdk` | `/mem/v3/api/memory` | `SDKWORK_MEMORY_OPEN_API_BASE_URL` |
+| `sdkwork-knowledgebase-app-api` | `sdkwork-knowledgebase-app-sdk` | `/app/v3/api/knowledge` | `SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL` |
+| `sdkwork-knowledgebase-backend-api` | `sdkwork-knowledgebase-backend-sdk` | `/backend/v3/api/knowledge` | `SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL` |
+| `sdkwork-knowledgebase-open-api` | `sdkwork-knowledgebase-sdk` | `/knowledge/v3/api` | `SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL` |
+| `sdkwork-news-open-api` | `sdkwork-news-sdk` | `/open/v3/api/news` | `SDKWORK_NEWS_OPEN_API_BASE_URL` |
+| `sdkwork-notes-open-api` | `sdkwork-notes-sdk` | `/notes/v3/api` | `SDKWORK_NOTES_OPEN_API_BASE_URL` |
+| `sdkwork-community-open-api` | `sdkwork-community-sdk` | `/community/v3/api` | `SDKWORK_COMMUNITY_OPEN_API_BASE_URL` |
+| `sdkwork-image-open-api` | `sdkwork-image-sdk` | `/image/v3/api` | `SDKWORK_IMAGE_OPEN_API_BASE_URL` |
 
 When adding another foundation API, add its source crate once in root `[workspace.dependencies]`,
 activate it through a focused gateway runtime feature only when the dependency exposes a compatible
@@ -53,10 +91,12 @@ product.
 
 Commerce app/backend surfaces are broad fallback routes while the workspace migrates product apps to
 the shared gateway. Fixed Appbase IAM routes and more specific app dependency prefixes such as Drive
-Notary, RTC, Agent, and AIoT are resolved before the broad Commerce fallbacks. Cargo metadata
-currently proves the embedded Appbase app surface only; Appbase backend, Drive, Notary, Commerce,
-RTC, Agent, and AIoT remain split upstream integrations until their production routers expose
-compatible, approved public builders.
+Notary, RTC, Agent, AIoT, Drive backend/open/admin, Memory, Knowledgebase, News, Notes, Community,
+Image, and other specific foundation prefixes are resolved before the broad Commerce fallbacks.
+Cargo metadata currently proves the embedded Appbase app surface only; Appbase backend, Drive,
+Notary, Commerce, RTC, Agent, AIoT, Memory, Knowledgebase, and the remaining foundation modules
+remain split upstream integrations until their production routers expose compatible, approved public
+builders.
 
 ## Configuration
 
@@ -100,11 +140,13 @@ Environment overrides are then applied:
   `SDKWORK_COMMERCE_BACKEND_API_BASE_URL`, plus shared foundation keys
   `SDKWORK_RTC_APP_API_BASE_URL`, `SDKWORK_RTC_BACKEND_API_BASE_URL`,
   `SDKWORK_AGENT_APP_API_BASE_URL`, `SDKWORK_AGENT_BACKEND_API_BASE_URL`,
-  `SDKWORK_AGENT_OPEN_API_BASE_URL`, `SDKWORK_AIOT_APP_API_BASE_URL`, and
-  `SDKWORK_AIOT_BACKEND_API_BASE_URL`
+  `SDKWORK_AGENT_OPEN_API_BASE_URL`, `SDKWORK_AIOT_APP_API_BASE_URL`,
+  `SDKWORK_AIOT_BACKEND_API_BASE_URL`, `SDKWORK_DRIVE_OPEN_API_BASE_URL`,
+  `SDKWORK_MEMORY_OPEN_API_BASE_URL`, `SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL`,
+  and other dependency surface keys declared in `sdkwork.app.config.json`
 
 `sdkwork.app.config.json` drives the default SDKWork identity, bind address, API surfaces, and
-dependency SDK surfaces. TOML files under `config/` are tracked templates for environment-specific
+dependency SDK surfaces. TOML files under `configs/` are tracked templates for environment-specific
 deployment overlays.
 
 Config loading performs startup validation after TOML/manifest/env merging. The gateway rejects
@@ -123,7 +165,7 @@ pnpm dev
 Equivalent Cargo command:
 
 ```powershell
-cargo run -p sdkwork-api-gateway-service --bin sdkwork-api-gateway -- --config config/sdkwork-api-gateway.development.toml.example
+cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway -- --config configs/sdkwork-api-gateway.development.toml.example
 ```
 
 ## Server Packaging
@@ -310,13 +352,16 @@ probe closes the circuit.
 Standalone service startup uses:
 
 ```rust
-use sdkwork_api_gateway_runtime::build_sdkwork_api_gateway_service_router;
+use sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router;
 ```
+
+`build_sdkwork_api_gateway_service_router` remains exported as a compatibility alias for existing
+embedded callers and delegates to the standard API server builder.
 
 Third-party embedding can use:
 
 ```rust
-use sdkwork_api_gateway_runtime::{
+use sdkwork_api_gateway::{
     build_sdkwork_api_gateway_router_with_embedded_routers,
     build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
     SdkworkAppbaseLocalIamRuntimeContext,

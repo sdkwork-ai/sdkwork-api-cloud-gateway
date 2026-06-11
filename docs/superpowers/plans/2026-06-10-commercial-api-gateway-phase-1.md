@@ -1,4 +1,4 @@
-# Commercial API Gateway Phase 1 Implementation Plan
+﻿# Commercial API Gateway Phase 1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
@@ -8,7 +8,7 @@
 security, in-memory traffic control, docs, and verification.
 
 **Architecture:** Keep public router builders stable. Add focused modules inside
-`sdkwork-api-gateway-runtime` and extend `sdkwork-api-gateway-config` plus
+`sdkwork-api-gateway` and extend `sdkwork-api-gateway-config` plus
 `sdkwork-api-gateway-observability`. Use typed config, in-memory runtime state, and Axum middleware
 style helpers. Start with memory-only stores; leave Redis for Phase 2.
 
@@ -21,13 +21,13 @@ style helpers. Start with memory-only stores; leave Redis for Phase 2.
 - Modify: `crates/sdkwork-api-gateway-config/src/lib.rs`
 - Modify: `crates/sdkwork-api-gateway-config/tests/config_tests.rs`
 - Modify: `crates/sdkwork-api-gateway-observability/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway-runtime/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway-runtime/src/runtime.rs`
-- Create: `crates/sdkwork-api-gateway-runtime/src/policy.rs`
-- Create: `crates/sdkwork-api-gateway-runtime/src/security.rs`
-- Create: `crates/sdkwork-api-gateway-runtime/src/traffic.rs`
-- Create: `crates/sdkwork-api-gateway-runtime/src/metrics.rs`
-- Modify: `crates/sdkwork-api-gateway-runtime/tests/runtime_tests.rs`
+- Modify: `crates/sdkwork-api-gateway/src/lib.rs`
+- Modify: `crates/sdkwork-api-gateway/src/runtime.rs`
+- Create: `crates/sdkwork-api-gateway/src/policy.rs`
+- Create: `crates/sdkwork-api-gateway/src/security.rs`
+- Create: `crates/sdkwork-api-gateway/src/traffic.rs`
+- Create: `crates/sdkwork-api-gateway/src/metrics.rs`
+- Modify: `crates/sdkwork-api-gateway/tests/runtime_tests.rs`
 - Modify: `config/*.toml.example`
 - Modify: `sdkwork.app.config.json`
 - Modify: `specs/component.spec.json`

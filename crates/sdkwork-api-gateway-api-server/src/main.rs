@@ -1,8 +1,8 @@
-use std::{collections::HashMap, env, net::SocketAddr};
+﻿use std::{collections::HashMap, env, net::SocketAddr};
 
 use anyhow::Context;
-use sdkwork_api_gateway_runtime::build_sdkwork_api_gateway_service_router;
-use sdkwork_api_gateway_service::load_gateway_config;
+use sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router;
+use sdkwork_api_gateway_api_server::load_gateway_config;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
@@ -18,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
         .bind
         .parse()
         .with_context(|| format!("invalid bind address `{}`", config.server.bind))?;
-    let app = build_sdkwork_api_gateway_service_router(config)?;
+    let app = build_sdkwork_api_gateway_api_server_router(config)?;
     let listener = TcpListener::bind(bind).await?;
     let local_addr = listener.local_addr()?;
 

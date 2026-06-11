@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs, path::PathBuf, process::Command};
+﻿use std::{collections::HashMap, fs, path::PathBuf, process::Command};
 
 use sdkwork_api_gateway_config::{
     DependencyRuntimeMode, GatewayMode, GatewayPolicyRuleConfig, GatewayRuntimeConfig,
@@ -274,9 +274,9 @@ fn parses_toml_and_applies_environment_overrides() {
 fn parses_all_tracked_config_templates() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     for relative_path in [
-        "config/sdkwork-api-gateway.development.toml.example",
-        "config/sdkwork-api-gateway.test.toml.example",
-        "config/sdkwork-api-gateway.production.toml.example",
+        "configs/sdkwork-api-gateway.development.toml.example",
+        "configs/sdkwork-api-gateway.test.toml.example",
+        "configs/sdkwork-api-gateway.production.toml.example",
     ] {
         let path = root.join(relative_path);
         GatewayRuntimeConfig::from_path(&path)
@@ -842,6 +842,16 @@ fn application_manifest_declares_workspace_foundation_split_dependency_surfaces(
             "http://127.0.0.1:18681",
         ),
         (
+            "sdkwork-knowledgebase-open-api",
+            "sdkwork-knowledgebase",
+            "sdkwork-knowledgebase-sdk",
+            "sdkwork-knowledgebase.open",
+            "open",
+            "/knowledge/v3/api",
+            "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
+            "http://127.0.0.1:18682",
+        ),
+        (
             "sdkwork-news-app-api",
             "sdkwork-news",
             "sdkwork-news-app-sdk",
@@ -1296,9 +1306,9 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         .and_then(|packages| {
             packages
                 .iter()
-                .find(|package| package["name"].as_str() == Some("sdkwork-api-gateway-runtime"))
+                .find(|package| package["name"].as_str() == Some("sdkwork-api-gateway"))
         })
-        .expect("cargo metadata includes sdkwork-api-gateway-runtime");
+        .expect("cargo metadata includes sdkwork-api-gateway");
 
     let dependencies = spec["dependencies"]
         .as_array()

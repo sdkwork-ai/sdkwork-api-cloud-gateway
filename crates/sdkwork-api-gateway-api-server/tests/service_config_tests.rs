@@ -1,7 +1,7 @@
 use std::{collections::HashMap, path::PathBuf};
 
+use sdkwork_api_gateway_api_server::load_gateway_config;
 use sdkwork_api_gateway_config::GatewayMode;
-use sdkwork_api_gateway_service::load_gateway_config;
 
 fn workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -23,7 +23,7 @@ fn loads_sdkwork_manifest_from_application_root_when_no_config_path_is_provided(
 #[test]
 fn explicit_config_path_and_environment_overrides_win_over_manifest_defaults() {
     let root = workspace_root();
-    let config_path = root.join("config/sdkwork-api-gateway.test.toml.example");
+    let config_path = root.join("configs/sdkwork-api-gateway.test.toml.example");
     let mut env = HashMap::new();
     env.insert(
         "SDKWORK_API_GATEWAY_BIND".to_string(),

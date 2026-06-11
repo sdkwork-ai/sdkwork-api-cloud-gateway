@@ -2,343 +2,350 @@ mode = "split"
 
 [service]
 name = "sdkwork-api-gateway"
-environment = "development"
+environment = "production"
 
 [server]
-bind = "127.0.0.1:3900"
+bind = "0.0.0.0:3900"
 
 [[upstreams]]
 serviceId = "sdkwork-appbase-app-api"
-baseUrl = "http://127.0.0.1:3800"
+baseUrl = "https://appbase.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-drive-app-api"
-baseUrl = "http://127.0.0.1:18080"
+baseUrl = "https://drive.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-notary-app-api"
-baseUrl = "http://127.0.0.1:18092"
+baseUrl = "https://notary.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-appbase-backend-api"
-baseUrl = "http://127.0.0.1:3801"
+baseUrl = "https://appbase-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-commerce-app-api"
-baseUrl = "http://127.0.0.1:18180"
+baseUrl = "https://commerce-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-commerce-backend-api"
-baseUrl = "http://127.0.0.1:18181"
+baseUrl = "https://commerce-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-rtc-app-api"
-baseUrl = "http://127.0.0.1:18280"
+baseUrl = "https://rtc-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-rtc-backend-api"
-baseUrl = "http://127.0.0.1:18281"
+baseUrl = "https://rtc-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-agent-app-api"
-baseUrl = "http://127.0.0.1:18380"
+baseUrl = "https://agent-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-agent-backend-api"
-baseUrl = "http://127.0.0.1:18381"
+baseUrl = "https://agent-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-agent-open-api"
-baseUrl = "http://127.0.0.1:18382"
+baseUrl = "https://agent-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-aiot-app-api"
-baseUrl = "http://127.0.0.1:18480"
+baseUrl = "https://aiot-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-aiot-backend-api"
-baseUrl = "http://127.0.0.1:18481"
+baseUrl = "https://aiot-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-drive-backend-api"
-baseUrl = "http://127.0.0.1:18081"
+baseUrl = "https://drive-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-drive-open-api"
-baseUrl = "http://127.0.0.1:18082"
+baseUrl = "https://drive-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-drive-admin-storage-api"
-baseUrl = "http://127.0.0.1:18083"
+baseUrl = "https://drive-admin-storage.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-notary-backend-api"
-baseUrl = "http://127.0.0.1:18093"
+baseUrl = "https://notary-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-memory-app-api"
-baseUrl = "http://127.0.0.1:18580"
+baseUrl = "https://memory-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-memory-backend-api"
-baseUrl = "http://127.0.0.1:18581"
+baseUrl = "https://memory-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-memory-open-api"
-baseUrl = "http://127.0.0.1:18582"
+baseUrl = "https://memory-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-knowledgebase-app-api"
-baseUrl = "http://127.0.0.1:18680"
+baseUrl = "https://knowledgebase-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-knowledgebase-backend-api"
-baseUrl = "http://127.0.0.1:18681"
+baseUrl = "https://knowledgebase-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-knowledgebase-open-api"
+baseUrl = "https://knowledgebase-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-news-app-api"
-baseUrl = "http://127.0.0.1:18780"
+baseUrl = "https://news-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-news-backend-api"
-baseUrl = "http://127.0.0.1:18781"
+baseUrl = "https://news-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-news-open-api"
-baseUrl = "http://127.0.0.1:18782"
+baseUrl = "https://news-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-notes-app-api"
-baseUrl = "http://127.0.0.1:18880"
+baseUrl = "https://notes-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-notes-backend-api"
-baseUrl = "http://127.0.0.1:18881"
+baseUrl = "https://notes-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-notes-open-api"
-baseUrl = "http://127.0.0.1:18882"
+baseUrl = "https://notes-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-music-app-api"
-baseUrl = "http://127.0.0.1:18980"
+baseUrl = "https://music-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-music-backend-api"
-baseUrl = "http://127.0.0.1:18981"
+baseUrl = "https://music-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-generations-app-api"
-baseUrl = "http://127.0.0.1:19080"
+baseUrl = "https://generations-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-generations-backend-api"
-baseUrl = "http://127.0.0.1:19081"
+baseUrl = "https://generations-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-community-app-api"
-baseUrl = "http://127.0.0.1:19180"
+baseUrl = "https://community-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-community-backend-api"
-baseUrl = "http://127.0.0.1:19181"
+baseUrl = "https://community-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-community-open-api"
-baseUrl = "http://127.0.0.1:19182"
+baseUrl = "https://community-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-search-app-api"
-baseUrl = "http://127.0.0.1:19280"
+baseUrl = "https://search-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-search-backend-api"
-baseUrl = "http://127.0.0.1:19281"
+baseUrl = "https://search-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-voice-app-api"
-baseUrl = "http://127.0.0.1:19380"
+baseUrl = "https://voice-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-voice-backend-api"
-baseUrl = "http://127.0.0.1:19381"
+baseUrl = "https://voice-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-image-app-api"
-baseUrl = "http://127.0.0.1:19480"
+baseUrl = "https://image-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-image-backend-api"
-baseUrl = "http://127.0.0.1:19481"
+baseUrl = "https://image-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-image-open-api"
-baseUrl = "http://127.0.0.1:19482"
+baseUrl = "https://image-open.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-comments-app-api"
-baseUrl = "http://127.0.0.1:19580"
+baseUrl = "https://comments-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-comments-backend-api"
-baseUrl = "http://127.0.0.1:19581"
+baseUrl = "https://comments-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-course-app-api"
-baseUrl = "http://127.0.0.1:19680"
+baseUrl = "https://course-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-course-backend-api"
-baseUrl = "http://127.0.0.1:19681"
+baseUrl = "https://course-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-messaging-app-api"
-baseUrl = "http://127.0.0.1:19780"
+baseUrl = "https://messaging-app.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
 
 [[upstreams]]
 serviceId = "sdkwork-messaging-backend-api"
-baseUrl = "http://127.0.0.1:19781"
+baseUrl = "https://messaging-backend.example.com"
 required = true
 timeoutMs = 30000
 readinessPath = "/healthz"
@@ -351,7 +358,7 @@ apiAuthority = "sdkwork-appbase-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api"
 runtimeMode = "split-or-embedded"
-sameOriginAllowed = true
+sameOriginAllowed = false
 executableExport = "sdkwork_iam_http::build_sdkwork_appbase_app_api_router"
 cargoFeature = "foundation-appbase"
 cargoDependency = "sdkwork_iam_http"
@@ -366,7 +373,7 @@ apiAuthority = "sdkwork-drive-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/drive"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "drive-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_DRIVE_APP_API_BASE_URL"
 
@@ -378,7 +385,7 @@ apiAuthority = "sdkwork-notary-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/notary"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "notary-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NOTARY_APP_API_BASE_URL"
 
@@ -390,7 +397,7 @@ apiAuthority = "sdkwork-appbase-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/iam"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "appbase-backend-iam-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_APPBASE_BACKEND_API_BASE_URL"
 
@@ -402,7 +409,7 @@ apiAuthority = "sdkwork-commerce-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "commerce-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMERCE_APP_API_BASE_URL"
 
@@ -414,7 +421,7 @@ apiAuthority = "sdkwork-commerce-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "commerce-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMERCE_BACKEND_API_BASE_URL"
 
@@ -426,7 +433,7 @@ apiAuthority = "sdkwork-rtc-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/rtc"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "rtc-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_RTC_APP_API_BASE_URL"
 
@@ -438,7 +445,7 @@ apiAuthority = "sdkwork-rtc-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/rtc"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "rtc-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_RTC_BACKEND_API_BASE_URL"
 
@@ -450,7 +457,7 @@ apiAuthority = "sdkwork-agent-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/ai"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "agent-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_AGENT_APP_API_BASE_URL"
 
@@ -462,7 +469,7 @@ apiAuthority = "sdkwork-agent-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/ai"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "agent-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_AGENT_BACKEND_API_BASE_URL"
 
@@ -474,7 +481,7 @@ apiAuthority = "sdkwork-agent-open-api"
 surface = "open"
 apiPrefix = "/agent/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "agent-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_AGENT_OPEN_API_BASE_URL"
 
@@ -486,7 +493,7 @@ apiAuthority = "sdkwork-aiot-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/iot"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "aiot-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_AIOT_APP_API_BASE_URL"
 
@@ -498,7 +505,7 @@ apiAuthority = "sdkwork-aiot-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/iot"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "aiot-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_AIOT_BACKEND_API_BASE_URL"
 
@@ -510,7 +517,7 @@ apiAuthority = "sdkwork-drive.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/drive"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "drive-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_DRIVE_BACKEND_API_BASE_URL"
 
@@ -522,7 +529,7 @@ apiAuthority = "sdkwork-drive.open"
 surface = "open"
 apiPrefix = "/open/v3/api/drive"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "drive-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_DRIVE_OPEN_API_BASE_URL"
 
@@ -534,7 +541,7 @@ apiAuthority = "sdkwork-drive.admin.storage"
 surface = "admin"
 apiPrefix = "/admin/v3/api/drive"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "drive-admin-storage-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL"
 
@@ -546,7 +553,7 @@ apiAuthority = "sdkwork-notary.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/notary"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "notary-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NOTARY_BACKEND_API_BASE_URL"
 
@@ -558,7 +565,7 @@ apiAuthority = "sdkwork-memory.app"
 surface = "app"
 apiPrefix = "/app/v3/api/memory"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "memory-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MEMORY_APP_API_BASE_URL"
 
@@ -570,7 +577,7 @@ apiAuthority = "sdkwork-memory.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/memory"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "memory-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MEMORY_BACKEND_API_BASE_URL"
 
@@ -582,7 +589,7 @@ apiAuthority = "sdkwork-memory-open-api"
 surface = "open"
 apiPrefix = "/mem/v3/api/memory"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "memory-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MEMORY_OPEN_API_BASE_URL"
 
@@ -594,7 +601,7 @@ apiAuthority = "sdkwork-knowledgebase.app"
 surface = "app"
 apiPrefix = "/app/v3/api/knowledge"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "knowledgebase-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL"
 
@@ -606,9 +613,21 @@ apiAuthority = "sdkwork-knowledgebase.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/knowledge"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "knowledgebase-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-knowledgebase-open-api"
+workspace = "sdkwork-knowledgebase"
+sdkFamily = "sdkwork-knowledgebase-sdk"
+apiAuthority = "sdkwork-knowledgebase.open"
+surface = "open"
+apiPrefix = "/knowledge/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "knowledgebase-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL"
 
 [[dependencySurfaces]]
 serviceId = "sdkwork-news-app-api"
@@ -618,7 +637,7 @@ apiAuthority = "sdkwork-news.app"
 surface = "app"
 apiPrefix = "/app/v3/api/news"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "news-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NEWS_APP_API_BASE_URL"
 
@@ -630,7 +649,7 @@ apiAuthority = "sdkwork-news.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/news"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "news-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NEWS_BACKEND_API_BASE_URL"
 
@@ -642,7 +661,7 @@ apiAuthority = "sdkwork-news.open"
 surface = "open"
 apiPrefix = "/open/v3/api/news"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "news-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NEWS_OPEN_API_BASE_URL"
 
@@ -654,7 +673,7 @@ apiAuthority = "sdkwork-notes-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/notes"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "notes-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NOTES_APP_API_BASE_URL"
 
@@ -666,7 +685,7 @@ apiAuthority = "sdkwork-notes-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/notes"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "notes-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NOTES_BACKEND_API_BASE_URL"
 
@@ -678,7 +697,7 @@ apiAuthority = "sdkwork-notes-open-api"
 surface = "open"
 apiPrefix = "/notes/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "notes-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_NOTES_OPEN_API_BASE_URL"
 
@@ -690,7 +709,7 @@ apiAuthority = "sdkwork-music-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/music"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "music-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MUSIC_APP_API_BASE_URL"
 
@@ -702,7 +721,7 @@ apiAuthority = "sdkwork-music-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/music"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "music-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MUSIC_BACKEND_API_BASE_URL"
 
@@ -714,7 +733,7 @@ apiAuthority = "sdkwork-generations-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/generations"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "generations-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_GENERATIONS_APP_API_BASE_URL"
 
@@ -726,7 +745,7 @@ apiAuthority = "sdkwork-generations-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/generations"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "generations-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_GENERATIONS_BACKEND_API_BASE_URL"
 
@@ -738,7 +757,7 @@ apiAuthority = "sdkwork-community.app"
 surface = "app"
 apiPrefix = "/app/v3/api/community"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "community-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMUNITY_APP_API_BASE_URL"
 
@@ -750,7 +769,7 @@ apiAuthority = "sdkwork-community.backend"
 surface = "backend"
 apiPrefix = "/backend/v3/api/community"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "community-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMUNITY_BACKEND_API_BASE_URL"
 
@@ -762,7 +781,7 @@ apiAuthority = "sdkwork-community.open"
 surface = "open"
 apiPrefix = "/community/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "community-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMUNITY_OPEN_API_BASE_URL"
 
@@ -774,7 +793,7 @@ apiAuthority = "sdkwork-search-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/search"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "search-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_SEARCH_APP_API_BASE_URL"
 
@@ -786,7 +805,7 @@ apiAuthority = "sdkwork-search-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/search"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "search-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_SEARCH_BACKEND_API_BASE_URL"
 
@@ -798,7 +817,7 @@ apiAuthority = "sdkwork-voice-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/voice"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "voice-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_VOICE_APP_API_BASE_URL"
 
@@ -810,7 +829,7 @@ apiAuthority = "sdkwork-voice-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/voice"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "voice-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_VOICE_BACKEND_API_BASE_URL"
 
@@ -822,7 +841,7 @@ apiAuthority = "sdkwork-image-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/image"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "image-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_IMAGE_APP_API_BASE_URL"
 
@@ -834,7 +853,7 @@ apiAuthority = "sdkwork-image-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/image"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "image-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_IMAGE_BACKEND_API_BASE_URL"
 
@@ -846,7 +865,7 @@ apiAuthority = "sdkwork-image-open-api"
 surface = "open"
 apiPrefix = "/image/v3/api"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "image-open-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_IMAGE_OPEN_API_BASE_URL"
 
@@ -858,7 +877,7 @@ apiAuthority = "sdkwork-comments-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/comments"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "comments-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMENTS_APP_API_BASE_URL"
 
@@ -870,7 +889,7 @@ apiAuthority = "sdkwork-comments-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/engagement"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "comments-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMENTS_APP_API_BASE_URL"
 
@@ -882,7 +901,7 @@ apiAuthority = "sdkwork-comments-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/comments"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "comments-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMENTS_BACKEND_API_BASE_URL"
 
@@ -894,7 +913,7 @@ apiAuthority = "sdkwork-comments-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/engagement"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "comments-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COMMENTS_BACKEND_API_BASE_URL"
 
@@ -906,7 +925,7 @@ apiAuthority = "sdkwork-course-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/courses"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_APP_API_BASE_URL"
 
@@ -918,7 +937,7 @@ apiAuthority = "sdkwork-course-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/course_applications"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_APP_API_BASE_URL"
 
@@ -930,7 +949,7 @@ apiAuthority = "sdkwork-course-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/courses"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
 
@@ -942,7 +961,7 @@ apiAuthority = "sdkwork-course-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/course_applications"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
 
@@ -954,7 +973,7 @@ apiAuthority = "sdkwork-course-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/course_lessons"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
 
@@ -966,7 +985,7 @@ apiAuthority = "sdkwork-course-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/course_sections"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "course-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
 
@@ -978,7 +997,7 @@ apiAuthority = "sdkwork-messaging-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api/messaging"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "messaging-app-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MESSAGING_APP_API_BASE_URL"
 
@@ -990,17 +1009,17 @@ apiAuthority = "sdkwork-messaging-backend-api"
 surface = "backend"
 apiPrefix = "/backend/v3/api/messaging"
 runtimeMode = "split"
-sameOriginAllowed = true
+sameOriginAllowed = false
 coverage = "messaging-backend-api-upstream-routes"
 requiredBaseUrlKey = "SDKWORK_MESSAGING_BACKEND_API_BASE_URL"
 
 [cors]
-allowAnyOrigin = true
+allowAnyOrigin = false
 allowedOrigins = []
 
 [request]
 maxBodyBytes = 33554432
-timeoutMs = 0
+timeoutMs = 60000
 
 [readiness]
 checkUpstreams = false
@@ -1011,9 +1030,9 @@ accessLogEnabled = true
 auditLogEnabled = true
 accessLogSampleRateBasisPoints = 10000
 auditLogSampleRateBasisPoints = 10000
-metricsEnabled = false
+metricsEnabled = true
 metricsPath = "/metrics"
-tracingEnabled = false
+tracingEnabled = true
 redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
 
 [diagnostics]
@@ -1023,7 +1042,7 @@ includePolicyInventory = true
 includeRouteInventory = true
 
 [security]
-allowedHosts = []
+allowedHosts = ["api.example.com"]
 trustedProxyCidrs = []
 secureHeadersEnabled = true
 maxHeaderBytes = 65536
@@ -1039,11 +1058,24 @@ inspectHeaders = true
 inspectJsonBody = false
 
 [traffic]
-rateLimitEnabled = false
+rateLimitEnabled = true
 compatXRateLimitHeaders = true
-globalMaxInFlight = 1024
-rateLimits = []
-concurrencyLimits = []
+globalMaxInFlight = 4096
+
+[[traffic.rateLimits]]
+id = "appbase-global"
+matchPathPrefix = "/app/v3/api"
+key = "client-ip"
+algorithm = "token-bucket"
+capacity = 600
+refillPerSecond = 10
+burst = 100
+rejectStatus = 429
+
+[[traffic.concurrencyLimits]]
+id = "appbase-global"
+matchServiceId = "sdkwork-appbase-app-api"
+maxInFlight = 1024
 
 [policy]
 enabled = true
@@ -1051,11 +1083,11 @@ dryRun = false
 rules = []
 
 [resilience]
-retryEnabled = false
-maxAttempts = 1
+retryEnabled = true
+maxAttempts = 2
 retryStatuses = [502, 503, 504]
-retryBackoffMs = 0
-circuitBreakerEnabled = false
+retryBackoffMs = 25
+circuitBreakerEnabled = true
 failureThreshold = 5
 openSeconds = 30
 halfOpenMaxAttempts = 1
