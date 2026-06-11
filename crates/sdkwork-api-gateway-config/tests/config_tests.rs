@@ -1762,6 +1762,7 @@ fn workspace_crates_have_module_readmes() {
             "Domain:",
             "Capability:",
             "Package type:",
+            "Owner:",
             "Status:",
             "## Public API",
             "## Required SDK Surface",

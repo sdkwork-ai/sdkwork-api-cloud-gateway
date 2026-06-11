@@ -3,6 +3,7 @@
 Domain: platform
 Capability: api-gateway-observability
 Package type: Rust library crate
+Owner: `sdkwork-api-gateway` maintainers
 Status: standard
 
 ## Public API

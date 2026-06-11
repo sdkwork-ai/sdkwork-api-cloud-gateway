@@ -3,6 +3,7 @@
 Domain: platform
 Capability: api-gateway-runtime
 Package type: Rust gateway library crate
+Owner: `sdkwork-api-gateway` maintainers
 Status: standard
 
 ## Public API

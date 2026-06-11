@@ -3,6 +3,7 @@
 Domain: platform
 Capability: api-gateway-api-server
 Package type: Rust API server process crate
+Owner: `sdkwork-api-gateway` maintainers
 Status: standard
 
 ## Public API
