@@ -1517,3 +1517,51 @@ fn agent_entrypoints_follow_sdkwork_standard() {
         );
     }
 }
+
+#[test]
+fn workspace_crates_have_module_readmes() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let workspace_toml_path = root.join("Cargo.toml");
+    let workspace_toml = fs::read_to_string(&workspace_toml_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read workspace manifest {}: {error}",
+            workspace_toml_path.display()
+        )
+    });
+    let workspace: toml::Value = toml::from_str(&workspace_toml).expect("workspace TOML parses");
+    let members = workspace
+        .get("workspace")
+        .and_then(|workspace| workspace.get("members"))
+        .and_then(toml::Value::as_array)
+        .expect("workspace members are declared");
+
+    for member in members {
+        let member = member.as_str().expect("workspace member is a string");
+        let readme_path = root.join(member).join("README.md");
+        let readme = fs::read_to_string(&readme_path).unwrap_or_else(|error| {
+            panic!(
+                "workspace crate {member} must have README.md at {}: {error}",
+                readme_path.display()
+            )
+        });
+
+        for required_phrase in [
+            "Domain:",
+            "Capability:",
+            "Package type:",
+            "Status:",
+            "## Public API",
+            "## Required SDK Surface",
+            "## Configuration",
+            "## SaaS/Private/Local Behavior",
+            "## Security",
+            "## Extension Points",
+            "## Verification",
+        ] {
+            assert!(
+                readme.contains(required_phrase),
+                "workspace crate {member} README must include {required_phrase}"
+            );
+        }
+    }
+}
