@@ -1532,6 +1532,39 @@ fn superpowers_docs_are_marked_as_historical_execution_records() {
 }
 
 #[test]
+fn local_specs_readme_documents_component_contract_boundary() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let readme_path = root.join("specs/README.md");
+    let readme = fs::read_to_string(&readme_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read local specs README {}: {error}",
+            readme_path.display()
+        )
+    });
+
+    for required_phrase in [
+        "Purpose:",
+        "Owner:",
+        "Allowed content:",
+        "Forbidden content:",
+        "Related specs:",
+        "Verification:",
+        "specs/component.spec.json",
+        "machine-readable component contract",
+        "../sdkwork-specs/COMPONENT_SPEC.md",
+        "../sdkwork-specs/DOCUMENTATION_SPEC.md",
+        "../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md",
+        "Do not copy root SDKWork standards",
+        "Do not add a separate gateway catalog",
+    ] {
+        assert!(
+            readme.contains(required_phrase),
+            "specs/README.md must document local specs boundary phrase {required_phrase}"
+        );
+    }
+}
+
+#[test]
 fn agent_entrypoints_follow_sdkwork_standard() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let agents_path = root.join("AGENTS.md");
