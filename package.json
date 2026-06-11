@@ -1,0 +1,18 @@
+{
+  "name": "sdkwork-api-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "cargo build --workspace",
+    "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
+    "fmt": "cargo fmt --all -- --check",
+    "package:server": "node scripts/package-server.mjs package",
+    "package:server:validate": "node scripts/package-server.mjs validate",
+    "release:package:server": "pnpm package:server",
+    "test": "cargo test --workspace",
+    "dev": "cargo run -p sdkwork-api-gateway-service --bin sdkwork-api-gateway -- --config config/sdkwork-api-gateway.development.toml.example",
+    "workflow:matrix:server": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --profile server --platform all --architecture all --format tar.gz",
+    "workflow:validate": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs validate --config sdkwork.workflow.json"
+  }
+}

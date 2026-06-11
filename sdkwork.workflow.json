@@ -1,0 +1,91 @@
+{
+  "$schema": "../sdkwork-github-workflow/schemas/sdkwork-workflow.schema.json",
+  "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
+  "app": {
+    "id": "sdkwork-api-gateway",
+    "name": "SDKWork API Gateway",
+    "repository": "Sdkwork-Cloud/sdkwork-api-gateway",
+    "sourcePath": ".",
+    "configPath": "sdkwork.app.config.json"
+  },
+  "release": {
+    "artifactPrefix": "sdkwork-api-gateway",
+    "defaultVersion": "0.1.0",
+    "changelog": {
+      "source": "auto",
+      "maxCommitSubjects": 50
+    }
+  },
+  "dependencies": [
+    {
+      "id": "sdkwork-appbase",
+      "repository": "Sdkwork-Cloud/sdkwork-appbase",
+      "refInput": "SDKWORK_APPBASE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN",
+      "submodules": "recursive"
+    }
+  ],
+  "toolchains": {
+    "node": "22",
+    "pnpm": "10.33.0",
+    "rust": "stable"
+  },
+  "lifecycle": {
+    "build": [
+      {
+        "name": "Verify Rust gateway workspace",
+        "shell": "pwsh",
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\ncargo fmt --all -- --check\ncargo test --workspace"
+      }
+    ],
+    "package": [
+      {
+        "name": "Package server archive",
+        "shell": "pwsh",
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm package:server"
+      }
+    ],
+    "sign": [
+      {
+        "name": "Signing policy placeholder",
+        "shell": "node",
+        "run": "console.log(`Signing is not required for ${process.env.SDKWORK_PACKAGE_ID}.`);"
+      }
+    ],
+    "sbom": [
+      {
+        "name": "SBOM policy placeholder",
+        "shell": "node",
+        "run": "console.log(`SBOM generation is not required for ${process.env.SDKWORK_PACKAGE_ID}.`);"
+      }
+    ],
+    "validate": [
+      {
+        "name": "Validate server archive",
+        "shell": "pwsh",
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm package:server:validate"
+      }
+    ]
+  },
+  "targets": [
+    {
+      "id": "linux-x64-server-tar-gz",
+      "profile": "server",
+      "platform": "linux",
+      "architecture": "x64",
+      "formats": ["tar.gz"],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": ["dist/server/sdkwork-api-gateway-*-linux-x64-server.tar.gz"]
+    }
+  ],
+  "security": {
+    "artifactAttestations": true,
+    "sbomRequired": false,
+    "signingRequired": false
+  },
+  "publish": {
+    "workflowArtifact": true,
+    "githubRelease": true,
+    "retentionDays": 30
+  }
+}

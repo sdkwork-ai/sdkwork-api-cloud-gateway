@@ -1,0 +1,40 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sdkwork-api-gateway-config",
+    "crates/sdkwork-api-gateway-registry",
+    "crates/sdkwork-api-gateway-observability",
+    "crates/sdkwork-api-gateway-runtime",
+    "services/sdkwork-api-gateway",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+anyhow = "1.0"
+axum = { version = "0.8", features = ["ws"] }
+bytes = "1"
+futures-util = "0.3"
+http-body-util = "0.1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2"
+tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "net", "signal", "time"] }
+tokio-tungstenite = "0.29"
+toml = "0.8"
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+sdkwork-api-gateway-config = { path = "crates/sdkwork-api-gateway-config" }
+sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observability" }
+sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
+sdkwork-api-gateway-runtime = { path = "crates/sdkwork-api-gateway-runtime" }
+
+sdkwork_http_context = { path = "../sdkwork-appbase/packages/native-rust/foundation/sdkwork-http-context-rust" }
+sdkwork_iam_http = { path = "../sdkwork-appbase/packages/native-rust/iam/sdkwork-iam-http-rust" }

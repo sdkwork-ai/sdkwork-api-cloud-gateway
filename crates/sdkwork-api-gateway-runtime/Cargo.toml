@@ -1,0 +1,35 @@
+[package]
+name = "sdkwork-api-gateway-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["foundation-appbase"]
+foundation-appbase = ["dep:sdkwork_iam_http"]
+
+[dependencies]
+axum.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+http-body-util.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
+sdkwork-api-gateway-config.workspace = true
+sdkwork-api-gateway-observability.workspace = true
+sdkwork-api-gateway-registry.workspace = true
+sdkwork_iam_http = { workspace = true, optional = true }
+
+[dev-dependencies]
+futures-util.workspace = true
+http-body-util.workspace = true
+tokio.workspace = true
+tokio-tungstenite.workspace = true
+serde_json.workspace = true

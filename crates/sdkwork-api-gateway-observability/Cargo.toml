@@ -1,0 +1,10 @@
+[package]
+name = "sdkwork-api-gateway-observability"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+sdkwork-api-gateway-config.workspace = true
+sdkwork-api-gateway-registry.workspace = true

@@ -1,0 +1,416 @@
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
+
+use axum::http::StatusCode;
+
+const HTTP_REQUEST_DURATION_BUCKETS: [f64; 11] = [
+    0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
+];
+
+#[derive(Clone, Default)]
+pub(crate) struct GatewayMetrics {
+    inner: Arc<Mutex<GatewayMetricsState>>,
+}
+
+#[derive(Default)]
+struct GatewayMetricsState {
+    http_requests: BTreeMap<HttpRequestLabels, u64>,
+    http_request_durations: BTreeMap<HttpRequestLabels, HistogramValue>,
+    upstream_requests: BTreeMap<UpstreamRequestLabels, u64>,
+    security_events: BTreeMap<SecurityEventLabels, u64>,
+    traffic_rejections: BTreeMap<TrafficRejectionLabels, u64>,
+    policy_rejections: BTreeMap<PolicyRejectionLabels, u64>,
+    policy_dry_runs: BTreeMap<PolicyDryRunLabels, u64>,
+    resilience_events: BTreeMap<ResilienceEventLabels, u64>,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct HttpRequestLabels {
+    service: String,
+    method: String,
+    route_target: String,
+    service_id: String,
+    status: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct UpstreamRequestLabels {
+    service: String,
+    service_id: String,
+    status: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct SecurityEventLabels {
+    service: String,
+    kind: String,
+    action: String,
+    rule: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct TrafficRejectionLabels {
+    service: String,
+    kind: String,
+    scope: String,
+    status: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct PolicyRejectionLabels {
+    service: String,
+    kind: String,
+    scope: String,
+    status: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct PolicyDryRunLabels {
+    service: String,
+    kind: String,
+    scope: String,
+    status: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct ResilienceEventLabels {
+    service: String,
+    service_id: String,
+    event: String,
+}
+
+#[derive(Clone, Debug)]
+struct HistogramValue {
+    buckets: [u64; HTTP_REQUEST_DURATION_BUCKETS.len()],
+    sum_seconds: f64,
+    count: u64,
+}
+
+impl GatewayMetrics {
+    pub(crate) fn record_http_request(
+        &self,
+        service: &str,
+        method: &str,
+        route_target: &str,
+        service_id: &str,
+        status: StatusCode,
+    ) {
+        let labels = HttpRequestLabels {
+            service: service.to_string(),
+            method: method.to_ascii_uppercase(),
+            route_target: route_target.to_string(),
+            service_id: service_id.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.http_requests.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_http_request_duration(
+        &self,
+        service: &str,
+        method: &str,
+        route_target: &str,
+        service_id: &str,
+        status: StatusCode,
+        duration: Duration,
+    ) {
+        let labels = HttpRequestLabels {
+            service: service.to_string(),
+            method: method.to_ascii_uppercase(),
+            route_target: route_target.to_string(),
+            service_id: service_id.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let histogram = state.http_request_durations.entry(labels).or_default();
+        histogram.record(duration.as_secs_f64());
+    }
+
+    pub(crate) fn record_upstream_request(
+        &self,
+        service: &str,
+        service_id: &str,
+        status: StatusCode,
+    ) {
+        let labels = UpstreamRequestLabels {
+            service: service.to_string(),
+            service_id: service_id.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.upstream_requests.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_security_event(
+        &self,
+        service: &str,
+        kind: &str,
+        action: &str,
+        rule: &str,
+    ) {
+        let labels = SecurityEventLabels {
+            service: service.to_string(),
+            kind: kind.to_string(),
+            action: action.to_string(),
+            rule: rule.to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.security_events.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_traffic_rejection(
+        &self,
+        service: &str,
+        kind: &str,
+        scope: &str,
+        status: StatusCode,
+    ) {
+        let labels = TrafficRejectionLabels {
+            service: service.to_string(),
+            kind: kind.to_string(),
+            scope: scope.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.traffic_rejections.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_policy_rejection(
+        &self,
+        service: &str,
+        kind: &str,
+        scope: &str,
+        status: StatusCode,
+    ) {
+        let labels = PolicyRejectionLabels {
+            service: service.to_string(),
+            kind: kind.to_string(),
+            scope: scope.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.policy_rejections.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_policy_dry_run(
+        &self,
+        service: &str,
+        kind: &str,
+        scope: &str,
+        status: StatusCode,
+    ) {
+        let labels = PolicyDryRunLabels {
+            service: service.to_string(),
+            kind: kind.to_string(),
+            scope: scope.to_string(),
+            status: status.as_u16().to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.policy_dry_runs.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn record_resilience_event(&self, service: &str, service_id: &str, event: &str) {
+        let labels = ResilienceEventLabels {
+            service: service.to_string(),
+            service_id: service_id.to_string(),
+            event: event.to_string(),
+        };
+        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        *state.resilience_events.entry(labels).or_insert(0) += 1;
+    }
+
+    pub(crate) fn render(&self, service: &str) -> String {
+        let state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut output = String::new();
+        output.push_str("# HELP sdkwork_api_gateway_build_info Gateway build metadata.\n");
+        output.push_str("# TYPE sdkwork_api_gateway_build_info gauge\n");
+        output.push_str(&format!(
+            "sdkwork_api_gateway_build_info{{service=\"{}\",version=\"{}\"}} 1\n",
+            escape_label_value(service),
+            escape_label_value(env!("CARGO_PKG_VERSION"))
+        ));
+        output.push_str(
+            "# HELP sdkwork_api_gateway_http_requests_total Gateway HTTP requests by route target.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_http_requests_total counter\n");
+        for (labels, value) in &state.http_requests {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_http_requests_total{{service=\"{}\",method=\"{}\",route_target=\"{}\",service_id=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.method.as_str()),
+                escape_label_value(labels.route_target.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_http_request_duration_seconds Gateway HTTP request duration to response headers.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_http_request_duration_seconds histogram\n");
+        for (labels, value) in &state.http_request_durations {
+            for (index, bucket) in HTTP_REQUEST_DURATION_BUCKETS.iter().enumerate() {
+                output.push_str(&format!(
+                    "sdkwork_api_gateway_http_request_duration_seconds_bucket{{service=\"{}\",method=\"{}\",route_target=\"{}\",service_id=\"{}\",status=\"{}\",le=\"{}\"}} {}\n",
+                    escape_label_value(labels.service.as_str()),
+                    escape_label_value(labels.method.as_str()),
+                    escape_label_value(labels.route_target.as_str()),
+                    escape_label_value(labels.service_id.as_str()),
+                    escape_label_value(labels.status.as_str()),
+                    format_bucket(*bucket),
+                    value.buckets[index]
+                ));
+            }
+            output.push_str(&format!(
+                "sdkwork_api_gateway_http_request_duration_seconds_bucket{{service=\"{}\",method=\"{}\",route_target=\"{}\",service_id=\"{}\",status=\"{}\",le=\"+Inf\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.method.as_str()),
+                escape_label_value(labels.route_target.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value.count
+            ));
+            output.push_str(&format!(
+                "sdkwork_api_gateway_http_request_duration_seconds_sum{{service=\"{}\",method=\"{}\",route_target=\"{}\",service_id=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.method.as_str()),
+                escape_label_value(labels.route_target.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value.sum_seconds
+            ));
+            output.push_str(&format!(
+                "sdkwork_api_gateway_http_request_duration_seconds_count{{service=\"{}\",method=\"{}\",route_target=\"{}\",service_id=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.method.as_str()),
+                escape_label_value(labels.route_target.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value.count
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_upstream_requests_total Gateway upstream dependency requests.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_upstream_requests_total counter\n");
+        for (labels, value) in &state.upstream_requests {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_upstream_requests_total{{service=\"{}\",service_id=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_security_events_total Gateway security decisions by bounded rule.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_security_events_total counter\n");
+        for (labels, value) in &state.security_events {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_security_events_total{{service=\"{}\",kind=\"{}\",action=\"{}\",rule=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.kind.as_str()),
+                escape_label_value(labels.action.as_str()),
+                escape_label_value(labels.rule.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_traffic_rejections_total Gateway traffic-control rejections.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_traffic_rejections_total counter\n");
+        for (labels, value) in &state.traffic_rejections {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_traffic_rejections_total{{service=\"{}\",kind=\"{}\",scope=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.kind.as_str()),
+                escape_label_value(labels.scope.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_policy_rejections_total Gateway policy-governance rejections.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_policy_rejections_total counter\n");
+        for (labels, value) in &state.policy_rejections {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_policy_rejections_total{{service=\"{}\",kind=\"{}\",scope=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.kind.as_str()),
+                escape_label_value(labels.scope.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_policy_dry_run_total Gateway policy-governance dry-run observations.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_policy_dry_run_total counter\n");
+        for (labels, value) in &state.policy_dry_runs {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_policy_dry_run_total{{service=\"{}\",kind=\"{}\",scope=\"{}\",status=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.kind.as_str()),
+                escape_label_value(labels.scope.as_str()),
+                escape_label_value(labels.status.as_str()),
+                value
+            ));
+        }
+        output.push_str(
+            "# HELP sdkwork_api_gateway_resilience_events_total Gateway resilience state transitions and decisions.\n",
+        );
+        output.push_str("# TYPE sdkwork_api_gateway_resilience_events_total counter\n");
+        for (labels, value) in &state.resilience_events {
+            output.push_str(&format!(
+                "sdkwork_api_gateway_resilience_events_total{{service=\"{}\",service_id=\"{}\",event=\"{}\"}} {}\n",
+                escape_label_value(labels.service.as_str()),
+                escape_label_value(labels.service_id.as_str()),
+                escape_label_value(labels.event.as_str()),
+                value
+            ));
+        }
+        output
+    }
+}
+
+impl Default for HistogramValue {
+    fn default() -> Self {
+        Self {
+            buckets: [0; HTTP_REQUEST_DURATION_BUCKETS.len()],
+            sum_seconds: 0.0,
+            count: 0,
+        }
+    }
+}
+
+impl HistogramValue {
+    fn record(&mut self, duration_seconds: f64) {
+        for (index, bucket) in HTTP_REQUEST_DURATION_BUCKETS.iter().enumerate() {
+            if duration_seconds <= *bucket {
+                self.buckets[index] += 1;
+            }
+        }
+        self.sum_seconds += duration_seconds;
+        self.count += 1;
+    }
+}
+
+fn format_bucket(value: f64) -> String {
+    if value.fract() == 0.0 {
+        return format!("{value:.0}");
+    }
+    value.to_string()
+}
+
+fn escape_label_value(value: &str) -> String {
+    value
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+}
