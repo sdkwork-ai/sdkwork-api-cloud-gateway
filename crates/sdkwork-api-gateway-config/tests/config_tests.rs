@@ -1287,6 +1287,19 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             .is_some_and(|value| value == "cargo metadata --no-deps --format-version 1")),
         "component spec must verify gateway Cargo metadata instead of a separate gateway catalog"
     );
+    for required_command in [
+        "pnpm workflow:validate",
+        "pnpm workflow:matrix:server",
+        "pnpm package:server",
+        "pnpm package:server:validate",
+    ] {
+        assert!(
+            verification_commands.iter().any(|command| command
+                .as_str()
+                .is_some_and(|value| value == required_command)),
+            "component spec must declare release verification command {required_command}"
+        );
+    }
 
     let runtime_exports = spec["entrypoints"]
         .as_array()

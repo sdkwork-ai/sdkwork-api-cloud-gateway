@@ -981,7 +981,11 @@
       "cargo test -p sdkwork-api-gateway-config",
       "cargo test -p sdkwork-api-gateway",
       "cargo fmt --all -- --check",
-      "cargo test --workspace"
+      "cargo test --workspace",
+      "pnpm workflow:validate",
+      "pnpm workflow:matrix:server",
+      "pnpm package:server",
+      "pnpm package:server:validate"
     ]
   },
   "runtimeBehavior": {
