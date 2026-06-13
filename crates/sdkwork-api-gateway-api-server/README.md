@@ -27,8 +27,8 @@ deployment overrides must not be committed.
 ## SaaS/Private/Local Behavior
 
 The binary is the standard server startup path for local development, private deployments, and CI
-packaging. `pnpm dev` runs this crate with the development template, and `pnpm package:server`
-packages the release binary with safe config templates.
+packaging. `pnpm dev` runs this crate with the integrated single-port development template, and
+`pnpm package:server` packages the release binary with safe config templates.
 
 ## Security
 

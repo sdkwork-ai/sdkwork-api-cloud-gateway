@@ -18,9 +18,9 @@ fn default_config_declares_gateway_identity_and_appbase_dependency() {
         .any(|surface| surface.service_id == "sdkwork-appbase-app-api"
             && surface.api_prefix == "/app/v3/api"
             && surface.cargo_feature.as_deref() == Some("foundation-appbase")
-            && surface.cargo_dependency.as_deref() == Some("sdkwork_iam_http")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork_router_iam_app_api")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_iam_http::build_sdkwork_appbase_app_api_router")));
+                == Some("sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router")));
 }
 
 #[test]
@@ -499,8 +499,8 @@ fn sdkwork_manifest_drives_runtime_identity_bind_and_dependency_surfaces() {
               "runtimeMode": "split-or-embedded",
               "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
               "cargoFeature": "foundation-appbase",
-              "cargoDependency": "sdkwork_iam_http",
-              "executableExport": "sdkwork_iam_http::build_sdkwork_appbase_app_api_router"
+              "cargoDependency": "sdkwork_router_iam_app_api",
+              "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
             }
           ]
         }
@@ -521,7 +521,7 @@ fn sdkwork_manifest_drives_runtime_identity_bind_and_dependency_surfaces() {
     assert_eq!(surface.cargo_feature.as_deref(), Some("foundation-appbase"));
     assert_eq!(
         surface.cargo_dependency.as_deref(),
-        Some("sdkwork_iam_http")
+        Some("sdkwork_router_iam_app_api")
     );
 }
 
@@ -1465,7 +1465,10 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             .expect("runtime package declares dependencies");
         let cargo_dependency_entry = runtime_dependencies
             .iter()
-            .find(|dependency| dependency["name"].as_str() == Some(cargo_dependency))
+            .find(|dependency| {
+                dependency["name"].as_str() == Some(cargo_dependency)
+                    || dependency["rename"].as_str() == Some(cargo_dependency)
+            })
             .unwrap_or_else(|| {
                 panic!("runtime package dependency table includes {cargo_dependency}")
             });
@@ -1838,6 +1841,23 @@ fn package_dev_entrypoint_is_declared_in_component_spec() {
             .any(|entrypoint| entrypoint.as_str() == Some("package.json#scripts.dev")),
         "component spec must declare package.json#scripts.dev as the pnpm dev startup entrypoint"
     );
+}
+
+#[test]
+fn development_template_defaults_to_embedded_single_port_mode() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let path = root.join("configs/sdkwork-api-gateway.development.toml.example");
+    let config = GatewayRuntimeConfig::from_path(&path)
+        .unwrap_or_else(|error| panic!("development config should parse: {error}"));
+
+    assert_eq!(config.mode, GatewayMode::Embedded);
+    assert!(
+        config.upstreams.is_empty(),
+        "default development config should not require split upstream ports"
+    );
+    assert_eq!(config.server.bind, "127.0.0.1:3900");
+    assert_eq!(config.dependency_surfaces.len(), 1);
+    assert_eq!(config.dependency_surfaces[0].service_id, "sdkwork-appbase-app-api");
 }
 
 #[test]

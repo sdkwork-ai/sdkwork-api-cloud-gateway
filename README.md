@@ -1,7 +1,8 @@
 ﻿# SDKWork API Gateway
 
 SDKWork API Gateway is a Rust/Axum gateway application. It can run as an independent service or be
-embedded into another Rust service through public router builders.
+embedded into another Rust service through public router builders. The default development topology
+is single-port and integrated; split multi-upstream validation is internal-only.
 
 ## Architecture
 
@@ -54,7 +55,7 @@ Current foundation integrations:
 
 | Cargo feature | Cargo dependency | SDKWork service | Router export |
 | --- | --- | --- | --- |
-| `foundation-appbase` | `sdkwork_iam_http` | `sdkwork-appbase-app-api` | `sdkwork_iam_http::build_sdkwork_appbase_app_api_router` |
+| `foundation-appbase` | `sdkwork_router_iam_app_api` | `sdkwork-appbase-app-api` | `sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router` |
 
 Representative split upstream foundation surfaces. The complete machine-readable list is
 `sdkwork.app.config.json` plus `specs/component.spec.json`:
@@ -203,9 +204,10 @@ cargo test --workspace
 
 ## SDKWork Surface Rules
 
-The gateway does not reimplement appbase IAM routes. In split mode, appbase IAM routes are proxied to
-`sdkwork-appbase-app-api`. In embedded mode, callers must provide an executable Axum router, or use
-`build_embedded_sdkwork_appbase_app_api_router`.
+The gateway does not reimplement appbase IAM routes. The default development mode is embedded and
+auto-mounts the executable appbase IAM router through `foundation-appbase`, so normal local work
+uses one public gateway port. Split upstream proxying remains available for lower-level validation
+paths, but it is not the standard development workflow.
 
 For non-appbase dependency surfaces, the runtime generates dependency routes from
 `dependencySurfaces`: each configured `apiPrefix` is routed as `apiPrefix/{*path}`. When dependency
