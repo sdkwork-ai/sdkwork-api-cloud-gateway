@@ -1,4 +1,4 @@
-﻿[workspace]
+[workspace]
 resolver = "2"
 members = [
     "crates/sdkwork-api-gateway-config",
@@ -36,4 +36,31 @@ sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observa
 sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
 sdkwork-api-gateway = { path = "crates/sdkwork-api-gateway" }
 
-sdkwork_iam_http = { path = "../sdkwork-appbase/packages/native-rust/iam/sdkwork-iam-http-rust" }
+sdkwork_router_iam_app_api = { package = "sdkwork-router-iam-app-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-app-api" }
+
+sdkwork_router_course_app_api = { package = "sdkwork-router-course-app-api", path = "../sdkwork-course/crates/sdkwork-router-course-app-api" }
+sdkwork_router_course_backend_api = { package = "sdkwork-router-course-backend-api", path = "../sdkwork-course/crates/sdkwork-router-course-backend-api" }
+sdkwork_router_news_app_api = { package = "sdkwork-router-news-app-api", path = "../sdkwork-news/crates/sdkwork-router-news-app-api" }
+sdkwork_router_news_backend_api = { package = "sdkwork-router-news-backend-api", path = "../sdkwork-news/crates/sdkwork-router-news-backend-api" }
+sdkwork_router_news_open_api = { package = "sdkwork-router-news-open-api", path = "../sdkwork-news/crates/sdkwork-router-news-open-api" }
+sdkwork_router_image_app_api = { package = "sdkwork-router-image-app-api", path = "../sdkwork-image/crates/sdkwork-router-image-app-api" }
+sdkwork_router_image_backend_api = { package = "sdkwork-router-image-backend-api", path = "../sdkwork-image/crates/sdkwork-router-image-backend-api" }
+sdkwork_router_image_open_api = { package = "sdkwork-router-image-open-api", path = "../sdkwork-image/crates/sdkwork-router-image-open-api" }
+sdkwork_router_forum_app_api = { package = "sdkwork-router-forum-app-api", path = "../sdkwork-forum/crates/sdkwork-router-forum-app-api" }
+sdkwork_router_forum_backend_api = { package = "sdkwork-router-forum-backend-api", path = "../sdkwork-forum/crates/sdkwork-router-forum-backend-api" }
+sdkwork_router_forum_open_api = { package = "sdkwork-router-forum-open-api", path = "../sdkwork-forum/crates/sdkwork-router-forum-open-api" }
+sdkwork_router_music_app_api = { package = "sdkwork-routes-music-app-api", path = "../sdkwork-music/crates/sdkwork-routes-music-app-api" }
+sdkwork_router_music_backend_api = { package = "sdkwork-routes-music-backend-api", path = "../sdkwork-music/crates/sdkwork-routes-music-backend-api" }
+sdkwork_router_messaging_app_api = { package = "sdkwork-router-messaging-app-api", path = "../sdkwork-messaging/crates/sdkwork-router-messaging-app-api" }
+sdkwork_router_messaging_backend_api = { package = "sdkwork-router-messaging-backend-api", path = "../sdkwork-messaging/crates/sdkwork-router-messaging-backend-api" }
+sdkwork_router_community_app_api = { package = "sdkwork-community-http-rust", path = "../sdkwork-community/crates/sdkwork-community-http-rust" }
+sdkwork_router_cms_app_api = { package = "sdkwork-router-cms-app-api", path = "../sdkwork-cms/crates/sdkwork-router-cms-app-api" }
+sdkwork_router_cms_backend_api = { package = "sdkwork-router-cms-backend-api", path = "../sdkwork-cms/crates/sdkwork-router-cms-backend-api" }
+sdkwork_router_cms_open_api = { package = "sdkwork-router-cms-open-api", path = "../sdkwork-cms/crates/sdkwork-router-cms-open-api" }
+sdkwork_router_voice_app_api = { package = "sdkwork-router-voice-app-api", path = "../sdkwork-voice/crates/sdkwork-router-voice-app-api" }
+sdkwork_router_voice_backend_api = { package = "sdkwork-router-voice-backend-api", path = "../sdkwork-voice/crates/sdkwork-router-voice-backend-api" }
+sdkwork_router_aiot_app_api = { package = "sdkwork-aiot-http-api", path = "../sdkwork-aiot/crates/sdkwork-aiot-http-api" }
+
+sdkwork_router_catalog_app_api = { package = "sdkwork-router-catalog-app-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-app-api" }
+sdkwork_router_catalog_backend_api = { package = "sdkwork-router-catalog-backend-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-backend-api" }
+sdkwork_router_catalog_open_api = { package = "sdkwork-router-catalog-open-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-open-api" }

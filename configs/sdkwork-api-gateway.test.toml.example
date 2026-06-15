@@ -17,9 +17,9 @@ surface = "app"
 apiPrefix = "/app/v3/api"
 runtimeMode = "split-or-embedded"
 sameOriginAllowed = true
-executableExport = "sdkwork_iam_http::build_sdkwork_appbase_app_api_router"
+executableExport = "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
 cargoFeature = "foundation-appbase"
-cargoDependency = "sdkwork_iam_http"
+cargoDependency = "sdkwork_router_iam_app_api"
 coverage = "appbase-iam-routes"
 requiredBaseUrlKey = "SDKWORK_APPBASE_APP_API_BASE_URL"
 

@@ -540,7 +540,7 @@ fn application_manifest_declares_drive_and_notary_split_dependency_surfaces() {
     assert_eq!(drive.api_authority, "sdkwork-drive-app-api");
     assert_eq!(drive.surface, "app");
     assert_eq!(drive.api_prefix, "/app/v3/api/drive");
-    assert_eq!(drive.runtime_mode, DependencyRuntimeMode::Split);
+    assert_eq!(drive.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
     assert_eq!(
         drive.required_base_url_key.as_deref(),
         Some("SDKWORK_DRIVE_APP_API_BASE_URL")
@@ -559,7 +559,7 @@ fn application_manifest_declares_drive_and_notary_split_dependency_surfaces() {
     assert_eq!(notary.api_authority, "sdkwork-notary-app-api");
     assert_eq!(notary.surface, "app");
     assert_eq!(notary.api_prefix, "/app/v3/api/notary");
-    assert_eq!(notary.runtime_mode, DependencyRuntimeMode::Split);
+    assert_eq!(notary.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
     assert_eq!(
         notary.required_base_url_key.as_deref(),
         Some("SDKWORK_NOTARY_APP_API_BASE_URL")
@@ -624,7 +624,7 @@ fn application_manifest_declares_claw_router_foundation_split_dependency_surface
         assert_eq!(surface.sdk_family, sdk_family);
         assert_eq!(surface.api_authority, service_id);
         assert_eq!(surface.api_prefix, api_prefix);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Split);
+        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
         assert!(surface.executable_export.is_none());
         assert!(surface.cargo_feature.is_none());
@@ -646,15 +646,6 @@ fn application_manifest_declares_craw_chat_foundation_split_dependency_surfaces(
     let config = GatewayRuntimeConfig::from_application_root(root).expect("manifest parses");
 
     for (service_id, workspace, sdk_family, surface_kind, api_prefix, env_key, default_base_url) in [
-        (
-            "sdkwork-rtc-app-api",
-            "sdkwork-rtc",
-            "sdkwork-rtc-app-sdk",
-            "app",
-            "/app/v3/api/rtc",
-            "SDKWORK_RTC_APP_API_BASE_URL",
-            "http://127.0.0.1:18280",
-        ),
         (
             "sdkwork-rtc-backend-api",
             "sdkwork-rtc",
@@ -720,11 +711,8 @@ fn application_manifest_declares_craw_chat_foundation_split_dependency_surfaces(
         assert_eq!(surface.api_authority, service_id);
         assert_eq!(surface.surface, surface_kind);
         assert_eq!(surface.api_prefix, api_prefix);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Split);
+        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
-        assert!(surface.executable_export.is_none());
-        assert!(surface.cargo_feature.is_none());
-        assert!(surface.cargo_dependency.is_none());
 
         assert_eq!(
             config
@@ -882,16 +870,6 @@ fn application_manifest_declares_workspace_foundation_split_dependency_surfaces(
             "http://127.0.0.1:18782",
         ),
         (
-            "sdkwork-notes-app-api",
-            "sdkwork-notes",
-            "sdkwork-notes-app-sdk",
-            "sdkwork-notes-app-api",
-            "app",
-            "/app/v3/api/notes",
-            "SDKWORK_NOTES_APP_API_BASE_URL",
-            "http://127.0.0.1:18880",
-        ),
-        (
             "sdkwork-notes-backend-api",
             "sdkwork-notes",
             "sdkwork-notes-backend-sdk",
@@ -992,11 +970,8 @@ fn application_manifest_declares_workspace_foundation_split_dependency_surfaces(
         assert_eq!(surface.api_authority, api_authority);
         assert_eq!(surface.surface, surface_kind);
         assert_eq!(surface.api_prefix, api_prefix);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Split);
+        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
-        assert!(surface.executable_export.is_none());
-        assert!(surface.cargo_feature.is_none());
-        assert!(surface.cargo_dependency.is_none());
 
         assert_eq!(
             config
@@ -1223,11 +1198,8 @@ fn application_manifest_declares_materialized_content_foundation_split_dependenc
         assert_eq!(surface.sdk_family, sdk_family);
         assert_eq!(surface.api_authority, api_authority);
         assert_eq!(surface.surface, surface_kind);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Split);
+        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
-        assert!(surface.executable_export.is_none());
-        assert!(surface.cargo_feature.is_none());
-        assert!(surface.cargo_dependency.is_none());
 
         assert_eq!(
             config

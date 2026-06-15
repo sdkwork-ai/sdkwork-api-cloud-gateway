@@ -24,4 +24,4 @@ pub use runtime::{
     build_sdkwork_api_gateway_router_with_registry, GatewayRuntime,
 };
 #[cfg(feature = "foundation-appbase")]
-pub use sdkwork_iam_http::SdkworkAppbaseLocalIamRuntimeContext;
+pub use sdkwork_router_iam_app_api::SdkworkAppbaseLocalIamRuntimeContext;

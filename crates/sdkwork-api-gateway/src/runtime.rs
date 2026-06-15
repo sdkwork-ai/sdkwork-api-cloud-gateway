@@ -38,7 +38,7 @@ use sdkwork_api_gateway_observability::{
 };
 use sdkwork_api_gateway_registry::{GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget};
 #[cfg(feature = "foundation-appbase")]
-use sdkwork_iam_http::SdkworkAppbaseLocalIamRuntimeContext;
+use sdkwork_router_iam_app_api::SdkworkAppbaseLocalIamRuntimeContext;
 use serde_json::json;
 use tokio::{net::TcpStream, select};
 use tokio_tungstenite::{
@@ -271,14 +271,14 @@ pub fn build_sdkwork_api_gateway_router_with_embedded_appbase(
 
 #[cfg(feature = "foundation-appbase")]
 pub fn build_embedded_sdkwork_appbase_app_api_router() -> Router {
-    sdkwork_iam_http::build_sdkwork_appbase_app_api_router()
+    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router()
 }
 
 #[cfg(feature = "foundation-appbase")]
 pub fn build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(
     runtime_context: SdkworkAppbaseLocalIamRuntimeContext,
 ) -> Router {
-    sdkwork_iam_http::build_sdkwork_appbase_app_api_router_with_runtime_context(runtime_context)
+    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router_with_runtime_context(runtime_context)
 }
 
 async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {

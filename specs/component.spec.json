@@ -544,6 +544,167 @@
       "routePrecedence": "after fixed appbase backend IAM routes"
     },
     {
+      "surface": "app",
+      "prefix": "/im/v3/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "craw-chat-im-http",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/control",
+      "ownership": "dependency",
+      "dependencyServiceId": "craw-chat-backend-http",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/audit",
+      "ownership": "dependency",
+      "dependencyServiceId": "craw-chat-backend-http",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/ops",
+      "ownership": "dependency",
+      "dependencyServiceId": "craw-chat-backend-http",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-claw-gateway",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/catalog",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/listings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/publishers",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/releases",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/compliance",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/library",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/wishlist",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/downloadGrants",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/moderation",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/catalog",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/listings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/publishers",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/market",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/metrics",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/releases",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/catalog",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/listings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/automation",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api",
       "ownership": "gateway"
@@ -563,15 +724,15 @@
       "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appbase",
-      "cargoDependency": "sdkwork_iam_http",
-      "embeddedExecutableExport": "sdkwork_iam_http::build_sdkwork_appbase_app_api_router"
+      "cargoDependency": "sdkwork_router_iam_app_api",
+      "embeddedExecutableExport": "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
     },
     {
       "serviceId": "sdkwork-drive-app-api",
       "workspace": "sdkwork-drive",
       "apiAuthority": "sdkwork-drive-app-api",
       "sdkFamily": "sdkwork-drive-app-sdk",
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_DRIVE_APP_API_BASE_URL",
       "coverage": "drive-app-api-upstream-routes",
       "embeddedStatus": "blocked-until-dependency-router-uses-compatible-axum"
@@ -581,436 +742,93 @@
       "workspace": "sdkwork-notary",
       "apiAuthority": "sdkwork-notary-app-api",
       "sdkFamily": "sdkwork-notary-app-sdk",
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_NOTARY_APP_API_BASE_URL",
       "coverage": "notary-app-api-upstream-routes",
       "embeddedStatus": "blocked-until-dependency-router-uses-compatible-axum"
-    },
-    {
-      "serviceId": "sdkwork-rtc-app-api",
-      "workspace": "sdkwork-rtc",
-      "apiAuthority": "sdkwork-rtc-app-api",
-      "sdkFamily": "sdkwork-rtc-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_RTC_APP_API_BASE_URL",
-      "coverage": "rtc-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-rtc-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-rtc-backend-api",
-      "workspace": "sdkwork-rtc",
-      "apiAuthority": "sdkwork-rtc-backend-api",
-      "sdkFamily": "sdkwork-rtc-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_RTC_BACKEND_API_BASE_URL",
-      "coverage": "rtc-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-rtc-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-agent-app-api",
-      "workspace": "sdkwork-kernel",
-      "apiAuthority": "sdkwork-agent-app-api",
-      "sdkFamily": "sdkwork-agent-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_AGENT_APP_API_BASE_URL",
-      "coverage": "agent-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-agent-business-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-agent-backend-api",
-      "workspace": "sdkwork-kernel",
-      "apiAuthority": "sdkwork-agent-backend-api",
-      "sdkFamily": "sdkwork-agent-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_AGENT_BACKEND_API_BASE_URL",
-      "coverage": "agent-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-agent-business-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-agent-open-api",
-      "workspace": "sdkwork-kernel",
-      "apiAuthority": "sdkwork-agent-open-api",
-      "sdkFamily": "sdkwork-agent-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_AGENT_OPEN_API_BASE_URL",
-      "coverage": "agent-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-agent-business-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-aiot-app-api",
-      "workspace": "sdkwork-aiot",
-      "apiAuthority": "sdkwork-aiot-app-api",
-      "sdkFamily": "sdkwork-aiot-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_AIOT_APP_API_BASE_URL",
-      "coverage": "aiot-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-aiot-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-aiot-backend-api",
-      "workspace": "sdkwork-aiot",
-      "apiAuthority": "sdkwork-aiot-backend-api",
-      "sdkFamily": "sdkwork-aiot-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_AIOT_BACKEND_API_BASE_URL",
-      "coverage": "aiot-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-aiot-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-drive-backend-api",
-      "workspace": "sdkwork-drive",
-      "apiAuthority": "sdkwork-drive.backend",
-      "sdkFamily": "sdkwork-drive-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_DRIVE_BACKEND_API_BASE_URL",
-      "coverage": "drive-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-drive-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-drive-open-api",
-      "workspace": "sdkwork-drive",
-      "apiAuthority": "sdkwork-drive.open",
-      "sdkFamily": "sdkwork-drive-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_DRIVE_OPEN_API_BASE_URL",
-      "coverage": "drive-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-drive-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-drive-admin-storage-api",
-      "workspace": "sdkwork-drive",
-      "apiAuthority": "sdkwork-drive.admin.storage",
-      "sdkFamily": "sdkwork-drive-admin-storage-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL",
-      "coverage": "drive-admin-storage-api-upstream-routes",
-      "embeddedStatus": "split-only-until-drive-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-notary-backend-api",
-      "workspace": "sdkwork-notary",
-      "apiAuthority": "sdkwork-notary.backend",
-      "sdkFamily": "sdkwork-notary-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NOTARY_BACKEND_API_BASE_URL",
-      "coverage": "notary-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-notary-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-memory-app-api",
-      "workspace": "sdkwork-memory",
-      "apiAuthority": "sdkwork-memory.app",
-      "sdkFamily": "sdkwork-memory-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_MEMORY_APP_API_BASE_URL",
-      "coverage": "memory-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-memory-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-memory-backend-api",
-      "workspace": "sdkwork-memory",
-      "apiAuthority": "sdkwork-memory.backend",
-      "sdkFamily": "sdkwork-memory-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_MEMORY_BACKEND_API_BASE_URL",
-      "coverage": "memory-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-memory-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-memory-open-api",
-      "workspace": "sdkwork-memory",
-      "apiAuthority": "sdkwork-memory-open-api",
-      "sdkFamily": "sdkwork-memory-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_MEMORY_OPEN_API_BASE_URL",
-      "coverage": "memory-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-memory-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-knowledgebase-app-api",
-      "workspace": "sdkwork-knowledgebase",
-      "apiAuthority": "sdkwork-knowledgebase.app",
-      "sdkFamily": "sdkwork-knowledgebase-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL",
-      "coverage": "knowledgebase-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-knowledgebase-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-knowledgebase-backend-api",
-      "workspace": "sdkwork-knowledgebase",
-      "apiAuthority": "sdkwork-knowledgebase.backend",
-      "sdkFamily": "sdkwork-knowledgebase-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL",
-      "coverage": "knowledgebase-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-knowledgebase-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-knowledgebase-open-api",
-      "workspace": "sdkwork-knowledgebase",
-      "apiAuthority": "sdkwork-knowledgebase.open",
-      "sdkFamily": "sdkwork-knowledgebase-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
-      "coverage": "knowledgebase-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-knowledgebase-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-news-app-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news.app",
-      "sdkFamily": "sdkwork-news-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NEWS_APP_API_BASE_URL",
-      "coverage": "news-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-news-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-news-backend-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news.backend",
-      "sdkFamily": "sdkwork-news-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NEWS_BACKEND_API_BASE_URL",
-      "coverage": "news-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-news-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-news-open-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news.open",
-      "sdkFamily": "sdkwork-news-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NEWS_OPEN_API_BASE_URL",
-      "coverage": "news-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-news-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-notes-app-api",
-      "workspace": "sdkwork-notes",
-      "apiAuthority": "sdkwork-notes-app-api",
-      "sdkFamily": "sdkwork-notes-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NOTES_APP_API_BASE_URL",
-      "coverage": "notes-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-notes-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-notes-backend-api",
-      "workspace": "sdkwork-notes",
-      "apiAuthority": "sdkwork-notes-backend-api",
-      "sdkFamily": "sdkwork-notes-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NOTES_BACKEND_API_BASE_URL",
-      "coverage": "notes-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-notes-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-notes-open-api",
-      "workspace": "sdkwork-notes",
-      "apiAuthority": "sdkwork-notes-open-api",
-      "sdkFamily": "sdkwork-notes-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_NOTES_OPEN_API_BASE_URL",
-      "coverage": "notes-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-notes-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-music-app-api",
-      "workspace": "sdkwork-music",
-      "apiAuthority": "sdkwork-music-app-api",
-      "sdkFamily": "sdkwork-music-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_MUSIC_APP_API_BASE_URL",
-      "coverage": "music-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-music-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-music-backend-api",
-      "workspace": "sdkwork-music",
-      "apiAuthority": "sdkwork-music-backend-api",
-      "sdkFamily": "sdkwork-music-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_MUSIC_BACKEND_API_BASE_URL",
-      "coverage": "music-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-music-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-generations-app-api",
-      "workspace": "sdkwork-generations",
-      "apiAuthority": "sdkwork-generations-app-api",
-      "sdkFamily": "sdkwork-generations-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_GENERATIONS_APP_API_BASE_URL",
-      "coverage": "generations-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-generations-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-generations-backend-api",
-      "workspace": "sdkwork-generations",
-      "apiAuthority": "sdkwork-generations-backend-api",
-      "sdkFamily": "sdkwork-generations-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_GENERATIONS_BACKEND_API_BASE_URL",
-      "coverage": "generations-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-generations-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-community-app-api",
-      "workspace": "sdkwork-community",
-      "apiAuthority": "sdkwork-community.app",
-      "sdkFamily": "sdkwork-community-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMUNITY_APP_API_BASE_URL",
-      "coverage": "community-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-community-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-community-backend-api",
-      "workspace": "sdkwork-community",
-      "apiAuthority": "sdkwork-community.backend",
-      "sdkFamily": "sdkwork-community-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMUNITY_BACKEND_API_BASE_URL",
-      "coverage": "community-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-community-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-community-open-api",
-      "workspace": "sdkwork-community",
-      "apiAuthority": "sdkwork-community.open",
-      "sdkFamily": "sdkwork-community-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMUNITY_OPEN_API_BASE_URL",
-      "coverage": "community-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-community-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-search-app-api",
-      "workspace": "sdkwork-search",
-      "apiAuthority": "sdkwork-search-app-api",
-      "sdkFamily": "sdkwork-search-app-sdk",
-      "apiPrefixes": ["/app/v3/api/search"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_SEARCH_APP_API_BASE_URL",
-      "coverage": "search-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-search-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-search-backend-api",
-      "workspace": "sdkwork-search",
-      "apiAuthority": "sdkwork-search-backend-api",
-      "sdkFamily": "sdkwork-search-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/search"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_SEARCH_BACKEND_API_BASE_URL",
-      "coverage": "search-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-search-exposes-a-complete-compatible-public-router-builder"
     },
     {
       "serviceId": "sdkwork-voice-app-api",
       "workspace": "sdkwork-voice",
       "apiAuthority": "sdkwork-voice-app-api",
       "sdkFamily": "sdkwork-voice-app-sdk",
-      "apiPrefixes": ["/app/v3/api/voice"],
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_VOICE_APP_API_BASE_URL",
-      "coverage": "voice-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-voice-exposes-a-complete-compatible-public-router-builder"
+      "cargoFeature": "foundation-voice",
+      "cargoDependency": "sdkwork_router_voice_app_api",
+      "embeddedExecutableExport": "sdkwork_router_voice_app_api::app_routes",
+      "coverage": "voice-app-api-upstream-routes"
     },
     {
       "serviceId": "sdkwork-voice-backend-api",
       "workspace": "sdkwork-voice",
       "apiAuthority": "sdkwork-voice-backend-api",
       "sdkFamily": "sdkwork-voice-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/voice"],
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_VOICE_BACKEND_API_BASE_URL",
-      "coverage": "voice-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-voice-exposes-a-complete-compatible-public-router-builder"
+      "cargoFeature": "foundation-voice",
+      "cargoDependency": "sdkwork_router_voice_backend_api",
+      "embeddedExecutableExport": "sdkwork_router_voice_backend_api::backend_routes",
+      "coverage": "voice-backend-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-image-app-api",
-      "workspace": "sdkwork-image",
-      "apiAuthority": "sdkwork-image-app-api",
-      "sdkFamily": "sdkwork-image-app-sdk",
-      "apiPrefixes": ["/app/v3/api/image"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_IMAGE_APP_API_BASE_URL",
-      "coverage": "image-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-image-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-rtc-backend-api",
+      "workspace": "sdkwork-rtc",
+      "apiAuthority": "sdkwork-rtc-backend-api",
+      "sdkFamily": "sdkwork-rtc-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_RTC_BACKEND_API_BASE_URL",
+      "coverage": "rtc-backend-api-upstream-routes",
+      "embeddedStatus": "split-only-until-rtc-exposes-a-complete-compatible-public-router-builder"
     },
     {
-      "serviceId": "sdkwork-image-backend-api",
-      "workspace": "sdkwork-image",
-      "apiAuthority": "sdkwork-image-backend-api",
-      "sdkFamily": "sdkwork-image-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/image"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_IMAGE_BACKEND_API_BASE_URL",
-      "coverage": "image-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-image-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-claw-gateway",
+      "workspace": "sdkwork-claw-router",
+      "apiAuthority": "sdkwork-claw-gateway",
+      "sdkFamily": "sdkwork-clawrouter-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_CLAW_GATEWAY_BASE_URL",
+      "coverage": "claw-gateway-open-api-upstream-routes",
+      "embeddedStatus": "split-only-until-claw-router-exposes-a-complete-compatible-public-router-builder"
     },
     {
-      "serviceId": "sdkwork-image-open-api",
-      "workspace": "sdkwork-image",
-      "apiAuthority": "sdkwork-image-open-api",
-      "sdkFamily": "sdkwork-image-sdk",
-      "apiPrefixes": ["/image/v3/api"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_IMAGE_OPEN_API_BASE_URL",
-      "coverage": "image-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-image-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-appstore-app-api",
+      "workspace": "sdkwork-appstore",
+      "apiAuthority": "sdkwork-appstore-app-api",
+      "sdkFamily": "sdkwork-appstore-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "apiPrefixes": ["/app/v3/api/catalog", "/app/v3/api/listings", "/app/v3/api/publishers", "/app/v3/api/releases", "/app/v3/api/compliance", "/app/v3/api/library", "/app/v3/api/wishlist", "/app/v3/api/downloadGrants"],
+      "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
+      "cargoFeature": "foundation-appstore",
+      "cargoDependency": "sdkwork_router_catalog_app_api",
+      "embeddedExecutableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "coverage": "appstore-app-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-comments-app-api",
-      "workspace": "sdkwork-comments",
-      "apiAuthority": "sdkwork-comments-app-api",
-      "sdkFamily": "sdkwork-comments-app-sdk",
-      "apiPrefixes": ["/app/v3/api/comments", "/app/v3/api/engagement"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_APP_API_BASE_URL",
-      "coverage": "comments-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-comments-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-appstore-backend-api",
+      "workspace": "sdkwork-appstore",
+      "apiAuthority": "sdkwork-appstore-backend-api",
+      "sdkFamily": "sdkwork-appstore-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "apiPrefixes": ["/backend/v3/api/moderation", "/backend/v3/api/catalog", "/backend/v3/api/listings", "/backend/v3/api/publishers", "/backend/v3/api/market", "/backend/v3/api/metrics"],
+      "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
+      "cargoFeature": "foundation-appstore",
+      "cargoDependency": "sdkwork_router_catalog_backend_api",
+      "embeddedExecutableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "coverage": "appstore-backend-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-comments-backend-api",
-      "workspace": "sdkwork-comments",
-      "apiAuthority": "sdkwork-comments-backend-api",
-      "sdkFamily": "sdkwork-comments-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/comments", "/backend/v3/api/engagement"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-      "coverage": "comments-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-comments-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-course-app-api",
-      "workspace": "sdkwork-course",
-      "apiAuthority": "sdkwork-course-app-api",
-      "sdkFamily": "sdkwork-course-app-sdk",
-      "apiPrefixes": ["/app/v3/api/courses", "/app/v3/api/course_applications"],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COURSE_APP_API_BASE_URL",
-      "coverage": "course-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-course-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-course-backend-api",
-      "workspace": "sdkwork-course",
-      "apiAuthority": "sdkwork-course-backend-api",
-      "sdkFamily": "sdkwork-course-backend-sdk",
-      "apiPrefixes": [
-        "/backend/v3/api/courses",
-        "/backend/v3/api/course_applications",
-        "/backend/v3/api/course_lessons",
-        "/backend/v3/api/course_sections"
-      ],
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COURSE_BACKEND_API_BASE_URL",
-      "coverage": "course-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-course-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-appstore-open-api",
+      "workspace": "sdkwork-appstore",
+      "apiAuthority": "sdkwork-appstore-open-api",
+      "sdkFamily": "sdkwork-appstore-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "apiPrefixes": ["/store/v3/api"],
+      "requiredBaseUrlKey": "SDKWORK_APPSTORE_OPEN_API_BASE_URL",
+      "cargoFeature": "foundation-appstore",
+      "cargoDependency": "sdkwork_router_catalog_open_api",
+      "embeddedExecutableExport": "sdkwork_router_catalog_open_api::route_definitions",
+      "coverage": "appstore-open-api-upstream-routes"
     },
     {
       "serviceId": "sdkwork-messaging-app-api",
@@ -1018,7 +836,7 @@
       "apiAuthority": "sdkwork-messaging-app-api",
       "sdkFamily": "sdkwork-messaging-app-sdk",
       "apiPrefixes": ["/app/v3/api/messaging"],
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_MESSAGING_APP_API_BASE_URL",
       "coverage": "messaging-app-api-upstream-routes",
       "embeddedStatus": "split-only-until-messaging-exposes-a-complete-compatible-public-router-builder"
@@ -1029,7 +847,7 @@
       "apiAuthority": "sdkwork-messaging-backend-api",
       "sdkFamily": "sdkwork-messaging-backend-sdk",
       "apiPrefixes": ["/backend/v3/api/messaging"],
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_MESSAGING_BACKEND_API_BASE_URL",
       "coverage": "messaging-backend-api-upstream-routes",
       "embeddedStatus": "split-only-until-messaging-exposes-a-complete-compatible-public-router-builder"
@@ -1039,30 +857,64 @@
       "workspace": "sdkwork-appbase",
       "apiAuthority": "sdkwork-appbase-backend-api",
       "sdkFamily": "sdkwork-appbase-backend-sdk",
-      "runtimeModes": ["split"],
+      "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
       "coverage": "appbase-backend-iam-upstream-routes",
       "embeddedStatus": "split-only-until-production-backend-router-is-approved-for-gateway-embedding"
     },
     {
-      "serviceId": "sdkwork-commerce-app-api",
-      "workspace": "sdkwork-commerce",
-      "apiAuthority": "sdkwork-commerce-app-api",
-      "sdkFamily": "sdkwork-commerce-app-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMERCE_APP_API_BASE_URL",
-      "coverage": "commerce-app-api-upstream-routes",
-      "embeddedStatus": "split-only-until-commerce-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-course-app-api",
+      "workspace": "sdkwork-course",
+      "apiAuthority": "sdkwork-course-app-api",
+      "sdkFamily": "sdkwork-course-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_COURSE_APP_API_BASE_URL",
+      "cargoFeature": "foundation-course",
+      "cargoDependency": "sdkwork_router_course_app_api",
+      "embeddedExecutableExport": "sdkwork_router_course_app_api::build_router",
+      "coverage": "course-app-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-commerce-backend-api",
-      "workspace": "sdkwork-commerce",
-      "apiAuthority": "sdkwork-commerce-backend-api",
-      "sdkFamily": "sdkwork-commerce-backend-sdk",
-      "runtimeModes": ["split"],
-      "requiredBaseUrlKey": "SDKWORK_COMMERCE_BACKEND_API_BASE_URL",
-      "coverage": "commerce-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-commerce-exposes-a-complete-compatible-public-router-builder"
+      "serviceId": "sdkwork-course-backend-api",
+      "workspace": "sdkwork-course",
+      "apiAuthority": "sdkwork-course-backend-api",
+      "sdkFamily": "sdkwork-course-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_COURSE_BACKEND_API_BASE_URL",
+      "cargoFeature": "foundation-course",
+      "cargoDependency": "sdkwork_router_course_backend_api",
+      "embeddedExecutableExport": "sdkwork_router_course_backend_api::build_router",
+      "coverage": "course-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "craw-chat-im-http",
+      "workspace": "craw-chat",
+      "apiAuthority": "craw-chat-im-http",
+      "sdkFamily": "sdkwork-im-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "CRAW_CHAT_IM_HTTP_BASE_URL",
+      "coverage": "craw-chat-im-api-upstream-routes",
+      "embeddedStatus": "split-only-until-craw-chat-exposes-a-complete-compatible-public-router-builder"
+    },
+    {
+      "serviceId": "craw-chat-backend-http",
+      "workspace": "craw-chat",
+      "apiAuthority": "craw-chat-backend-http",
+      "sdkFamily": "sdkwork-im-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+      "coverage": "craw-chat-backend-api-upstream-routes",
+      "embeddedStatus": "split-only-until-craw-chat-exposes-a-complete-compatible-public-router-builder"
+    },
+    {
+      "serviceId": "sdkwork-claw-gateway",
+      "workspace": "sdkwork-claw-router",
+      "apiAuthority": "sdkwork-claw-gateway",
+      "sdkFamily": "sdkwork-clawrouter-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_CLAW_GATEWAY_BASE_URL",
+      "coverage": "claw-gateway-open-api-upstream-routes",
+      "embeddedStatus": "split-only-until-claw-router-exposes-a-complete-compatible-public-router-builder"
     }
   ],
   "routeRegistry": {
@@ -1071,8 +923,11 @@
       "sdkwork-appbase-app-api is restricted to appbase IAM dependency route patterns",
       "sdkwork-appbase-backend-api is restricted to backend IAM dependency route patterns",
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
-      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, and other more specific dependency routes",
-      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, and other more specific dependency routes",
+      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, CrawChat, Appstore, and other more specific dependency routes",
+      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, CrawChat, Appstore, and other more specific dependency routes",
+      "craw-chat-im-http routes /im/v3/api/* paths for IM presence, realtime, chat, social, streams, calls, and media APIs",
+      "craw-chat-backend-http routes /backend/v3/api/control/*, /backend/v3/api/audit/*, and /backend/v3/api/ops/* paths for control plane, audit, and operations APIs",
+      "sdkwork-claw-gateway routes /v1/* paths for OpenAI-compatible API passthrough",
       "non-appbase dependency surfaces route by apiPrefix/{*path}",
       "workspace foundation dependency surfaces are added only when existing SDK assembly plus materialized OpenAPI paths or normalized route manifest evidence provides a stable route prefix; empty or generic-only SDK assemblies are not gateway startup dependencies",
       "one dependency SDK family may declare multiple apiPrefixes when its materialized path set spans multiple stable prefixes; all prefixes share the same serviceId and requiredBaseUrlKey",
