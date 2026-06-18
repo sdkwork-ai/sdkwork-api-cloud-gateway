@@ -20,6 +20,7 @@ use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
 use sdkwork_api_gateway::{
     build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
+    build_embedded_sdkwork_appbase_backend_api_router,
     build_sdkwork_api_gateway_api_server_router, build_sdkwork_api_gateway_router,
     build_sdkwork_api_gateway_router_with_embedded_routers, GatewayRuntime,
     SdkworkAppbaseLocalIamRuntimeContext,
@@ -3166,6 +3167,7 @@ async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
     let config = embedded_config_without_upstreams();
 
     let app = build_sdkwork_api_gateway_api_server_router(config)
+        .await
         .expect("api-server router mounts appbase");
     let response = app
         .oneshot(
@@ -3184,14 +3186,66 @@ async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
 }
 
 #[tokio::test]
+async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
+    let backend_router = build_embedded_sdkwork_appbase_backend_api_router()
+        .await
+        .expect("backend router builds");
+
+    let mut config = embedded_config_without_upstreams();
+    config
+        .dependency_surfaces
+        .push(sdkwork_api_gateway_config::DependencyApiSurfaceConfig {
+            service_id: sdkwork_api_gateway_config::APPBASE_BACKEND_API_SERVICE_ID.to_owned(),
+            workspace: "sdkwork-appbase".to_owned(),
+            sdk_family: "sdkwork-appbase-backend-sdk".to_owned(),
+            api_authority: "sdkwork-appbase-backend-api".to_owned(),
+            surface: "backend".to_owned(),
+            api_prefix: sdkwork_api_gateway_config::APPBASE_BACKEND_API_PREFIX.to_owned(),
+            runtime_mode: sdkwork_api_gateway_config::DependencyRuntimeMode::Embedded,
+            same_origin_allowed: true,
+            executable_export: Some(
+                "sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router".to_owned(),
+            ),
+            cargo_feature: Some("foundation-appbase".to_owned()),
+            cargo_dependency: Some("sdkwork-router-iam-backend-api".to_owned()),
+            coverage: "appbase-iam-backend-routes".to_owned(),
+            required_base_url_key: None,
+        });
+
+    let app = build_sdkwork_api_gateway_router_with_embedded_routers(
+        config,
+        [(
+            sdkwork_api_gateway_config::APPBASE_BACKEND_API_SERVICE_ID,
+            backend_router,
+        )],
+    )
+    .expect("embedded backend router satisfies dependency");
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method("GET")
+                .uri("/backend/v3/api/iam/users")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_ne!(response.status(), 404);
+    assert_ne!(response.status(), 502);
+}
+
+#[tokio::test]
 async fn embedded_appbase_runtime_context_builder_exports_executable_router() {
     let context = SdkworkAppbaseLocalIamRuntimeContext::new(
         "sdkwork-api-gateway",
         "tenant_gateway",
         "org_gateway",
     );
-    let appbase_router =
-        build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(context);
+    let appbase_router = build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(context)
+        .await
+        .expect("runtime context router satisfies dependency");
 
     let config = embedded_config_without_upstreams();
     let app = build_sdkwork_api_gateway_router_with_embedded_routers(

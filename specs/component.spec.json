@@ -547,28 +547,28 @@
       "surface": "app",
       "prefix": "/im/v3/api",
       "ownership": "dependency",
-      "dependencyServiceId": "craw-chat-im-http",
+      "dependencyServiceId": "sdkwork-im-im-http",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/control",
       "ownership": "dependency",
-      "dependencyServiceId": "craw-chat-backend-http",
+      "dependencyServiceId": "sdkwork-im-backend-http",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/audit",
       "ownership": "dependency",
-      "dependencyServiceId": "craw-chat-backend-http",
+      "dependencyServiceId": "sdkwork-im-backend-http",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/ops",
       "ownership": "dependency",
-      "dependencyServiceId": "craw-chat-backend-http",
+      "dependencyServiceId": "sdkwork-im-backend-http",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -887,24 +887,24 @@
       "coverage": "course-backend-api-upstream-routes"
     },
     {
-      "serviceId": "craw-chat-im-http",
-      "workspace": "craw-chat",
-      "apiAuthority": "craw-chat-im-http",
+      "serviceId": "sdkwork-im-im-http",
+      "workspace": "sdkwork-im",
+      "apiAuthority": "sdkwork-im-im-http",
       "sdkFamily": "sdkwork-im-app-sdk",
       "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "CRAW_CHAT_IM_HTTP_BASE_URL",
-      "coverage": "craw-chat-im-api-upstream-routes",
-      "embeddedStatus": "split-only-until-craw-chat-exposes-a-complete-compatible-public-router-builder"
+      "coverage": "sdkwork-im-im-api-upstream-routes",
+      "embeddedStatus": "split-only-until-sdkwork-im-exposes-a-complete-compatible-public-router-builder"
     },
     {
-      "serviceId": "craw-chat-backend-http",
-      "workspace": "craw-chat",
-      "apiAuthority": "craw-chat-backend-http",
+      "serviceId": "sdkwork-im-backend-http",
+      "workspace": "sdkwork-im",
+      "apiAuthority": "sdkwork-im-backend-http",
       "sdkFamily": "sdkwork-im-backend-sdk",
       "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
-      "coverage": "craw-chat-backend-api-upstream-routes",
-      "embeddedStatus": "split-only-until-craw-chat-exposes-a-complete-compatible-public-router-builder"
+      "coverage": "sdkwork-im-backend-api-upstream-routes",
+      "embeddedStatus": "split-only-until-sdkwork-im-exposes-a-complete-compatible-public-router-builder"
     },
     {
       "serviceId": "sdkwork-claw-gateway",
@@ -923,10 +923,10 @@
       "sdkwork-appbase-app-api is restricted to appbase IAM dependency route patterns",
       "sdkwork-appbase-backend-api is restricted to backend IAM dependency route patterns",
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
-      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, CrawChat, Appstore, and other more specific dependency routes",
-      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, CrawChat, Appstore, and other more specific dependency routes",
-      "craw-chat-im-http routes /im/v3/api/* paths for IM presence, realtime, chat, social, streams, calls, and media APIs",
-      "craw-chat-backend-http routes /backend/v3/api/control/*, /backend/v3/api/audit/*, and /backend/v3/api/ops/* paths for control plane, audit, and operations APIs",
+      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
+      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
+      "sdkwork-im-im-http routes /im/v3/api/* paths for IM presence, realtime, chat, social, streams, calls, and media APIs",
+      "sdkwork-im-backend-http routes /backend/v3/api/control/*, /backend/v3/api/audit/*, and /backend/v3/api/ops/* paths for control plane, audit, and operations APIs",
       "sdkwork-claw-gateway routes /v1/* paths for OpenAI-compatible API passthrough",
       "non-appbase dependency surfaces route by apiPrefix/{*path}",
       "workspace foundation dependency surfaces are added only when existing SDK assembly plus materialized OpenAPI paths or normalized route manifest evidence provides a stable route prefix; empty or generic-only SDK assemblies are not gateway startup dependencies",

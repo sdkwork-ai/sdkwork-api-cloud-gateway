@@ -8,4 +8,6 @@ pub enum GatewayRuntimeError {
     MissingEmbeddedRouter { service_id: String },
     #[error("failed to build HTTP client: {0}")]
     HttpClient(#[from] reqwest::Error),
+    #[error("failed to build embedded router for `{service_id}`: {message}")]
+    EmbeddedRouterBuild { service_id: String, message: String },
 }

@@ -37,6 +37,7 @@ sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
 sdkwork-api-gateway = { path = "crates/sdkwork-api-gateway" }
 
 sdkwork_router_iam_app_api = { package = "sdkwork-router-iam-app-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-app-api" }
+sdkwork_router_iam_backend_api = { package = "sdkwork-router-iam-backend-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-backend-api" }
 
 sdkwork_router_course_app_api = { package = "sdkwork-router-course-app-api", path = "../sdkwork-course/crates/sdkwork-router-course-app-api" }
 sdkwork_router_course_backend_api = { package = "sdkwork-router-course-backend-api", path = "../sdkwork-course/crates/sdkwork-router-course-backend-api" }

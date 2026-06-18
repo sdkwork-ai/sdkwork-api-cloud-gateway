@@ -6,7 +6,10 @@ license.workspace = true
 
 [features]
 default = ["foundation-appbase"]
-foundation-appbase = ["dep:sdkwork_router_iam_app_api"]
+foundation-appbase = [
+    "dep:sdkwork_router_iam_app_api",
+    "dep:sdkwork_router_iam_backend_api",
+]
 foundation-course = ["dep:sdkwork_router_course_app_api", "dep:sdkwork_router_course_backend_api"]
 foundation-news = ["dep:sdkwork_router_news_app_api", "dep:sdkwork_router_news_backend_api", "dep:sdkwork_router_news_open_api"]
 foundation-image = ["dep:sdkwork_router_image_app_api", "dep:sdkwork_router_image_backend_api", "dep:sdkwork_router_image_open_api"]
@@ -37,6 +40,7 @@ sdkwork-api-gateway-config.workspace = true
 sdkwork-api-gateway-observability.workspace = true
 sdkwork-api-gateway-registry.workspace = true
 sdkwork_router_iam_app_api = { workspace = true, optional = true }
+sdkwork_router_iam_backend_api = { workspace = true, optional = true }
 sdkwork_router_course_app_api = { workspace = true, optional = true }
 sdkwork_router_course_backend_api = { workspace = true, optional = true }
 sdkwork_router_news_app_api = { workspace = true, optional = true }

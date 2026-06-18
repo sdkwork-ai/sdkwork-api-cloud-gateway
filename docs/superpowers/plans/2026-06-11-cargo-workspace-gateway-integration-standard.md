@@ -1,4 +1,4 @@
-﻿# Cargo Workspace Gateway Integration Standard Implementation Plan
+# Cargo Workspace Gateway Integration Standard Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -102,4 +102,4 @@ Expected: relevant standards and gateway files contain the new policy.
 
 - [ ] **Step 4: Summarize result**
 
-Report modified files, verification evidence, and any residual migration work for `sdkwork-claw-router` and `craw-chat`.
+Report modified files, verification evidence, and any residual migration work for `sdkwork-claw-router` and `sdkwork-im`.

@@ -760,25 +760,25 @@
       "surface": "app",
       "prefix": "/im/v3/api",
       "owner": "dependency",
-      "serviceId": "craw-chat-im-http"
+      "serviceId": "sdkwork-im-im-http"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/control",
       "owner": "dependency",
-      "serviceId": "craw-chat-backend-http"
+      "serviceId": "sdkwork-im-backend-http"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/audit",
       "owner": "dependency",
-      "serviceId": "craw-chat-backend-http"
+      "serviceId": "sdkwork-im-backend-http"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/ops",
       "owner": "dependency",
-      "serviceId": "craw-chat-backend-http"
+      "serviceId": "sdkwork-im-backend-http"
     },
     {
       "surface": "open",
@@ -1634,48 +1634,48 @@
       "coverage": "commerce-backend-api-upstream-routes"
     },
     {
-      "serviceId": "craw-chat-im-http",
-      "workspace": "craw-chat",
+      "serviceId": "sdkwork-im-im-http",
+      "workspace": "sdkwork-im",
       "sdkFamily": "sdkwork-im-app-sdk",
-      "apiAuthority": "craw-chat-im-http",
+      "apiAuthority": "sdkwork-im-im-http",
       "surface": "app",
       "apiPrefix": "/im/v3/api",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "CRAW_CHAT_IM_HTTP_BASE_URL",
-      "coverage": "craw-chat-im-api-upstream-routes"
+      "coverage": "sdkwork-im-im-api-upstream-routes"
     },
     {
-      "serviceId": "craw-chat-backend-http",
-      "workspace": "craw-chat",
+      "serviceId": "sdkwork-im-backend-http",
+      "workspace": "sdkwork-im",
       "sdkFamily": "sdkwork-im-backend-sdk",
-      "apiAuthority": "craw-chat-backend-http",
+      "apiAuthority": "sdkwork-im-backend-http",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/control",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
-      "coverage": "craw-chat-backend-api-upstream-routes"
+      "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {
-      "serviceId": "craw-chat-backend-http",
-      "workspace": "craw-chat",
+      "serviceId": "sdkwork-im-backend-http",
+      "workspace": "sdkwork-im",
       "sdkFamily": "sdkwork-im-backend-sdk",
-      "apiAuthority": "craw-chat-backend-http",
+      "apiAuthority": "sdkwork-im-backend-http",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/audit",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
-      "coverage": "craw-chat-backend-api-upstream-routes"
+      "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {
-      "serviceId": "craw-chat-backend-http",
-      "workspace": "craw-chat",
+      "serviceId": "sdkwork-im-backend-http",
+      "workspace": "sdkwork-im",
       "sdkFamily": "sdkwork-im-backend-sdk",
-      "apiAuthority": "craw-chat-backend-http",
+      "apiAuthority": "sdkwork-im-backend-http",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/ops",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
-      "coverage": "craw-chat-backend-api-upstream-routes"
+      "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {
       "serviceId": "sdkwork-claw-gateway",

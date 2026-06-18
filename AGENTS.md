@@ -118,7 +118,7 @@ temporary bind address and stop the process after the check.
   handlers in this product.
 - Split mode requires upstream dependency base URLs at startup. Embedded mode requires an executable
   embedded router for each required dependency surface when no upstream is configured.
-- `sdkwork-claw-router`, `craw-chat`, and other applications should integrate foundation APIs through
+- `sdkwork-claw-router`, `sdkwork-im`, and other applications should integrate foundation APIs through
   `sdkwork-api-gateway` instead of directly depending on those APIs themselves.
 - Do not hand-edit generated SDK output. Fix the source contract, generator input, approved facade,
   or Cargo workspace dependency and then regenerate through the approved toolchain.

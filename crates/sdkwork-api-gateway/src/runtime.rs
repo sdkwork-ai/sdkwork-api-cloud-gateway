@@ -209,18 +209,20 @@ pub fn build_sdkwork_api_gateway_router(
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub fn build_sdkwork_api_gateway_api_server_router(
+pub async fn build_sdkwork_api_gateway_api_server_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     match config.mode {
         GatewayMode::Split => build_sdkwork_api_gateway_router(config),
-        GatewayMode::Embedded => build_sdkwork_api_gateway_router_with_embedded_routers(
-            config,
-            [(
-                APPBASE_APP_API_SERVICE_ID,
-                build_embedded_sdkwork_appbase_app_api_router(),
-            )],
-        ),
+        GatewayMode::Embedded => {
+            build_sdkwork_api_gateway_router_with_embedded_routers(
+                config,
+                [(
+                    APPBASE_APP_API_SERVICE_ID,
+                    build_embedded_sdkwork_appbase_app_api_router().await?,
+                )],
+            )
+        }
     }
 }
 
@@ -256,7 +258,7 @@ where
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub fn build_sdkwork_api_gateway_router_with_embedded_appbase(
+pub async fn build_sdkwork_api_gateway_router_with_embedded_appbase(
     mut config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     config.mode = GatewayMode::Embedded;
@@ -264,21 +266,42 @@ pub fn build_sdkwork_api_gateway_router_with_embedded_appbase(
         config,
         [(
             APPBASE_APP_API_SERVICE_ID,
-            build_embedded_sdkwork_appbase_app_api_router(),
+            build_embedded_sdkwork_appbase_app_api_router().await?,
         )],
     )
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub fn build_embedded_sdkwork_appbase_app_api_router() -> Router {
-    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router()
+pub async fn build_embedded_sdkwork_appbase_backend_api_router(
+) -> Result<Router, GatewayRuntimeError> {
+    Ok(
+        sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router_from_env().await,
+    )
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub fn build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(
+pub async fn build_embedded_sdkwork_appbase_app_api_router(
+) -> Result<Router, GatewayRuntimeError> {
+    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router()
+        .await
+        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+            service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
+            message,
+        })
+}
+
+#[cfg(feature = "foundation-appbase")]
+pub async fn build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(
     runtime_context: SdkworkAppbaseLocalIamRuntimeContext,
-) -> Router {
-    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router_with_runtime_context(runtime_context)
+) -> Result<Router, GatewayRuntimeError> {
+    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router_with_runtime_context(
+        runtime_context,
+    )
+    .await
+    .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+        service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
+        message,
+    })
 }
 
 async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {

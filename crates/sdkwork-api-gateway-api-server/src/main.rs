@@ -18,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
         .bind
         .parse()
         .with_context(|| format!("invalid bind address `{}`", config.server.bind))?;
-    let app = build_sdkwork_api_gateway_api_server_router(config)?;
+    let app = build_sdkwork_api_gateway_api_server_router(config).await?;
     let listener = TcpListener::bind(bind).await?;
     let local_addr = listener.local_addr()?;
 
