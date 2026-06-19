@@ -1844,6 +1844,7 @@ dependencies = [
  "sdkwork-iam-context-service",
  "sdkwork-web-axum",
  "sdkwork-web-core",
+ "serde",
  "serde_json",
  "sha2",
  "sqlx",
@@ -2020,9 +2021,13 @@ name = "sdkwork-router-iam-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "chrono",
+ "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-contract",
  "sdkwork-web-core",
+ "serde_json",
+ "sqlx",
 ]
 
 [[package]]
