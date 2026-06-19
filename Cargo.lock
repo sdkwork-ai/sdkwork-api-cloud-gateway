@@ -1840,6 +1840,7 @@ dependencies = [
  "chrono",
  "hmac",
  "rand_core 0.6.4",
+ "reqwest",
  "sdkwork-database-sqlx",
  "sdkwork-iam-context-service",
  "sdkwork-web-axum",
@@ -1848,6 +1849,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "sqlx",
+ "uuid",
 ]
 
 [[package]]
