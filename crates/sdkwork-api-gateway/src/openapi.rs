@@ -29,6 +29,10 @@ pub(crate) async fn openapi_document(
             "/healthz": {
                 "get": {
                     "operationId": "getGatewayHealth",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
                     "responses": {
                         "200": { "description": "Gateway health" }
                     }
@@ -37,6 +41,10 @@ pub(crate) async fn openapi_document(
             "/readyz": {
                 "get": {
                     "operationId": "getGatewayReadiness",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
                     "responses": {
                         "200": { "description": "Gateway readiness" }
                     }
@@ -45,8 +53,24 @@ pub(crate) async fn openapi_document(
             "/openapi/index.json": {
                 "get": {
                     "operationId": "listGatewayApiDependencies",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
                     "responses": {
                         "200": { "description": "Gateway route and dependency index" }
+                    }
+                }
+            },
+            "/openapi.json": {
+                "get": {
+                    "operationId": "getGatewayOpenApiDocument",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
+                    "responses": {
+                        "200": { "description": "Gateway OpenAPI document" }
                     }
                 }
             }

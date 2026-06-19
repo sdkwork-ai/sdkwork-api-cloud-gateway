@@ -14,6 +14,7 @@
     "generated": false,
     "manifests": [
       "Cargo.toml",
+      "Cargo.lock",
       "package.json",
       "sdkwork.app.config.json",
       "sdkwork.workflow.json",
@@ -70,6 +71,31 @@
       "file": "TEST_SPEC.md",
       "path": "../sdkwork-specs/TEST_SPEC.md",
       "purpose": "Executable verification requirements for gateway surfaces and release packaging."
+    },
+    {
+      "file": "WEB_FRAMEWORK_SPEC.md",
+      "path": "../sdkwork-specs/WEB_FRAMEWORK_SPEC.md",
+      "purpose": "Mandatory sdkwork-web-framework integration for gateway proxy and embedded HTTP surfaces."
+    },
+    {
+      "file": "SECURITY_SPEC.md",
+      "path": "../sdkwork-specs/SECURITY_SPEC.md",
+      "purpose": "Gateway security headers, WAF, rate limits, CORS, and credential forwarding rules."
+    },
+    {
+      "file": "OBSERVABILITY_SPEC.md",
+      "path": "../sdkwork-specs/OBSERVABILITY_SPEC.md",
+      "purpose": "Access, audit, metrics, trace propagation, and diagnostics redaction policy."
+    },
+    {
+      "file": "ENVIRONMENT_SPEC.md",
+      "path": "../sdkwork-specs/ENVIRONMENT_SPEC.md",
+      "purpose": "Dependency upstream base URL env keys and gateway runtime env bindings."
+    },
+    {
+      "file": "APP_MANIFEST_SPEC.md",
+      "path": "../sdkwork-specs/APP_MANIFEST_SPEC.md",
+      "purpose": "sdkwork.app.config.json identity, env bindings, and API surface authority."
     }
   ],
   "contracts": {
@@ -82,6 +108,11 @@
       "sdkwork_api_gateway::build_sdkwork_api_gateway_router",
       "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_registry",
       "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_embedded_routers",
+      "sdkwork_api_gateway::web_framework::finalize_gateway_router",
+      "sdkwork_api_gateway::web_framework::finalize_gateway_router_async",
+      "sdkwork_api_gateway::web_framework::split_proxy_call_chain",
+      "sdkwork_api_gateway::web_framework::web_framework_enabled",
+      "sdkwork_api_gateway::web_framework::parse_web_framework_toggle",
       "sdkwork_api_gateway_api_server::load_gateway_config",
       "package.json#scripts.dev",
       "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway"
@@ -115,7 +146,18 @@
     "authority": "cargo-workspace",
     "catalogPolicy": "no-dedicated-gateway-catalog",
     "cargoWorkspaceRoot": "Cargo.toml",
-    "runtimeFeatureAuthority": "crates/sdkwork-api-gateway/Cargo.toml"
+    "runtimeFeatureAuthority": "crates/sdkwork-api-gateway/Cargo.toml",
+    "webFramework": {
+      "workspace": "sdkwork-web-framework",
+      "cargoDependencies": [
+        "sdkwork-web-contract",
+        "sdkwork-web-core",
+        "sdkwork-web-axum"
+      ],
+      "optionalCargoDependencies": [
+        "sdkwork-iam-web-adapter"
+      ]
+    }
   },
   "entrypoints": [
     {
@@ -134,7 +176,12 @@
         "build_sdkwork_api_gateway_router_with_embedded_appbase",
         "build_embedded_sdkwork_appbase_app_api_router",
         "build_embedded_sdkwork_appbase_app_api_router_with_runtime_context",
-        "SdkworkAppbaseLocalIamRuntimeContext"
+        "SdkworkAppbaseLocalIamRuntimeContext",
+        "web_framework_enabled",
+        "parse_web_framework_toggle",
+        "finalize_gateway_router",
+        "finalize_gateway_router_async",
+        "split_proxy_call_chain"
       ]
     },
     {
@@ -943,7 +990,7 @@
       "cargo metadata --no-deps --format-version 1",
       "cargo test -p sdkwork-api-gateway-config",
       "cargo test -p sdkwork-api-gateway",
-      "cargo fmt --all -- --check",
+      "cargo fmt -- --check",
       "cargo test --workspace",
       "pnpm workflow:validate",
       "pnpm workflow:matrix:server",
@@ -957,7 +1004,8 @@
     "problemContentType": "application/problem+json",
     "cors": {
       "configField": "cors",
-      "strictOriginMode": "cors.allowAnyOrigin=false with cors.allowedOrigins"
+      "strictOriginMode": "cors.allowAnyOrigin=false with cors.allowedOrigins",
+      "splitModeAuthority": "sdkwork-web-framework SecurityPolicy.cors when SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED=true"
     },
     "configValidation": {
       "phase": "startup-after-toml-manifest-env-merge",
@@ -1095,13 +1143,19 @@
     "security": {
       "secureHeaders": {
         "enabledBy": "security.secureHeadersEnabled",
+        "splitModeBaselineAuthority": "sdkwork-web-framework HeaderSecurity stage",
+        "gatewayExtendedHeaders": [
+          "Content-Security-Policy",
+          "X-Permitted-Cross-Domain-Policies"
+        ],
         "headers": [
           "X-Content-Type-Options",
           "X-Frame-Options",
           "Referrer-Policy",
           "Permissions-Policy",
           "Content-Security-Policy",
-          "Strict-Transport-Security"
+          "Strict-Transport-Security",
+          "X-Permitted-Cross-Domain-Policies"
         ]
       },
       "hostAllowlist": {
@@ -1261,7 +1315,27 @@
       "X-Forwarded-Proto",
       "X-Request-Id"
     ],
-    "generatedRequestIdPrefix": "sdkwork-api-gateway-",
+    "generatedRequestIdFormat": "uuid-v4",
+    "webFramework": {
+      "enabledByDefault": true,
+      "toggleEnv": "SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED",
+      "splitMode": {
+        "pipeline": "sdkwork-web-framework-standard-plus-unknown-surface-bypass",
+        "interceptorCount": 19,
+        "dependencyAuthPolicy": "defer-to-upstream-via-public-path-prefixes",
+        "unknownSurfacePolicy": "public-to-reach-gateway-fallback",
+        "corsPreflight": "gateway-options-layer-with-framework-cors-policy"
+      },
+      "embeddedMode": {
+        "outerRouter": "request-identity-only",
+        "dependencyRouters": "must-not-double-wrap-web-framework"
+      },
+      "disabledMode": {
+        "outerRouter": "request-identity-only",
+        "corsAuthority": "tower-http CorsLayer",
+        "secureHeadersAuthority": "gateway security middleware"
+      }
+    },
     "upstreamTimeoutBehavior": {
       "configField": "upstreams[].timeoutMs",
       "timeoutStatus": 504,

@@ -141,6 +141,7 @@ Environment overrides are then applied:
 - `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD`
 - `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS`
 - `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS`
+- `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED`
 - dependency base URL keys such as `SDKWORK_APPBASE_APP_API_BASE_URL`,
   `SDKWORK_DRIVE_APP_API_BASE_URL`, `SDKWORK_NOTARY_APP_API_BASE_URL`,
   `SDKWORK_APPBASE_BACKEND_API_BASE_URL`, `SDKWORK_COMMERCE_APP_API_BASE_URL`, and
@@ -198,9 +199,12 @@ pnpm workflow:matrix:server
 ## Test
 
 ```powershell
-cargo fmt --all -- --check
+cargo fmt -- --check
 cargo test --workspace
 ```
+
+Workspace-scoped rustfmt avoids `--all` traversal of optional foundation path dependencies into
+sibling application workspaces that sit outside this repository's Cargo workspace authority.
 
 ## SDKWork Surface Rules
 
@@ -218,9 +222,10 @@ dependency upstream with bidirectional message bridging. Close frames preserve t
 reason.
 
 HTTP proxy requests add `X-Forwarded-Host` and `X-Forwarded-Proto` before forwarding upstream.
-When an inbound request has no `X-Request-Id`, the gateway generates a `sdkwork-api-gateway-*`
-request id, forwards it to the dependency upstream, and returns it on proxied HTTP responses.
-Proxy error responses also include the request id when one is available.
+Split mode runs the `sdkwork-web-framework` request-identity stage and assigns a server-generated
+UUID v4 `X-Request-Id` on every request. The gateway forwards that value to dependency upstreams and
+returns it on proxied HTTP responses and problem details. Client-supplied request ids are not
+preserved in split mode because framework identity assignment is authoritative.
 
 Request bodies are bounded by `request.maxBodyBytes` and return `413` with the
 `request_body_too_large` problem title when the configured limit is exceeded. Matching
@@ -234,6 +239,23 @@ problem title.
 Unmatched or failed gateway routes return RFC 7807-style problem responses with
 `application/problem+json`.
 
+## Web Framework Integration
+
+Split mode mounts the standard `sdkwork-web-framework` interceptor pipeline before gateway proxy
+dispatch. Dependency API prefixes are treated as public at the gateway boundary so credential
+resolution and authentication remain upstream responsibilities. Unclassified paths are also treated
+as public so hidden diagnostics and route-not-found handlers can return gateway-owned problem
+responses instead of framework `401` rejections.
+
+Embedded mode applies request identity only on the outer gateway router. Embedded dependency routers
+already mount their own framework layers and must not be double-wrapped during gateway merge.
+
+Toggle the outer framework pipeline with `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by
+default). When disabled, split mode falls back to the legacy Tower `CorsLayer` and gateway security
+middleware for CORS and secure response headers while still assigning UUID `x-request-id` on the outer
+router. Router builders `finalize_gateway_router`, `finalize_gateway_router_async`, and
+`split_proxy_call_chain` are exported from `sdkwork_api_gateway::web_framework`.
+
 Each upstream can set `timeoutMs`/`timeout_ms` through the typed runtime config. Timed out upstream
 requests return `504` with the `upstream_timeout` problem title. `request.timeoutMs` is the
 gateway-level budget around the proxied dependency request and can fire before a longer per-upstream
@@ -244,7 +266,9 @@ upstreams, and dependency surfaces. When `readiness.checkUpstreams` is enabled, 
 are checked with `upstreams[].readinessPath` and failures return `503` with `status: "degraded"`.
 
 CORS is configured through `[cors]`. `allowAnyOrigin = true` allows any origin; strict mode uses
-`allowAnyOrigin = false` with an explicit `allowedOrigins` list.
+`allowAnyOrigin = false` with an explicit `allowedOrigins` list. In split mode with the web framework
+enabled, CORS enforcement and response headers are owned by `sdkwork-web-framework`
+`SecurityPolicy.cors` rather than a duplicate Tower `CorsLayer`.
 
 ## Commercial Gateway Controls
 
@@ -288,7 +312,10 @@ Policy method and body-limit rejections are covered with `category = "policy"`.
 
 Security controls are configured through `[security]`. `secureHeadersEnabled` adds baseline response
 headers such as `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
-`Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. `allowedHosts`
+`Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. In split mode with
+the web framework enabled, baseline headers are applied by the framework `HeaderSecurity` stage and
+gateway-owned extensions such as `Content-Security-Policy` and
+`X-Permitted-Cross-Domain-Policies` remain gateway responsibilities. `allowedHosts`
 enforces a host allowlist and returns `421` with `host_not_allowed` when a request host is rejected.
 `maxHeaderBytes` and `maxHeaderCount` reject oversized request headers with `431` and the
 `request_headers_too_large` problem title.

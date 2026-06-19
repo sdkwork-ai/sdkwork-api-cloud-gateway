@@ -35,7 +35,7 @@
       {
         "name": "Verify Rust gateway workspace",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\ncargo fmt --all -- --check\ncargo test --workspace"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\ncargo fmt -- --check\ncargo test --workspace"
       }
     ],
     "package": [
@@ -69,13 +69,19 @@
   },
   "targets": [
     {
-      "id": "linux-x64-server-tar-gz",
+      "id": "linux-x64-standalone-server-tar-gz",
       "profile": "server",
       "platform": "linux",
       "architecture": "x64",
-      "formats": ["tar.gz"],
+      "formats": [
+        "tar.gz"
+      ],
       "runner": "ubuntu-24.04",
-      "outputGlobs": ["dist/server/sdkwork-api-gateway-*-linux-x64-server.tar.gz"]
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "server",
+      "outputGlobs": [
+        "dist/server/sdkwork-api-gateway-*-linux-x64-server.tar.gz"
+      ]
     }
   ],
   "security": {

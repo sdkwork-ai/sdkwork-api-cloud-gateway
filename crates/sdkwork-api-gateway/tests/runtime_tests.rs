@@ -19,11 +19,11 @@ use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
 use sdkwork_api_gateway::{
+    build_embedded_sdkwork_appbase_app_api_router,
     build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
-    build_embedded_sdkwork_appbase_backend_api_router,
-    build_sdkwork_api_gateway_api_server_router, build_sdkwork_api_gateway_router,
-    build_sdkwork_api_gateway_router_with_embedded_routers, GatewayRuntime,
-    SdkworkAppbaseLocalIamRuntimeContext,
+    build_embedded_sdkwork_appbase_backend_api_router, build_sdkwork_api_gateway_api_server_router,
+    build_sdkwork_api_gateway_router, build_sdkwork_api_gateway_router_with_embedded_routers,
+    GatewayRuntime, SdkworkAppbaseLocalIamRuntimeContext,
 };
 use sdkwork_api_gateway_config::{
     DependencyApiSurfaceConfig, DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig,
@@ -72,6 +72,10 @@ async fn request_id_echo(headers: axum::http::HeaderMap) -> String {
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default()
         .to_string()
+}
+
+fn is_framework_request_id(value: &str) -> bool {
+    sdkwork_web_core::is_canonical_uuid(value)
 }
 
 async fn traceparent_echo(headers: axum::http::HeaderMap) -> String {
@@ -240,20 +244,6 @@ async fn spawn_foundation_echo_upstream(api_prefix: &str) -> String {
     format!("http://{address}")
 }
 
-async fn spawn_foundation_route_echo_upstream(route_path: &str) -> String {
-    let router = Router::new().route(route_path, post(dependency_echo));
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("bind foundation route test upstream");
-    let address = listener.local_addr().expect("test upstream local address");
-    tokio::spawn(async move {
-        axum::serve(listener, router)
-            .await
-            .expect("test foundation route upstream server");
-    });
-    format!("http://{address}")
-}
-
 async fn spawn_foundation_multi_route_echo_upstream(route_paths: &[&str]) -> String {
     let mut router = Router::new();
     for route_path in route_paths {
@@ -287,130 +277,193 @@ async fn spawn_websocket_echo_upstream() -> String {
 
 async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     let mut env = HashMap::new();
-    
+
     let appbase_app = spawn_appbase_echo_upstream().await;
     env.insert("SDKWORK_APPBASE_APP_API_BASE_URL".to_string(), appbase_app);
-    
+
     let appbase_backend = spawn_foundation_echo_upstream("/backend/v3/api/iam").await;
-    env.insert("SDKWORK_APPBASE_BACKEND_API_BASE_URL".to_string(), appbase_backend);
-    
+    env.insert(
+        "SDKWORK_APPBASE_BACKEND_API_BASE_URL".to_string(),
+        appbase_backend,
+    );
+
     let drive_app = spawn_foundation_echo_upstream("/app/v3/api/drive").await;
     env.insert("SDKWORK_DRIVE_APP_API_BASE_URL".to_string(), drive_app);
-    
+
     let drive_backend = spawn_foundation_echo_upstream("/backend/v3/api/drive").await;
-    env.insert("SDKWORK_DRIVE_BACKEND_API_BASE_URL".to_string(), drive_backend);
-    
+    env.insert(
+        "SDKWORK_DRIVE_BACKEND_API_BASE_URL".to_string(),
+        drive_backend,
+    );
+
     let drive_open = spawn_foundation_echo_upstream("/open/v3/api/drive").await;
     env.insert("SDKWORK_DRIVE_OPEN_API_BASE_URL".to_string(), drive_open);
-    
+
     let drive_admin = spawn_foundation_echo_upstream("/admin/v3/api/drive").await;
-    env.insert("SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL".to_string(), drive_admin);
-    
+    env.insert(
+        "SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL".to_string(),
+        drive_admin,
+    );
+
     let notary_app = spawn_foundation_echo_upstream("/app/v3/api/notary").await;
     env.insert("SDKWORK_NOTARY_APP_API_BASE_URL".to_string(), notary_app);
-    
+
     let notary_backend = spawn_foundation_echo_upstream("/backend/v3/api/notary").await;
-    env.insert("SDKWORK_NOTARY_BACKEND_API_BASE_URL".to_string(), notary_backend);
-    
+    env.insert(
+        "SDKWORK_NOTARY_BACKEND_API_BASE_URL".to_string(),
+        notary_backend,
+    );
+
     let rtc_app = spawn_foundation_echo_upstream("/app/v3/api/rtc").await;
     env.insert("SDKWORK_RTC_APP_API_BASE_URL".to_string(), rtc_app);
-    
+
     let rtc_backend = spawn_foundation_echo_upstream("/backend/v3/api/rtc").await;
     env.insert("SDKWORK_RTC_BACKEND_API_BASE_URL".to_string(), rtc_backend);
-    
+
     let agent_app = spawn_foundation_echo_upstream("/app/v3/api/ai").await;
     env.insert("SDKWORK_AGENT_APP_API_BASE_URL".to_string(), agent_app);
-    
+
     let agent_backend = spawn_foundation_echo_upstream("/backend/v3/api/ai").await;
-    env.insert("SDKWORK_AGENT_BACKEND_API_BASE_URL".to_string(), agent_backend);
-    
+    env.insert(
+        "SDKWORK_AGENT_BACKEND_API_BASE_URL".to_string(),
+        agent_backend,
+    );
+
     let agent_open = spawn_foundation_echo_upstream("/agent/v3/api").await;
     env.insert("SDKWORK_AGENT_OPEN_API_BASE_URL".to_string(), agent_open);
-    
+
     let aiot_app = spawn_foundation_echo_upstream("/app/v3/api/iot").await;
     env.insert("SDKWORK_AIOT_APP_API_BASE_URL".to_string(), aiot_app);
-    
+
     let aiot_backend = spawn_foundation_echo_upstream("/backend/v3/api/iot").await;
-    env.insert("SDKWORK_AIOT_BACKEND_API_BASE_URL".to_string(), aiot_backend);
-    
+    env.insert(
+        "SDKWORK_AIOT_BACKEND_API_BASE_URL".to_string(),
+        aiot_backend,
+    );
+
     let memory_app = spawn_foundation_echo_upstream("/app/v3/api/memory").await;
     env.insert("SDKWORK_MEMORY_APP_API_BASE_URL".to_string(), memory_app);
-    
+
     let memory_backend = spawn_foundation_echo_upstream("/backend/v3/api/memory").await;
-    env.insert("SDKWORK_MEMORY_BACKEND_API_BASE_URL".to_string(), memory_backend);
-    
+    env.insert(
+        "SDKWORK_MEMORY_BACKEND_API_BASE_URL".to_string(),
+        memory_backend,
+    );
+
     let memory_open = spawn_foundation_echo_upstream("/mem/v3/api/memory").await;
     env.insert("SDKWORK_MEMORY_OPEN_API_BASE_URL".to_string(), memory_open);
-    
+
     let knowledgebase_app = spawn_foundation_echo_upstream("/app/v3/api/knowledge").await;
-    env.insert("SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL".to_string(), knowledgebase_app);
-    
+    env.insert(
+        "SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL".to_string(),
+        knowledgebase_app,
+    );
+
     let knowledgebase_backend = spawn_foundation_echo_upstream("/backend/v3/api/knowledge").await;
-    env.insert("SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL".to_string(), knowledgebase_backend);
-    
+    env.insert(
+        "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL".to_string(),
+        knowledgebase_backend,
+    );
+
     let knowledgebase_open = spawn_foundation_echo_upstream("/knowledge/v3/api").await;
-    env.insert("SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL".to_string(), knowledgebase_open);
-    
+    env.insert(
+        "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL".to_string(),
+        knowledgebase_open,
+    );
+
     let news_app = spawn_foundation_echo_upstream("/app/v3/api/news").await;
     env.insert("SDKWORK_NEWS_APP_API_BASE_URL".to_string(), news_app);
-    
+
     let news_backend = spawn_foundation_echo_upstream("/backend/v3/api/news").await;
-    env.insert("SDKWORK_NEWS_BACKEND_API_BASE_URL".to_string(), news_backend);
-    
+    env.insert(
+        "SDKWORK_NEWS_BACKEND_API_BASE_URL".to_string(),
+        news_backend,
+    );
+
     let news_open = spawn_foundation_echo_upstream("/open/v3/api/news").await;
     env.insert("SDKWORK_NEWS_OPEN_API_BASE_URL".to_string(), news_open);
-    
+
     let notes_app = spawn_foundation_echo_upstream("/app/v3/api/notes").await;
     env.insert("SDKWORK_NOTES_APP_API_BASE_URL".to_string(), notes_app);
-    
+
     let notes_backend = spawn_foundation_echo_upstream("/backend/v3/api/notes").await;
-    env.insert("SDKWORK_NOTES_BACKEND_API_BASE_URL".to_string(), notes_backend);
-    
+    env.insert(
+        "SDKWORK_NOTES_BACKEND_API_BASE_URL".to_string(),
+        notes_backend,
+    );
+
     let notes_open = spawn_foundation_echo_upstream("/notes/v3/api").await;
     env.insert("SDKWORK_NOTES_OPEN_API_BASE_URL".to_string(), notes_open);
-    
+
     let music_app = spawn_foundation_echo_upstream("/app/v3/api/music").await;
     env.insert("SDKWORK_MUSIC_APP_API_BASE_URL".to_string(), music_app);
-    
+
     let music_backend = spawn_foundation_echo_upstream("/backend/v3/api/music").await;
-    env.insert("SDKWORK_MUSIC_BACKEND_API_BASE_URL".to_string(), music_backend);
-    
+    env.insert(
+        "SDKWORK_MUSIC_BACKEND_API_BASE_URL".to_string(),
+        music_backend,
+    );
+
     let generations_app = spawn_foundation_echo_upstream("/app/v3/api/generations").await;
-    env.insert("SDKWORK_GENERATIONS_APP_API_BASE_URL".to_string(), generations_app);
-    
+    env.insert(
+        "SDKWORK_GENERATIONS_APP_API_BASE_URL".to_string(),
+        generations_app,
+    );
+
     let generations_backend = spawn_foundation_echo_upstream("/backend/v3/api/generations").await;
-    env.insert("SDKWORK_GENERATIONS_BACKEND_API_BASE_URL".to_string(), generations_backend);
-    
+    env.insert(
+        "SDKWORK_GENERATIONS_BACKEND_API_BASE_URL".to_string(),
+        generations_backend,
+    );
+
     let community_app = spawn_foundation_echo_upstream("/app/v3/api/community").await;
-    env.insert("SDKWORK_COMMUNITY_APP_API_BASE_URL".to_string(), community_app);
-    
+    env.insert(
+        "SDKWORK_COMMUNITY_APP_API_BASE_URL".to_string(),
+        community_app,
+    );
+
     let community_backend = spawn_foundation_echo_upstream("/backend/v3/api/community").await;
-    env.insert("SDKWORK_COMMUNITY_BACKEND_API_BASE_URL".to_string(), community_backend);
-    
+    env.insert(
+        "SDKWORK_COMMUNITY_BACKEND_API_BASE_URL".to_string(),
+        community_backend,
+    );
+
     let community_open = spawn_foundation_echo_upstream("/community/v3/api").await;
-    env.insert("SDKWORK_COMMUNITY_OPEN_API_BASE_URL".to_string(), community_open);
-    
+    env.insert(
+        "SDKWORK_COMMUNITY_OPEN_API_BASE_URL".to_string(),
+        community_open,
+    );
+
     let search_app = spawn_foundation_echo_upstream("/app/v3/api/search").await;
     env.insert("SDKWORK_SEARCH_APP_API_BASE_URL".to_string(), search_app);
-    
+
     let search_backend = spawn_foundation_echo_upstream("/backend/v3/api/search").await;
-    env.insert("SDKWORK_SEARCH_BACKEND_API_BASE_URL".to_string(), search_backend);
-    
+    env.insert(
+        "SDKWORK_SEARCH_BACKEND_API_BASE_URL".to_string(),
+        search_backend,
+    );
+
     let voice_app = spawn_foundation_echo_upstream("/app/v3/api/voice").await;
     env.insert("SDKWORK_VOICE_APP_API_BASE_URL".to_string(), voice_app);
-    
+
     let voice_backend = spawn_foundation_echo_upstream("/backend/v3/api/voice").await;
-    env.insert("SDKWORK_VOICE_BACKEND_API_BASE_URL".to_string(), voice_backend);
-    
+    env.insert(
+        "SDKWORK_VOICE_BACKEND_API_BASE_URL".to_string(),
+        voice_backend,
+    );
+
     let image_app = spawn_foundation_echo_upstream("/app/v3/api/image").await;
     env.insert("SDKWORK_IMAGE_APP_API_BASE_URL".to_string(), image_app);
-    
+
     let image_backend = spawn_foundation_echo_upstream("/backend/v3/api/image").await;
-    env.insert("SDKWORK_IMAGE_BACKEND_API_BASE_URL".to_string(), image_backend);
-    
+    env.insert(
+        "SDKWORK_IMAGE_BACKEND_API_BASE_URL".to_string(),
+        image_backend,
+    );
+
     let image_open = spawn_foundation_echo_upstream("/image/v3/api").await;
     env.insert("SDKWORK_IMAGE_OPEN_API_BASE_URL".to_string(), image_open);
-    
+
     let comments_app = spawn_foundation_multi_route_echo_upstream(&[
         "/app/v3/api/comments/probe",
         "/app/v3/api/comments/{*rest}",
@@ -418,11 +471,17 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         "/app/v3/api/engagement/{*rest}",
     ])
     .await;
-    env.insert("SDKWORK_COMMENTS_APP_API_BASE_URL".to_string(), comments_app);
-    
+    env.insert(
+        "SDKWORK_COMMENTS_APP_API_BASE_URL".to_string(),
+        comments_app,
+    );
+
     let comments_backend = spawn_foundation_echo_upstream("/backend/v3/api/comments").await;
-    env.insert("SDKWORK_COMMENTS_BACKEND_API_BASE_URL".to_string(), comments_backend);
-    
+    env.insert(
+        "SDKWORK_COMMENTS_BACKEND_API_BASE_URL".to_string(),
+        comments_backend,
+    );
+
     let course_app = spawn_foundation_multi_route_echo_upstream(&[
         "/app/v3/api/courses/probe",
         "/app/v3/api/courses/{*rest}",
@@ -431,7 +490,7 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     ])
     .await;
     env.insert("SDKWORK_COURSE_APP_API_BASE_URL".to_string(), course_app);
-    
+
     let course_backend = spawn_foundation_multi_route_echo_upstream(&[
         "/backend/v3/api/courses/probe",
         "/backend/v3/api/courses/{*rest}",
@@ -443,47 +502,68 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         "/backend/v3/api/course_sections/{*rest}",
     ])
     .await;
-    env.insert("SDKWORK_COURSE_BACKEND_API_BASE_URL".to_string(), course_backend);
-    
+    env.insert(
+        "SDKWORK_COURSE_BACKEND_API_BASE_URL".to_string(),
+        course_backend,
+    );
+
     let messaging_app = spawn_foundation_echo_upstream("/app/v3/api/messaging").await;
-    env.insert("SDKWORK_MESSAGING_APP_API_BASE_URL".to_string(), messaging_app);
-    
+    env.insert(
+        "SDKWORK_MESSAGING_APP_API_BASE_URL".to_string(),
+        messaging_app,
+    );
+
     let messaging_backend = spawn_foundation_echo_upstream("/backend/v3/api/messaging").await;
-    env.insert("SDKWORK_MESSAGING_BACKEND_API_BASE_URL".to_string(), messaging_backend);
-    
+    env.insert(
+        "SDKWORK_MESSAGING_BACKEND_API_BASE_URL".to_string(),
+        messaging_backend,
+    );
+
     let commerce_app = spawn_foundation_echo_upstream("/app/v3/api").await;
-    env.insert("SDKWORK_COMMERCE_APP_API_BASE_URL".to_string(), commerce_app);
-    
+    env.insert(
+        "SDKWORK_COMMERCE_APP_API_BASE_URL".to_string(),
+        commerce_app,
+    );
+
     let commerce_backend = spawn_foundation_echo_upstream("/backend/v3/api").await;
-    env.insert("SDKWORK_COMMERCE_BACKEND_API_BASE_URL".to_string(), commerce_backend);
-    
+    env.insert(
+        "SDKWORK_COMMERCE_BACKEND_API_BASE_URL".to_string(),
+        commerce_backend,
+    );
+
     let cms_app = spawn_foundation_echo_upstream("/app/v3/api/cms").await;
     env.insert("SDKWORK_CMS_APP_API_BASE_URL".to_string(), cms_app);
-    
+
     let cms_backend = spawn_foundation_echo_upstream("/backend/v3/api/cms").await;
     env.insert("SDKWORK_CMS_BACKEND_API_BASE_URL".to_string(), cms_backend);
-    
+
     let cms_open = spawn_foundation_echo_upstream("/cms/v3/api").await;
     env.insert("SDKWORK_CMS_OPEN_API_BASE_URL".to_string(), cms_open);
-    
+
     let forum_app = spawn_foundation_echo_upstream("/app/v3/api/forum").await;
     env.insert("SDKWORK_FORUM_APP_API_BASE_URL".to_string(), forum_app);
-    
+
     let forum_backend = spawn_foundation_echo_upstream("/backend/v3/api/forum").await;
-    env.insert("SDKWORK_FORUM_BACKEND_API_BASE_URL".to_string(), forum_backend);
-    
+    env.insert(
+        "SDKWORK_FORUM_BACKEND_API_BASE_URL".to_string(),
+        forum_backend,
+    );
+
     let forum_open = spawn_foundation_echo_upstream("/forum/v3/api").await;
     env.insert("SDKWORK_FORUM_OPEN_API_BASE_URL".to_string(), forum_open);
-    
+
     let craw_chat_im = spawn_foundation_echo_upstream("/im/v3/api").await;
     env.insert("CRAW_CHAT_IM_HTTP_BASE_URL".to_string(), craw_chat_im);
-    
+
     let craw_chat_backend = spawn_foundation_echo_upstream("/backend/v3/api/control").await;
-    env.insert("CRAW_CHAT_BACKEND_HTTP_BASE_URL".to_string(), craw_chat_backend);
-    
+    env.insert(
+        "CRAW_CHAT_BACKEND_HTTP_BASE_URL".to_string(),
+        craw_chat_backend,
+    );
+
     let claw_gateway = spawn_foundation_echo_upstream("/v1").await;
     env.insert("SDKWORK_CLAW_GATEWAY_BASE_URL".to_string(), claw_gateway);
-    
+
     let appstore_app = spawn_foundation_multi_route_echo_upstream(&[
         "/app/v3/api/catalog/probe",
         "/app/v3/api/catalog/{*rest}",
@@ -503,8 +583,11 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         "/app/v3/api/downloadGrants/{*rest}",
     ])
     .await;
-    env.insert("SDKWORK_APPSTORE_APP_API_BASE_URL".to_string(), appstore_app);
-    
+    env.insert(
+        "SDKWORK_APPSTORE_APP_API_BASE_URL".to_string(),
+        appstore_app,
+    );
+
     let appstore_backend = spawn_foundation_multi_route_echo_upstream(&[
         "/backend/v3/api/moderation/probe",
         "/backend/v3/api/moderation/{*rest}",
@@ -520,8 +603,11 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         "/backend/v3/api/metrics/{*rest}",
     ])
     .await;
-    env.insert("SDKWORK_APPSTORE_BACKEND_API_BASE_URL".to_string(), appstore_backend);
-    
+    env.insert(
+        "SDKWORK_APPSTORE_BACKEND_API_BASE_URL".to_string(),
+        appstore_backend,
+    );
+
     let appstore_open = spawn_foundation_multi_route_echo_upstream(&[
         "/store/v3/api/releases/probe",
         "/store/v3/api/releases/{*rest}",
@@ -533,8 +619,11 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         "/store/v3/api/automation/{*rest}",
     ])
     .await;
-    env.insert("SDKWORK_APPSTORE_OPEN_API_BASE_URL".to_string(), appstore_open);
-    
+    env.insert(
+        "SDKWORK_APPSTORE_OPEN_API_BASE_URL".to_string(),
+        appstore_open,
+    );
+
     env
 }
 
@@ -632,6 +721,7 @@ async fn gateway_exposes_health_ready_and_openapi_index() {
     assert_eq!(readiness["routeCount"], 4);
 
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/openapi/index.json")
@@ -644,6 +734,27 @@ async fn gateway_exposes_health_ready_and_openapi_index() {
     assert!(response_text(response)
         .await
         .contains("sdkwork-appbase-app-api"));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/openapi.json")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(response.status(), 200);
+    let document = response_json(response).await;
+    assert_eq!(document["openapi"], "3.1.0");
+    assert_eq!(
+        document["paths"]["/openapi.json"]["get"]["operationId"],
+        "getGatewayOpenApiDocument"
+    );
+    assert_eq!(
+        document["paths"]["/openapi.json"]["get"]["x-sdkwork-request-context"],
+        "WebRequestContext"
+    );
 }
 
 #[tokio::test]
@@ -758,6 +869,13 @@ async fn secure_response_headers_are_added_when_enabled() {
             .get("referrer-policy")
             .and_then(|value| value.to_str().ok()),
         Some("no-referrer")
+    );
+    assert_eq!(
+        response
+            .headers()
+            .get("content-security-policy")
+            .and_then(|value| value.to_str().ok()),
+        Some("default-src 'none'; frame-ancestors 'none'")
     );
 }
 
@@ -1574,8 +1692,7 @@ async fn split_mode_generates_request_id_when_missing_and_forwards_it_upstream()
 
     assert_eq!(response.status(), 200);
     let request_id = response_text(response).await;
-    assert!(request_id.starts_with("sdkwork-api-gateway-"));
-    assert!(request_id.len() > "sdkwork-api-gateway-".len());
+    assert!(is_framework_request_id(request_id.as_str()));
 }
 
 #[tokio::test]
@@ -1656,13 +1773,12 @@ async fn split_mode_returns_request_id_on_upstream_connection_failure_problem() 
         .unwrap();
 
     assert_eq!(response.status(), 502);
-    assert_eq!(
-        response
-            .headers()
-            .get("x-request-id")
-            .and_then(|value| value.to_str().ok()),
-        Some("request-failure-1")
-    );
+    let request_id = response
+        .headers()
+        .get("x-request-id")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    assert!(is_framework_request_id(request_id));
     assert_eq!(
         response
             .headers()
@@ -1703,9 +1819,8 @@ async fn split_mode_honors_per_upstream_timeout() {
         .headers()
         .get("x-request-id")
         .and_then(|value| value.to_str().ok())
-        .unwrap_or_default()
-        .to_string();
-    assert!(request_id.starts_with("sdkwork-api-gateway-"));
+        .unwrap_or_default();
+    assert!(is_framework_request_id(request_id));
     let problem = response_json(response).await;
     assert_eq!(problem["title"], "upstream_timeout");
 }
@@ -1737,13 +1852,12 @@ async fn split_mode_honors_gateway_request_timeout_before_upstream_timeout() {
         .unwrap();
 
     assert_eq!(response.status(), 504);
-    assert_eq!(
-        response
-            .headers()
-            .get("x-request-id")
-            .and_then(|value| value.to_str().ok()),
-        Some("gateway-timeout-1")
-    );
+    let request_id = response
+        .headers()
+        .get("x-request-id")
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    assert!(is_framework_request_id(request_id));
     assert_eq!(
         response
             .headers()
@@ -3187,6 +3301,9 @@ async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
 
 #[tokio::test]
 async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
+    let appbase_router = build_embedded_sdkwork_appbase_app_api_router()
+        .await
+        .expect("app router builds");
     let backend_router = build_embedded_sdkwork_appbase_backend_api_router()
         .await
         .expect("backend router builds");
@@ -3204,7 +3321,8 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
             runtime_mode: sdkwork_api_gateway_config::DependencyRuntimeMode::Embedded,
             same_origin_allowed: true,
             executable_export: Some(
-                "sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router".to_owned(),
+                "sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router"
+                    .to_owned(),
             ),
             cargo_feature: Some("foundation-appbase".to_owned()),
             cargo_dependency: Some("sdkwork-router-iam-backend-api".to_owned()),
@@ -3214,10 +3332,16 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
 
     let app = build_sdkwork_api_gateway_router_with_embedded_routers(
         config,
-        [(
-            sdkwork_api_gateway_config::APPBASE_BACKEND_API_SERVICE_ID,
-            backend_router,
-        )],
+        [
+            (
+                sdkwork_api_gateway_config::APPBASE_APP_API_SERVICE_ID,
+                appbase_router,
+            ),
+            (
+                sdkwork_api_gateway_config::APPBASE_BACKEND_API_SERVICE_ID,
+                backend_router,
+            ),
+        ],
     )
     .expect("embedded backend router satisfies dependency");
 
@@ -3243,9 +3367,10 @@ async fn embedded_appbase_runtime_context_builder_exports_executable_router() {
         "tenant_gateway",
         "org_gateway",
     );
-    let appbase_router = build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(context)
-        .await
-        .expect("runtime context router satisfies dependency");
+    let appbase_router =
+        build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(context)
+            .await
+            .expect("runtime context router satisfies dependency");
 
     let config = embedded_config_without_upstreams();
     let app = build_sdkwork_api_gateway_router_with_embedded_routers(

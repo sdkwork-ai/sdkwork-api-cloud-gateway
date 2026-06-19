@@ -30,6 +30,7 @@ tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+async-trait = "0.1"
 
 sdkwork-api-gateway-config = { path = "crates/sdkwork-api-gateway-config" }
 sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observability" }
@@ -60,8 +61,13 @@ sdkwork_router_cms_backend_api = { package = "sdkwork-router-cms-backend-api", p
 sdkwork_router_cms_open_api = { package = "sdkwork-router-cms-open-api", path = "../sdkwork-cms/crates/sdkwork-router-cms-open-api" }
 sdkwork_router_voice_app_api = { package = "sdkwork-router-voice-app-api", path = "../sdkwork-voice/crates/sdkwork-router-voice-app-api" }
 sdkwork_router_voice_backend_api = { package = "sdkwork-router-voice-backend-api", path = "../sdkwork-voice/crates/sdkwork-router-voice-backend-api" }
-sdkwork_router_aiot_app_api = { package = "sdkwork-aiot-http-api", path = "../sdkwork-aiot/crates/sdkwork-aiot-http-api" }
+sdkwork_router_aiot_app_api = { package = "sdkwork-router-iot-app-api", path = "../sdkwork-aiot/crates/sdkwork-router-iot-app-api" }
 
 sdkwork_router_catalog_app_api = { package = "sdkwork-router-catalog-app-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-app-api" }
 sdkwork_router_catalog_backend_api = { package = "sdkwork-router-catalog-backend-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-backend-api" }
 sdkwork_router_catalog_open_api = { package = "sdkwork-router-catalog-open-api", path = "../sdkwork-appstore/crates/sdkwork-router-catalog-open-api" }
+
+sdkwork-web-contract = { path = "../sdkwork-web-framework/crates/sdkwork-web-contract" }
+sdkwork-web-core = { path = "../sdkwork-web-framework/crates/sdkwork-web-core" }
+sdkwork-web-axum = { path = "../sdkwork-web-framework/crates/sdkwork-web-axum" }
+sdkwork-iam-web-adapter = { path = "../sdkwork-appbase/crates/sdkwork-iam-web-adapter" }

@@ -1285,6 +1285,19 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             "component spec must declare authored language {language}"
         );
     }
+    let manifests = spec["component"]["manifests"]
+        .as_array()
+        .expect("component spec declares component.manifests");
+    assert!(
+        manifests
+            .iter()
+            .any(|entry| entry.as_str() == Some("Cargo.lock")),
+        "component manifests must list Cargo.lock for deployable Rust backend"
+    );
+    assert!(
+        root.join("Cargo.lock").is_file(),
+        "Cargo.lock must exist at repository root per DEPENDENCY_MANAGEMENT_SPEC"
+    );
     let canonical_specs = spec["canonicalSpecs"]
         .as_array()
         .expect("component spec declares canonicalSpecs");
@@ -1295,6 +1308,11 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         "TYPESCRIPT_CODE_SPEC.md",
         "COMPONENT_SPEC.md",
         "GITHUB_WORKFLOW_SPEC.md",
+        "WEB_FRAMEWORK_SPEC.md",
+        "SECURITY_SPEC.md",
+        "OBSERVABILITY_SPEC.md",
+        "APP_MANIFEST_SPEC.md",
+        "ENVIRONMENT_SPEC.md",
     ] {
         assert!(
             canonical_specs
@@ -1343,6 +1361,18 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             "component spec must declare release verification command {required_command}"
         );
     }
+    assert!(
+        verification_commands
+            .iter()
+            .any(|command| command.as_str() == Some("cargo fmt -- --check")),
+        "component spec must verify rustfmt for gateway workspace members"
+    );
+    assert!(
+        !verification_commands.iter().any(|command| command
+            .as_str()
+            .is_some_and(|value| value == "cargo fmt --all -- --check")),
+        "component spec must not use cargo fmt --all; optional foundation path deps resolve sibling workspaces"
+    );
 
     let runtime_exports = spec["entrypoints"]
         .as_array()
@@ -1360,12 +1390,74 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             .any(|export| export.as_str() == Some("build_sdkwork_api_gateway_api_server_router")),
         "component spec must declare the canonical api-server router builder"
     );
+    for required_export in [
+        "web_framework_enabled",
+        "parse_web_framework_toggle",
+        "finalize_gateway_router",
+        "finalize_gateway_router_async",
+        "split_proxy_call_chain",
+    ] {
+        assert!(
+            runtime_exports
+                .iter()
+                .any(|export| export.as_str() == Some(required_export)),
+            "component spec must declare web-framework export {required_export}"
+        );
+    }
     assert!(
         runtime_exports
             .iter()
             .all(|export| export.as_str() != Some("build_sdkwork_api_gateway_service_router")),
         "component spec must not preserve the legacy service router alias"
     );
+    assert_eq!(
+        spec["runtimeBehavior"]["generatedRequestIdFormat"].as_str(),
+        Some("uuid-v4"),
+        "component spec must declare framework UUID request identity"
+    );
+    assert_eq!(
+        spec["runtimeBehavior"]["webFramework"]["toggleEnv"].as_str(),
+        Some("SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED"),
+        "component spec must declare web-framework toggle env"
+    );
+    assert_eq!(
+        spec["runtimeBehavior"]["webFramework"]["splitMode"]["interceptorCount"].as_u64(),
+        Some(19),
+        "component spec must document split-mode framework interceptor count"
+    );
+    assert_eq!(
+        spec["runtimeBehavior"]["security"]["secureHeaders"]["splitModeBaselineAuthority"].as_str(),
+        Some("sdkwork-web-framework HeaderSecurity stage"),
+        "component spec must declare framework ownership of baseline secure headers in split mode"
+    );
+    assert_eq!(
+        spec["runtimeBehavior"]["webFramework"]["disabledMode"]["corsAuthority"].as_str(),
+        Some("tower-http CorsLayer"),
+        "component spec must document legacy cors authority when web framework is disabled"
+    );
+    assert_eq!(
+        spec["runtimeBehavior"]["webFramework"]["disabledMode"]["secureHeadersAuthority"]
+            .as_str(),
+        Some("gateway security middleware"),
+        "component spec must document gateway secure header authority when web framework is disabled"
+    );
+    let web_framework = spec["gatewayIntegration"]["webFramework"]
+        .as_object()
+        .expect("gatewayIntegration.webFramework is declared");
+    for dependency in [
+        "sdkwork-web-contract",
+        "sdkwork-web-core",
+        "sdkwork-web-axum",
+    ] {
+        assert!(
+            web_framework["cargoDependencies"]
+                .as_array()
+                .expect("webFramework cargoDependencies")
+                .iter()
+                .any(|entry| entry.as_str() == Some(dependency)),
+            "gatewayIntegration.webFramework must declare {dependency}"
+        );
+    }
 
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let metadata_output = Command::new(cargo)
@@ -1388,6 +1480,22 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
                 .find(|package| package["name"].as_str() == Some("sdkwork-api-gateway"))
         })
         .expect("cargo metadata includes sdkwork-api-gateway");
+
+    let runtime_dependencies = runtime_package["dependencies"]
+        .as_array()
+        .expect("runtime package declares dependencies");
+    for web_dependency in [
+        "sdkwork-web-contract",
+        "sdkwork-web-core",
+        "sdkwork-web-axum",
+    ] {
+        assert!(
+            runtime_dependencies
+                .iter()
+                .any(|dependency| dependency["name"].as_str() == Some(web_dependency)),
+            "runtime package must depend on {web_dependency}"
+        );
+    }
 
     let dependencies = spec["dependencies"]
         .as_array()
@@ -1525,12 +1633,29 @@ fn gateway_runtime_source_is_split_by_endpoint_responsibility() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let gateway_src = root.join("crates/sdkwork-api-gateway/src");
 
-    for module in ["health.rs", "openapi.rs", "diagnostics.rs"] {
+    for module in [
+        "health.rs",
+        "openapi.rs",
+        "diagnostics.rs",
+        "web_framework.rs",
+    ] {
         assert!(
             gateway_src.join(module).is_file(),
             "gateway endpoint responsibility must live in {module}"
         );
     }
+
+    let gateway_tests = root.join("crates/sdkwork-api-gateway/tests");
+    assert!(
+        gateway_tests.join("web_framework_tests.rs").is_file(),
+        "gateway must keep dedicated web-framework integration tests"
+    );
+
+    let lib_source = fs::read_to_string(gateway_src.join("lib.rs")).expect("lib.rs readable");
+    assert!(
+        lib_source.contains("pub mod web_framework"),
+        "gateway library must declare web_framework module"
+    );
 
     let runtime_source = fs::read_to_string(gateway_src.join("runtime.rs"))
         .expect("runtime source should be readable");
@@ -1746,6 +1871,14 @@ fn agent_entrypoints_follow_sdkwork_standard() {
             "AGENTS.md must cite {required_reference}"
         );
     }
+    assert!(
+        agents.contains("cargo fmt -- --check"),
+        "AGENTS.md must document workspace-scoped rustfmt verification"
+    );
+    assert!(
+        !agents.contains("cargo fmt --all -- --check"),
+        "AGENTS.md must not document cargo fmt --all for this gateway workspace"
+    );
 
     for shim in ["CLAUDE.md", "GEMINI.md", "CODEX.md"] {
         let shim_path = root.join(shim);
@@ -1813,6 +1946,43 @@ fn package_dev_entrypoint_is_declared_in_component_spec() {
             .any(|entrypoint| entrypoint.as_str() == Some("package.json#scripts.dev")),
         "component spec must declare package.json#scripts.dev as the pnpm dev startup entrypoint"
     );
+    for required_entrypoint in [
+        "sdkwork_api_gateway::web_framework::finalize_gateway_router",
+        "sdkwork_api_gateway::web_framework::finalize_gateway_router_async",
+        "sdkwork_api_gateway::web_framework::split_proxy_call_chain",
+        "sdkwork_api_gateway::web_framework::web_framework_enabled",
+        "sdkwork_api_gateway::web_framework::parse_web_framework_toggle",
+    ] {
+        assert!(
+            runtime_entrypoints
+                .iter()
+                .any(|entrypoint| entrypoint.as_str() == Some(required_entrypoint)),
+            "component spec must declare web-framework runtime entrypoint {required_entrypoint}"
+        );
+    }
+}
+
+#[test]
+fn application_manifest_declares_web_framework_toggle_env_binding() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest_path = root.join("sdkwork.app.config.json");
+    let manifest: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap_or_else(|error| {
+            panic!(
+                "failed to read application manifest {}: {error}",
+                manifest_path.display()
+            )
+        }))
+        .expect("application manifest parses");
+    let variables = manifest["envBindings"]["variables"]
+        .as_array()
+        .expect("application manifest declares envBindings.variables");
+    assert!(
+        variables.iter().any(|entry| {
+            entry["name"].as_str() == Some("SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED")
+        }),
+        "application manifest must declare SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED env binding"
+    );
 }
 
 #[test]
@@ -1829,7 +1999,10 @@ fn development_template_defaults_to_embedded_single_port_mode() {
     );
     assert_eq!(config.server.bind, "127.0.0.1:3900");
     assert_eq!(config.dependency_surfaces.len(), 1);
-    assert_eq!(config.dependency_surfaces[0].service_id, "sdkwork-appbase-app-api");
+    assert_eq!(
+        config.dependency_surfaces[0].service_id,
+        "sdkwork-appbase-app-api"
+    );
 }
 
 #[test]

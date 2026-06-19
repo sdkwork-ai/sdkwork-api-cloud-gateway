@@ -2,10 +2,7 @@ use std::{
     collections::HashMap,
     error::Error as StdError,
     fmt, io,
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc,
-    },
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -39,6 +36,7 @@ use sdkwork_api_gateway_observability::{
 use sdkwork_api_gateway_registry::{GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget};
 #[cfg(feature = "foundation-appbase")]
 use sdkwork_router_iam_app_api::SdkworkAppbaseLocalIamRuntimeContext;
+use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tokio::{net::TcpStream, select};
 use tokio_tungstenite::{
@@ -58,10 +56,8 @@ use tracing::info;
 
 use crate::{
     diagnostics, health, metrics::GatewayMetrics, openapi, policy, resilience, security, traffic,
-    GatewayRuntimeError,
+    web_framework, GatewayRuntimeError,
 };
-
-static REQUEST_ID_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Copy, Debug)]
 struct GatewayFailureClass(&'static str);
@@ -129,6 +125,11 @@ impl GatewayRuntime {
     }
 
     pub fn router(self) -> Router {
+        let config = self.config.clone();
+        web_framework::finalize_gateway_router(&config, self.assemble_router())
+    }
+
+    fn assemble_router(self) -> Router {
         let summary = describe_gateway_startup(&self.config, &self.registry);
         info!(
             service_name = %summary.service_name,
@@ -140,6 +141,7 @@ impl GatewayRuntime {
         );
 
         let cors = cors_layer(&self.config);
+        let use_framework_cors = web_framework::split_mode_web_framework_active(&self.config);
         let metrics_enabled = self.config.observability.metrics_enabled;
         let metrics_path = metrics_route_path(self.config.observability.metrics_path.as_str());
         let diagnostics_enabled = self.config.diagnostics.enabled;
@@ -173,8 +175,7 @@ impl GatewayRuntime {
             );
         }
 
-        router
-            .layer(cors)
+        let mut router = router
             .layer(middleware::from_fn_with_state(
                 state.clone(),
                 traffic_middleware,
@@ -183,7 +184,15 @@ impl GatewayRuntime {
                 state.clone(),
                 security_middleware,
             ))
-            .with_state(state)
+            .with_state(state);
+
+        if !use_framework_cors {
+            router = router.layer(cors);
+        } else {
+            router = web_framework::with_preflight_options_support(router);
+        }
+
+        router
     }
 }
 
@@ -212,18 +221,22 @@ pub fn build_sdkwork_api_gateway_router(
 pub async fn build_sdkwork_api_gateway_api_server_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
-    match config.mode {
-        GatewayMode::Split => build_sdkwork_api_gateway_router(config),
+    let finalize_config = config.clone();
+    let router = match config.mode {
+        GatewayMode::Split => GatewayRuntime::new(config)?.assemble_router(),
         GatewayMode::Embedded => {
-            build_sdkwork_api_gateway_router_with_embedded_routers(
-                config,
-                [(
-                    APPBASE_APP_API_SERVICE_ID,
-                    build_embedded_sdkwork_appbase_app_api_router().await?,
-                )],
-            )
+            let embedded_router = build_embedded_sdkwork_appbase_app_api_router().await?;
+            let registry =
+                sdkwork_api_gateway_registry::GatewayRouteRegistry::from_dependency_surfaces(
+                    finalize_config.dependency_surfaces.as_slice(),
+                );
+            let embedded_routers =
+                HashMap::from([(APPBASE_APP_API_SERVICE_ID.to_owned(), embedded_router)]);
+            GatewayRuntime::with_registry_and_embedded_routers(config, registry, embedded_routers)?
+                .assemble_router()
         }
-    }
+    };
+    Ok(web_framework::finalize_gateway_router_async(&finalize_config, router).await)
 }
 
 #[cfg(not(feature = "foundation-appbase"))]
@@ -274,14 +287,12 @@ pub async fn build_sdkwork_api_gateway_router_with_embedded_appbase(
 #[cfg(feature = "foundation-appbase")]
 pub async fn build_embedded_sdkwork_appbase_backend_api_router(
 ) -> Result<Router, GatewayRuntimeError> {
-    Ok(
-        sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router_from_env().await,
-    )
+    Ok(sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router_from_env().await)
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_appbase_app_api_router(
-) -> Result<Router, GatewayRuntimeError> {
+pub async fn build_embedded_sdkwork_appbase_app_api_router() -> Result<Router, GatewayRuntimeError>
+{
     sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router()
         .await
         .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
@@ -315,6 +326,14 @@ async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
             state.metrics.render(state.config.service.name.as_str()),
         ))
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
+}
+
+fn apply_configured_secure_response_headers(state: &GatewayState, response: Response) -> Response {
+    security::apply_secure_response_headers(
+        &state.config.security,
+        web_framework::split_mode_web_framework_active(&state.config),
+        response,
+    )
 }
 
 async fn security_middleware(
@@ -374,7 +393,7 @@ async fn security_middleware(
                 request.headers(),
             );
             rejection.apply_headers(response.headers_mut());
-            return security::apply_secure_response_headers(&state.config.security, response);
+            return apply_configured_secure_response_headers(state.as_ref(), response);
         }
     };
 
@@ -403,7 +422,7 @@ async fn security_middleware(
             },
         );
     }
-    security::apply_secure_response_headers(&state.config.security, response)
+    apply_configured_secure_response_headers(state.as_ref(), response)
 }
 
 async fn traffic_middleware(
@@ -451,7 +470,7 @@ async fn traffic_middleware(
                 request.headers(),
             );
             rejection.apply_headers(response.headers_mut());
-            return security::apply_secure_response_headers(&state.config.security, response);
+            return apply_configured_secure_response_headers(state.as_ref(), response);
         }
     };
 
@@ -1314,7 +1333,7 @@ fn request_id_for_headers(headers: &HeaderMap) -> String {
         .and_then(|value| value.to_str().ok())
         .filter(|value| !value.trim().is_empty())
         .map(ToOwned::to_owned)
-        .unwrap_or_else(generate_request_id)
+        .unwrap_or_else(new_request_id)
 }
 
 fn is_length_limit_error(error: &axum::Error) -> bool {
@@ -1326,11 +1345,6 @@ fn is_length_limit_error(error: &axum::Error) -> bool {
         source = error.source();
     }
     false
-}
-
-fn generate_request_id() -> String {
-    let next = REQUEST_ID_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-    format!("sdkwork-api-gateway-{next}")
 }
 
 fn apply_forwarded_headers(

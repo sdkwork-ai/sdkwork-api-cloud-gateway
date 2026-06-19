@@ -68,6 +68,7 @@ impl SecurityRejection {
 
 pub(crate) fn apply_secure_response_headers(
     config: &GatewaySecurityConfig,
+    framework_handles_baseline: bool,
     mut response: Response,
 ) -> Response {
     if !config.secure_headers_enabled {
@@ -75,24 +76,26 @@ pub(crate) fn apply_secure_response_headers(
     }
 
     let headers = response.headers_mut();
-    insert_if_absent(headers, "x-content-type-options", "nosniff");
-    insert_if_absent(headers, "x-frame-options", "DENY");
-    insert_if_absent(headers, "referrer-policy", "no-referrer");
-    insert_if_absent(
-        headers,
-        "permissions-policy",
-        "camera=(), microphone=(), geolocation=()",
-    );
+    if !framework_handles_baseline {
+        insert_if_absent(headers, "x-content-type-options", "nosniff");
+        insert_if_absent(headers, "x-frame-options", "DENY");
+        insert_if_absent(headers, "referrer-policy", "no-referrer");
+        insert_if_absent(
+            headers,
+            "permissions-policy",
+            "camera=(), microphone=(), geolocation=()",
+        );
+        insert_if_absent(
+            headers,
+            "strict-transport-security",
+            "max-age=31536000; includeSubDomains",
+        );
+    }
     insert_if_absent(headers, "x-permitted-cross-domain-policies", "none");
     insert_if_absent(
         headers,
         "content-security-policy",
         "default-src 'none'; frame-ancestors 'none'",
-    );
-    insert_if_absent(
-        headers,
-        "strict-transport-security",
-        "max-age=31536000; includeSubDomains",
     );
     response
 }

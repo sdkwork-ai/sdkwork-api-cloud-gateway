@@ -14,9 +14,13 @@ controls, diagnostics, metrics, and resilience behavior.
 
 Public router builders include `build_sdkwork_api_gateway_api_server_router`,
 `build_sdkwork_api_gateway_router`, `build_sdkwork_api_gateway_router_with_registry`, and
-`build_sdkwork_api_gateway_router_with_embedded_routers`. When the `foundation-appbase` feature is
-enabled, the crate also exports Appbase embedded router helpers and
-`SdkworkAppbaseLocalIamRuntimeContext`.
+`build_sdkwork_api_gateway_router_with_embedded_routers`. Split mode finalizes routers through
+`sdkwork-web-framework` (`finalize_gateway_router`, `finalize_gateway_router_async`,
+`split_proxy_call_chain`, `web_framework_enabled`, `parse_web_framework_toggle`). Toggle the outer
+pipeline with `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by default); when disabled, split
+mode falls back to Tower `CorsLayer` and gateway security middleware while still assigning UUID
+`x-request-id`. When the `foundation-appbase` feature is enabled, the crate also exports Appbase
+embedded router helpers and `SdkworkAppbaseLocalIamRuntimeContext`.
 
 ## Required SDK Surface
 
@@ -39,9 +43,12 @@ routers for dependency surfaces that do not use upstreams.
 
 ## Security
 
-Appbase IAM handlers remain dependency-owned. The runtime enforces configured host allowlists,
-header limits, WAF rules, body limits, CORS, policy governance, request timeouts, rate limits,
-concurrency limits, diagnostics safety, and bounded observability labels before or during proxying.
+Appbase IAM handlers remain dependency-owned. Split mode runs `sdkwork-web-framework` surface
+classification, request identity, logging, audit, baseline secure headers, and response identity
+before proxy dispatch; gateway-specific WAF, host allowlist, header limits, body limits, CORS overlays,
+policy governance, request timeouts, rate limits, concurrency limits, diagnostics safety, gateway
+extended secure headers, and bounded observability labels remain gateway-owned controls during
+proxying.
 
 ## Extension Points
 
@@ -55,9 +62,11 @@ Run from the repository root:
 
 ```powershell
 cargo test -p sdkwork-api-gateway
+cargo test -p sdkwork-api-gateway --test web_framework_tests
 cargo test --workspace
 ```
 
 Related specs: `../../../sdkwork-specs/COMPONENT_SPEC.md`,
 `../../../sdkwork-specs/APP_SDK_INTEGRATION_SPEC.md`, `../../../sdkwork-specs/RUST_CODE_SPEC.md`,
-`../../../sdkwork-specs/SECURITY_SPEC.md`, and `../../../sdkwork-specs/TEST_SPEC.md`.
+`../../../sdkwork-specs/WEB_FRAMEWORK_SPEC.md`, `../../../sdkwork-specs/SECURITY_SPEC.md`, and
+`../../../sdkwork-specs/TEST_SPEC.md`.

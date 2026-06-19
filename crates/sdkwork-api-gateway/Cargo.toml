@@ -9,6 +9,7 @@ default = ["foundation-appbase"]
 foundation-appbase = [
     "dep:sdkwork_router_iam_app_api",
     "dep:sdkwork_router_iam_backend_api",
+    "dep:sdkwork-iam-web-adapter",
 ]
 foundation-course = ["dep:sdkwork_router_course_app_api", "dep:sdkwork_router_course_backend_api"]
 foundation-news = ["dep:sdkwork_router_news_app_api", "dep:sdkwork_router_news_backend_api", "dep:sdkwork_router_news_open_api"]
@@ -23,6 +24,7 @@ foundation-aiot = ["dep:sdkwork_router_aiot_app_api"]
 foundation-appstore = ["dep:sdkwork_router_catalog_app_api", "dep:sdkwork_router_catalog_backend_api", "dep:sdkwork_router_catalog_open_api"]
 
 [dependencies]
+async-trait.workspace = true
 axum.workspace = true
 bytes.workspace = true
 futures-util.workspace = true
@@ -39,6 +41,10 @@ tracing.workspace = true
 sdkwork-api-gateway-config.workspace = true
 sdkwork-api-gateway-observability.workspace = true
 sdkwork-api-gateway-registry.workspace = true
+sdkwork-web-contract.workspace = true
+sdkwork-web-core.workspace = true
+sdkwork-web-axum.workspace = true
+sdkwork-iam-web-adapter = { workspace = true, optional = true }
 sdkwork_router_iam_app_api = { workspace = true, optional = true }
 sdkwork_router_iam_backend_api = { workspace = true, optional = true }
 sdkwork_router_course_app_api = { workspace = true, optional = true }
@@ -70,6 +76,7 @@ sdkwork_router_catalog_open_api = { workspace = true, optional = true }
 [dev-dependencies]
 futures-util.workspace = true
 http-body-util.workspace = true
+sdkwork-web-core.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 serde_json.workspace = true

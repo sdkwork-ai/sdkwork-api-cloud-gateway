@@ -3,7 +3,14 @@
   "appId": "sdkwork-api-gateway",
   "name": "SDKWork API Gateway",
   "family": "backend",
-  "runtime": "rust-axum",
+  "runtime": {
+    "framework": "rust-axum",
+    "supportedDeploymentProfiles": [
+      "cloud",
+      "standalone"
+    ],
+    "defaultDeploymentProfile": "cloud"
+  },
   "preset": "api-gateway",
   "outputStrategy": "tracked-templates-with-local-overlays",
   "backend": {
@@ -145,6 +152,11 @@
       },
       {
         "name": "SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED",
         "required": false,
         "tracked": false
       },

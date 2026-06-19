@@ -6,7 +6,7 @@
   "scripts": {
     "build": "cargo build --workspace",
     "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
-    "fmt": "cargo fmt --all -- --check",
+    "fmt": "cargo fmt -- --check",
     "package:server": "node scripts/package-server.mjs package",
     "package:server:validate": "node scripts/package-server.mjs validate",
     "release:package:server": "pnpm package:server",

@@ -10,6 +10,7 @@ mod resilience;
 mod runtime;
 mod security;
 mod traffic;
+pub mod web_framework;
 
 pub use error::GatewayRuntimeError;
 #[cfg(feature = "foundation-appbase")]
@@ -26,3 +27,7 @@ pub use runtime::{
 };
 #[cfg(feature = "foundation-appbase")]
 pub use sdkwork_router_iam_app_api::SdkworkAppbaseLocalIamRuntimeContext;
+pub use web_framework::{
+    finalize_gateway_router, finalize_gateway_router_async, parse_web_framework_toggle,
+    split_proxy_call_chain, web_framework_enabled,
+};

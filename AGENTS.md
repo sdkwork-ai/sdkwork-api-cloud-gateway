@@ -95,7 +95,8 @@ modules.
 Run commands from this repository root:
 
 - `cargo metadata --no-deps --format-version 1`
-- `cargo fmt --all -- --check`
+- `cargo fmt -- --check` (workspace members only; do not use `--all` because optional foundation path
+  dependencies resolve sibling application workspaces outside this repository authority)
 - `cargo test --workspace`
 - `pnpm workflow:validate`
 - `pnpm workflow:matrix:server`

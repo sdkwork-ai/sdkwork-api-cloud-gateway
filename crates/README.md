@@ -13,4 +13,4 @@ state, and dependency-owned source copied from sibling repositories.
 Related specs: `../sdkwork-specs/RUST_CODE_SPEC.md`, `../sdkwork-specs/NAMING_SPEC.md`, and
 `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`.
 
-Verification: run `cargo fmt --all -- --check` and `cargo test --workspace` from the repository root.
+Verification: run `cargo fmt -- --check` and `cargo test --workspace` from the repository root.
