@@ -175,8 +175,6 @@
         "build_sdkwork_api_gateway_router_with_embedded_routers",
         "build_sdkwork_api_gateway_router_with_embedded_appbase",
         "build_embedded_sdkwork_appbase_app_api_router",
-        "build_embedded_sdkwork_appbase_app_api_router_with_runtime_context",
-        "SdkworkAppbaseLocalIamRuntimeContext",
         "web_framework_enabled",
         "parse_web_framework_toggle",
         "finalize_gateway_router",

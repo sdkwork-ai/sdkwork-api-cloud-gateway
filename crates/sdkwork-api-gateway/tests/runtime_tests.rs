@@ -20,10 +20,9 @@ use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
 use sdkwork_api_gateway::{
     build_embedded_sdkwork_appbase_app_api_router,
-    build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
     build_embedded_sdkwork_appbase_backend_api_router, build_sdkwork_api_gateway_api_server_router,
     build_sdkwork_api_gateway_router, build_sdkwork_api_gateway_router_with_embedded_routers,
-    GatewayRuntime, SdkworkAppbaseLocalIamRuntimeContext,
+    GatewayRuntime,
 };
 use sdkwork_api_gateway_config::{
     DependencyApiSurfaceConfig, DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig,
@@ -3351,41 +3350,6 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
                 .method("GET")
                 .uri("/backend/v3/api/iam/users")
                 .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_ne!(response.status(), 404);
-    assert_ne!(response.status(), 502);
-}
-
-#[tokio::test]
-async fn embedded_appbase_runtime_context_builder_exports_executable_router() {
-    let context = SdkworkAppbaseLocalIamRuntimeContext::new(
-        "sdkwork-api-gateway",
-        "tenant_gateway",
-        "org_gateway",
-    );
-    let appbase_router =
-        build_embedded_sdkwork_appbase_app_api_router_with_runtime_context(context)
-            .await
-            .expect("runtime context router satisfies dependency");
-
-    let config = embedded_config_without_upstreams();
-    let app = build_sdkwork_api_gateway_router_with_embedded_routers(
-        config,
-        [("sdkwork-appbase-app-api", appbase_router)],
-    )
-    .expect("runtime context router satisfies dependency");
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .method("POST")
-                .uri("/app/v3/api/auth/sessions")
-                .header("content-type", "application/json")
-                .body(Body::from("{}"))
                 .unwrap(),
         )
         .await

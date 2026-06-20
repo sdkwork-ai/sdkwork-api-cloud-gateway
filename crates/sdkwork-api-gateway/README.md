@@ -20,7 +20,7 @@ Public router builders include `build_sdkwork_api_gateway_api_server_router`,
 pipeline with `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by default); when disabled, split
 mode falls back to Tower `CorsLayer` and gateway security middleware while still assigning UUID
 `x-request-id`. When the `foundation-appbase` feature is enabled, the crate also exports Appbase
-embedded router helpers and `SdkworkAppbaseLocalIamRuntimeContext`.
+embedded router helpers. IAM tenant and organization context is resolved from dual tokens at request time, not injected through `SDKWORK_IAM_LOCAL_*` environment variables.
 
 ## Required SDK Surface
 

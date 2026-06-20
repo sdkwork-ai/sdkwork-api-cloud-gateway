@@ -16,7 +16,6 @@ pub use error::GatewayRuntimeError;
 #[cfg(feature = "foundation-appbase")]
 pub use runtime::{
     build_embedded_sdkwork_appbase_app_api_router,
-    build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
     build_embedded_sdkwork_appbase_backend_api_router,
     build_sdkwork_api_gateway_router_with_embedded_appbase,
 };
@@ -25,8 +24,6 @@ pub use runtime::{
     build_sdkwork_api_gateway_router_with_embedded_routers,
     build_sdkwork_api_gateway_router_with_registry, GatewayRuntime,
 };
-#[cfg(feature = "foundation-appbase")]
-pub use sdkwork_router_iam_app_api::SdkworkAppbaseLocalIamRuntimeContext;
 pub use web_framework::{
     finalize_gateway_router, finalize_gateway_router_async, parse_web_framework_toggle,
     split_proxy_call_chain, web_framework_enabled,

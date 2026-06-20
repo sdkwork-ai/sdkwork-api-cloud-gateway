@@ -395,8 +395,7 @@ Third-party embedding can use:
 ```rust
 use sdkwork_api_gateway::{
     build_sdkwork_api_gateway_router_with_embedded_routers,
-    build_embedded_sdkwork_appbase_app_api_router_with_runtime_context,
-    SdkworkAppbaseLocalIamRuntimeContext,
+    build_embedded_sdkwork_appbase_app_api_router,
 };
 ```
 
