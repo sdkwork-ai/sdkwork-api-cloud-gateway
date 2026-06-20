@@ -1458,6 +1458,17 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             "gatewayIntegration.webFramework must declare {dependency}"
         );
     }
+    let shared_utilities = spec["gatewayIntegration"]["sharedUtilities"]
+        .as_object()
+        .expect("gatewayIntegration.sharedUtilities is declared");
+    assert!(
+        shared_utilities["cargoDependencies"]
+            .as_array()
+            .expect("sharedUtilities cargoDependencies")
+            .iter()
+            .any(|entry| entry.as_str() == Some("sdkwork-utils-rust")),
+        "gatewayIntegration.sharedUtilities must declare sdkwork-utils-rust"
+    );
 
     let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_string());
     let metadata_output = Command::new(cargo)
@@ -1496,10 +1507,26 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
             "runtime package must depend on {web_dependency}"
         );
     }
+    assert!(
+        runtime_dependencies
+            .iter()
+            .any(|dependency| dependency["name"].as_str() == Some("sdkwork-utils-rust")),
+        "runtime package must depend on sdkwork-utils-rust for shared utility helpers"
+    );
 
     let dependencies = spec["dependencies"]
         .as_array()
         .expect("component spec declares dependencies");
+    let mut seen_service_ids = std::collections::HashSet::new();
+    for dependency in dependencies {
+        let service_id = dependency["serviceId"]
+            .as_str()
+            .expect("dependency declares serviceId");
+        assert!(
+            seen_service_ids.insert(service_id.to_owned()),
+            "component spec dependencies must not duplicate serviceId {service_id}"
+        );
+    }
     for dependency in dependencies {
         let runtime_modes = dependency["runtimeModes"]
             .as_array()
@@ -1903,6 +1930,40 @@ fn agent_entrypoints_follow_sdkwork_standard() {
         assert!(
             content.contains("Do not duplicate or override SDKWork rules here."),
             "{shim} must stay a compatibility shim instead of a second rule body"
+        );
+    }
+}
+
+#[test]
+fn gateway_owned_api_contract_is_authored_under_apis_directory() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let contract_path = root.join("apis/gateway-api/platform/openapi.yaml");
+    let contract = fs::read_to_string(&contract_path).unwrap_or_else(|error| {
+        panic!(
+            "gateway-owned API contract must exist at {}: {error}",
+            contract_path.display()
+        )
+    });
+    let document: serde_json::Value =
+        serde_json::from_str(&contract).expect("gateway-api openapi contract parses as JSON");
+    for operation_id in [
+        "getGatewayHealth",
+        "getGatewayReadiness",
+        "listGatewayApiDependencies",
+        "getGatewayOpenApiDocument",
+    ] {
+        let paths = document["paths"]
+            .as_object()
+            .expect("gateway-api contract declares paths");
+        assert!(
+            paths.values().any(|path_item| {
+                path_item
+                    .as_object()
+                    .and_then(|methods| methods.get("get"))
+                    .and_then(|operation| operation["operationId"].as_str())
+                    == Some(operation_id)
+            }),
+            "gateway-api contract must declare operationId {operation_id}"
         );
     }
 }

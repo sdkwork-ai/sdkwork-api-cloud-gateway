@@ -157,6 +157,13 @@
       "optionalCargoDependencies": [
         "sdkwork-iam-web-adapter"
       ]
+    },
+    "sharedUtilities": {
+      "workspace": "sdkwork-utils",
+      "cargoDependencies": [
+        "sdkwork-utils-rust"
+      ],
+      "usage": "boolean env toggles and HTTP path normalization in gateway runtime"
     }
   },
   "entrypoints": [
@@ -950,16 +957,6 @@
       "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
       "coverage": "sdkwork-im-backend-api-upstream-routes",
       "embeddedStatus": "split-only-until-sdkwork-im-exposes-a-complete-compatible-public-router-builder"
-    },
-    {
-      "serviceId": "sdkwork-claw-gateway",
-      "workspace": "sdkwork-claw-router",
-      "apiAuthority": "sdkwork-claw-gateway",
-      "sdkFamily": "sdkwork-clawrouter-app-sdk",
-      "runtimeModes": ["split", "embedded"],
-      "requiredBaseUrlKey": "SDKWORK_CLAW_GATEWAY_BASE_URL",
-      "coverage": "claw-gateway-open-api-upstream-routes",
-      "embeddedStatus": "split-only-until-claw-router-exposes-a-complete-compatible-public-router-builder"
     }
   ],
   "routeRegistry": {

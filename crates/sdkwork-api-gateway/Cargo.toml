@@ -44,6 +44,7 @@ sdkwork-api-gateway-registry.workspace = true
 sdkwork-web-contract.workspace = true
 sdkwork-web-core.workspace = true
 sdkwork-web-axum.workspace = true
+sdkwork-utils-rust.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
 sdkwork_router_iam_app_api = { workspace = true, optional = true }
 sdkwork_router_iam_backend_api = { workspace = true, optional = true }

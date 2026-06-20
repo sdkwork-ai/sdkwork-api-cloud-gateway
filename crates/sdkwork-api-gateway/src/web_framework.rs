@@ -50,10 +50,7 @@ const GATEWAY_ROUTE_MANIFEST: &[HttpRoute] = &[
 
 /// Parses `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED` style toggle values.
 pub fn parse_web_framework_toggle(value: &str) -> bool {
-    matches!(
-        value.trim().to_ascii_lowercase().as_str(),
-        "1" | "true" | "yes" | "on"
-    )
+    sdkwork_utils_rust::boolean::parse_bool(value).unwrap_or(false)
 }
 
 /// Whether the gateway outer router should mount the sdkwork-web-framework pipeline.
@@ -311,9 +308,12 @@ fn normalize_route_prefix(path: &str, fallback: &str) -> String {
     if trimmed.is_empty() {
         return fallback.to_owned();
     }
-    if trimmed.starts_with('/') {
-        trimmed.to_owned()
+    let normalized = sdkwork_utils_rust::path::normalize_path(trimmed);
+    if normalized.is_empty() {
+        fallback.to_owned()
+    } else if normalized.starts_with('/') {
+        normalized
     } else {
-        format!("/{trimmed}")
+        format!("/{normalized}")
     }
 }

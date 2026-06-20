@@ -1,0 +1,72 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SDKWork API Gateway",
+    "version": "0.1.0",
+    "description": "Gateway-owned health, readiness, and OpenAPI discovery surfaces.",
+    "x-sdkwork-api-authority": "sdkwork-api-gateway",
+    "x-sdkwork-api-surface": "gateway-api"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "getGatewayHealth",
+        "summary": "getGatewayHealth",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Gateway health"
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "operationId": "getGatewayReadiness",
+        "summary": "getGatewayReadiness",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Gateway readiness"
+          }
+        }
+      }
+    },
+    "/openapi/index.json": {
+      "get": {
+        "operationId": "listGatewayApiDependencies",
+        "summary": "listGatewayApiDependencies",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Gateway route and dependency index"
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "getGatewayOpenApiDocument",
+        "summary": "getGatewayOpenApiDocument",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Gateway OpenAPI document"
+          }
+        }
+      }
+    }
+  }
+}
