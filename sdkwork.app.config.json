@@ -23,7 +23,9 @@
       "iam.organizations.read",
       "iam.roles.read",
       "iam.permissions.read"
-    ]
+    ],
+    "tenantId": "100001",
+    "organizationId": "0"
   },
   "envBindings": {
     "schemaVersion": 2,

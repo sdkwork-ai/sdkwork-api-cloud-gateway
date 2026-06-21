@@ -5,14 +5,22 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "cargo build --workspace",
+    "check": "pnpm fmt && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
+    "clean": "cargo clean",
     "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
-    "fmt": "cargo fmt -- --check",
-    "package:server": "node scripts/package-server.mjs package",
-    "package:server:validate": "node scripts/package-server.mjs validate",
-    "release:package:server": "pnpm package:server",
-    "test": "cargo test --workspace",
     "dev": "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway -- --config configs/sdkwork-api-gateway.development.toml.example",
-    "workflow:matrix:server": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --profile server --platform all --architecture all --format tar.gz",
+    "fmt": "cargo fmt -- --check",
+    "gateway:matrix": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --profile server --platform all --architecture all --format tar.gz",
+    "gateway:matrix:standalone": "pnpm gateway:matrix",
+    "gateway:package:standalone": "node scripts/package-server.mjs package --deployment-profile standalone",
+    "gateway:validate:standalone": "node scripts/package-server.mjs validate --deployment-profile standalone",
+    "package:server": "pnpm gateway:package:standalone",
+    "package:server:validate": "pnpm gateway:validate:standalone",
+    "release:package": "pnpm gateway:package:standalone",
+    "release:package:server": "pnpm gateway:package:standalone",
+    "test": "cargo test --workspace",
+    "verify": "pnpm check && pnpm test && pnpm clippy",
+    "workflow:matrix:server": "pnpm gateway:matrix",
     "workflow:validate": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs validate --config sdkwork.workflow.json"
   }
 }

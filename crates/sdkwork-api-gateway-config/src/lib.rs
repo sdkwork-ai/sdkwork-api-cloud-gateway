@@ -1304,14 +1304,12 @@ fn is_json_path(path: &Path) -> bool {
 }
 
 fn parse_bool_env(key: &str, value: &str) -> Result<bool, GatewayConfigError> {
-    match value.trim().to_ascii_lowercase().as_str() {
-        "true" | "1" | "yes" | "y" | "on" => Ok(true),
-        "false" | "0" | "no" | "n" | "off" => Ok(false),
-        _ => Err(GatewayConfigError::InvalidBoolean {
+    sdkwork_utils_rust::boolean::parse_bool(value).ok_or_else(|| {
+        GatewayConfigError::InvalidBoolean {
             key: key.to_string(),
             value: value.to_string(),
-        }),
-    }
+        }
+    })
 }
 
 fn parse_u64_env(key: &str, value: &str) -> Result<u64, GatewayConfigError> {

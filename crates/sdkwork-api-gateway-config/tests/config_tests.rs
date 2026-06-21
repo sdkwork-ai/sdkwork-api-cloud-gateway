@@ -1349,10 +1349,12 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         "component spec must verify gateway Cargo metadata instead of a separate gateway catalog"
     );
     for required_command in [
+        "pnpm check",
+        "pnpm verify",
         "pnpm workflow:validate",
-        "pnpm workflow:matrix:server",
-        "pnpm package:server",
-        "pnpm package:server:validate",
+        "pnpm gateway:matrix:standalone",
+        "pnpm gateway:package:standalone",
+        "pnpm gateway:validate:standalone",
     ] {
         assert!(
             verification_commands.iter().any(|command| command

@@ -102,6 +102,8 @@ jobs:
       framework_ref: v1
       dependency_refs_json: >-
         {
-          "SDKWORK_APPBASE_REF": "${{ vars.SDKWORK_APPBASE_REF }}"
+          "SDKWORK_APPBASE_REF": "${{ vars.SDKWORK_APPBASE_REF }}",
+          "SDKWORK_WEB_FRAMEWORK_REF": "${{ vars.SDKWORK_WEB_FRAMEWORK_REF }}",
+          "SDKWORK_UTILS_REF": "${{ vars.SDKWORK_UTILS_REF }}"
         }
     secrets: inherit

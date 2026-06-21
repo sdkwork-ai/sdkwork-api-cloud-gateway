@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 const APP_ID = 'sdkwork-api-gateway';
 const BINARY_NAME = 'sdkwork-api-gateway';
 const SERVER_PROFILE = 'server';
+const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
 const SUPPORTED_FORMAT = 'tar.gz';
 
 const scriptPath = fileURLToPath(import.meta.url);
@@ -43,6 +44,7 @@ Options:
   --platform <value>      Package platform. Defaults to SDKWORK_PACKAGE_PLATFORM or host platform.
   --arch <value>          Package architecture. Defaults to SDKWORK_PACKAGE_ARCHITECTURE or host arch.
   --format <value>        Package format. Only tar.gz is supported.
+  --deployment-profile <value>  Deployment profile (standalone or cloud). Defaults to standalone.
   --package-id <value>    Package id. Defaults to SDKWORK_PACKAGE_ID or canonical id.
   --rust-target <value>   Optional cargo --target triple for cross-builds.
   --skip-build            Reuse an existing release binary.
@@ -73,6 +75,10 @@ function parseArgs(argv) {
         break;
       case '--format':
         options.format = requireValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--deployment-profile':
+        options.deploymentProfile = requireValue(argv, index, arg);
         index += 1;
         break;
       case '--package-id':
@@ -120,13 +126,18 @@ async function createPackageContext(options) {
     options.architecture ?? process.env.SDKWORK_PACKAGE_ARCHITECTURE ?? hostArchitecture
   );
   const format = options.format ?? process.env.SDKWORK_PACKAGE_FORMAT ?? SUPPORTED_FORMAT;
+  const deploymentProfile = normalizeDeploymentProfile(
+    options.deploymentProfile ??
+      process.env.SDKWORK_PACKAGE_DEPLOYMENT_PROFILE ??
+      DEFAULT_DEPLOYMENT_PROFILE
+  );
   const version = normalizeVersion(
     options.version ?? process.env.SDKWORK_PACKAGE_VERSION ?? packageJson.version ?? '0.1.0'
   );
   const packageId =
     options.packageId ??
     process.env.SDKWORK_PACKAGE_ID ??
-    `${platform}-${architecture}-${SERVER_PROFILE}-tar-gz`;
+    `${platform}-${architecture}-${deploymentProfile}-${SERVER_PROFILE}-tar-gz`;
   const rustTarget = options.rustTarget ?? process.env.SDKWORK_RUST_TARGET ?? '';
 
   if (format !== SUPPORTED_FORMAT) {
@@ -151,6 +162,7 @@ async function createPackageContext(options) {
     archivePath,
     binaryName,
     binaryPath,
+    deploymentProfile,
     distRoot,
     format,
     hostArchitecture,
@@ -217,6 +229,14 @@ function normalizePackageArchitecture(value) {
     return text;
   }
   throw new Error(`Unsupported server package architecture: ${value}`);
+}
+
+function normalizeDeploymentProfile(value) {
+  const text = String(value ?? '').trim().toLowerCase();
+  if (text === 'standalone' || text === 'cloud') {
+    return text;
+  }
+  throw new Error(`Unsupported deployment profile: ${value}`);
 }
 
 async function packageServer(context) {
@@ -309,6 +329,7 @@ function createInstallManifest(context) {
     appId: APP_ID,
     packageId: context.packageId,
     profile: SERVER_PROFILE,
+    deploymentProfile: context.deploymentProfile,
     platform: context.platform,
     architecture: context.architecture,
     format: context.format,

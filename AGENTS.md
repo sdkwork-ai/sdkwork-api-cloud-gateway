@@ -98,10 +98,12 @@ Run commands from this repository root:
 - `cargo fmt -- --check` (workspace members only; do not use `--all` because optional foundation path
   dependencies resolve sibling application workspaces outside this repository authority)
 - `cargo test --workspace`
+- `pnpm check`
+- `pnpm verify`
 - `pnpm workflow:validate`
-- `pnpm workflow:matrix:server`
-- `pnpm package:server`
-- `pnpm package:server:validate`
+- `pnpm gateway:matrix:standalone`
+- `pnpm gateway:package:standalone`
+- `pnpm gateway:validate:standalone`
 
 Use narrower commands first while developing, then run the broader verification set before claiming
 completion, committing, or pushing. When `pnpm dev` behavior changes, smoke-test `/healthz` with a
