@@ -16,7 +16,14 @@
   "backend": {
     "appId": "sdkwork-api-gateway",
     "serviceId": "sdkwork-api-gateway",
-    "defaultBind": "127.0.0.1:3900"
+    "defaultBind": "127.0.0.1:3900",
+    "profileKey": "backend-root-admin",
+    "accessTokenPermissionScope": [
+      "iam.users.read",
+      "iam.organizations.read",
+      "iam.roles.read",
+      "iam.permissions.read"
+    ]
   },
   "envBindings": {
     "schemaVersion": 2,
@@ -1910,5 +1917,13 @@
       "executableExport": "sdkwork_router_catalog_open_api::route_definitions",
       "coverage": "appstore-open-api-upstream-routes"
     }
-  ]
+  ],
+  "app": {
+    "key": "sdkwork-api-gateway",
+    "name": "SDKWork API Gateway",
+    "displayName": "SDKWork API Gateway",
+    "appType": "APP_HTML",
+    "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-api-gateway"
+  },
+  "environments": {}
 }
