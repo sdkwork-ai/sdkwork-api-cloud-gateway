@@ -3,7 +3,7 @@
 Purpose: historical execution records for agent-led design and implementation work on SDKWork API
 Gateway.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: dated design notes, implementation plans, review notes, and verification summaries
 created during agent execution.
@@ -14,7 +14,7 @@ secrets, local machine state, and replacement copies of root specs.
 Related specs: `../../../sdkwork-specs/DOCUMENTATION_SPEC.md`,
 `../../../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`, and `../../../sdkwork-specs/README.md`.
 
-Verification: run `cargo test -p sdkwork-api-gateway-config` when changing these work records or
+Verification: run `cargo test -p sdkwork-api-cloud-gateway-config` when changing these work records or
 their guardrails.
 
 These files are historical execution records and are not the current source of truth for gateway

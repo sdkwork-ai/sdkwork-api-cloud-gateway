@@ -3,7 +3,7 @@
 Purpose: thin command entrypoints for SDKWork API Gateway build, workflow, package, and validation
 tasks.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: small Node, PowerShell, shell, or other command wrappers that call canonical build,
 test, workflow, package, or release commands.

@@ -2,7 +2,7 @@
 
 Purpose: reusable developer, validation, generation, migration, and operator tools.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: reusable validators, generators, migration tools, parsers, CLIs, and operator utilities.
 

@@ -2,14 +2,14 @@
   "$schema": "../sdkwork-github-workflow/schemas/sdkwork-workflow.schema.json",
   "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
   "app": {
-    "id": "sdkwork-api-gateway",
+    "id": "sdkwork-api-cloud-gateway",
     "name": "SDKWork API Gateway",
-    "repository": "Sdkwork-Cloud/sdkwork-api-gateway",
+    "repository": "Sdkwork-Cloud/sdkwork-api-cloud-gateway",
     "sourcePath": ".",
     "configPath": "sdkwork.app.config.json"
   },
   "release": {
-    "artifactPrefix": "sdkwork-api-gateway",
+    "artifactPrefix": "sdkwork-api-cloud-gateway",
     "defaultVersion": "0.1.0",
     "changelog": {
       "source": "auto",
@@ -92,7 +92,7 @@
       "deploymentProfile": "standalone",
       "runtimeTarget": "server",
       "outputGlobs": [
-        "dist/server/sdkwork-api-gateway-*-linux-x64-server.tar.gz"
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-server.tar.gz"
       ]
     }
   ],

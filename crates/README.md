@@ -2,7 +2,7 @@
 
 Purpose: authored Rust crates for the SDKWork API Gateway application root.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: gateway library crates, API server crates, config, registry, observability, focused
 Rust modules, package-local tests, and crate-local component metadata when required.

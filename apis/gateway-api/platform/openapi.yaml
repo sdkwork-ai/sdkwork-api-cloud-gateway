@@ -4,7 +4,7 @@
     "title": "SDKWork API Gateway",
     "version": "0.1.0",
     "description": "Gateway-owned health, readiness, and OpenAPI discovery surfaces.",
-    "x-sdkwork-api-authority": "sdkwork-api-gateway",
+    "x-sdkwork-api-authority": "sdkwork-api-cloud-gateway",
     "x-sdkwork-api-surface": "gateway-api"
   },
   "paths": {

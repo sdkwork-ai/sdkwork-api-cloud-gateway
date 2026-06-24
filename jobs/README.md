@@ -2,7 +2,7 @@
 
 Purpose: scheduled jobs, queue bindings, batch descriptors, and maintenance runbooks.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: job schedules, queue configuration examples, batch operation descriptors, and runbooks.
 

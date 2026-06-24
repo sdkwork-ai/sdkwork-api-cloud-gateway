@@ -19,10 +19,10 @@ layout is governed by `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`.
 
 ## Application Identity
 
-- Application id: `sdkwork-api-gateway`
+- Application id: `sdkwork-api-cloud-gateway`
 - Runtime family: Rust backend service
-- Primary service process: `crates/sdkwork-api-gateway-api-server`
-- Public gateway crate: `crates/sdkwork-api-gateway`
+- Primary service process: `crates/sdkwork-api-cloud-gateway-api-server`
+- Public gateway crate: `crates/sdkwork-api-cloud-gateway`
 - Manifest source of truth: `sdkwork.app.config.json`
 - Component contract: `specs/component.spec.json`
 
@@ -46,6 +46,12 @@ layout is governed by `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`.
   in `tools/` or a crate.
 - `docs/`: repository documentation and historical execution records. `docs/superpowers/` is
   historical only and is not a current source of truth.
+
+## Documentation Canon
+
+- [docs/README.md](docs/README.md)
+- [docs/product/prd/PRD.md](docs/product/prd/PRD.md)
+- [docs/architecture/tech/TECH_ARCHITECTURE.md](docs/architecture/tech/TECH_ARCHITECTURE.md)
 
 ## Spec Resolution Order
 
@@ -111,8 +117,8 @@ temporary bind address and stop the process after the check.
 
 ## Agent Execution Rules
 
-- The gateway supports independent startup through `crates/sdkwork-api-gateway-api-server` and
-  embedding through public router builders from `sdkwork-api-gateway`.
+- The gateway supports independent startup through `crates/sdkwork-api-cloud-gateway-api-server` and
+  embedding through public router builders from `sdkwork-api-cloud-gateway`.
 - Gateway integration authority is Cargo-workspace-first. Do not create a separate gateway catalog;
   use root `Cargo.toml`, crate Cargo features, `sdkwork.app.config.json`, and
   `specs/component.spec.json`.
@@ -122,7 +128,7 @@ temporary bind address and stop the process after the check.
 - Split mode requires upstream dependency base URLs at startup. Embedded mode requires an executable
   embedded router for each required dependency surface when no upstream is configured.
 - `sdkwork-claw-router`, `sdkwork-im`, and other applications should integrate foundation APIs through
-  `sdkwork-api-gateway` instead of directly depending on those APIs themselves.
+  `sdkwork-api-cloud-gateway` instead of directly depending on those APIs themselves.
 - Do not hand-edit generated SDK output. Fix the source contract, generator input, approved facade,
   or Cargo workspace dependency and then regenerate through the approved toolchain.
 

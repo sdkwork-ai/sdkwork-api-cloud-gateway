@@ -2,7 +2,7 @@
 
 Purpose: source-controlled SDKWork workspace metadata for this application root.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: application-local agent skills, application-local agent plugin bundles,
 non-secret workspace metadata, and optional manifests that support repository automation without
@@ -24,5 +24,5 @@ Related specs: `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`, `../sdkwork-specs/A
 and `../sdkwork-specs/SOUL.md`.
 
 Verification: follow `AGENTS.md` for execution order and run
-`cargo test -p sdkwork-api-gateway-config sdkwork_workspace_readmes_follow_repository_workspace_standard`
+`cargo test -p sdkwork-api-cloud-gateway-config sdkwork_workspace_readmes_follow_repository_workspace_standard`
 when changing `.sdkwork/` documentation or workspace metadata.

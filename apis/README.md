@@ -2,7 +2,7 @@
 
 Purpose: authored API contract inputs for SDKWork API Gateway owned surfaces.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: OpenAPI/RPC/event contracts, API examples, changelogs, route materialization inputs, and validation fixtures owned by this gateway.
 

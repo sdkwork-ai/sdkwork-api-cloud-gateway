@@ -3,7 +3,7 @@
 Purpose: SDK family workspaces, SDK generation manifests, authority materialization outputs, and
 generated SDK artifacts owned by SDKWork API Gateway.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: gateway-owned SDK family workspaces, generated SDK language packages, SDK assembly
 metadata, SDK component specs, and generation inputs derived from gateway-owned API authorities.

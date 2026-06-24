@@ -2,7 +2,7 @@
 
 Purpose: cross-package, contract, integration, end-to-end, fixture, and static verification content.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: repository-level test fixtures, static checks, contract tests, and integration/e2e test harnesses.
 

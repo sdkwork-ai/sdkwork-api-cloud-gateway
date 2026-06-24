@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "kind": "sdkwork.component.spec",
   "component": {
-    "name": "sdkwork-api-gateway",
+    "name": "sdkwork-api-cloud-gateway",
     "displayName": "SDKWork API Gateway",
     "version": "0.1.0",
-    "type": "web-backend-service",
+    "type": "rust-platform-cloud-gateway",
     "root": ".",
     "domain": "platform",
     "capability": "api-gateway",
-    "surface": "backend",
+    "surface": "gateway-api",
     "languages": ["rust", "javascript", "node"],
     "generated": false,
     "manifests": [
@@ -100,22 +100,22 @@
   ],
   "contracts": {
     "publicExports": [
-      "sdkwork-api-gateway",
-      "sdkwork-api-gateway-api-server"
+      "sdkwork-api-cloud-gateway",
+      "sdkwork-api-cloud-gateway-api-server"
     ],
     "runtimeEntrypoints": [
-      "sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router",
-      "sdkwork_api_gateway::build_sdkwork_api_gateway_router",
-      "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_registry",
-      "sdkwork_api_gateway::build_sdkwork_api_gateway_router_with_embedded_routers",
-      "sdkwork_api_gateway::web_framework::finalize_gateway_router",
-      "sdkwork_api_gateway::web_framework::finalize_gateway_router_async",
-      "sdkwork_api_gateway::web_framework::split_proxy_call_chain",
-      "sdkwork_api_gateway::web_framework::web_framework_enabled",
-      "sdkwork_api_gateway::web_framework::parse_web_framework_toggle",
-      "sdkwork_api_gateway_api_server::load_gateway_config",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_api_server_router",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_registry",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
+      "sdkwork_api_cloud_gateway::web_framework::finalize_gateway_router",
+      "sdkwork_api_cloud_gateway::web_framework::finalize_gateway_router_async",
+      "sdkwork_api_cloud_gateway::web_framework::split_proxy_call_chain",
+      "sdkwork_api_cloud_gateway::web_framework::web_framework_enabled",
+      "sdkwork_api_cloud_gateway::web_framework::parse_web_framework_toggle",
+      "sdkwork_api_cloud_gateway_api_server::load_gateway_config",
       "package.json#scripts.dev",
-      "cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway"
+      "cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway"
     ],
     "routeManifest": null,
     "sdkClients": [],
@@ -139,14 +139,14 @@
       "sdkwork.workflow.json"
     ]
   },
-  "componentId": "sdkwork-api-gateway",
+  "componentId": "sdkwork-api-cloud-gateway",
   "componentType": "backend-service",
   "runtime": "rust-axum",
   "gatewayIntegration": {
     "authority": "cargo-workspace",
     "catalogPolicy": "no-dedicated-gateway-catalog",
     "cargoWorkspaceRoot": "Cargo.toml",
-    "runtimeFeatureAuthority": "crates/sdkwork-api-gateway/Cargo.toml",
+    "runtimeFeatureAuthority": "crates/sdkwork-api-cloud-gateway/Cargo.toml",
     "webFramework": {
       "workspace": "sdkwork-web-framework",
       "cargoDependencies": [
@@ -169,18 +169,18 @@
   "entrypoints": [
     {
       "kind": "binary",
-      "path": "crates/sdkwork-api-gateway-api-server",
-      "name": "sdkwork-api-gateway"
+      "path": "crates/sdkwork-api-cloud-gateway-api-server",
+      "name": "sdkwork-api-cloud-gateway"
     },
     {
       "kind": "library",
-      "path": "crates/sdkwork-api-gateway",
+      "path": "crates/sdkwork-api-cloud-gateway",
       "exports": [
-        "build_sdkwork_api_gateway_api_server_router",
-        "build_sdkwork_api_gateway_router",
-        "build_sdkwork_api_gateway_router_with_registry",
-        "build_sdkwork_api_gateway_router_with_embedded_routers",
-        "build_sdkwork_api_gateway_router_with_embedded_appbase",
+        "build_sdkwork_api_cloud_gateway_api_server_router",
+        "build_sdkwork_api_cloud_gateway_router",
+        "build_sdkwork_api_cloud_gateway_router_with_registry",
+        "build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
+        "build_sdkwork_api_cloud_gateway_router_with_embedded_appbase",
         "build_embedded_sdkwork_appbase_app_api_router",
         "web_framework_enabled",
         "parse_web_framework_toggle",
@@ -191,7 +191,7 @@
     },
     {
       "kind": "library",
-      "path": "crates/sdkwork-api-gateway-api-server",
+      "path": "crates/sdkwork-api-cloud-gateway-api-server",
       "exports": [
         "load_gateway_config",
         "config_path_from_args"
@@ -434,6 +434,48 @@
       "prefix": "/community/v3/api",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-community-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/cms",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cms-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/cms",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cms-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/cms/v3/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cms-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/forum",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-forum-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/forum",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-forum-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/forum/v3/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-forum-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -939,6 +981,78 @@
       "coverage": "course-backend-api-upstream-routes"
     },
     {
+      "serviceId": "sdkwork-cms-app-api",
+      "workspace": "sdkwork-cms",
+      "apiAuthority": "sdkwork-cms-app-api",
+      "sdkFamily": "sdkwork-cms-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_CMS_APP_API_BASE_URL",
+      "cargoFeature": "foundation-cms",
+      "cargoDependency": "sdkwork_router_cms_app_api",
+      "embeddedExecutableExport": "sdkwork_router_cms_app_api::build_sdkwork_cms_app_api_router",
+      "coverage": "cms-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-cms-backend-api",
+      "workspace": "sdkwork-cms",
+      "apiAuthority": "sdkwork-cms-backend-api",
+      "sdkFamily": "sdkwork-cms-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_CMS_BACKEND_API_BASE_URL",
+      "cargoFeature": "foundation-cms",
+      "cargoDependency": "sdkwork_router_cms_backend_api",
+      "embeddedExecutableExport": "sdkwork_router_cms_backend_api::build_sdkwork_cms_backend_api_router",
+      "coverage": "cms-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-cms-open-api",
+      "workspace": "sdkwork-cms",
+      "apiAuthority": "sdkwork-cms-open-api",
+      "sdkFamily": "sdkwork-cms-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_CMS_OPEN_API_BASE_URL",
+      "cargoFeature": "foundation-cms",
+      "cargoDependency": "sdkwork_router_cms_open_api",
+      "embeddedExecutableExport": "sdkwork_router_cms_open_api::build_sdkwork_cms_open_api_router",
+      "coverage": "cms-open-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-forum-app-api",
+      "workspace": "sdkwork-forum",
+      "apiAuthority": "sdkwork-forum-app-api",
+      "sdkFamily": "sdkwork-forum-app-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_FORUM_APP_API_BASE_URL",
+      "cargoFeature": "foundation-forum",
+      "cargoDependency": "sdkwork_router_forum_app_api",
+      "embeddedExecutableExport": "sdkwork_router_forum_app_api::build_sdkwork_forum_app_api_router",
+      "coverage": "forum-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-forum-backend-api",
+      "workspace": "sdkwork-forum",
+      "apiAuthority": "sdkwork-forum-backend-api",
+      "sdkFamily": "sdkwork-forum-backend-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_FORUM_BACKEND_API_BASE_URL",
+      "cargoFeature": "foundation-forum",
+      "cargoDependency": "sdkwork_router_forum_backend_api",
+      "embeddedExecutableExport": "sdkwork_router_forum_backend_api::build_sdkwork_forum_backend_api_router",
+      "coverage": "forum-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-forum-open-api",
+      "workspace": "sdkwork-forum",
+      "apiAuthority": "sdkwork-forum-open-api",
+      "sdkFamily": "sdkwork-forum-sdk",
+      "runtimeModes": ["split", "embedded"],
+      "requiredBaseUrlKey": "SDKWORK_FORUM_OPEN_API_BASE_URL",
+      "cargoFeature": "foundation-forum",
+      "cargoDependency": "sdkwork_router_forum_open_api",
+      "embeddedExecutableExport": "sdkwork_router_forum_open_api::build_sdkwork_forum_open_api_router",
+      "coverage": "forum-open-api-upstream-routes"
+    },
+    {
       "serviceId": "sdkwork-im-im-http",
       "workspace": "sdkwork-im",
       "apiAuthority": "sdkwork-im-im-http",
@@ -965,8 +1079,8 @@
       "sdkwork-appbase-app-api is restricted to appbase IAM dependency route patterns",
       "sdkwork-appbase-backend-api is restricted to backend IAM dependency route patterns",
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
-      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
-      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
+      "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, CMS, Forum, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
+      "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, CMS, Forum, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
       "sdkwork-im-im-http routes /im/v3/api/* paths for IM presence, realtime, chat, social, streams, calls, and media APIs",
       "sdkwork-im-backend-http routes /backend/v3/api/control/*, /backend/v3/api/audit/*, and /backend/v3/api/ops/* paths for control plane, audit, and operations APIs",
       "sdkwork-claw-gateway routes /v1/* paths for OpenAI-compatible API passthrough",
@@ -983,8 +1097,8 @@
   "verification": {
     "commands": [
       "cargo metadata --no-deps --format-version 1",
-      "cargo test -p sdkwork-api-gateway-config",
-      "cargo test -p sdkwork-api-gateway",
+      "cargo test -p sdkwork-api-cloud-gateway-config",
+      "cargo test -p sdkwork-api-cloud-gateway",
       "cargo fmt -- --check",
       "cargo test --workspace",
       "pnpm check",
@@ -1002,7 +1116,7 @@
     "cors": {
       "configField": "cors",
       "strictOriginMode": "cors.allowAnyOrigin=false with cors.allowedOrigins",
-      "splitModeAuthority": "sdkwork-web-framework SecurityPolicy.cors when SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED=true"
+      "splitModeAuthority": "sdkwork-web-framework SecurityPolicy.cors when SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED=true"
     },
     "configValidation": {
       "phase": "startup-after-toml-manifest-env-merge",
@@ -1041,7 +1155,7 @@
         "enabledBy": "observability.auditLogEnabled",
         "sampleRateField": "observability.auditLogSampleRateBasisPoints",
         "sampleRateRangeBasisPoints": [0, 10000],
-        "target": "sdkwork_api_gateway::audit",
+        "target": "sdkwork_api_cloud_gateway::audit",
         "decisionSources": [
           "security.waf",
           "security.allowedHosts",
@@ -1073,15 +1187,15 @@
         "pathField": "observability.metricsPath",
         "format": "prometheus-text",
         "series": [
-          "sdkwork_api_gateway_build_info",
-          "sdkwork_api_gateway_http_requests_total",
-          "sdkwork_api_gateway_http_request_duration_seconds",
-          "sdkwork_api_gateway_upstream_requests_total",
-          "sdkwork_api_gateway_security_events_total",
-          "sdkwork_api_gateway_traffic_rejections_total",
-          "sdkwork_api_gateway_policy_rejections_total",
-          "sdkwork_api_gateway_policy_dry_run_total",
-          "sdkwork_api_gateway_resilience_events_total"
+          "sdkwork_api_cloud_gateway_build_info",
+          "sdkwork_api_cloud_gateway_http_requests_total",
+          "sdkwork_api_cloud_gateway_http_request_duration_seconds",
+          "sdkwork_api_cloud_gateway_upstream_requests_total",
+          "sdkwork_api_cloud_gateway_security_events_total",
+          "sdkwork_api_cloud_gateway_traffic_rejections_total",
+          "sdkwork_api_cloud_gateway_policy_rejections_total",
+          "sdkwork_api_cloud_gateway_policy_dry_run_total",
+          "sdkwork_api_cloud_gateway_resilience_events_total"
         ],
         "histogramBucketsSeconds": [
           0.005,
@@ -1230,8 +1344,8 @@
       ],
       "metrics": {
         "series": [
-          "sdkwork_api_gateway_policy_rejections_total",
-          "sdkwork_api_gateway_policy_dry_run_total"
+          "sdkwork_api_cloud_gateway_policy_rejections_total",
+          "sdkwork_api_cloud_gateway_policy_dry_run_total"
         ],
         "labels": [
           "service",
@@ -1315,7 +1429,7 @@
     "generatedRequestIdFormat": "uuid-v4",
     "webFramework": {
       "enabledByDefault": true,
-      "toggleEnv": "SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED",
+      "toggleEnv": "SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED",
       "splitMode": {
         "pipeline": "sdkwork-web-framework-standard-plus-unknown-surface-bypass",
         "interceptorCount": 19,

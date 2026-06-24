@@ -1,0 +1,1525 @@
+mode = "split"
+
+[service]
+name = "sdkwork-api-cloud-gateway"
+environment = "production"
+
+[server]
+bind = "0.0.0.0:3900"
+
+[[upstreams]]
+serviceId = "sdkwork-appbase-app-api"
+baseUrl = "https://appbase.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-drive-app-api"
+baseUrl = "https://drive.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-notary-app-api"
+baseUrl = "https://notary.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-appbase-backend-api"
+baseUrl = "https://appbase-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-commerce-app-api"
+baseUrl = "https://commerce-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-commerce-backend-api"
+baseUrl = "https://commerce-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-rtc-app-api"
+baseUrl = "https://rtc-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-rtc-backend-api"
+baseUrl = "https://rtc-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-agent-app-api"
+baseUrl = "https://agent-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-agent-backend-api"
+baseUrl = "https://agent-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-agent-open-api"
+baseUrl = "https://agent-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-aiot-app-api"
+baseUrl = "https://aiot-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-aiot-backend-api"
+baseUrl = "https://aiot-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-drive-backend-api"
+baseUrl = "https://drive-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-drive-open-api"
+baseUrl = "https://drive-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-drive-admin-storage-api"
+baseUrl = "https://drive-admin-storage.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-notary-backend-api"
+baseUrl = "https://notary-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-memory-app-api"
+baseUrl = "https://memory-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-memory-backend-api"
+baseUrl = "https://memory-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-memory-open-api"
+baseUrl = "https://memory-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-knowledgebase-app-api"
+baseUrl = "https://knowledgebase-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-knowledgebase-backend-api"
+baseUrl = "https://knowledgebase-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-knowledgebase-open-api"
+baseUrl = "https://knowledgebase-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-news-app-api"
+baseUrl = "https://news-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-news-backend-api"
+baseUrl = "https://news-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-news-open-api"
+baseUrl = "https://news-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-notes-app-api"
+baseUrl = "https://notes-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-notes-backend-api"
+baseUrl = "https://notes-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-notes-open-api"
+baseUrl = "https://notes-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-music-app-api"
+baseUrl = "https://music-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-music-backend-api"
+baseUrl = "https://music-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-generations-app-api"
+baseUrl = "https://generations-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-generations-backend-api"
+baseUrl = "https://generations-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-community-app-api"
+baseUrl = "https://community-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-community-backend-api"
+baseUrl = "https://community-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-community-open-api"
+baseUrl = "https://community-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-search-app-api"
+baseUrl = "https://search-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-search-backend-api"
+baseUrl = "https://search-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-voice-app-api"
+baseUrl = "https://voice-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-voice-backend-api"
+baseUrl = "https://voice-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-image-app-api"
+baseUrl = "https://image-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-image-backend-api"
+baseUrl = "https://image-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-image-open-api"
+baseUrl = "https://image-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-comments-app-api"
+baseUrl = "https://comments-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-comments-backend-api"
+baseUrl = "https://comments-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-course-app-api"
+baseUrl = "https://course-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-course-backend-api"
+baseUrl = "https://course-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-messaging-app-api"
+baseUrl = "https://messaging-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-messaging-backend-api"
+baseUrl = "https://messaging-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-cms-app-api"
+baseUrl = "https://cms-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-cms-backend-api"
+baseUrl = "https://cms-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-cms-open-api"
+baseUrl = "https://cms-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-forum-app-api"
+baseUrl = "https://forum-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-forum-backend-api"
+baseUrl = "https://forum-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-forum-open-api"
+baseUrl = "https://forum-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-im-im-http"
+baseUrl = "https://im.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-im-backend-http"
+baseUrl = "https://im-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-claw-gateway"
+baseUrl = "https://claw-gateway.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-appstore-app-api"
+baseUrl = "https://appstore-app.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-appstore-backend-api"
+baseUrl = "https://appstore-backend.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[upstreams]]
+serviceId = "sdkwork-appstore-open-api"
+baseUrl = "https://appstore-open.example.com"
+required = true
+timeoutMs = 30000
+readinessPath = "/healthz"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appbase-app-api"
+workspace = "sdkwork-appbase"
+sdkFamily = "sdkwork-appbase-app-sdk"
+apiAuthority = "sdkwork-appbase-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api"
+runtimeMode = "split-or-embedded"
+sameOriginAllowed = false
+executableExport = "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
+cargoFeature = "foundation-appbase"
+cargoDependency = "sdkwork_router_iam_app_api"
+coverage = "appbase-iam-routes"
+requiredBaseUrlKey = "SDKWORK_APPBASE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-drive-app-api"
+workspace = "sdkwork-drive"
+sdkFamily = "sdkwork-drive-app-sdk"
+apiAuthority = "sdkwork-drive-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/drive"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "drive-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_DRIVE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-notary-app-api"
+workspace = "sdkwork-notary"
+sdkFamily = "sdkwork-notary-app-sdk"
+apiAuthority = "sdkwork-notary-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/notary"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "notary-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NOTARY_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appbase-backend-api"
+workspace = "sdkwork-appbase"
+sdkFamily = "sdkwork-appbase-backend-sdk"
+apiAuthority = "sdkwork-appbase-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/iam"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appbase-backend-iam-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPBASE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-commerce-app-api"
+workspace = "sdkwork-commerce"
+sdkFamily = "sdkwork-commerce-app-sdk"
+apiAuthority = "sdkwork-commerce-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "commerce-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMERCE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-commerce-backend-api"
+workspace = "sdkwork-commerce"
+sdkFamily = "sdkwork-commerce-backend-sdk"
+apiAuthority = "sdkwork-commerce-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "commerce-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMERCE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-rtc-app-api"
+workspace = "sdkwork-rtc"
+sdkFamily = "sdkwork-rtc-app-sdk"
+apiAuthority = "sdkwork-rtc-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/rtc"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "rtc-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_RTC_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-rtc-backend-api"
+workspace = "sdkwork-rtc"
+sdkFamily = "sdkwork-rtc-backend-sdk"
+apiAuthority = "sdkwork-rtc-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/rtc"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "rtc-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_RTC_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-agent-app-api"
+workspace = "sdkwork-kernel"
+sdkFamily = "sdkwork-agent-app-sdk"
+apiAuthority = "sdkwork-agent-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/ai"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "agent-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_AGENT_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-agent-backend-api"
+workspace = "sdkwork-kernel"
+sdkFamily = "sdkwork-agent-backend-sdk"
+apiAuthority = "sdkwork-agent-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/ai"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "agent-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_AGENT_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-agent-open-api"
+workspace = "sdkwork-kernel"
+sdkFamily = "sdkwork-agent-sdk"
+apiAuthority = "sdkwork-agent-open-api"
+surface = "open"
+apiPrefix = "/agent/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "agent-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_AGENT_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-aiot-app-api"
+workspace = "sdkwork-aiot"
+sdkFamily = "sdkwork-aiot-app-sdk"
+apiAuthority = "sdkwork-aiot-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/iot"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "aiot-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_AIOT_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-aiot-backend-api"
+workspace = "sdkwork-aiot"
+sdkFamily = "sdkwork-aiot-backend-sdk"
+apiAuthority = "sdkwork-aiot-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/iot"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "aiot-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_AIOT_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-drive-backend-api"
+workspace = "sdkwork-drive"
+sdkFamily = "sdkwork-drive-backend-sdk"
+apiAuthority = "sdkwork-drive.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/drive"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "drive-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_DRIVE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-drive-open-api"
+workspace = "sdkwork-drive"
+sdkFamily = "sdkwork-drive-sdk"
+apiAuthority = "sdkwork-drive.open"
+surface = "open"
+apiPrefix = "/open/v3/api/drive"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "drive-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_DRIVE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-drive-admin-storage-api"
+workspace = "sdkwork-drive"
+sdkFamily = "sdkwork-drive-admin-storage-sdk"
+apiAuthority = "sdkwork-drive.admin.storage"
+surface = "admin"
+apiPrefix = "/admin/v3/api/drive"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "drive-admin-storage-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-notary-backend-api"
+workspace = "sdkwork-notary"
+sdkFamily = "sdkwork-notary-backend-sdk"
+apiAuthority = "sdkwork-notary.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/notary"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "notary-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NOTARY_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-memory-app-api"
+workspace = "sdkwork-memory"
+sdkFamily = "sdkwork-memory-app-sdk"
+apiAuthority = "sdkwork-memory.app"
+surface = "app"
+apiPrefix = "/app/v3/api/memory"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "memory-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MEMORY_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-memory-backend-api"
+workspace = "sdkwork-memory"
+sdkFamily = "sdkwork-memory-backend-sdk"
+apiAuthority = "sdkwork-memory.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/memory"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "memory-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MEMORY_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-memory-open-api"
+workspace = "sdkwork-memory"
+sdkFamily = "sdkwork-memory-sdk"
+apiAuthority = "sdkwork-memory-open-api"
+surface = "open"
+apiPrefix = "/mem/v3/api/memory"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "memory-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MEMORY_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-knowledgebase-app-api"
+workspace = "sdkwork-knowledgebase"
+sdkFamily = "sdkwork-knowledgebase-app-sdk"
+apiAuthority = "sdkwork-knowledgebase.app"
+surface = "app"
+apiPrefix = "/app/v3/api/knowledge"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "knowledgebase-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-knowledgebase-backend-api"
+workspace = "sdkwork-knowledgebase"
+sdkFamily = "sdkwork-knowledgebase-backend-sdk"
+apiAuthority = "sdkwork-knowledgebase.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/knowledge"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "knowledgebase-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-knowledgebase-open-api"
+workspace = "sdkwork-knowledgebase"
+sdkFamily = "sdkwork-knowledgebase-sdk"
+apiAuthority = "sdkwork-knowledgebase.open"
+surface = "open"
+apiPrefix = "/knowledge/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "knowledgebase-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-news-app-api"
+workspace = "sdkwork-news"
+sdkFamily = "sdkwork-news-app-sdk"
+apiAuthority = "sdkwork-news.app"
+surface = "app"
+apiPrefix = "/app/v3/api/news"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "news-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NEWS_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-news-backend-api"
+workspace = "sdkwork-news"
+sdkFamily = "sdkwork-news-backend-sdk"
+apiAuthority = "sdkwork-news.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/news"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "news-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NEWS_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-news-open-api"
+workspace = "sdkwork-news"
+sdkFamily = "sdkwork-news-sdk"
+apiAuthority = "sdkwork-news.open"
+surface = "open"
+apiPrefix = "/open/v3/api/news"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "news-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NEWS_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-notes-app-api"
+workspace = "sdkwork-notes"
+sdkFamily = "sdkwork-notes-app-sdk"
+apiAuthority = "sdkwork-notes-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/notes"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "notes-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NOTES_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-notes-backend-api"
+workspace = "sdkwork-notes"
+sdkFamily = "sdkwork-notes-backend-sdk"
+apiAuthority = "sdkwork-notes-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/notes"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "notes-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NOTES_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-notes-open-api"
+workspace = "sdkwork-notes"
+sdkFamily = "sdkwork-notes-sdk"
+apiAuthority = "sdkwork-notes-open-api"
+surface = "open"
+apiPrefix = "/notes/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "notes-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_NOTES_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-music-app-api"
+workspace = "sdkwork-music"
+sdkFamily = "sdkwork-music-app-sdk"
+apiAuthority = "sdkwork-music-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/music"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "music-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MUSIC_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-music-backend-api"
+workspace = "sdkwork-music"
+sdkFamily = "sdkwork-music-backend-sdk"
+apiAuthority = "sdkwork-music-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/music"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "music-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MUSIC_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-generations-app-api"
+workspace = "sdkwork-generations"
+sdkFamily = "sdkwork-generations-app-sdk"
+apiAuthority = "sdkwork-generations-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/generations"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "generations-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_GENERATIONS_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-generations-backend-api"
+workspace = "sdkwork-generations"
+sdkFamily = "sdkwork-generations-backend-sdk"
+apiAuthority = "sdkwork-generations-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/generations"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "generations-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_GENERATIONS_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-community-app-api"
+workspace = "sdkwork-community"
+sdkFamily = "sdkwork-community-app-sdk"
+apiAuthority = "sdkwork-community.app"
+surface = "app"
+apiPrefix = "/app/v3/api/community"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "community-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMUNITY_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-community-backend-api"
+workspace = "sdkwork-community"
+sdkFamily = "sdkwork-community-backend-sdk"
+apiAuthority = "sdkwork-community.backend"
+surface = "backend"
+apiPrefix = "/backend/v3/api/community"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "community-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMUNITY_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-community-open-api"
+workspace = "sdkwork-community"
+sdkFamily = "sdkwork-community-sdk"
+apiAuthority = "sdkwork-community.open"
+surface = "open"
+apiPrefix = "/community/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "community-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMUNITY_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-search-app-api"
+workspace = "sdkwork-search"
+sdkFamily = "sdkwork-search-app-sdk"
+apiAuthority = "sdkwork-search-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/search"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "search-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_SEARCH_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-search-backend-api"
+workspace = "sdkwork-search"
+sdkFamily = "sdkwork-search-backend-sdk"
+apiAuthority = "sdkwork-search-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/search"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "search-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_SEARCH_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-voice-app-api"
+workspace = "sdkwork-voice"
+sdkFamily = "sdkwork-voice-app-sdk"
+apiAuthority = "sdkwork-voice-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/voice"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "voice-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_VOICE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-voice-backend-api"
+workspace = "sdkwork-voice"
+sdkFamily = "sdkwork-voice-backend-sdk"
+apiAuthority = "sdkwork-voice-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/voice"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "voice-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_VOICE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-image-app-api"
+workspace = "sdkwork-image"
+sdkFamily = "sdkwork-image-app-sdk"
+apiAuthority = "sdkwork-image-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/image"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "image-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_IMAGE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-image-backend-api"
+workspace = "sdkwork-image"
+sdkFamily = "sdkwork-image-backend-sdk"
+apiAuthority = "sdkwork-image-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/image"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "image-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_IMAGE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-image-open-api"
+workspace = "sdkwork-image"
+sdkFamily = "sdkwork-image-sdk"
+apiAuthority = "sdkwork-image-open-api"
+surface = "open"
+apiPrefix = "/image/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "image-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_IMAGE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-comments-app-api"
+workspace = "sdkwork-comments"
+sdkFamily = "sdkwork-comments-app-sdk"
+apiAuthority = "sdkwork-comments-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/comments"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "comments-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMENTS_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-comments-app-api"
+workspace = "sdkwork-comments"
+sdkFamily = "sdkwork-comments-app-sdk"
+apiAuthority = "sdkwork-comments-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/engagement"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "comments-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMENTS_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-comments-backend-api"
+workspace = "sdkwork-comments"
+sdkFamily = "sdkwork-comments-backend-sdk"
+apiAuthority = "sdkwork-comments-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/comments"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "comments-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMENTS_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-comments-backend-api"
+workspace = "sdkwork-comments"
+sdkFamily = "sdkwork-comments-backend-sdk"
+apiAuthority = "sdkwork-comments-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/engagement"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "comments-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COMMENTS_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-app-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-app-sdk"
+apiAuthority = "sdkwork-course-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/courses"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-app-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-app-sdk"
+apiAuthority = "sdkwork-course-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/course_applications"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-backend-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-backend-sdk"
+apiAuthority = "sdkwork-course-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/courses"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-backend-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-backend-sdk"
+apiAuthority = "sdkwork-course-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/course_applications"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-backend-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-backend-sdk"
+apiAuthority = "sdkwork-course-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/course_lessons"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-course-backend-api"
+workspace = "sdkwork-course"
+sdkFamily = "sdkwork-course-backend-sdk"
+apiAuthority = "sdkwork-course-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/course_sections"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "course-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_COURSE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-messaging-app-api"
+workspace = "sdkwork-messaging"
+sdkFamily = "sdkwork-messaging-app-sdk"
+apiAuthority = "sdkwork-messaging-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/messaging"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "messaging-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MESSAGING_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-messaging-backend-api"
+workspace = "sdkwork-messaging"
+sdkFamily = "sdkwork-messaging-backend-sdk"
+apiAuthority = "sdkwork-messaging-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/messaging"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "messaging-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_MESSAGING_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-cms-app-api"
+workspace = "sdkwork-cms"
+sdkFamily = "sdkwork-cms-app-sdk"
+apiAuthority = "sdkwork-cms-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/cms"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "cms-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_CMS_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-cms-backend-api"
+workspace = "sdkwork-cms"
+sdkFamily = "sdkwork-cms-backend-sdk"
+apiAuthority = "sdkwork-cms-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/cms"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "cms-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_CMS_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-cms-open-api"
+workspace = "sdkwork-cms"
+sdkFamily = "sdkwork-cms-sdk"
+apiAuthority = "sdkwork-cms-open-api"
+surface = "open"
+apiPrefix = "/cms/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "cms-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_CMS_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-forum-app-api"
+workspace = "sdkwork-forum"
+sdkFamily = "sdkwork-forum-app-sdk"
+apiAuthority = "sdkwork-forum-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/forum"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "forum-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_FORUM_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-forum-backend-api"
+workspace = "sdkwork-forum"
+sdkFamily = "sdkwork-forum-backend-sdk"
+apiAuthority = "sdkwork-forum-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/forum"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "forum-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_FORUM_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-forum-open-api"
+workspace = "sdkwork-forum"
+sdkFamily = "sdkwork-forum-sdk"
+apiAuthority = "sdkwork-forum-open-api"
+surface = "open"
+apiPrefix = "/forum/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "forum-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_FORUM_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-im-im-http"
+workspace = "sdkwork-im"
+sdkFamily = "sdkwork-im-app-sdk"
+apiAuthority = "sdkwork-im-im-http"
+surface = "app"
+apiPrefix = "/im/v3/api"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "sdkwork-im-im-api-upstream-routes"
+requiredBaseUrlKey = "CRAW_CHAT_IM_HTTP_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-im-backend-http"
+workspace = "sdkwork-im"
+sdkFamily = "sdkwork-im-backend-sdk"
+apiAuthority = "sdkwork-im-backend-http"
+surface = "backend"
+apiPrefix = "/backend/v3/api/control"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "sdkwork-im-backend-api-upstream-routes"
+requiredBaseUrlKey = "CRAW_CHAT_BACKEND_HTTP_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-im-backend-http"
+workspace = "sdkwork-im"
+sdkFamily = "sdkwork-im-backend-sdk"
+apiAuthority = "sdkwork-im-backend-http"
+surface = "backend"
+apiPrefix = "/backend/v3/api/audit"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "sdkwork-im-backend-api-upstream-routes"
+requiredBaseUrlKey = "CRAW_CHAT_BACKEND_HTTP_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-im-backend-http"
+workspace = "sdkwork-im"
+sdkFamily = "sdkwork-im-backend-sdk"
+apiAuthority = "sdkwork-im-backend-http"
+surface = "backend"
+apiPrefix = "/backend/v3/api/ops"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "sdkwork-im-backend-api-upstream-routes"
+requiredBaseUrlKey = "CRAW_CHAT_BACKEND_HTTP_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-claw-gateway"
+workspace = "sdkwork-claw-router"
+sdkFamily = "sdkwork-clawrouter-app-sdk"
+apiAuthority = "sdkwork-claw-gateway"
+surface = "open"
+apiPrefix = "/v1"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "claw-gateway-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_CLAW_GATEWAY_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/catalog"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/listings"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/publishers"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/releases"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/compliance"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/library"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/wishlist"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-app-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-app-sdk"
+apiAuthority = "sdkwork-appstore-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/downloadGrants"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-app-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_APP_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/moderation"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/catalog"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/listings"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/publishers"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/market"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-backend-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-backend-sdk"
+apiAuthority = "sdkwork-appstore-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/metrics"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-backend-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-open-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-sdk"
+apiAuthority = "sdkwork-appstore-open-api"
+surface = "open"
+apiPrefix = "/store/v3/api/releases"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-open-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-sdk"
+apiAuthority = "sdkwork-appstore-open-api"
+surface = "open"
+apiPrefix = "/store/v3/api/catalog"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-open-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-sdk"
+apiAuthority = "sdkwork-appstore-open-api"
+surface = "open"
+apiPrefix = "/store/v3/api/listings"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_OPEN_API_BASE_URL"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-appstore-open-api"
+workspace = "sdkwork-appstore"
+sdkFamily = "sdkwork-appstore-sdk"
+apiAuthority = "sdkwork-appstore-open-api"
+surface = "open"
+apiPrefix = "/store/v3/api/automation"
+runtimeMode = "split"
+sameOriginAllowed = false
+coverage = "appstore-open-api-upstream-routes"
+requiredBaseUrlKey = "SDKWORK_APPSTORE_OPEN_API_BASE_URL"
+
+[cors]
+allowAnyOrigin = false
+allowedOrigins = []
+
+[request]
+maxBodyBytes = 33554432
+timeoutMs = 60000
+
+[readiness]
+checkUpstreams = false
+timeoutMs = 1000
+
+[observability]
+accessLogEnabled = true
+auditLogEnabled = true
+accessLogSampleRateBasisPoints = 10000
+auditLogSampleRateBasisPoints = 10000
+metricsEnabled = true
+metricsPath = "/metrics"
+tracingEnabled = true
+redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
+
+[diagnostics]
+enabled = false
+path = "/internal/gateway/diagnostics"
+includePolicyInventory = true
+includeRouteInventory = true
+
+[security]
+allowedHosts = ["api.example.com"]
+trustedProxyCidrs = []
+secureHeadersEnabled = true
+maxHeaderBytes = 65536
+maxHeaderCount = 128
+rejectCredentialHeadersOnAnonymousAuthRoutes = true
+csrfGuardEnabled = false
+
+[security.waf]
+enabled = false
+mode = "monitor"
+inspectQuery = true
+inspectHeaders = true
+inspectJsonBody = false
+
+[traffic]
+rateLimitEnabled = true
+compatXRateLimitHeaders = true
+globalMaxInFlight = 4096
+
+[[traffic.rateLimits]]
+id = "appbase-global"
+matchPathPrefix = "/app/v3/api"
+key = "client-ip"
+algorithm = "token-bucket"
+capacity = 600
+refillPerSecond = 10
+burst = 100
+rejectStatus = 429
+
+[[traffic.concurrencyLimits]]
+id = "appbase-global"
+matchServiceId = "sdkwork-appbase-app-api"
+maxInFlight = 1024
+
+[policy]
+enabled = true
+dryRun = false
+rules = []
+
+[resilience]
+retryEnabled = true
+maxAttempts = 2
+retryStatuses = [502, 503, 504]
+retryBackoffMs = 25
+circuitBreakerEnabled = true
+failureThreshold = 5
+openSeconds = 30
+halfOpenMaxAttempts = 1

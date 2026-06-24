@@ -4,7 +4,7 @@
 
 **Goal:** Make SDKWork API Gateway integration standards rely on Cargo workspace/features and existing SDKWork specs, without adding a separate gateway catalog file.
 
-**Architecture:** `sdkwork-api-gateway` keeps runtime dependency execution in Cargo manifests and router exports. `sdkwork-specs` defines how Cargo evidence, `sdkwork.app.config.json`, `component.spec.json`, and SDK assembly metadata align. Business applications consume `sdkwork-api-gateway` instead of each independently composing foundation API runtimes.
+**Architecture:** `sdkwork-api-cloud-gateway` keeps runtime dependency execution in Cargo manifests and router exports. `sdkwork-specs` defines how Cargo evidence, `sdkwork.app.config.json`, `component.spec.json`, and SDK assembly metadata align. Business applications consume `sdkwork-api-cloud-gateway` instead of each independently composing foundation API runtimes.
 
 **Tech Stack:** Rust Cargo workspace, Axum gateway runtime, JSON component specs, Markdown SDKWork standards.
 
@@ -14,9 +14,9 @@
 
 **Files:**
 - Modify: `Cargo.toml`
-- Modify: `crates/sdkwork-api-gateway/Cargo.toml`
-- Modify: `crates/sdkwork-api-gateway/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway/src/runtime.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/Cargo.toml`
+- Modify: `crates/sdkwork-api-cloud-gateway/src/lib.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/src/runtime.rs`
 
 - [ ] **Step 1: Run a red static check**
 
@@ -25,7 +25,7 @@ Expected: FAIL before editing because the feature is not declared.
 
 - [ ] **Step 2: Add the feature**
 
-Declare `foundation-appbase` in `sdkwork-api-gateway`, make `sdkwork_iam_http` optional there, and keep it in default features.
+Declare `foundation-appbase` in `sdkwork-api-cloud-gateway`, make `sdkwork_iam_http` optional there, and keep it in default features.
 
 - [ ] **Step 3: Gate appbase embedded exports**
 

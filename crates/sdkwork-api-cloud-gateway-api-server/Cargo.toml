@@ -1,0 +1,18 @@
+﻿[package]
+name = "sdkwork-api-cloud-gateway-api-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "sdkwork-api-cloud-gateway"
+path = "src/main.rs"
+
+[dependencies]
+anyhow.workspace = true
+axum.workspace = true
+sdkwork-api-cloud-gateway-config.workspace = true
+sdkwork-api-cloud-gateway.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

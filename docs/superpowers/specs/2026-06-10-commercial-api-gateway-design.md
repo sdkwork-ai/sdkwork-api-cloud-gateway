@@ -2,12 +2,12 @@
 
 ## Goal
 
-Bring `sdkwork-api-gateway` from a working SDKWork dependency gateway to a commercial-grade gateway
+Bring `sdkwork-api-cloud-gateway` from a working SDKWork dependency gateway to a commercial-grade gateway
 foundation with observable, secure, traffic-controlled, resilient, and performant runtime behavior
 while preserving both startup modes:
 
-- standalone service through `crates/sdkwork-api-gateway-api-server`
-- same-process embedding through `sdkwork-api-gateway` router builders
+- standalone service through `crates/sdkwork-api-cloud-gateway-api-server`
+- same-process embedding through `sdkwork-api-cloud-gateway` router builders
 
 ## Constraints
 

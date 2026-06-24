@@ -2,7 +2,7 @@
 
 Purpose: application/runtime plugin source packages.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: installable runtime extension source packages and plugin component specs.
 

@@ -29,6 +29,6 @@ Related specs:
 
 Verification:
 
-- `cargo test -p sdkwork-api-gateway-config local_specs_readme_documents_component_contract_boundary`
-- `cargo test -p sdkwork-api-gateway-config component_spec_uses_cargo_metadata_as_gateway_integration_authority`
+- `cargo test -p sdkwork-api-cloud-gateway-config local_specs_readme_documents_component_contract_boundary`
+- `cargo test -p sdkwork-api-cloud-gateway-config component_spec_uses_cargo_metadata_as_gateway_integration_authority`
 - `cargo test --workspace`

@@ -2,7 +2,7 @@
 
 Purpose: secondary runnable application surfaces for this repository.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: future app surface roots, demos promoted to runnable apps, or deployable app compositions that need their own `sdkwork.app.config.json`.
 

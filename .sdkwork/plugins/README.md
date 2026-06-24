@@ -2,7 +2,7 @@
 
 Purpose: application-local Codex or SDKWork agent plugin bundles for SDKWork API Gateway.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: lowercase kebab-case plugin directories with `.codex-plugin/plugin.json`, plugin
 skills, MCP server definitions, app definitions, and deterministic helper scripts when required.

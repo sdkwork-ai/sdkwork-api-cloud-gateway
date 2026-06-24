@@ -6,12 +6,12 @@ is single-port and integrated; split multi-upstream validation is internal-only.
 
 ## Architecture
 
-- `sdkwork-api-gateway-config`: typed runtime configuration.
-- `sdkwork-api-gateway-registry`: SDKWork route metadata and executable dependency routing rules.
-- `sdkwork-api-gateway-observability`: startup and route summaries.
-- `sdkwork-api-gateway`: Axum router builders, preflight validation, embedded routing, and
+- `sdkwork-api-cloud-gateway-config`: typed runtime configuration.
+- `sdkwork-api-cloud-gateway-registry`: SDKWork route metadata and executable dependency routing rules.
+- `sdkwork-api-cloud-gateway-observability`: startup and route summaries.
+- `sdkwork-api-cloud-gateway`: Axum router builders, preflight validation, embedded routing, and
   split-mode HTTP/WebSocket proxying.
-- `crates/sdkwork-api-gateway-api-server`: independent binary entrypoint and tested service config loader.
+- `crates/sdkwork-api-cloud-gateway-api-server`: independent binary entrypoint and tested service config loader.
 
 Within the gateway crate, endpoint responsibilities are split into focused modules: `health.rs` owns
 `/healthz` and `/readyz`, `openapi.rs` owns OpenAPI metadata responses, and `diagnostics.rs` owns the
@@ -110,38 +110,38 @@ builders.
 Configuration is resolved in this order:
 
 1. `--config <path>` or `--config=<path>`
-2. `SDKWORK_API_GATEWAY_CONFIG`
+2. `SDKWORK_API_CLOUD_GATEWAY_CONFIG`
 3. `sdkwork.app.config.json` in the application root
 4. built-in defaults
 
 Environment overrides are then applied:
 
-- `SDKWORK_API_GATEWAY_BIND`
-- `SDKWORK_API_GATEWAY_MODE`
-- `SDKWORK_API_GATEWAY_MAX_BODY_BYTES`
-- `SDKWORK_API_GATEWAY_TIMEOUT_MS`
-- `SDKWORK_API_GATEWAY_READINESS_CHECK_UPSTREAMS`
-- `SDKWORK_API_GATEWAY_READINESS_TIMEOUT_MS`
-- `SDKWORK_API_GATEWAY_ACCESS_LOG_ENABLED`
-- `SDKWORK_API_GATEWAY_AUDIT_LOG_ENABLED`
-- `SDKWORK_API_GATEWAY_ACCESS_LOG_SAMPLE_RATE_BASIS_POINTS`
-- `SDKWORK_API_GATEWAY_AUDIT_LOG_SAMPLE_RATE_BASIS_POINTS`
-- `SDKWORK_API_GATEWAY_METRICS_ENABLED`
-- `SDKWORK_API_GATEWAY_TRACING_ENABLED`
-- `SDKWORK_API_GATEWAY_SECURITY_HEADERS_ENABLED`
-- `SDKWORK_API_GATEWAY_ALLOWED_HOSTS`
-- `SDKWORK_API_GATEWAY_RATE_LIMIT_ENABLED`
-- `SDKWORK_API_GATEWAY_POLICY_ENABLED`
-- `SDKWORK_API_GATEWAY_POLICY_DRY_RUN`
-- `SDKWORK_API_GATEWAY_DIAGNOSTICS_ENABLED`
-- `SDKWORK_API_GATEWAY_DIAGNOSTICS_PATH`
-- `SDKWORK_API_GATEWAY_RETRY_ENABLED`
-- `SDKWORK_API_GATEWAY_RETRY_MAX_ATTEMPTS`
-- `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_ENABLED`
-- `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD`
-- `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS`
-- `SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS`
-- `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_BIND`
+- `SDKWORK_API_CLOUD_GATEWAY_MODE`
+- `SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES`
+- `SDKWORK_API_CLOUD_GATEWAY_TIMEOUT_MS`
+- `SDKWORK_API_CLOUD_GATEWAY_READINESS_CHECK_UPSTREAMS`
+- `SDKWORK_API_CLOUD_GATEWAY_READINESS_TIMEOUT_MS`
+- `SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_AUDIT_LOG_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_SAMPLE_RATE_BASIS_POINTS`
+- `SDKWORK_API_CLOUD_GATEWAY_AUDIT_LOG_SAMPLE_RATE_BASIS_POINTS`
+- `SDKWORK_API_CLOUD_GATEWAY_METRICS_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_TRACING_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_SECURITY_HEADERS_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS`
+- `SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_POLICY_DRY_RUN`
+- `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH`
+- `SDKWORK_API_CLOUD_GATEWAY_RETRY_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_RETRY_MAX_ATTEMPTS`
+- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD`
+- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS`
+- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS`
+- `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`
 - dependency base URL keys such as `SDKWORK_APPBASE_APP_API_BASE_URL`,
   `SDKWORK_DRIVE_APP_API_BASE_URL`, `SDKWORK_NOTARY_APP_API_BASE_URL`,
   `SDKWORK_APPBASE_BACKEND_API_BASE_URL`, `SDKWORK_COMMERCE_APP_API_BASE_URL`, and
@@ -173,7 +173,7 @@ pnpm dev
 Equivalent Cargo command:
 
 ```powershell
-cargo run -p sdkwork-api-gateway-api-server --bin sdkwork-api-gateway -- --config configs/sdkwork-api-gateway.development.toml.example
+cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example
 ```
 
 ## Server Packaging
@@ -250,11 +250,11 @@ responses instead of framework `401` rejections.
 Embedded mode applies request identity only on the outer gateway router. Embedded dependency routers
 already mount their own framework layers and must not be double-wrapped during gateway merge.
 
-Toggle the outer framework pipeline with `SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by
+Toggle the outer framework pipeline with `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by
 default). When disabled, split mode falls back to the legacy Tower `CorsLayer` and gateway security
 middleware for CORS and secure response headers while still assigning UUID `x-request-id` on the outer
 router. Router builders `finalize_gateway_router`, `finalize_gateway_router_async`, and
-`split_proxy_call_chain` are exported from `sdkwork_api_gateway::web_framework`.
+`split_proxy_call_chain` are exported from `sdkwork_api_cloud_gateway::web_framework`.
 
 Each upstream can set `timeoutMs`/`timeout_ms` through the typed runtime config. Timed out upstream
 requests return `504` with the `upstream_timeout` problem title. `request.timeoutMs` is the
@@ -285,7 +285,7 @@ gateway HTTP requests, upstream dependency requests, WAF decisions, traffic-cont
 policy-governance rejections and dry-run observations, plus resilience events such as gateway request
 timeout, upstream timeout, retry attempt, retry exhausted, circuit-open, short-circuit, and half-open
 probe decisions. It also exports
-`sdkwork_api_gateway_http_request_duration_seconds` as a Prometheus histogram with stable second
+`sdkwork_api_cloud_gateway_http_request_duration_seconds` as a Prometheus histogram with stable second
 buckets from `0.005` through `10` plus `+Inf`; the current measurement is the gateway route duration
 until response headers are produced. Metric labels use bounded service, method, status, rule, scope,
 action, and event values; they do not include raw paths, request ids, trace ids, tokens, tenant/user
@@ -303,7 +303,7 @@ identifiers, IP addresses, and live request data. `includePolicyInventory` and
 `includeRouteInventory` can suppress the detailed policy or route item arrays while retaining counts.
 
 Security and traffic decisions also emit structured audit events on tracing target
-`sdkwork_api_gateway::audit` when `auditLogEnabled` is true. `auditLogSampleRateBasisPoints`
+`sdkwork_api_cloud_gateway::audit` when `auditLogEnabled` is true. `auditLogSampleRateBasisPoints`
 controls deterministic audit-log sampling with the same `0` to `10000` range. Audit events use bounded
 `category`/`action`/`reason`/`scope` values and include status, method, route target, dependency
 service id, request id, and trace context. WAF monitor/block decisions, host allowlist rejections,
@@ -339,7 +339,7 @@ match `matchServiceId` and/or `matchPathPrefix`, then enforce `allowedMethods`, 
 `maxBodyBytes`, or a route-specific gateway `timeoutMs`. Disallowed methods return `405` with the
 `method_not_allowed` problem title and an `Allow` header. Policy body-limit rejections return `413`
 with `request_body_too_large`. Policy rejections are counted in
-`sdkwork_api_gateway_policy_rejections_total{service,kind,scope,status}` where `scope` is the bounded
+`sdkwork_api_cloud_gateway_policy_rejections_total{service,kind,scope,status}` where `scope` is the bounded
 policy rule id, never the raw request path.
 
 `dryRun = true` enables policy observation mode for rollout. In dry-run, matched method violations
@@ -350,7 +350,7 @@ overrides are observed without replacing the global `request.maxBodyBytes` safet
 global limit. Dry-run responses receive `X-SDKWork-Policy-Action: dry-run`,
 `X-SDKWork-Policy-Kind`, and `X-SDKWork-Policy-Rule`, an audit event is emitted with
 `action = "dry-run"`, and
-`sdkwork_api_gateway_policy_dry_run_total{service,kind,scope,status}` is incremented with the actual
+`sdkwork_api_cloud_gateway_policy_dry_run_total{service,kind,scope,status}` is incremented with the actual
 response status. Dry-run labels are bounded to the policy kind and rule id.
 
 Example:
@@ -387,17 +387,24 @@ probe closes the circuit.
 Standalone service startup uses:
 
 ```rust
-use sdkwork_api_gateway::build_sdkwork_api_gateway_api_server_router;
+use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_api_server_router;
 ```
 
 Third-party embedding can use:
 
 ```rust
-use sdkwork_api_gateway::{
-    build_sdkwork_api_gateway_router_with_embedded_routers,
+use sdkwork_api_cloud_gateway::{
+    build_sdkwork_api_cloud_gateway_router_with_embedded_routers,
     build_embedded_sdkwork_appbase_app_api_router,
 };
 ```
 
 The API server crate exposes `load_gateway_config` for callers that want the same manifest/config/env
 resolution used by the binary.
+
+## Documentation Canon
+
+- [docs/README.md](docs/README.md)
+- [docs/product/prd/PRD.md](docs/product/prd/PRD.md)
+- [docs/architecture/tech/TECH_ARCHITECTURE.md](docs/architecture/tech/TECH_ARCHITECTURE.md)
+

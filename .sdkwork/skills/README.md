@@ -2,7 +2,7 @@
 
 Purpose: application-local agent or operator workflows for SDKWork API Gateway.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: lowercase kebab-case skill directories containing `SKILL.md`, deterministic helper
 scripts, references, and assets needed by the skill.

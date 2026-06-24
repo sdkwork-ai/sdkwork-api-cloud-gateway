@@ -8,8 +8,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-const APP_ID = 'sdkwork-api-gateway';
-const BINARY_NAME = 'sdkwork-api-gateway';
+const APP_ID = 'sdkwork-api-cloud-gateway';
+const BINARY_NAME = 'sdkwork-api-cloud-gateway';
 const SERVER_PROFILE = 'server';
 const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
 const SUPPORTED_FORMAT = 'tar.gz';
@@ -269,11 +269,11 @@ async function packageServer(context) {
   await createArchive(context);
   await validateArchive(context);
 
-  console.log(`[sdkwork-api-gateway] packaged ${path.relative(appRoot, context.archivePath)}`);
+  console.log(`[sdkwork-api-cloud-gateway] packaged ${path.relative(appRoot, context.archivePath)}`);
 }
 
 function runCargoBuild(context) {
-  const args = ['build', '--release', '-p', 'sdkwork-api-gateway-api-server', '--bin', BINARY_NAME];
+  const args = ['build', '--release', '-p', 'sdkwork-api-cloud-gateway-api-server', '--bin', BINARY_NAME];
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
   }
@@ -297,8 +297,8 @@ async function copyIfExists(relativeSource, destination) {
 
 function renderInstallGuide(context) {
   const binaryPath = context.platform === 'windows'
-    ? '.\\bin\\sdkwork-api-gateway.exe'
-    : './bin/sdkwork-api-gateway';
+    ? '.\\bin\\sdkwork-api-cloud-gateway.exe'
+    : './bin/sdkwork-api-cloud-gateway';
   return `# SDKWork API Gateway Server Package
 
 Package: ${context.packageId}
@@ -308,7 +308,7 @@ Target: ${context.platform}/${context.architecture}
 ## Start
 
 \`\`\`sh
-${binaryPath} --config config/sdkwork-api-gateway.production.toml.example
+${binaryPath} --config config/sdkwork-api-cloud-gateway.production.toml.example
 \`\`\`
 
 ## Health Checks
@@ -336,9 +336,9 @@ function createInstallManifest(context) {
     version: context.version,
     binary: `bin/${context.binaryName}`,
     configExamples: [
-      'config/sdkwork-api-gateway.development.toml.example',
-      'config/sdkwork-api-gateway.production.toml.example',
-      'config/sdkwork-api-gateway.test.toml.example',
+      'config/sdkwork-api-cloud-gateway.development.toml.example',
+      'config/sdkwork-api-cloud-gateway.production.toml.example',
+      'config/sdkwork-api-cloud-gateway.test.toml.example',
     ],
     healthPath: '/healthz',
     readinessPath: '/readyz',
@@ -389,7 +389,7 @@ async function validateArchive(context) {
   const listing = run('tar', ['-tzf', context.archivePath], { cwd: appRoot, capture: true });
   const requiredEntries = [
     `${context.stageName}/bin/${context.binaryName}`,
-    `${context.stageName}/config/sdkwork-api-gateway.production.toml.example`,
+    `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml.example`,
     `${context.stageName}/install-manifest.json`,
     `${context.stageName}/checksums.sha256`,
     `${context.stageName}/README.md`,
@@ -400,7 +400,7 @@ async function validateArchive(context) {
       throw new Error(`Server archive missing ${entry}`);
     }
   }
-  console.log(`[sdkwork-api-gateway] validated ${path.relative(appRoot, context.archivePath)}`);
+  console.log(`[sdkwork-api-cloud-gateway] validated ${path.relative(appRoot, context.archivePath)}`);
 }
 
 function run(command, args, { cwd, capture = false } = {}) {
@@ -432,6 +432,6 @@ function toPosixPath(value) {
 }
 
 main().catch((error) => {
-  console.error(`[sdkwork-api-gateway] ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`[sdkwork-api-cloud-gateway] ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });

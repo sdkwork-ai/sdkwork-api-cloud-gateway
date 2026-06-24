@@ -1,0 +1,9 @@
+[package]
+name = "sdkwork-api-cloud-gateway-registry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+sdkwork-api-cloud-gateway-config.workspace = true

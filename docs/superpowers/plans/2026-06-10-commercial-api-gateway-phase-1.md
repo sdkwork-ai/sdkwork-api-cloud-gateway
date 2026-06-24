@@ -8,8 +8,8 @@
 security, in-memory traffic control, docs, and verification.
 
 **Architecture:** Keep public router builders stable. Add focused modules inside
-`sdkwork-api-gateway` and extend `sdkwork-api-gateway-config` plus
-`sdkwork-api-gateway-observability`. Use typed config, in-memory runtime state, and Axum middleware
+`sdkwork-api-cloud-gateway` and extend `sdkwork-api-cloud-gateway-config` plus
+`sdkwork-api-cloud-gateway-observability`. Use typed config, in-memory runtime state, and Axum middleware
 style helpers. Start with memory-only stores; leave Redis for Phase 2.
 
 **Tech Stack:** Rust 2021, Axum 0.8, Tower, Reqwest, Serde, Tokio, tracing.
@@ -18,16 +18,16 @@ style helpers. Start with memory-only stores; leave Redis for Phase 2.
 
 ## Files
 
-- Modify: `crates/sdkwork-api-gateway-config/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway-config/tests/config_tests.rs`
-- Modify: `crates/sdkwork-api-gateway-observability/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway/src/lib.rs`
-- Modify: `crates/sdkwork-api-gateway/src/runtime.rs`
-- Create: `crates/sdkwork-api-gateway/src/policy.rs`
-- Create: `crates/sdkwork-api-gateway/src/security.rs`
-- Create: `crates/sdkwork-api-gateway/src/traffic.rs`
-- Create: `crates/sdkwork-api-gateway/src/metrics.rs`
-- Modify: `crates/sdkwork-api-gateway/tests/runtime_tests.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway-config/src/lib.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway-config/tests/config_tests.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway-observability/src/lib.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/src/lib.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/src/runtime.rs`
+- Create: `crates/sdkwork-api-cloud-gateway/src/policy.rs`
+- Create: `crates/sdkwork-api-cloud-gateway/src/security.rs`
+- Create: `crates/sdkwork-api-cloud-gateway/src/traffic.rs`
+- Create: `crates/sdkwork-api-cloud-gateway/src/metrics.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/tests/runtime_tests.rs`
 - Modify: `config/*.toml.example`
 - Modify: `sdkwork.app.config.json`
 - Modify: `specs/component.spec.json`
@@ -36,7 +36,7 @@ style helpers. Start with memory-only stores; leave Redis for Phase 2.
 ## Task 1: Typed Commercial Config
 
 - [ ] Write failing config tests for `observability`, `security`, and `traffic` sections.
-- [ ] Run `cargo test -p sdkwork-api-gateway-config --test config_tests` and confirm missing fields fail.
+- [ ] Run `cargo test -p sdkwork-api-cloud-gateway-config --test config_tests` and confirm missing fields fail.
 - [ ] Add typed config structs with safe defaults.
 - [ ] Add env overrides for selected keys.
 - [ ] Update TOML examples.

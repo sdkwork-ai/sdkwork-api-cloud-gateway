@@ -2,7 +2,7 @@
 
 Purpose: deployment topology, infrastructure descriptors, release handoff files, and deployment runbooks.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: Docker, Kubernetes, systemd, nginx, environment topology, release handoff, and deployment runbook examples.
 

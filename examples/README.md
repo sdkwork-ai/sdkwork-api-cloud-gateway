@@ -2,7 +2,7 @@
 
 Purpose: runnable examples and copyable integration examples for SDKWork API Gateway consumers.
 
-Owner: `sdkwork-api-gateway` maintainers.
+Owner: `sdkwork-api-cloud-gateway` maintainers.
 
 Allowed content: sample commands, safe example configs, SDK/API usage examples, and integration fixtures.
 

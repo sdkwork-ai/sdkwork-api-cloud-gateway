@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "appId": "sdkwork-api-gateway",
+  "appId": "sdkwork-api-cloud-gateway",
   "name": "SDKWork API Gateway",
   "family": "backend",
   "runtime": {
@@ -14,8 +14,8 @@
   "preset": "api-gateway",
   "outputStrategy": "tracked-templates-with-local-overlays",
   "backend": {
-    "appId": "sdkwork-api-gateway",
-    "serviceId": "sdkwork-api-gateway",
+    "appId": "sdkwork-api-cloud-gateway",
+    "serviceId": "sdkwork-api-cloud-gateway",
     "defaultBind": "127.0.0.1:3900",
     "profileKey": "backend-root-admin",
     "accessTokenPermissionScope": [
@@ -35,137 +35,137 @@
     "outputStrategy": "tracked-templates-with-local-overlays",
     "variables": [
       {
-        "name": "SDKWORK_API_GATEWAY_CONFIG",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_CONFIG",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_BIND",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_BIND",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_MODE",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_MODE",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_MAX_BODY_BYTES",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_TIMEOUT_MS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_TIMEOUT_MS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_READINESS_CHECK_UPSTREAMS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_READINESS_CHECK_UPSTREAMS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_READINESS_TIMEOUT_MS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_READINESS_TIMEOUT_MS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_ACCESS_LOG_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_AUDIT_LOG_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_AUDIT_LOG_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_ACCESS_LOG_SAMPLE_RATE_BASIS_POINTS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_SAMPLE_RATE_BASIS_POINTS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_AUDIT_LOG_SAMPLE_RATE_BASIS_POINTS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_AUDIT_LOG_SAMPLE_RATE_BASIS_POINTS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_METRICS_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_METRICS_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_TRACING_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_TRACING_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_SECURITY_HEADERS_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_SECURITY_HEADERS_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_ALLOWED_HOSTS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_RATE_LIMIT_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_POLICY_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_POLICY_DRY_RUN",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_POLICY_DRY_RUN",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_DIAGNOSTICS_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_DIAGNOSTICS_PATH",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_RETRY_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_RETRY_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_RETRY_MAX_ATTEMPTS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_RETRY_MAX_ATTEMPTS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_ENABLED",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS",
         "required": false,
         "tracked": false
       },
       {
-        "name": "SDKWORK_API_GATEWAY_WEB_FRAMEWORK_ENABLED",
+        "name": "SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED",
         "required": false,
         "tracked": false
       },
@@ -346,6 +346,36 @@
       },
       {
         "name": "SDKWORK_COMMUNITY_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_CMS_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_CMS_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_CMS_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_FORUM_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_FORUM_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_FORUM_OPEN_API_BASE_URL",
         "required": false,
         "tracked": false
       },
@@ -644,6 +674,42 @@
       "prefix": "/community/v3/api",
       "owner": "dependency",
       "serviceId": "sdkwork-community-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/cms",
+      "owner": "dependency",
+      "serviceId": "sdkwork-cms-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/cms",
+      "owner": "dependency",
+      "serviceId": "sdkwork-cms-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/cms/v3/api",
+      "owner": "dependency",
+      "serviceId": "sdkwork-cms-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/forum",
+      "owner": "dependency",
+      "serviceId": "sdkwork-forum-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/forum",
+      "owner": "dependency",
+      "serviceId": "sdkwork-forum-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/forum/v3/api",
+      "owner": "dependency",
+      "serviceId": "sdkwork-forum-open-api"
     },
     {
       "surface": "app",
@@ -1921,11 +1987,11 @@
     }
   ],
   "app": {
-    "key": "sdkwork-api-gateway",
+    "key": "sdkwork-api-cloud-gateway",
     "name": "SDKWork API Gateway",
     "displayName": "SDKWork API Gateway",
     "appType": "APP_HTML",
-    "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-api-gateway"
+    "officialWebsiteUrl": "https://sdkwork.com/apps/sdkwork-api-cloud-gateway"
   },
   "environments": {}
 }

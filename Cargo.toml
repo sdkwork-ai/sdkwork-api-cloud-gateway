@@ -1,11 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/sdkwork-api-gateway-config",
-    "crates/sdkwork-api-gateway-registry",
-    "crates/sdkwork-api-gateway-observability",
-    "crates/sdkwork-api-gateway",
-    "crates/sdkwork-api-gateway-api-server",
+    "crates/sdkwork-api-cloud-gateway-config",
+    "crates/sdkwork-api-cloud-gateway-registry",
+    "crates/sdkwork-api-cloud-gateway-observability",
+    "crates/sdkwork-api-cloud-gateway",
+    "crates/sdkwork-api-cloud-gateway-api-server",
 ]
 
 [workspace.package]
@@ -32,10 +32,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 async-trait = "0.1"
 
-sdkwork-api-gateway-config = { path = "crates/sdkwork-api-gateway-config" }
-sdkwork-api-gateway-observability = { path = "crates/sdkwork-api-gateway-observability" }
-sdkwork-api-gateway-registry = { path = "crates/sdkwork-api-gateway-registry" }
-sdkwork-api-gateway = { path = "crates/sdkwork-api-gateway" }
+sdkwork-api-cloud-gateway-config = { path = "crates/sdkwork-api-cloud-gateway-config" }
+sdkwork-api-cloud-gateway-observability = { path = "crates/sdkwork-api-cloud-gateway-observability" }
+sdkwork-api-cloud-gateway-registry = { path = "crates/sdkwork-api-cloud-gateway-registry" }
+sdkwork-api-cloud-gateway = { path = "crates/sdkwork-api-cloud-gateway" }
 
 sdkwork_router_iam_app_api = { package = "sdkwork-router-iam-app-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-app-api" }
 sdkwork_router_iam_backend_api = { package = "sdkwork-router-iam-backend-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-backend-api" }
