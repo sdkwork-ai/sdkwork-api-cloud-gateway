@@ -181,7 +181,7 @@
         "build_sdkwork_api_cloud_gateway_router_with_registry",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_appbase",
-        "build_embedded_sdkwork_appbase_app_api_router",
+        "build_embedded_sdkwork_iam_app_api_router",
         "web_framework_enabled",
         "parse_web_framework_toggle",
         "finalize_gateway_router",
@@ -203,7 +203,7 @@
       "surface": "app",
       "prefix": "/app/v3/api",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appbase-app-api",
+      "dependencyServiceId": "sdkwork-iam-app-api",
       "dependencyRoutes": [
         "/app/v3/api/auth/{*path}",
         "/app/v3/api/iam/{*path}",
@@ -615,7 +615,7 @@
       "surface": "backend",
       "prefix": "/backend/v3/api/iam",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appbase-backend-api",
+      "dependencyServiceId": "sdkwork-iam-backend-api",
       "dependencyRoutes": [
         "/backend/v3/api/iam/{*path}"
       ],
@@ -811,15 +811,15 @@
   ],
   "dependencies": [
     {
-      "serviceId": "sdkwork-appbase-app-api",
+      "serviceId": "sdkwork-iam-app-api",
       "workspace": "sdkwork-appbase",
-      "apiAuthority": "sdkwork-appbase-app-api",
-      "sdkFamily": "sdkwork-appbase-app-sdk",
+      "apiAuthority": "sdkwork-iam-app-api",
+      "sdkFamily": "sdkwork-iam-app-sdk",
       "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appbase",
       "cargoDependency": "sdkwork_router_iam_app_api",
-      "embeddedExecutableExport": "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
+      "embeddedExecutableExport": "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router"
     },
     {
       "serviceId": "sdkwork-drive-app-api",
@@ -947,10 +947,10 @@
       "embeddedStatus": "split-only-until-messaging-exposes-a-complete-compatible-public-router-builder"
     },
     {
-      "serviceId": "sdkwork-appbase-backend-api",
+      "serviceId": "sdkwork-iam-backend-api",
       "workspace": "sdkwork-appbase",
-      "apiAuthority": "sdkwork-appbase-backend-api",
-      "sdkFamily": "sdkwork-appbase-backend-sdk",
+      "apiAuthority": "sdkwork-iam-backend-api",
+      "sdkFamily": "sdkwork-iam-backend-sdk",
       "runtimeModes": ["split", "embedded"],
       "requiredBaseUrlKey": "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
       "coverage": "appbase-backend-iam-upstream-routes",
@@ -1058,7 +1058,7 @@
       "apiAuthority": "sdkwork-im-im-http",
       "sdkFamily": "sdkwork-im-app-sdk",
       "runtimeModes": ["split", "embedded"],
-      "requiredBaseUrlKey": "CRAW_CHAT_IM_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_IM_HTTP_BASE_URL",
       "coverage": "sdkwork-im-im-api-upstream-routes",
       "embeddedStatus": "split-only-until-sdkwork-im-exposes-a-complete-compatible-public-router-builder"
     },
@@ -1068,7 +1068,7 @@
       "apiAuthority": "sdkwork-im-backend-http",
       "sdkFamily": "sdkwork-im-backend-sdk",
       "runtimeModes": ["split", "embedded"],
-      "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
       "coverage": "sdkwork-im-backend-api-upstream-routes",
       "embeddedStatus": "split-only-until-sdkwork-im-exposes-a-complete-compatible-public-router-builder"
     }
@@ -1076,8 +1076,8 @@
   "routeRegistry": {
     "source": "dependencySurfaces",
     "rules": [
-      "sdkwork-appbase-app-api is restricted to appbase IAM dependency route patterns",
-      "sdkwork-appbase-backend-api is restricted to backend IAM dependency route patterns",
+      "sdkwork-iam-app-api is restricted to appbase IAM dependency route patterns",
+      "sdkwork-iam-backend-api is restricted to backend IAM dependency route patterns",
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
       "sdkwork-commerce-app-api is a broad app fallback for remaining /app/v3/api paths after fixed appbase, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, CMS, Forum, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",
       "sdkwork-commerce-backend-api is a broad backend fallback for remaining /backend/v3/api paths after fixed appbase backend IAM, Drive, Notary, RTC, Agent, AIoT, Memory, Knowledgebase, News, Notes, Music, Generations, Community, CMS, Forum, Search, Voice, Image, Comments, Course, Messaging, SdkworkIm, Appstore, and other more specific dependency routes",

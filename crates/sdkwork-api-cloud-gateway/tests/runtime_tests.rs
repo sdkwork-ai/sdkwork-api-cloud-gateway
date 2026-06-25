@@ -19,8 +19,8 @@ use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
 use sdkwork_api_cloud_gateway::{
-    build_embedded_sdkwork_appbase_app_api_router,
-    build_embedded_sdkwork_appbase_backend_api_router,
+    build_embedded_sdkwork_iam_app_api_router,
+    build_embedded_sdkwork_iam_backend_api_router,
     build_sdkwork_api_cloud_gateway_api_server_router, build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers, GatewayRuntime,
 };
@@ -551,13 +551,13 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     let forum_open = spawn_foundation_echo_upstream("/forum/v3/api").await;
     env.insert("SDKWORK_FORUM_OPEN_API_BASE_URL".to_string(), forum_open);
 
-    let craw_chat_im = spawn_foundation_echo_upstream("/im/v3/api").await;
-    env.insert("CRAW_CHAT_IM_HTTP_BASE_URL".to_string(), craw_chat_im);
+    let im_http = spawn_foundation_echo_upstream("/im/v3/api").await;
+    env.insert("SDKWORK_IM_IM_HTTP_BASE_URL".to_string(), im_http);
 
-    let craw_chat_backend = spawn_foundation_echo_upstream("/backend/v3/api/control").await;
+    let im_backend = spawn_foundation_echo_upstream("/backend/v3/api/control").await;
     env.insert(
-        "CRAW_CHAT_BACKEND_HTTP_BASE_URL".to_string(),
-        craw_chat_backend,
+        "SDKWORK_IM_BACKEND_HTTP_BASE_URL".to_string(),
+        im_backend,
     );
 
     let claw_gateway = spawn_foundation_echo_upstream("/v1").await;
@@ -690,7 +690,7 @@ async fn preflight_fails_when_split_dependency_upstream_is_missing() {
         .expect_err("missing required split upstream should fail")
         .to_string();
 
-    assert!(error.contains("sdkwork-appbase-app-api"));
+    assert!(error.contains("sdkwork-iam-app-api"));
     assert!(error.contains("upstream"));
 }
 
@@ -740,7 +740,7 @@ async fn gateway_exposes_health_ready_and_openapi_index() {
     assert_eq!(response.status(), 200);
     assert!(response_text(response)
         .await
-        .contains("sdkwork-appbase-app-api"));
+        .contains("sdkwork-iam-app-api"));
 
     let response = app
         .oneshot(
@@ -976,7 +976,7 @@ async fn waf_monitor_mode_marks_suspicious_query_without_blocking() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1016,7 +1016,7 @@ async fn waf_enforce_mode_blocks_suspicious_query_with_problem_json() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1054,7 +1054,7 @@ async fn waf_enforce_mode_blocks_suspicious_headers_when_enabled() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1087,7 +1087,7 @@ async fn embedded_mode_delegates_appbase_dependency_routes_to_supplied_router() 
 
     let app = build_sdkwork_api_cloud_gateway_router_with_embedded_routers(
         config,
-        [("sdkwork-appbase-app-api", appbase_router)],
+        [("sdkwork-iam-app-api", appbase_router)],
     )
     .expect("embedded router satisfies dependency");
 
@@ -1112,7 +1112,7 @@ async fn split_mode_proxies_dependency_route_to_configured_upstream() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1140,7 +1140,7 @@ async fn metrics_endpoint_is_hidden_by_default_and_exposed_when_enabled() {
     );
     let hidden_app = build_sdkwork_api_cloud_gateway_router_with_embedded_routers(
         embedded_config_without_upstreams(),
-        [("sdkwork-appbase-app-api", appbase_router.clone())],
+        [("sdkwork-iam-app-api", appbase_router.clone())],
     )
     .expect("embedded router builds");
 
@@ -1160,7 +1160,7 @@ async fn metrics_endpoint_is_hidden_by_default_and_exposed_when_enabled() {
     config.observability.metrics_path = "/internal/metrics".to_string();
     let metrics_app = build_sdkwork_api_cloud_gateway_router_with_embedded_routers(
         config,
-        [("sdkwork-appbase-app-api", appbase_router)],
+        [("sdkwork-iam-app-api", appbase_router)],
     )
     .expect("embedded metrics router builds");
 
@@ -1213,7 +1213,7 @@ async fn diagnostics_endpoint_returns_safe_policy_and_route_inventory_when_enabl
         environment = "test"
 
         [[upstreams]]
-        serviceId = "sdkwork-appbase-app-api"
+        serviceId = "sdkwork-iam-app-api"
         baseUrl = "http://127.0.0.1:4800"
 
         [diagnostics]
@@ -1228,7 +1228,7 @@ async fn diagnostics_endpoint_returns_safe_policy_and_route_inventory_when_enabl
 
         [[policy.rules]]
         id = "auth-post-only"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         allowedMethods = ["POST"]
         maxBodyBytes = 4096
@@ -1289,7 +1289,7 @@ async fn diagnostics_endpoint_returns_safe_policy_and_route_inventory_when_enabl
     assert_eq!(diagnostics["policy"]["rules"][0]["id"], "auth-post-only");
     assert_eq!(
         diagnostics["policy"]["rules"][0]["matchServiceId"],
-        "sdkwork-appbase-app-api"
+        "sdkwork-iam-app-api"
     );
     assert_eq!(
         diagnostics["policy"]["rules"][0]["matchPathPrefix"],
@@ -1312,7 +1312,7 @@ async fn split_mode_metrics_count_proxied_dependency_requests() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1342,19 +1342,19 @@ async fn split_mode_metrics_count_proxied_dependency_requests() {
     assert_eq!(metrics_response.status(), 200);
     let metrics = response_text(metrics_response).await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_http_requests_total{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-appbase-app-api\",status=\"200\"} 1"
+        "sdkwork_api_cloud_gateway_http_requests_total{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-iam-app-api\",status=\"200\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_upstream_requests_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",status=\"200\"} 1"
+        "sdkwork_api_cloud_gateway_upstream_requests_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",status=\"200\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_http_request_duration_seconds_bucket{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-appbase-app-api\",status=\"200\",le=\"+Inf\"} 1"
+        "sdkwork_api_cloud_gateway_http_request_duration_seconds_bucket{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-iam-app-api\",status=\"200\",le=\"+Inf\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_http_request_duration_seconds_count{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-appbase-app-api\",status=\"200\"} 1"
+        "sdkwork_api_cloud_gateway_http_request_duration_seconds_count{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-iam-app-api\",status=\"200\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_http_request_duration_seconds_sum{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-appbase-app-api\",status=\"200\"}"
+        "sdkwork_api_cloud_gateway_http_request_duration_seconds_sum{service=\"sdkwork-api-cloud-gateway\",method=\"POST\",route_target=\"dependency\",service_id=\"sdkwork-iam-app-api\",status=\"200\"}"
     ));
 }
 
@@ -1368,7 +1368,7 @@ async fn metrics_count_waf_monitor_and_block_events() {
     monitor_config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url.clone();
 
@@ -1410,7 +1410,7 @@ async fn metrics_count_waf_monitor_and_block_events() {
     block_config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1467,7 +1467,7 @@ async fn metrics_count_rate_limit_rejections() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1535,7 +1535,7 @@ async fn route_prefix_rate_limit_rejects_with_standard_headers() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1596,7 +1596,7 @@ async fn global_concurrency_limit_rejects_requests_over_capacity() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1651,7 +1651,7 @@ async fn split_mode_adds_forwarded_headers_to_upstream_requests() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1682,7 +1682,7 @@ async fn split_mode_generates_request_id_when_missing_and_forwards_it_upstream()
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1710,7 +1710,7 @@ async fn split_mode_forwards_traceparent_to_upstream_requests() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -1763,7 +1763,7 @@ async fn split_mode_returns_request_id_on_upstream_connection_failure_problem() 
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = "http://127.0.0.1:9".to_string();
 
@@ -1805,7 +1805,7 @@ async fn split_mode_honors_per_upstream_timeout() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 10;
@@ -1841,7 +1841,7 @@ async fn split_mode_honors_gateway_request_timeout_before_upstream_timeout() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 1_000;
@@ -1887,7 +1887,7 @@ async fn metrics_count_gateway_request_timeouts() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 1_000;
@@ -1918,7 +1918,7 @@ async fn metrics_count_gateway_request_timeouts() {
     )
     .await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"gateway_request_timeout\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"gateway_request_timeout\"} 1"
     ));
 }
 
@@ -1930,7 +1930,7 @@ async fn metrics_count_upstream_timeouts() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 10;
@@ -1963,7 +1963,7 @@ async fn metrics_count_upstream_timeouts() {
     )
     .await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"upstream_timeout\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"upstream_timeout\"} 1"
     ));
 }
 
@@ -1987,7 +1987,7 @@ async fn metrics_count_retry_attempts_and_exhaustion() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2019,10 +2019,10 @@ async fn metrics_count_retry_attempts_and_exhaustion() {
     )
     .await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"retry_attempt\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"retry_attempt\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"retry_exhausted\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"retry_exhausted\"} 1"
     ));
 }
 
@@ -2037,7 +2037,7 @@ async fn split_mode_retries_retryable_upstream_statuses_when_enabled() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2075,7 +2075,7 @@ async fn split_mode_opens_circuit_after_repeated_upstream_failures() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2148,7 +2148,7 @@ async fn split_mode_allows_half_open_probe_and_closes_circuit_after_success() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2224,7 +2224,7 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2274,10 +2274,10 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
     )
     .await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"circuit_open\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"circuit_open\"} 1"
     ));
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"circuit_short_circuit\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"circuit_short_circuit\"} 1"
     ));
 
     let attempts = Arc::new(AtomicUsize::new(0));
@@ -2298,7 +2298,7 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
     half_open_config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2350,7 +2350,7 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
     )
     .await;
     assert!(metrics.contains(
-        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-appbase-app-api\",event=\"circuit_half_open_probe\"} 1"
+        "sdkwork_api_cloud_gateway_resilience_events_total{service=\"sdkwork-api-cloud-gateway\",service_id=\"sdkwork-iam-app-api\",event=\"circuit_half_open_probe\"} 1"
     ));
 }
 
@@ -2362,7 +2362,7 @@ async fn readyz_can_check_required_upstream_health() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = upstream_base_url;
     upstream.readiness_path = "/healthz".to_string();
@@ -2391,7 +2391,7 @@ async fn readyz_returns_unavailable_when_required_upstream_health_fails() {
     let upstream = config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream");
     upstream.base_url = "http://127.0.0.1:9".to_string();
     upstream.readiness_path = "/healthz".to_string();
@@ -2421,7 +2421,7 @@ async fn split_mode_rejects_request_bodies_over_configured_limit() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2455,7 +2455,7 @@ async fn policy_method_allowlist_rejects_disallowed_dependency_methods_and_recor
 
         [[policy.rules]]
         id = "auth-post-only"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         allowedMethods = ["POST"]
         "#,
@@ -2464,7 +2464,7 @@ async fn policy_method_allowlist_rejects_disallowed_dependency_methods_and_recor
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2522,7 +2522,7 @@ async fn policy_dry_run_allows_disallowed_method_and_records_observation_metrics
 
         [[policy.rules]]
         id = "auth-post-only"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         allowedMethods = ["POST"]
         "#,
@@ -2531,7 +2531,7 @@ async fn policy_dry_run_allows_disallowed_method_and_records_observation_metrics
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2598,7 +2598,7 @@ async fn policy_body_limit_overrides_global_limit_and_records_metrics() {
 
         [[policy.rules]]
         id = "auth-small-body"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         maxBodyBytes = 4
         "#,
@@ -2607,7 +2607,7 @@ async fn policy_body_limit_overrides_global_limit_and_records_metrics() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2661,7 +2661,7 @@ async fn policy_dry_run_allows_policy_body_limit_overflow_and_records_observatio
 
         [[policy.rules]]
         id = "auth-small-body"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         maxBodyBytes = 4
         "#,
@@ -2670,7 +2670,7 @@ async fn policy_dry_run_allows_policy_body_limit_overflow_and_records_observatio
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2738,7 +2738,7 @@ async fn policy_timeout_overrides_global_timeout_for_dependency_route() {
 
         [[policy.rules]]
         id = "auth-fast-timeout"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth/slow"
         timeoutMs = 5
         "#,
@@ -2747,7 +2747,7 @@ async fn policy_timeout_overrides_global_timeout_for_dependency_route() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2775,7 +2775,7 @@ async fn split_mode_returns_upstream_response_before_stream_body_completes() {
     config
         .upstreams
         .iter_mut()
-        .find(|upstream| upstream.service_id == "sdkwork-appbase-app-api")
+        .find(|upstream| upstream.service_id == "sdkwork-iam-app-api")
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
@@ -2969,7 +2969,7 @@ async fn split_mode_proxies_manifest_claw_router_foundation_surfaces_with_route_
 }
 
 #[tokio::test]
-async fn split_mode_proxies_manifest_craw_chat_foundation_surfaces_with_route_precedence() {
+async fn split_mode_proxies_manifest_sdkwork_im_foundation_surfaces_with_route_precedence() {
     let env = spawn_all_foundation_upstreams().await;
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
 
@@ -3319,10 +3319,10 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
         return;
     }
 
-    let appbase_router = build_embedded_sdkwork_appbase_app_api_router()
+    let appbase_router = build_embedded_sdkwork_iam_app_api_router()
         .await
         .expect("app router builds");
-    let backend_router = build_embedded_sdkwork_appbase_backend_api_router()
+    let backend_router = build_embedded_sdkwork_iam_backend_api_router()
         .await
         .expect("backend router builds");
 
@@ -3331,14 +3331,14 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
         sdkwork_api_cloud_gateway_config::DependencyApiSurfaceConfig {
             service_id: sdkwork_api_cloud_gateway_config::APPBASE_BACKEND_API_SERVICE_ID.to_owned(),
             workspace: "sdkwork-appbase".to_owned(),
-            sdk_family: "sdkwork-appbase-backend-sdk".to_owned(),
-            api_authority: "sdkwork-appbase-backend-api".to_owned(),
+            sdk_family: "sdkwork-iam-backend-sdk".to_owned(),
+            api_authority: "sdkwork-iam-backend-api".to_owned(),
             surface: "backend".to_owned(),
             api_prefix: sdkwork_api_cloud_gateway_config::APPBASE_BACKEND_API_PREFIX.to_owned(),
             runtime_mode: sdkwork_api_cloud_gateway_config::DependencyRuntimeMode::Embedded,
             same_origin_allowed: true,
             executable_export: Some(
-                "sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router"
+                "sdkwork_router_iam_backend_api::build_sdkwork_iam_backend_api_router"
                     .to_owned(),
             ),
             cargo_feature: Some("foundation-appbase".to_owned()),

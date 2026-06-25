@@ -55,7 +55,7 @@ Current foundation integrations:
 
 | Cargo feature | Cargo dependency | SDKWork service | Router export |
 | --- | --- | --- | --- |
-| `foundation-appbase` | `sdkwork_router_iam_app_api` | `sdkwork-appbase-app-api` | `sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router` |
+| `foundation-appbase` | `sdkwork_router_iam_app_api` | `sdkwork-iam-app-api` | `sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router` |
 
 Representative split upstream foundation surfaces. The complete machine-readable list is
 `sdkwork.app.config.json` plus `specs/component.spec.json`:
@@ -64,7 +64,7 @@ Representative split upstream foundation surfaces. The complete machine-readable
 | --- | --- | --- | --- |
 | `sdkwork-drive-app-api` | `sdkwork-drive-app-sdk` | `/app/v3/api/drive` | `SDKWORK_DRIVE_APP_API_BASE_URL` |
 | `sdkwork-notary-app-api` | `sdkwork-notary-app-sdk` | `/app/v3/api/notary` | `SDKWORK_NOTARY_APP_API_BASE_URL` |
-| `sdkwork-appbase-backend-api` | `sdkwork-appbase-backend-sdk` | `/backend/v3/api/iam` | `SDKWORK_APPBASE_BACKEND_API_BASE_URL` |
+| `sdkwork-iam-backend-api` | `sdkwork-iam-backend-sdk` | `/backend/v3/api/iam` | `SDKWORK_APPBASE_BACKEND_API_BASE_URL` |
 | `sdkwork-commerce-app-api` | `sdkwork-commerce-app-sdk` | `/app/v3/api` | `SDKWORK_COMMERCE_APP_API_BASE_URL` |
 | `sdkwork-commerce-backend-api` | `sdkwork-commerce-backend-sdk` | `/backend/v3/api` | `SDKWORK_COMMERCE_BACKEND_API_BASE_URL` |
 | `sdkwork-rtc-app-api` | `sdkwork-rtc-app-sdk` | `/app/v3/api/rtc` | `SDKWORK_RTC_APP_API_BASE_URL` |
@@ -87,6 +87,10 @@ Representative split upstream foundation surfaces. The complete machine-readable
 | `sdkwork-notes-open-api` | `sdkwork-notes-sdk` | `/notes/v3/api` | `SDKWORK_NOTES_OPEN_API_BASE_URL` |
 | `sdkwork-community-open-api` | `sdkwork-community-sdk` | `/community/v3/api` | `SDKWORK_COMMUNITY_OPEN_API_BASE_URL` |
 | `sdkwork-image-open-api` | `sdkwork-image-sdk` | `/image/v3/api` | `SDKWORK_IMAGE_OPEN_API_BASE_URL` |
+| `sdkwork-im-im-http` | `sdkwork-im-app-sdk` | `/im/v3/api` | `SDKWORK_IM_IM_HTTP_BASE_URL` |
+| `sdkwork-im-backend-http` | `sdkwork-im-backend-sdk` | `/backend/v3/api/control` | `SDKWORK_IM_BACKEND_HTTP_BASE_URL` |
+| `sdkwork-claw-gateway` | `sdkwork-claw-sdk` | `/v1` | `SDKWORK_CLAW_GATEWAY_BASE_URL` |
+| `sdkwork-appstore-app-api` | `sdkwork-appstore-app-sdk` | `/app/v3/api/catalog` | `SDKWORK_APPSTORE_APP_API_BASE_URL` |
 
 When adding another foundation API, add its source crate once in root `[workspace.dependencies]`,
 activate it through a focused gateway runtime feature only when the dependency exposes a compatible
@@ -99,7 +103,7 @@ product.
 Commerce app/backend surfaces are broad fallback routes while the workspace migrates product apps to
 the shared gateway. Fixed Appbase IAM routes and more specific app dependency prefixes such as Drive
 Notary, RTC, Agent, AIoT, Drive backend/open/admin, Memory, Knowledgebase, News, Notes, Community,
-Image, and other specific foundation prefixes are resolved before the broad Commerce fallbacks.
+Image, IM, Claw, Appstore, and other specific foundation prefixes are resolved before the broad Commerce fallbacks.
 Cargo metadata currently proves the embedded Appbase app surface only; Appbase backend, Drive,
 Notary, Commerce, RTC, Agent, AIoT, Memory, Knowledgebase, and the remaining foundation modules
 remain split upstream integrations until their production routers expose compatible, approved public
@@ -362,7 +366,7 @@ dryRun = false
 
 [[policy.rules]]
 id = "appbase-auth-write-policy"
-matchServiceId = "sdkwork-appbase-app-api"
+matchServiceId = "sdkwork-iam-app-api"
 matchPathPrefix = "/app/v3/api/auth"
 allowedMethods = ["POST"]
 maxBodyBytes = 4096
@@ -395,7 +399,7 @@ Third-party embedding can use:
 ```rust
 use sdkwork_api_cloud_gateway::{
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers,
-    build_embedded_sdkwork_appbase_app_api_router,
+    build_embedded_sdkwork_iam_app_api_router,
 };
 ```
 

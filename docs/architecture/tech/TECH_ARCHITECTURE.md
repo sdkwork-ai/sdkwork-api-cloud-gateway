@@ -115,6 +115,9 @@ Key env toggles (non-exhaustive): `SDKWORK_API_CLOUD_GATEWAY_SECURITY_HEADERS_EN
 `SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED`, `SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED`,
 `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`.
 
+IM split upstreams use canonical keys `SDKWORK_IM_IM_HTTP_BASE_URL` and
+`SDKWORK_IM_BACKEND_HTTP_BASE_URL`. Legacy `CRAW_CHAT_*` aliases remain supported during migration.
+
 Prometheus series use the `sdkwork_api_cloud_gateway_*` prefix (see `specs/component.spec.json`
 observability section). Tracked config templates must not contain live secrets.
 

@@ -7,11 +7,11 @@ use thiserror::Error;
 
 pub const DEFAULT_GATEWAY_SERVICE_NAME: &str = "sdkwork-api-cloud-gateway";
 pub const DEFAULT_GATEWAY_BIND: &str = "127.0.0.1:3900";
-pub const APPBASE_APP_API_SERVICE_ID: &str = "sdkwork-appbase-app-api";
+pub const APPBASE_APP_API_SERVICE_ID: &str = "sdkwork-iam-app-api";
 pub const APPBASE_APP_API_PREFIX: &str = "/app/v3/api";
 pub const APPBASE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:3800";
 pub const APPBASE_APP_API_BASE_URL_ENV: &str = "SDKWORK_APPBASE_APP_API_BASE_URL";
-pub const APPBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-appbase-backend-api";
+pub const APPBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-iam-backend-api";
 pub const APPBASE_BACKEND_API_PREFIX: &str = "/backend/v3/api/iam";
 pub const APPBASE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:3801";
 pub const APPBASE_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_APPBASE_BACKEND_API_BASE_URL";
@@ -158,10 +158,12 @@ pub const FORUM_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_FORUM_OPEN_API_BASE_URL";
 pub const SDKWORK_IM_IM_HTTP_SERVICE_ID: &str = "sdkwork-im-im-http";
 pub const SDKWORK_IM_IM_HTTP_PREFIX: &str = "/im/v3/api";
 pub const SDKWORK_IM_IM_HTTP_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19880";
-pub const SDKWORK_IM_IM_HTTP_BASE_URL_ENV: &str = "CRAW_CHAT_IM_HTTP_BASE_URL";
+pub const SDKWORK_IM_IM_HTTP_BASE_URL_ENV: &str = "SDKWORK_IM_IM_HTTP_BASE_URL";
+pub const SDKWORK_IM_IM_HTTP_BASE_URL_LEGACY_ENV: &str = "CRAW_CHAT_IM_HTTP_BASE_URL";
 pub const SDKWORK_IM_BACKEND_HTTP_SERVICE_ID: &str = "sdkwork-im-backend-http";
 pub const SDKWORK_IM_BACKEND_HTTP_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19881";
-pub const SDKWORK_IM_BACKEND_HTTP_BASE_URL_ENV: &str = "CRAW_CHAT_BACKEND_HTTP_BASE_URL";
+pub const SDKWORK_IM_BACKEND_HTTP_BASE_URL_ENV: &str = "SDKWORK_IM_BACKEND_HTTP_BASE_URL";
+pub const SDKWORK_IM_BACKEND_HTTP_BASE_URL_LEGACY_ENV: &str = "CRAW_CHAT_BACKEND_HTTP_BASE_URL";
 pub const SDKWORK_CLAW_GATEWAY_SERVICE_ID: &str = "sdkwork-claw-gateway";
 pub const SDKWORK_CLAW_GATEWAY_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18190";
 pub const SDKWORK_CLAW_GATEWAY_BASE_URL_ENV: &str = "SDKWORK_CLAW_GATEWAY_BASE_URL";
@@ -822,8 +824,36 @@ impl GatewayRuntimeConfig {
             self.set_upstream_base_url(APPBASE_APP_API_SERVICE_ID, base_url);
         }
 
+        self.apply_legacy_im_upstream_env_overrides(env);
+
         self.validate()?;
         Ok(self)
+    }
+
+    fn apply_legacy_im_upstream_env_overrides(&mut self, env: &HashMap<String, String>) {
+        let overrides = [
+            (
+                SDKWORK_IM_IM_HTTP_SERVICE_ID,
+                SDKWORK_IM_IM_HTTP_BASE_URL_ENV,
+                SDKWORK_IM_IM_HTTP_BASE_URL_LEGACY_ENV,
+            ),
+            (
+                SDKWORK_IM_BACKEND_HTTP_SERVICE_ID,
+                SDKWORK_IM_BACKEND_HTTP_BASE_URL_ENV,
+                SDKWORK_IM_BACKEND_HTTP_BASE_URL_LEGACY_ENV,
+            ),
+        ];
+        for (service_id, canonical_key, legacy_key) in overrides {
+            if env
+                .get(canonical_key)
+                .is_some_and(|value| !value.trim().is_empty())
+            {
+                continue;
+            }
+            if let Some(base_url) = env.get(legacy_key).filter(|value| !value.trim().is_empty()) {
+                self.set_upstream_base_url(service_id, base_url);
+            }
+        }
     }
 
     pub fn upstream(&self, service_id: &str) -> Option<&ServiceUpstreamConfig> {
@@ -1132,14 +1162,14 @@ fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
     vec![DependencyApiSurfaceConfig {
         service_id: APPBASE_APP_API_SERVICE_ID.to_string(),
         workspace: "sdkwork-appbase".to_string(),
-        sdk_family: "sdkwork-appbase-app-sdk".to_string(),
-        api_authority: "sdkwork-appbase-app-api".to_string(),
+        sdk_family: "sdkwork-iam-app-sdk".to_string(),
+        api_authority: "sdkwork-iam-app-api".to_string(),
         surface: "app".to_string(),
         api_prefix: APPBASE_APP_API_PREFIX.to_string(),
         runtime_mode: DependencyRuntimeMode::SplitOrEmbedded,
         same_origin_allowed: true,
         executable_export: Some(
-            "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router".to_string(),
+            "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router".to_string(),
         ),
         cargo_feature: Some("foundation-appbase".to_string()),
         cargo_dependency: Some("sdkwork_router_iam_app_api".to_string()),
@@ -1224,7 +1254,7 @@ fn default_upstream_for_dependency_surface(
 
 fn default_executable_export_for_service(service_id: &str) -> Option<String> {
     (service_id == APPBASE_APP_API_SERVICE_ID)
-        .then(|| "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router".to_string())
+        .then(|| "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router".to_string())
 }
 
 fn default_coverage_for_service(service_id: &str) -> String {

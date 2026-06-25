@@ -128,7 +128,7 @@ fn appbase_route(path_pattern: &str) -> RouteDescriptor {
         protocol: RouteProtocol::Http,
         visibility: RouteVisibility::App,
         execution_target: RouteExecutionTarget::Dependency,
-        sdk_target: Some("sdkwork-appbase-app-sdk".to_string()),
+        sdk_target: Some("sdkwork-iam-app-sdk".to_string()),
         requires_executable_dependency: true,
     }
 }
@@ -143,7 +143,7 @@ fn appbase_backend_route() -> RouteDescriptor {
         protocol: RouteProtocol::Http,
         visibility: RouteVisibility::Backend,
         execution_target: RouteExecutionTarget::Dependency,
-        sdk_target: Some("sdkwork-appbase-backend-sdk".to_string()),
+        sdk_target: Some("sdkwork-iam-backend-sdk".to_string()),
         requires_executable_dependency: false,
     }
 }

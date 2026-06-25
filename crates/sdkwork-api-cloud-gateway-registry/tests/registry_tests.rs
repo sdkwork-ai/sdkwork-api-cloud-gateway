@@ -55,7 +55,7 @@ fn default_registry_resolves_appbase_iam_routes_as_dependency_routes() {
         .resolve("POST", "/app/v3/api/auth/login")
         .expect("auth route resolves");
 
-    assert_eq!(descriptor.service_id, "sdkwork-appbase-app-api");
+    assert_eq!(descriptor.service_id, "sdkwork-iam-app-api");
     assert_eq!(
         descriptor.execution_target,
         RouteExecutionTarget::Dependency
@@ -77,7 +77,7 @@ fn default_registry_does_not_treat_unknown_app_paths_as_appbase_iam() {
 #[test]
 fn registry_from_dependency_surfaces_routes_non_appbase_prefixes_without_expanding_appbase() {
     let mut appbase_surface = custom_dependency_surface();
-    appbase_surface.service_id = "sdkwork-appbase-app-api".to_string();
+    appbase_surface.service_id = "sdkwork-iam-app-api".to_string();
     appbase_surface.api_prefix = "/app/v3/api".to_string();
     appbase_surface.surface = "app".to_string();
 
@@ -120,9 +120,9 @@ fn registry_resolves_specific_foundation_routes_before_broad_commerce_fallbacks(
             "/backend/v3/api",
         ),
         dependency_surface(
-            "sdkwork-appbase-backend-api",
+            "sdkwork-iam-backend-api",
             "sdkwork-appbase",
-            "sdkwork-appbase-backend-sdk",
+            "sdkwork-iam-backend-sdk",
             "backend",
             "/backend/v3/api/iam",
         ),
@@ -190,9 +190,9 @@ fn registry_resolves_specific_foundation_routes_before_broad_commerce_fallbacks(
             "/backend/v3/api/iot",
         ),
         dependency_surface(
-            "sdkwork-appbase-app-api",
+            "sdkwork-iam-app-api",
             "sdkwork-appbase",
-            "sdkwork-appbase-app-sdk",
+            "sdkwork-iam-app-sdk",
             "app",
             "/app/v3/api",
         ),
@@ -203,7 +203,7 @@ fn registry_resolves_specific_foundation_routes_before_broad_commerce_fallbacks(
             .resolve("POST", "/app/v3/api/auth/login")
             .expect("appbase app auth route resolves")
             .service_id,
-        "sdkwork-appbase-app-api"
+        "sdkwork-iam-app-api"
     );
     assert_eq!(
         registry
@@ -280,7 +280,7 @@ fn registry_resolves_specific_foundation_routes_before_broad_commerce_fallbacks(
             .resolve("GET", "/backend/v3/api/iam/users")
             .expect("Appbase backend IAM route resolves")
             .service_id,
-        "sdkwork-appbase-backend-api"
+        "sdkwork-iam-backend-api"
     );
     assert_eq!(
         registry

@@ -47,14 +47,14 @@
       {
         "name": "Verify Rust gateway workspace",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\ncargo fmt -- --check\ncargo test --workspace"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\ncargo fmt -- --check\ncargo test --workspace"
       }
     ],
     "package": [
       {
         "name": "Package server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm gateway:package:standalone"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm gateway:package:standalone"
       }
     ],
     "sign": [

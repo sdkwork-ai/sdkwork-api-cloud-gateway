@@ -226,7 +226,7 @@ pub async fn build_sdkwork_api_cloud_gateway_api_server_router(
     let router = match config.mode {
         GatewayMode::Split => GatewayRuntime::new(config)?.assemble_router(),
         GatewayMode::Embedded => {
-            let embedded_router = build_embedded_sdkwork_appbase_app_api_router().await?;
+            let embedded_router = build_embedded_sdkwork_iam_app_api_router().await?;
             let registry =
                 sdkwork_api_cloud_gateway_registry::GatewayRouteRegistry::from_dependency_surfaces(
                     finalize_config.dependency_surfaces.as_slice(),
@@ -280,21 +280,27 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
         config,
         [(
             APPBASE_APP_API_SERVICE_ID,
-            build_embedded_sdkwork_appbase_app_api_router().await?,
+            build_embedded_sdkwork_iam_app_api_router().await?,
         )],
     )
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_appbase_backend_api_router(
+pub async fn build_embedded_sdkwork_iam_backend_api_router(
 ) -> Result<Router, GatewayRuntimeError> {
-    Ok(sdkwork_router_iam_backend_api::build_sdkwork_appbase_backend_api_router_from_env().await)
+    Ok(sdkwork_router_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_appbase_app_api_router() -> Result<Router, GatewayRuntimeError>
+pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, GatewayRuntimeError>
 {
-    sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router()
+    crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()
+        .await
+        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+            service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
+            message,
+        })?;
+    sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router()
         .await
         .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
             service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),

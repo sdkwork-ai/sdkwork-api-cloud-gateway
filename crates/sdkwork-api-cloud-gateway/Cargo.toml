@@ -10,6 +10,8 @@ foundation-appbase = [
     "dep:sdkwork_router_iam_app_api",
     "dep:sdkwork_router_iam_backend_api",
     "dep:sdkwork-iam-web-adapter",
+    "dep:sdkwork-iam-database-host",
+    "dep:sdkwork-iam-embedded-application-bootstrap",
 ]
 foundation-course = ["dep:sdkwork_router_course_app_api", "dep:sdkwork_router_course_backend_api"]
 foundation-news = ["dep:sdkwork_router_news_app_api", "dep:sdkwork_router_news_backend_api", "dep:sdkwork_router_news_open_api"]
@@ -46,6 +48,8 @@ sdkwork-web-core.workspace = true
 sdkwork-web-axum.workspace = true
 sdkwork-utils-rust.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
+sdkwork-iam-database-host = { workspace = true, optional = true }
+sdkwork-iam-embedded-application-bootstrap = { workspace = true, optional = true }
 sdkwork_router_iam_app_api = { workspace = true, optional = true }
 sdkwork_router_iam_backend_api = { workspace = true, optional = true }
 sdkwork_router_course_app_api = { workspace = true, optional = true }

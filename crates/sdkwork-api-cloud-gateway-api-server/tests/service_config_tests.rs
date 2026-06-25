@@ -17,7 +17,7 @@ fn loads_sdkwork_manifest_from_application_root_when_no_config_path_is_provided(
     assert!(config
         .dependency_surfaces
         .iter()
-        .any(|surface| surface.service_id == "sdkwork-appbase-app-api"));
+        .any(|surface| surface.service_id == "sdkwork-iam-app-api"));
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn explicit_config_path_and_environment_overrides_win_over_manifest_defaults() {
     assert_eq!(config.mode, GatewayMode::Split);
     assert_eq!(
         config
-            .upstream("sdkwork-appbase-app-api")
+            .upstream("sdkwork-iam-app-api")
             .expect("env-created appbase upstream")
             .base_url,
         "http://127.0.0.1:4888"

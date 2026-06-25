@@ -19,7 +19,8 @@
     "release:package": "pnpm gateway:package:standalone",
     "release:package:server": "pnpm gateway:package:standalone",
     "test": "cargo test --workspace",
-    "verify": "pnpm check && pnpm test && pnpm clippy",
+    "test:iam-application-bootstrap-standard": "node scripts/dev/sdkwork-api-cloud-gateway-iam-application-bootstrap-standard.test.mjs",
+    "verify": "pnpm check && pnpm test && pnpm test:iam-application-bootstrap-standard && pnpm clippy",
     "workflow:matrix:server": "pnpm gateway:matrix",
     "workflow:validate": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs validate --config sdkwork.workflow.json"
   }

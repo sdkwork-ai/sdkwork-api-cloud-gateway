@@ -37,8 +37,8 @@ sdkwork-api-cloud-gateway-observability = { path = "crates/sdkwork-api-cloud-gat
 sdkwork-api-cloud-gateway-registry = { path = "crates/sdkwork-api-cloud-gateway-registry" }
 sdkwork-api-cloud-gateway = { path = "crates/sdkwork-api-cloud-gateway" }
 
-sdkwork_router_iam_app_api = { package = "sdkwork-router-iam-app-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-app-api" }
-sdkwork_router_iam_backend_api = { package = "sdkwork-router-iam-backend-api", path = "../sdkwork-appbase/crates/sdkwork-router-iam-backend-api" }
+sdkwork_router_iam_app_api = { package = "sdkwork-router-iam-app-api", path = "../sdkwork-iam/crates/sdkwork-router-iam-app-api" }
+sdkwork_router_iam_backend_api = { package = "sdkwork-router-iam-backend-api", path = "../sdkwork-iam/crates/sdkwork-router-iam-backend-api" }
 
 sdkwork_router_course_app_api = { package = "sdkwork-router-course-app-api", path = "../sdkwork-course/crates/sdkwork-router-course-app-api" }
 sdkwork_router_course_backend_api = { package = "sdkwork-router-course-backend-api", path = "../sdkwork-course/crates/sdkwork-router-course-backend-api" }
@@ -70,5 +70,7 @@ sdkwork_router_catalog_open_api = { package = "sdkwork-router-catalog-open-api",
 sdkwork-web-contract = { path = "../sdkwork-web-framework/crates/sdkwork-web-contract" }
 sdkwork-web-core = { path = "../sdkwork-web-framework/crates/sdkwork-web-core" }
 sdkwork-web-axum = { path = "../sdkwork-web-framework/crates/sdkwork-web-axum" }
-sdkwork-iam-web-adapter = { path = "../sdkwork-appbase/crates/sdkwork-iam-web-adapter" }
+sdkwork-iam-web-adapter = { path = "../sdkwork-iam/crates/sdkwork-iam-web-adapter" }
+sdkwork-iam-database-host = { path = "../sdkwork-iam/crates/sdkwork-iam-database-host" }
+sdkwork-iam-embedded-application-bootstrap = { path = "../sdkwork-iam/crates/sdkwork-iam-embedded-application-bootstrap" }
 sdkwork-utils-rust = { path = "../sdkwork-utils/packages/sdkwork-utils-rust" }

@@ -1815,6 +1815,8 @@ dependencies = [
  "sdkwork-api-cloud-gateway-observability",
  "sdkwork-api-cloud-gateway-registry",
  "sdkwork-community-http-rust",
+ "sdkwork-iam-database-host",
+ "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
  "sdkwork-router-catalog-app-api",
  "sdkwork-router-catalog-backend-api",
@@ -1895,37 +1897,6 @@ version = "0.1.0"
 dependencies = [
  "sdkwork-api-cloud-gateway-config",
  "serde",
-]
-
-[[package]]
-name = "sdkwork-appbase-database-host"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "clap",
- "dotenvy",
- "sdkwork-database-config",
- "sdkwork-database-drift",
- "sdkwork-database-lifecycle",
- "sdkwork-database-spi",
- "sdkwork-database-sqlx",
- "sdkwork-iam-module-registry",
- "sdkwork-iam-web-adapter",
- "serde_json",
- "sqlx",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "sdkwork-appbase-iam-bootstrap"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "sdkwork-iam-context-service",
- "sdkwork-iam-module-registry",
- "sqlx",
 ]
 
 [[package]]
@@ -2060,10 +2031,55 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-iam-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-iam-context-service",
+ "sdkwork-iam-module-registry",
+ "sqlx",
+]
+
+[[package]]
 name = "sdkwork-iam-context-service"
 version = "0.1.0"
 dependencies = [
  "sdkwork-utils-rust",
+]
+
+[[package]]
+name = "sdkwork-iam-database-host"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "clap",
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-drift",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+ "sdkwork-iam-embedded-application-bootstrap",
+ "sdkwork-iam-module-registry",
+ "sdkwork-iam-web-adapter",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-iam-embedded-application-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-database-config",
+ "sdkwork-iam-bootstrap",
+ "sdkwork-iam-web-adapter",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]
@@ -2092,16 +2108,18 @@ dependencies = [
  "password-hash",
  "rand_core 0.6.4",
  "reqwest",
- "sdkwork-appbase-iam-bootstrap",
  "sdkwork-database-sqlx",
+ "sdkwork-iam-bootstrap",
  "sdkwork-iam-context-service",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-core",
  "serde",
  "serde_json",
+ "sha1",
  "sha2",
  "sqlx",
+ "urlencoding",
  "uuid",
 ]
 
@@ -2255,11 +2273,11 @@ dependencies = [
  "hmac",
  "password-hash",
  "rand_core 0.6.4",
- "sdkwork-appbase-database-host",
- "sdkwork-appbase-iam-bootstrap",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
+ "sdkwork-iam-bootstrap",
  "sdkwork-iam-context-service",
+ "sdkwork-iam-database-host",
  "sdkwork-iam-web-adapter",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -2281,9 +2299,9 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "chrono",
- "sdkwork-appbase-database-host",
- "sdkwork-appbase-iam-bootstrap",
  "sdkwork-database-sqlx",
+ "sdkwork-iam-bootstrap",
+ "sdkwork-iam-database-host",
  "sdkwork-iam-module-registry",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-contract",

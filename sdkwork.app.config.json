@@ -445,12 +445,12 @@
         "tracked": false
       },
       {
-        "name": "CRAW_CHAT_IM_HTTP_BASE_URL",
+        "name": "SDKWORK_IM_IM_HTTP_BASE_URL",
         "required": false,
         "tracked": false
       },
       {
-        "name": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+        "name": "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
         "required": false,
         "tracked": false
       },
@@ -481,7 +481,7 @@
       "surface": "app",
       "prefix": "/app/v3/api",
       "owner": "dependency",
-      "serviceId": "sdkwork-appbase-app-api"
+      "serviceId": "sdkwork-iam-app-api"
     },
     {
       "surface": "app",
@@ -829,7 +829,7 @@
       "surface": "backend",
       "prefix": "/backend/v3/api/iam",
       "owner": "dependency",
-      "serviceId": "sdkwork-appbase-backend-api"
+      "serviceId": "sdkwork-iam-backend-api"
     },
     {
       "surface": "app",
@@ -994,17 +994,17 @@
   ],
   "sdkDependencies": [
     {
-      "serviceId": "sdkwork-appbase-app-api",
+      "serviceId": "sdkwork-iam-app-api",
       "workspace": "sdkwork-appbase",
-      "sdkFamily": "sdkwork-appbase-app-sdk",
-      "apiAuthority": "sdkwork-appbase-app-api",
+      "sdkFamily": "sdkwork-iam-app-sdk",
+      "apiAuthority": "sdkwork-iam-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appbase",
       "cargoDependency": "sdkwork_router_iam_app_api",
-      "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router",
+      "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router",
       "coverage": "appbase-iam-routes"
     },
     {
@@ -1688,10 +1688,10 @@
       "coverage": "messaging-backend-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-appbase-backend-api",
+      "serviceId": "sdkwork-iam-backend-api",
       "workspace": "sdkwork-appbase",
-      "sdkFamily": "sdkwork-appbase-backend-sdk",
-      "apiAuthority": "sdkwork-appbase-backend-api",
+      "sdkFamily": "sdkwork-iam-backend-sdk",
+      "apiAuthority": "sdkwork-iam-backend-api",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/iam",
       "runtimeMode": "split-or-embedded",
@@ -1728,7 +1728,7 @@
       "surface": "app",
       "apiPrefix": "/im/v3/api",
       "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "CRAW_CHAT_IM_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_IM_HTTP_BASE_URL",
       "coverage": "sdkwork-im-im-api-upstream-routes"
     },
     {
@@ -1739,7 +1739,7 @@
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/control",
       "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
       "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {
@@ -1750,7 +1750,7 @@
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/audit",
       "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
       "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {
@@ -1761,7 +1761,7 @@
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/ops",
       "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+      "requiredBaseUrlKey": "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
       "coverage": "sdkwork-im-backend-api-upstream-routes"
     },
     {

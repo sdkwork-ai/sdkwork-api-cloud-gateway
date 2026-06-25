@@ -2,7 +2,8 @@ use std::{collections::HashMap, fs, path::PathBuf, process::Command};
 
 use sdkwork_api_cloud_gateway_config::{
     DependencyRuntimeMode, GatewayMode, GatewayPolicyRuleConfig, GatewayRuntimeConfig,
-    APPBASE_APP_API_BASE_URL_ENV,
+    APPBASE_APP_API_BASE_URL_ENV, SDKWORK_IM_BACKEND_HTTP_SERVICE_ID,
+    SDKWORK_IM_IM_HTTP_SERVICE_ID,
 };
 
 #[test]
@@ -15,12 +16,12 @@ fn default_config_declares_gateway_identity_and_appbase_dependency() {
     assert!(config
         .dependency_surfaces
         .iter()
-        .any(|surface| surface.service_id == "sdkwork-appbase-app-api"
+        .any(|surface| surface.service_id == "sdkwork-iam-app-api"
             && surface.api_prefix == "/app/v3/api"
             && surface.cargo_feature.as_deref() == Some("foundation-appbase")
             && surface.cargo_dependency.as_deref() == Some("sdkwork_router_iam_app_api")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router")));
+                == Some("sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router")));
 }
 
 #[test]
@@ -36,7 +37,7 @@ fn parses_toml_and_applies_environment_overrides() {
         mode = "split"
 
         [[upstreams]]
-        serviceId = "sdkwork-appbase-app-api"
+        serviceId = "sdkwork-iam-app-api"
         baseUrl = "http://127.0.0.1:3800"
         required = true
         timeoutMs = 1500
@@ -97,7 +98,7 @@ fn parses_toml_and_applies_environment_overrides() {
 
         [[traffic.concurrencyLimits]]
         id = "appbase"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         maxInFlight = 256
 
         [resilience]
@@ -197,7 +198,7 @@ fn parses_toml_and_applies_environment_overrides() {
     assert_eq!(config.server.bind, "127.0.0.1:4999");
     assert_eq!(
         config
-            .upstream("sdkwork-appbase-app-api")
+            .upstream("sdkwork-iam-app-api")
             .expect("appbase upstream")
             .base_url,
         "http://127.0.0.1:4888"
@@ -212,7 +213,7 @@ fn parses_toml_and_applies_environment_overrides() {
     assert_eq!(config.readiness.timeout_ms, 1250);
     assert_eq!(
         config
-            .upstream("sdkwork-appbase-app-api")
+            .upstream("sdkwork-iam-app-api")
             .expect("appbase upstream")
             .readiness_path,
         "/internal/readyz"
@@ -293,7 +294,7 @@ fn parses_policy_rules_for_method_body_and_timeout_governance() {
 
         [[policy.rules]]
         id = "appbase-auth-write-policy"
-        matchServiceId = "sdkwork-appbase-app-api"
+        matchServiceId = "sdkwork-iam-app-api"
         matchPathPrefix = "/app/v3/api/auth"
         allowedMethods = ["POST"]
         maxBodyBytes = 4096
@@ -308,7 +309,7 @@ fn parses_policy_rules_for_method_body_and_timeout_governance() {
         config.policy.rules[0],
         GatewayPolicyRuleConfig {
             id: "appbase-auth-write-policy".to_string(),
-            match_service_id: Some("sdkwork-appbase-app-api".to_string()),
+            match_service_id: Some("sdkwork-iam-app-api".to_string()),
             match_path_prefix: Some("/app/v3/api/auth".to_string()),
             allowed_methods: vec!["POST".to_string()],
             max_body_bytes: Some(4096),
@@ -490,17 +491,17 @@ fn sdkwork_manifest_drives_runtime_identity_bind_and_dependency_surfaces() {
           },
           "sdkDependencies": [
             {
-              "serviceId": "sdkwork-appbase-app-api",
+              "serviceId": "sdkwork-iam-app-api",
               "workspace": "sdkwork-appbase",
-              "sdkFamily": "sdkwork-appbase-app-sdk",
-              "apiAuthority": "sdkwork-appbase-app-api",
+              "sdkFamily": "sdkwork-iam-app-sdk",
+              "apiAuthority": "sdkwork-iam-app-api",
               "surface": "app",
               "apiPrefix": "/app/v3/api",
               "runtimeMode": "split-or-embedded",
               "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
               "cargoFeature": "foundation-appbase",
               "cargoDependency": "sdkwork_router_iam_app_api",
-              "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_appbase_app_api_router"
+              "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router"
             }
           ]
         }
@@ -591,9 +592,9 @@ fn application_manifest_declares_claw_router_foundation_split_dependency_surface
 
     for (service_id, workspace, sdk_family, api_prefix, env_key, default_base_url) in [
         (
-            "sdkwork-appbase-backend-api",
+            "sdkwork-iam-backend-api",
             "sdkwork-appbase",
-            "sdkwork-appbase-backend-sdk",
+            "sdkwork-iam-backend-sdk",
             "/backend/v3/api/iam",
             "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
             "http://127.0.0.1:3801",
@@ -641,7 +642,7 @@ fn application_manifest_declares_claw_router_foundation_split_dependency_surface
 }
 
 #[test]
-fn application_manifest_declares_craw_chat_foundation_split_dependency_surfaces() {
+fn application_manifest_declares_sdkwork_im_foundation_split_dependency_surfaces() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let config = GatewayRuntimeConfig::from_application_root(root).expect("manifest parses");
 
@@ -1266,12 +1267,12 @@ fn application_manifest_declares_extended_platform_dependency_upstreams() {
         ),
         (
             "sdkwork-im-im-http",
-            "CRAW_CHAT_IM_HTTP_BASE_URL",
+            "SDKWORK_IM_IM_HTTP_BASE_URL",
             "http://127.0.0.1:19880",
         ),
         (
             "sdkwork-im-backend-http",
-            "CRAW_CHAT_BACKEND_HTTP_BASE_URL",
+            "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
             "http://127.0.0.1:19881",
         ),
         (
@@ -1337,12 +1338,130 @@ fn application_manifest_declares_cms_and_forum_env_bindings() {
         "SDKWORK_FORUM_APP_API_BASE_URL",
         "SDKWORK_FORUM_BACKEND_API_BASE_URL",
         "SDKWORK_FORUM_OPEN_API_BASE_URL",
+        "SDKWORK_IM_IM_HTTP_BASE_URL",
+        "SDKWORK_IM_BACKEND_HTTP_BASE_URL",
     ] {
         assert!(
             variables
                 .iter()
                 .any(|entry| entry["name"].as_str() == Some(env_key)),
             "application manifest must declare env binding {env_key}"
+        );
+    }
+}
+
+#[test]
+fn legacy_im_upstream_env_aliases_apply_when_canonical_keys_are_missing() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut env = HashMap::new();
+    env.insert(
+        "CRAW_CHAT_IM_HTTP_BASE_URL".to_string(),
+        "http://127.0.0.1:29980".to_string(),
+    );
+    env.insert(
+        "CRAW_CHAT_BACKEND_HTTP_BASE_URL".to_string(),
+        "http://127.0.0.1:29981".to_string(),
+    );
+
+    let config = GatewayRuntimeConfig::from_application_root(root)
+        .expect("manifest parses")
+        .with_env_overrides(&env)
+        .expect("legacy IM env overrides apply");
+
+    assert_eq!(
+        config
+            .upstream(SDKWORK_IM_IM_HTTP_SERVICE_ID)
+            .expect("im http upstream")
+            .base_url,
+        "http://127.0.0.1:29980"
+    );
+    assert_eq!(
+        config
+            .upstream(SDKWORK_IM_BACKEND_HTTP_SERVICE_ID)
+            .expect("im backend upstream")
+            .base_url,
+        "http://127.0.0.1:29981"
+    );
+}
+
+#[test]
+fn application_manifest_env_bindings_cover_all_dependency_base_url_keys() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest_path = root.join("sdkwork.app.config.json");
+    let manifest: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap())
+            .expect("manifest parses");
+    let env_names: std::collections::HashSet<String> = manifest["envBindings"]["variables"]
+        .as_array()
+        .expect("application manifest declares envBindings.variables")
+        .iter()
+        .filter_map(|entry| entry["name"].as_str().map(str::to_string))
+        .collect();
+
+    for dependency in manifest["sdkDependencies"]
+        .as_array()
+        .expect("application manifest declares sdkDependencies")
+    {
+        let Some(env_key) = dependency["requiredBaseUrlKey"].as_str() else {
+            continue;
+        };
+        let service_id = dependency["serviceId"]
+            .as_str()
+            .unwrap_or("unknown-service-id");
+        assert!(
+            env_names.contains(env_key),
+            "application manifest envBindings must declare requiredBaseUrlKey {env_key} for service {service_id}"
+        );
+    }
+}
+
+#[test]
+fn component_spec_dependencies_align_with_application_manifest_base_url_keys() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(root.join("sdkwork.app.config.json")).expect("manifest reads"),
+    )
+    .expect("manifest parses");
+    let spec: serde_json::Value = serde_json::from_str(
+        &fs::read_to_string(root.join("specs/component.spec.json")).expect("component spec reads"),
+    )
+    .expect("component spec parses");
+
+    let mut manifest_keys = HashMap::new();
+    for dependency in manifest["sdkDependencies"]
+        .as_array()
+        .expect("application manifest declares sdkDependencies")
+    {
+        let service_id = dependency["serviceId"]
+            .as_str()
+            .expect("sdkDependencies entry declares serviceId")
+            .to_string();
+        let env_key = dependency["requiredBaseUrlKey"]
+            .as_str()
+            .expect("sdkDependencies entry declares requiredBaseUrlKey")
+            .to_string();
+        if let Some(existing) = manifest_keys.insert(service_id.clone(), env_key.clone()) {
+            assert_eq!(
+                existing, env_key,
+                "manifest sdkDependencies must use one requiredBaseUrlKey for {service_id}"
+            );
+        }
+    }
+
+    for dependency in spec["dependencies"]
+        .as_array()
+        .expect("component spec declares dependencies")
+    {
+        let service_id = dependency["serviceId"]
+            .as_str()
+            .expect("component spec dependency declares serviceId");
+        let env_key = dependency["requiredBaseUrlKey"]
+            .as_str()
+            .expect("component spec dependency declares requiredBaseUrlKey");
+        assert_eq!(
+            manifest_keys.get(service_id).map(String::as_str),
+            Some(env_key),
+            "component spec and manifest must agree on requiredBaseUrlKey for {service_id}"
         );
     }
 }
@@ -2184,7 +2303,7 @@ fn development_template_defaults_to_embedded_single_port_mode() {
     assert_eq!(config.dependency_surfaces.len(), 1);
     assert_eq!(
         config.dependency_surfaces[0].service_id,
-        "sdkwork-appbase-app-api"
+        "sdkwork-iam-app-api"
     );
 }
 

@@ -277,7 +277,10 @@ function runCargoBuild(context) {
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
   }
-  run('cargo', args, { cwd: appRoot });
+  run('cargo', args, {
+    cwd: appRoot,
+    env: { ...process.env, CARGO_INCREMENTAL: '0' },
+  });
 }
 
 async function copyConfigExamples(stageRoot) {
@@ -403,10 +406,11 @@ async function validateArchive(context) {
   console.log(`[sdkwork-api-cloud-gateway] validated ${path.relative(appRoot, context.archivePath)}`);
 }
 
-function run(command, args, { cwd, capture = false } = {}) {
+function run(command, args, { cwd, capture = false, env } = {}) {
   const result = spawnSync(command, args, {
     cwd,
     encoding: 'utf8',
+    env: env ?? process.env,
     shell: false,
     stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
   });
