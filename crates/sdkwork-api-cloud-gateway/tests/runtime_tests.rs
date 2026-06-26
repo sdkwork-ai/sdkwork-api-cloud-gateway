@@ -3338,11 +3338,11 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
             runtime_mode: sdkwork_api_cloud_gateway_config::DependencyRuntimeMode::Embedded,
             same_origin_allowed: true,
             executable_export: Some(
-                "sdkwork_router_iam_backend_api::build_sdkwork_iam_backend_api_router"
+                "sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router"
                     .to_owned(),
             ),
             cargo_feature: Some("foundation-appbase".to_owned()),
-            cargo_dependency: Some("sdkwork-router-iam-backend-api".to_owned()),
+            cargo_dependency: Some("sdkwork-routes-iam-backend-api".to_owned()),
             coverage: "appbase-iam-backend-routes".to_owned(),
             required_base_url_key: None,
         },

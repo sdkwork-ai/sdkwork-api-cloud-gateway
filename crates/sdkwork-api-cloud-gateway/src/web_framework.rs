@@ -126,7 +126,7 @@ fn wrap_split_router(config: &GatewayRuntimeConfig, router: Router) -> Router {
 async fn wrap_split_router_async(config: &GatewayRuntimeConfig, router: Router) -> Router {
     #[cfg(feature = "foundation-appbase")]
     {
-        let resolver = sdkwork_iam_web_adapter::iam_database_resolver_from_env().await;
+        let resolver = sdkwork_iam_web_adapter::iam_web_request_context_resolver_from_env().await;
         let layer = build_split_web_framework_layer(config, resolver);
         with_web_request_context(router, layer)
     }

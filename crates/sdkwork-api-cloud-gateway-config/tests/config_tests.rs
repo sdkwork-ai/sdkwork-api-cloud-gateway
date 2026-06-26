@@ -19,9 +19,9 @@ fn default_config_declares_gateway_identity_and_appbase_dependency() {
         .any(|surface| surface.service_id == "sdkwork-iam-app-api"
             && surface.api_prefix == "/app/v3/api"
             && surface.cargo_feature.as_deref() == Some("foundation-appbase")
-            && surface.cargo_dependency.as_deref() == Some("sdkwork_router_iam_app_api")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork_routes_iam_app_api")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router")));
+                == Some("sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router")));
 }
 
 #[test]
@@ -500,8 +500,8 @@ fn sdkwork_manifest_drives_runtime_identity_bind_and_dependency_surfaces() {
               "runtimeMode": "split-or-embedded",
               "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
               "cargoFeature": "foundation-appbase",
-              "cargoDependency": "sdkwork_router_iam_app_api",
-              "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router"
+              "cargoDependency": "sdkwork_routes_iam_app_api",
+              "executableExport": "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router"
             }
           ]
         }
@@ -522,7 +522,7 @@ fn sdkwork_manifest_drives_runtime_identity_bind_and_dependency_surfaces() {
     assert_eq!(surface.cargo_feature.as_deref(), Some("foundation-appbase"));
     assert_eq!(
         surface.cargo_dependency.as_deref(),
-        Some("sdkwork_router_iam_app_api")
+        Some("sdkwork_routes_iam_app_api")
     );
 }
 

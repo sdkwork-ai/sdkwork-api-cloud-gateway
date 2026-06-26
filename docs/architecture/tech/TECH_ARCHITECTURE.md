@@ -41,7 +41,7 @@ for production and CI matrix packaging (`standalone` and `cloud` deployment prof
 | Route registry | In-repo metadata | `sdkwork-api-cloud-gateway-registry` |
 | Observability | Prometheus + structured logs | `sdkwork-api-cloud-gateway-observability`; series prefix `sdkwork_api_cloud_gateway_*` |
 | Utilities | `sdkwork-utils-rust` | Boolean parsing, path normalization |
-| IAM embedding | `foundation-appbase` feature | Optional embedded IAM routers via `sdkwork-router-iam-*` |
+| IAM embedding | `foundation-appbase` feature | Optional embedded IAM routers via `sdkwork-routes-iam-*` |
 | Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `sdkwork.workflow.json` |
 
 Intentionally **not** integrated at this stage:

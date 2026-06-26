@@ -288,7 +288,7 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
 #[cfg(feature = "foundation-appbase")]
 pub async fn build_embedded_sdkwork_iam_backend_api_router(
 ) -> Result<Router, GatewayRuntimeError> {
-    Ok(sdkwork_router_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
+    Ok(sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
 }
 
 #[cfg(feature = "foundation-appbase")]
@@ -300,7 +300,7 @@ pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, Gatew
             service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
             message,
         })?;
-    sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router()
+    sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router()
         .await
         .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
             service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),

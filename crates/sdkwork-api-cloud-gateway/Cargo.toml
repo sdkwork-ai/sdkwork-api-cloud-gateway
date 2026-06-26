@@ -7,23 +7,23 @@ license.workspace = true
 [features]
 default = ["foundation-appbase"]
 foundation-appbase = [
-    "dep:sdkwork_router_iam_app_api",
-    "dep:sdkwork_router_iam_backend_api",
+    "dep:sdkwork_routes_iam_app_api",
+    "dep:sdkwork_routes_iam_backend_api",
     "dep:sdkwork-iam-web-adapter",
     "dep:sdkwork-iam-database-host",
     "dep:sdkwork-iam-embedded-application-bootstrap",
 ]
-foundation-course = ["dep:sdkwork_router_course_app_api", "dep:sdkwork_router_course_backend_api"]
-foundation-news = ["dep:sdkwork_router_news_app_api", "dep:sdkwork_router_news_backend_api", "dep:sdkwork_router_news_open_api"]
-foundation-image = ["dep:sdkwork_router_image_app_api", "dep:sdkwork_router_image_backend_api", "dep:sdkwork_router_image_open_api"]
-foundation-forum = ["dep:sdkwork_router_forum_app_api", "dep:sdkwork_router_forum_backend_api", "dep:sdkwork_router_forum_open_api"]
-foundation-music = ["dep:sdkwork_router_music_app_api", "dep:sdkwork_router_music_backend_api"]
-foundation-messaging = ["dep:sdkwork_router_messaging_app_api", "dep:sdkwork_router_messaging_backend_api"]
-foundation-community = ["dep:sdkwork_router_community_app_api"]
-foundation-cms = ["dep:sdkwork_router_cms_app_api", "dep:sdkwork_router_cms_backend_api", "dep:sdkwork_router_cms_open_api"]
-foundation-voice = ["dep:sdkwork_router_voice_app_api", "dep:sdkwork_router_voice_backend_api"]
-foundation-aiot = ["dep:sdkwork_router_aiot_app_api"]
-foundation-appstore = ["dep:sdkwork_router_catalog_app_api", "dep:sdkwork_router_catalog_backend_api", "dep:sdkwork_router_catalog_open_api"]
+foundation-course = ["dep:sdkwork_routes_course_app_api", "dep:sdkwork_routes_course_backend_api"]
+foundation-news = ["dep:sdkwork_routes_news_app_api", "dep:sdkwork_routes_news_backend_api", "dep:sdkwork_routes_news_open_api"]
+foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api"]
+foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api"]
+foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api"]
+foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api"]
+foundation-community = ["dep:sdkwork_routes_community_app_api"]
+foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api"]
+foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api"]
+foundation-aiot = ["dep:sdkwork_routes_aiot_app_api"]
+foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api"]
 
 [dependencies]
 async-trait.workspace = true
@@ -50,33 +50,33 @@ sdkwork-utils-rust.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
 sdkwork-iam-database-host = { workspace = true, optional = true }
 sdkwork-iam-embedded-application-bootstrap = { workspace = true, optional = true }
-sdkwork_router_iam_app_api = { workspace = true, optional = true }
-sdkwork_router_iam_backend_api = { workspace = true, optional = true }
-sdkwork_router_course_app_api = { workspace = true, optional = true }
-sdkwork_router_course_backend_api = { workspace = true, optional = true }
-sdkwork_router_news_app_api = { workspace = true, optional = true }
-sdkwork_router_news_backend_api = { workspace = true, optional = true }
-sdkwork_router_news_open_api = { workspace = true, optional = true }
-sdkwork_router_image_app_api = { workspace = true, optional = true }
-sdkwork_router_image_backend_api = { workspace = true, optional = true }
-sdkwork_router_image_open_api = { workspace = true, optional = true }
-sdkwork_router_forum_app_api = { workspace = true, optional = true }
-sdkwork_router_forum_backend_api = { workspace = true, optional = true }
-sdkwork_router_forum_open_api = { workspace = true, optional = true }
-sdkwork_router_music_app_api = { workspace = true, optional = true }
-sdkwork_router_music_backend_api = { workspace = true, optional = true }
-sdkwork_router_messaging_app_api = { workspace = true, optional = true }
-sdkwork_router_messaging_backend_api = { workspace = true, optional = true }
-sdkwork_router_community_app_api = { workspace = true, optional = true }
-sdkwork_router_cms_app_api = { workspace = true, optional = true }
-sdkwork_router_cms_backend_api = { workspace = true, optional = true }
-sdkwork_router_cms_open_api = { workspace = true, optional = true }
-sdkwork_router_voice_app_api = { workspace = true, optional = true }
-sdkwork_router_voice_backend_api = { workspace = true, optional = true }
-sdkwork_router_aiot_app_api = { workspace = true, optional = true }
-sdkwork_router_catalog_app_api = { workspace = true, optional = true }
-sdkwork_router_catalog_backend_api = { workspace = true, optional = true }
-sdkwork_router_catalog_open_api = { workspace = true, optional = true }
+sdkwork_routes_iam_app_api = { workspace = true, optional = true }
+sdkwork_routes_iam_backend_api = { workspace = true, optional = true }
+sdkwork_routes_course_app_api = { workspace = true, optional = true }
+sdkwork_routes_course_backend_api = { workspace = true, optional = true }
+sdkwork_routes_news_app_api = { workspace = true, optional = true }
+sdkwork_routes_news_backend_api = { workspace = true, optional = true }
+sdkwork_routes_news_open_api = { workspace = true, optional = true }
+sdkwork_routes_image_app_api = { workspace = true, optional = true }
+sdkwork_routes_image_backend_api = { workspace = true, optional = true }
+sdkwork_routes_image_open_api = { workspace = true, optional = true }
+sdkwork_routes_forum_app_api = { workspace = true, optional = true }
+sdkwork_routes_forum_backend_api = { workspace = true, optional = true }
+sdkwork_routes_forum_open_api = { workspace = true, optional = true }
+sdkwork_routes_music_app_api = { workspace = true, optional = true }
+sdkwork_routes_music_backend_api = { workspace = true, optional = true }
+sdkwork_routes_messaging_app_api = { workspace = true, optional = true }
+sdkwork_routes_messaging_backend_api = { workspace = true, optional = true }
+sdkwork_routes_community_app_api = { workspace = true, optional = true }
+sdkwork_routes_cms_app_api = { workspace = true, optional = true }
+sdkwork_routes_cms_backend_api = { workspace = true, optional = true }
+sdkwork_routes_cms_open_api = { workspace = true, optional = true }
+sdkwork_routes_voice_app_api = { workspace = true, optional = true }
+sdkwork_routes_voice_backend_api = { workspace = true, optional = true }
+sdkwork_routes_aiot_app_api = { workspace = true, optional = true }
+sdkwork_routes_catalog_app_api = { workspace = true, optional = true }
+sdkwork_routes_catalog_backend_api = { workspace = true, optional = true }
+sdkwork_routes_catalog_open_api = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures-util.workspace = true

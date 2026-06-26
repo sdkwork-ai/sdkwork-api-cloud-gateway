@@ -1169,10 +1169,10 @@ fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
         runtime_mode: DependencyRuntimeMode::SplitOrEmbedded,
         same_origin_allowed: true,
         executable_export: Some(
-            "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router".to_string(),
+            "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router".to_string(),
         ),
         cargo_feature: Some("foundation-appbase".to_string()),
-        cargo_dependency: Some("sdkwork_router_iam_app_api".to_string()),
+        cargo_dependency: Some("sdkwork_routes_iam_app_api".to_string()),
         coverage: "appbase-iam-routes".to_string(),
         required_base_url_key: Some(APPBASE_APP_API_BASE_URL_ENV.to_string()),
     }]
@@ -1254,7 +1254,7 @@ fn default_upstream_for_dependency_surface(
 
 fn default_executable_export_for_service(service_id: &str) -> Option<String> {
     (service_id == APPBASE_APP_API_SERVICE_ID)
-        .then(|| "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router".to_string())
+        .then(|| "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router".to_string())
 }
 
 fn default_coverage_for_service(service_id: &str) -> String {

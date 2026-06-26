@@ -1818,30 +1818,30 @@ dependencies = [
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
- "sdkwork-router-catalog-app-api",
- "sdkwork-router-catalog-backend-api",
- "sdkwork-router-catalog-open-api",
- "sdkwork-router-cms-app-api",
- "sdkwork-router-cms-backend-api",
- "sdkwork-router-cms-open-api",
- "sdkwork-router-course-app-api",
- "sdkwork-router-course-backend-api",
- "sdkwork-router-forum-app-api",
- "sdkwork-router-forum-backend-api",
- "sdkwork-router-forum-open-api",
- "sdkwork-router-iam-app-api",
- "sdkwork-router-iam-backend-api",
- "sdkwork-router-image-app-api",
- "sdkwork-router-image-backend-api",
- "sdkwork-router-image-open-api",
- "sdkwork-router-iot-app-api",
- "sdkwork-router-messaging-app-api",
- "sdkwork-router-messaging-backend-api",
- "sdkwork-router-news-app-api",
- "sdkwork-router-news-backend-api",
- "sdkwork-router-news-open-api",
- "sdkwork-router-voice-app-api",
- "sdkwork-router-voice-backend-api",
+ "sdkwork-routes-catalog-app-api",
+ "sdkwork-routes-catalog-backend-api",
+ "sdkwork-routes-catalog-open-api",
+ "sdkwork-routes-cms-app-api",
+ "sdkwork-routes-cms-backend-api",
+ "sdkwork-routes-cms-open-api",
+ "sdkwork-routes-course-app-api",
+ "sdkwork-routes-course-backend-api",
+ "sdkwork-routes-forum-app-api",
+ "sdkwork-routes-forum-backend-api",
+ "sdkwork-routes-forum-open-api",
+ "sdkwork-routes-iam-app-api",
+ "sdkwork-routes-iam-backend-api",
+ "sdkwork-routes-image-app-api",
+ "sdkwork-routes-image-backend-api",
+ "sdkwork-routes-image-open-api",
+ "sdkwork-routes-iot-app-api",
+ "sdkwork-routes-messaging-app-api",
+ "sdkwork-routes-messaging-backend-api",
+ "sdkwork-routes-news-app-api",
+ "sdkwork-routes-news-backend-api",
+ "sdkwork-routes-news-open-api",
+ "sdkwork-routes-voice-app-api",
+ "sdkwork-routes-voice-backend-api",
  "sdkwork-routes-music-app-api",
  "sdkwork-routes-music-backend-api",
  "sdkwork-utils-rust",
@@ -2154,7 +2154,7 @@ name = "sdkwork-music-core-rust"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-catalog-app-api"
+name = "sdkwork-routes-catalog-app-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2167,7 +2167,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-catalog-backend-api"
+name = "sdkwork-routes-catalog-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2180,7 +2180,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-catalog-open-api"
+name = "sdkwork-routes-catalog-open-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2193,7 +2193,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-cms-app-api"
+name = "sdkwork-routes-cms-app-api"
 version = "0.1.0"
 dependencies = [
  "sdkwork-content-cms-service",
@@ -2202,7 +2202,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-cms-backend-api"
+name = "sdkwork-routes-cms-backend-api"
 version = "0.1.0"
 dependencies = [
  "sdkwork-content-cms-service",
@@ -2211,7 +2211,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-cms-open-api"
+name = "sdkwork-routes-cms-open-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2224,7 +2224,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-course-app-api"
+name = "sdkwork-routes-course-app-api"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -2234,7 +2234,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-course-backend-api"
+name = "sdkwork-routes-course-backend-api"
 version = "0.1.0"
 dependencies = [
  "async-trait",
@@ -2244,15 +2244,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-forum-app-api"
+name = "sdkwork-routes-forum-app-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-forum-backend-api"
+name = "sdkwork-routes-forum-backend-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-forum-open-api"
+name = "sdkwork-routes-forum-open-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2262,7 +2262,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-iam-app-api"
+name = "sdkwork-routes-iam-app-api"
 version = "0.1.0"
 dependencies = [
  "argon2",
@@ -2294,7 +2294,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-iam-backend-api"
+name = "sdkwork-routes-iam-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2313,15 +2313,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-image-app-api"
+name = "sdkwork-routes-image-app-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-image-backend-api"
+name = "sdkwork-routes-image-backend-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-image-open-api"
+name = "sdkwork-routes-image-open-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2331,7 +2331,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-iot-app-api"
+name = "sdkwork-routes-iot-app-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2350,23 +2350,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-messaging-app-api"
+name = "sdkwork-routes-messaging-app-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-messaging-backend-api"
+name = "sdkwork-routes-messaging-backend-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-news-app-api"
+name = "sdkwork-routes-news-app-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-news-backend-api"
+name = "sdkwork-routes-news-backend-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-news-open-api"
+name = "sdkwork-routes-news-open-api"
 version = "0.1.0"
 dependencies = [
  "axum",
@@ -2376,11 +2376,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-router-voice-app-api"
+name = "sdkwork-routes-voice-app-api"
 version = "0.1.0"
 
 [[package]]
-name = "sdkwork-router-voice-backend-api"
+name = "sdkwork-routes-voice-backend-api"
 version = "0.1.0"
 
 [[package]]

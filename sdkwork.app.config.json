@@ -1003,8 +1003,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPBASE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appbase",
-      "cargoDependency": "sdkwork_router_iam_app_api",
-      "executableExport": "sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router",
+      "cargoDependency": "sdkwork_routes_iam_app_api",
+      "executableExport": "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router",
       "coverage": "appbase-iam-routes"
     },
     {
@@ -1039,8 +1039,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_CMS_APP_API_BASE_URL",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork_router_cms_app_api",
-      "executableExport": "sdkwork_router_cms_app_api::build_sdkwork_cms_app_api_router",
+      "cargoDependency": "sdkwork_routes_cms_app_api",
+      "executableExport": "sdkwork_routes_cms_app_api::build_sdkwork_cms_app_api_router",
       "coverage": "cms-app-api-upstream-routes"
     },
     {
@@ -1053,8 +1053,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_CMS_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork_router_cms_backend_api",
-      "executableExport": "sdkwork_router_cms_backend_api::build_sdkwork_cms_backend_api_router",
+      "cargoDependency": "sdkwork_routes_cms_backend_api",
+      "executableExport": "sdkwork_routes_cms_backend_api::build_sdkwork_cms_backend_api_router",
       "coverage": "cms-backend-api-upstream-routes"
     },
     {
@@ -1067,8 +1067,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_CMS_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork_router_cms_open_api",
-      "executableExport": "sdkwork_router_cms_open_api::build_sdkwork_cms_open_api_router",
+      "cargoDependency": "sdkwork_routes_cms_open_api",
+      "executableExport": "sdkwork_routes_cms_open_api::build_sdkwork_cms_open_api_router",
       "coverage": "cms-open-api-upstream-routes"
     },
     {
@@ -1125,8 +1125,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AIOT_APP_API_BASE_URL",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork_router_aiot_app_api",
-      "executableExport": "sdkwork_router_aiot_app_api::standard_api_route_contracts",
+      "cargoDependency": "sdkwork_routes_aiot_app_api",
+      "executableExport": "sdkwork_routes_aiot_app_api::standard_api_route_contracts",
       "coverage": "aiot-app-api-upstream-routes"
     },
     {
@@ -1139,8 +1139,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AIOT_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork_router_aiot_app_api",
-      "executableExport": "sdkwork_router_aiot_app_api::standard_api_route_contracts",
+      "cargoDependency": "sdkwork_routes_aiot_app_api",
+      "executableExport": "sdkwork_routes_aiot_app_api::standard_api_route_contracts",
       "coverage": "aiot-backend-api-upstream-routes"
     },
     {
@@ -1263,8 +1263,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_NEWS_APP_API_BASE_URL",
       "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork_router_news_app_api",
-      "executableExport": "sdkwork_router_news_app_api::app_routes",
+      "cargoDependency": "sdkwork_routes_news_app_api",
+      "executableExport": "sdkwork_routes_news_app_api::app_routes",
       "coverage": "news-app-api-upstream-routes"
     },
     {
@@ -1277,8 +1277,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_NEWS_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork_router_news_backend_api",
-      "executableExport": "sdkwork_router_news_backend_api::backend_routes",
+      "cargoDependency": "sdkwork_routes_news_backend_api",
+      "executableExport": "sdkwork_routes_news_backend_api::backend_routes",
       "coverage": "news-backend-api-upstream-routes"
     },
     {
@@ -1291,8 +1291,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_NEWS_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork_router_news_open_api",
-      "executableExport": "sdkwork_router_news_open_api::open_routes",
+      "cargoDependency": "sdkwork_routes_news_open_api",
+      "executableExport": "sdkwork_routes_news_open_api::open_routes",
       "coverage": "news-open-api-upstream-routes"
     },
     {
@@ -1305,8 +1305,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_FORUM_APP_API_BASE_URL",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork_router_forum_app_api",
-      "executableExport": "sdkwork_router_forum_app_api::build_sdkwork_forum_app_api_router",
+      "cargoDependency": "sdkwork_routes_forum_app_api",
+      "executableExport": "sdkwork_routes_forum_app_api::build_sdkwork_forum_app_api_router",
       "coverage": "forum-app-api-upstream-routes"
     },
     {
@@ -1319,8 +1319,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_FORUM_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork_router_forum_backend_api",
-      "executableExport": "sdkwork_router_forum_backend_api::build_sdkwork_forum_backend_api_router",
+      "cargoDependency": "sdkwork_routes_forum_backend_api",
+      "executableExport": "sdkwork_routes_forum_backend_api::build_sdkwork_forum_backend_api_router",
       "coverage": "forum-backend-api-upstream-routes"
     },
     {
@@ -1333,8 +1333,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_FORUM_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork_router_forum_open_api",
-      "executableExport": "sdkwork_router_forum_open_api::build_sdkwork_forum_open_api_router",
+      "cargoDependency": "sdkwork_routes_forum_open_api",
+      "executableExport": "sdkwork_routes_forum_open_api::build_sdkwork_forum_open_api_router",
       "coverage": "forum-open-api-upstream-routes"
     },
     {
@@ -1369,8 +1369,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_MUSIC_APP_API_BASE_URL",
       "cargoFeature": "foundation-music",
-      "cargoDependency": "sdkwork_router_music_app_api",
-      "executableExport": "sdkwork_router_music_app_api::app_routes",
+      "cargoDependency": "sdkwork_routes_music_app_api",
+      "executableExport": "sdkwork_routes_music_app_api::app_routes",
       "coverage": "music-app-api-upstream-routes"
     },
     {
@@ -1383,8 +1383,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_MUSIC_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-music",
-      "cargoDependency": "sdkwork_router_music_backend_api",
-      "executableExport": "sdkwork_router_music_backend_api::backend_routes",
+      "cargoDependency": "sdkwork_routes_music_backend_api",
+      "executableExport": "sdkwork_routes_music_backend_api::backend_routes",
       "coverage": "music-backend-api-upstream-routes"
     },
     {
@@ -1419,8 +1419,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_COMMUNITY_APP_API_BASE_URL",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork_router_community_app_api",
-      "executableExport": "sdkwork_router_community_app_api::app_routes",
+      "cargoDependency": "sdkwork_routes_community_app_api",
+      "executableExport": "sdkwork_routes_community_app_api::app_routes",
       "coverage": "community-app-api-upstream-routes"
     },
     {
@@ -1433,8 +1433,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_COMMUNITY_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork_router_community_app_api",
-      "executableExport": "sdkwork_router_community_app_api::backend_routes",
+      "cargoDependency": "sdkwork_routes_community_app_api",
+      "executableExport": "sdkwork_routes_community_app_api::backend_routes",
       "coverage": "community-backend-api-upstream-routes"
     },
     {
@@ -1447,8 +1447,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_COMMUNITY_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork_router_community_app_api",
-      "executableExport": "sdkwork_router_community_app_api::open_routes",
+      "cargoDependency": "sdkwork_routes_community_app_api",
+      "executableExport": "sdkwork_routes_community_app_api::open_routes",
       "coverage": "community-open-api-upstream-routes"
     },
     {
@@ -1483,8 +1483,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_VOICE_APP_API_BASE_URL",
       "cargoFeature": "foundation-voice",
-      "cargoDependency": "sdkwork_router_voice_app_api",
-      "executableExport": "sdkwork_router_voice_app_api::app_routes",
+      "cargoDependency": "sdkwork_routes_voice_app_api",
+      "executableExport": "sdkwork_routes_voice_app_api::app_routes",
       "coverage": "voice-app-api-upstream-routes"
     },
     {
@@ -1497,8 +1497,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_VOICE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-voice",
-      "cargoDependency": "sdkwork_router_voice_backend_api",
-      "executableExport": "sdkwork_router_voice_backend_api::backend_routes",
+      "cargoDependency": "sdkwork_routes_voice_backend_api",
+      "executableExport": "sdkwork_routes_voice_backend_api::backend_routes",
       "coverage": "voice-backend-api-upstream-routes"
     },
     {
@@ -1511,8 +1511,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_IMAGE_APP_API_BASE_URL",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork_router_image_app_api",
-      "executableExport": "sdkwork_router_image_app_api::app_routes",
+      "cargoDependency": "sdkwork_routes_image_app_api",
+      "executableExport": "sdkwork_routes_image_app_api::app_routes",
       "coverage": "image-app-api-upstream-routes"
     },
     {
@@ -1525,8 +1525,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_IMAGE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork_router_image_backend_api",
-      "executableExport": "sdkwork_router_image_backend_api::backend_routes",
+      "cargoDependency": "sdkwork_routes_image_backend_api",
+      "executableExport": "sdkwork_routes_image_backend_api::backend_routes",
       "coverage": "image-backend-api-upstream-routes"
     },
     {
@@ -1539,8 +1539,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_IMAGE_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork_router_image_open_api",
-      "executableExport": "sdkwork_router_image_open_api::open_api_routes",
+      "cargoDependency": "sdkwork_routes_image_open_api",
+      "executableExport": "sdkwork_routes_image_open_api::open_api_routes",
       "coverage": "image-open-api-upstream-routes"
     },
     {
@@ -1597,8 +1597,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_COURSE_APP_API_BASE_URL",
       "cargoFeature": "foundation-course",
-      "cargoDependency": "sdkwork_router_course_app_api",
-      "executableExport": "sdkwork_router_course_app_api::build_router",
+      "cargoDependency": "sdkwork_routes_course_app_api",
+      "executableExport": "sdkwork_routes_course_app_api::build_router",
       "coverage": "course-app-api-upstream-routes"
     },
     {
@@ -1622,8 +1622,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_COURSE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-course",
-      "cargoDependency": "sdkwork_router_course_backend_api",
-      "executableExport": "sdkwork_router_course_backend_api::build_router",
+      "cargoDependency": "sdkwork_routes_course_backend_api",
+      "executableExport": "sdkwork_routes_course_backend_api::build_router",
       "coverage": "course-backend-api-upstream-routes"
     },
     {
@@ -1669,8 +1669,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_MESSAGING_APP_API_BASE_URL",
       "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork_router_messaging_app_api",
-      "executableExport": "sdkwork_router_messaging_app_api::messaging_app_api_manifest",
+      "cargoDependency": "sdkwork_routes_messaging_app_api",
+      "executableExport": "sdkwork_routes_messaging_app_api::messaging_app_api_manifest",
       "coverage": "messaging-app-api-upstream-routes"
     },
     {
@@ -1683,8 +1683,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_MESSAGING_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork_router_messaging_backend_api",
-      "executableExport": "sdkwork_router_messaging_backend_api::messaging_backend_api_manifest",
+      "cargoDependency": "sdkwork_routes_messaging_backend_api",
+      "executableExport": "sdkwork_routes_messaging_backend_api::messaging_backend_api_manifest",
       "coverage": "messaging-backend-api-upstream-routes"
     },
     {
@@ -1785,8 +1785,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1799,8 +1799,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1813,8 +1813,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1827,8 +1827,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1841,8 +1841,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1855,8 +1855,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1869,8 +1869,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1883,8 +1883,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_app_api",
-      "executableExport": "sdkwork_router_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork_routes_catalog_app_api",
+      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1897,8 +1897,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1911,8 +1911,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1925,8 +1925,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1939,8 +1939,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1953,8 +1953,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1967,8 +1967,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_backend_api",
-      "executableExport": "sdkwork_router_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_backend_api",
+      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -1981,8 +1981,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_router_catalog_open_api",
-      "executableExport": "sdkwork_router_catalog_open_api::route_definitions",
+      "cargoDependency": "sdkwork_routes_catalog_open_api",
+      "executableExport": "sdkwork_routes_catalog_open_api::route_definitions",
       "coverage": "appstore-open-api-upstream-routes"
     }
   ],

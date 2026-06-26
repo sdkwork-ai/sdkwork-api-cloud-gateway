@@ -55,7 +55,7 @@ Current foundation integrations:
 
 | Cargo feature | Cargo dependency | SDKWork service | Router export |
 | --- | --- | --- | --- |
-| `foundation-appbase` | `sdkwork_router_iam_app_api` | `sdkwork-iam-app-api` | `sdkwork_router_iam_app_api::build_sdkwork_iam_app_api_router` |
+| `foundation-appbase` | `sdkwork_routes_iam_app_api` | `sdkwork-iam-app-api` | `sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router` |
 
 Representative split upstream foundation surfaces. The complete machine-readable list is
 `sdkwork.app.config.json` plus `specs/component.spec.json`:
@@ -412,3 +412,6 @@ resolution used by the binary.
 - [docs/product/prd/PRD.md](docs/product/prd/PRD.md)
 - [docs/architecture/tech/TECH_ARCHITECTURE.md](docs/architecture/tech/TECH_ARCHITECTURE.md)
 
+## Application Roots
+
+- [apps directory index](apps/README.md)
