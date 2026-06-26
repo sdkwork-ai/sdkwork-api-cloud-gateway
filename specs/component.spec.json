@@ -877,7 +877,7 @@
     },
     {
       "serviceId": "sdkwork-claw-gateway",
-      "workspace": "sdkwork-claw-router",
+      "workspace": "sdkwork-clawrouter",
       "apiAuthority": "sdkwork-claw-gateway",
       "sdkFamily": "sdkwork-clawrouter-app-sdk",
       "runtimeModes": ["split", "embedded"],

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Land the shared SDKWork API Gateway integration standard in `sdkwork-claw-router` and `sdkwork-im` without introducing a parallel gateway catalog.
+**Goal:** Land the shared SDKWork API Gateway integration standard in `sdkwork-clawrouter` and `sdkwork-im` without introducing a parallel gateway catalog.
 
 **Architecture:** Foundation API integration evidence stays in native build tools and existing SDKWork specs: Cargo workspace dependencies/features, `sdkwork.app.config.json`, `specs/component.spec.json`, local dependency surface specs, SDK assembly metadata, and runtime config. Product apps document the gateway-backed target state and enforce static guardrails while legacy product-local foundation mounts remain only as migration compatibility.
 
@@ -13,10 +13,10 @@
 ### Task 1: SDKWork Claw Router Gateway Standard
 
 **Files:**
-- Modify: `E:/sdkwork-space/sdkwork-claw-router/specs/component.spec.json`
-- Modify: `E:/sdkwork-space/sdkwork-claw-router/specs/dependency-api-surfaces.json`
-- Modify: `E:/sdkwork-space/sdkwork-claw-router/specs/README.md`
-- Modify: `E:/sdkwork-space/sdkwork-claw-router/scripts/run-claw-router-product.test.mjs`
+- Modify: `E:/sdkwork-space/sdkwork-clawrouter/specs/component.spec.json`
+- Modify: `E:/sdkwork-space/sdkwork-clawrouter/specs/dependency-api-surfaces.json`
+- Modify: `E:/sdkwork-space/sdkwork-clawrouter/specs/README.md`
+- Modify: `E:/sdkwork-space/sdkwork-clawrouter/scripts/run-claw-router-product.test.mjs`
 - Optional existing config templates only if already present: `.env.release.example`, `apps/sdkwork-clawrouter-pc/.env.example`
 
 - [ ] Add failing governance assertions for shared gateway integration metadata and no standalone gateway catalog.

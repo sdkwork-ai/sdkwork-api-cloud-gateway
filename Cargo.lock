@@ -168,6 +168,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90"
 dependencies = [
  "axum-core",
+ "axum-macros",
  "base64",
  "bytes",
  "form_urlencoded",
@@ -214,6 +215,17 @@ dependencies = [
  "tower-layer",
  "tower-service",
  "tracing",
+]
+
+[[package]]
+name = "axum-macros"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7aa268c23bfbbd2c4363b9cd302a4f504fb2a9dfe7e3451d66f35dd392e20aca"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -1837,13 +1849,13 @@ dependencies = [
  "sdkwork-routes-iot-app-api",
  "sdkwork-routes-messaging-app-api",
  "sdkwork-routes-messaging-backend-api",
+ "sdkwork-routes-music-app-api",
+ "sdkwork-routes-music-backend-api",
  "sdkwork-routes-news-app-api",
  "sdkwork-routes-news-backend-api",
  "sdkwork-routes-news-open-api",
  "sdkwork-routes-voice-app-api",
  "sdkwork-routes-voice-backend-api",
- "sdkwork-routes-music-app-api",
- "sdkwork-routes-music-backend-api",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
@@ -2034,10 +2046,16 @@ dependencies = [
 name = "sdkwork-iam-bootstrap"
 version = "0.1.0"
 dependencies = [
+ "aes-gcm",
+ "base64",
  "chrono",
+ "rand_core 0.6.4",
  "sdkwork-iam-context-service",
  "sdkwork-iam-module-registry",
+ "sdkwork-id-core",
+ "sha2",
  "sqlx",
+ "uuid",
 ]
 
 [[package]]
@@ -2108,6 +2126,7 @@ dependencies = [
  "password-hash",
  "rand_core 0.6.4",
  "reqwest",
+ "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-iam-bootstrap",
  "sdkwork-iam-context-service",
@@ -2120,6 +2139,13 @@ dependencies = [
  "sha2",
  "sqlx",
  "urlencoding",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-id-core"
+version = "0.1.0"
+dependencies = [
  "uuid",
 ]
 
@@ -2161,6 +2187,7 @@ dependencies = [
  "sdkwork-appstore-catalog-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde",
  "serde_json",
@@ -2174,6 +2201,7 @@ dependencies = [
  "sdkwork-appstore-catalog-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde",
  "serde_json",
@@ -2187,6 +2215,7 @@ dependencies = [
  "sdkwork-appstore-catalog-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde",
  "serde_json",
@@ -2218,6 +2247,7 @@ dependencies = [
  "sdkwork-content-cms-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde",
  "serde_json",
@@ -2258,6 +2288,7 @@ dependencies = [
  "axum",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
 ]
 
@@ -2358,6 +2389,22 @@ name = "sdkwork-routes-messaging-backend-api"
 version = "0.1.0"
 
 [[package]]
+name = "sdkwork-routes-music-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "sdkwork-music-core-rust",
+]
+
+[[package]]
+name = "sdkwork-routes-music-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "sdkwork-music-core-rust",
+]
+
+[[package]]
 name = "sdkwork-routes-news-app-api"
 version = "0.1.0"
 
@@ -2372,6 +2419,7 @@ dependencies = [
  "axum",
  "sdkwork-iam-web-adapter",
  "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
  "sdkwork-web-core",
 ]
 
@@ -2382,20 +2430,6 @@ version = "0.1.0"
 [[package]]
 name = "sdkwork-routes-voice-backend-api"
 version = "0.1.0"
-
-[[package]]
-name = "sdkwork-routes-music-app-api"
-version = "0.1.0"
-dependencies = [
- "sdkwork-music-core-rust",
-]
-
-[[package]]
-name = "sdkwork-routes-music-backend-api"
-version = "0.1.0"
-dependencies = [
- "sdkwork-music-core-rust",
-]
 
 [[package]]
 name = "sdkwork-utils-rust"
@@ -2425,6 +2459,24 @@ dependencies = [
  "tokio",
  "tower",
  "tracing",
+]
+
+[[package]]
+name = "sdkwork-web-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "http",
+ "sdkwork-web-axum",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2551,6 +2603,12 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
+
+[[package]]
+name = "sha1_smol"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "sha2"
@@ -3354,6 +3412,7 @@ checksum = "144d6b123cef80b301b8f72a9e2ca4370ddec21950d0a103dd22c437006d2db7"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
+ "sha1_smol",
  "wasm-bindgen",
 ]
 
