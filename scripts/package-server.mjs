@@ -273,7 +273,7 @@ async function packageServer(context) {
 }
 
 function runCargoBuild(context) {
-  const args = ['build', '--release', '-p', 'sdkwork-api-cloud-gateway-api-server', '--bin', BINARY_NAME];
+  const args = ['build', '--release', '-p', 'sdkwork-api-cloud-gateway', '--bin', BINARY_NAME];
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
   }

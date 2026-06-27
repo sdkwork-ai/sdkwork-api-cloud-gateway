@@ -1628,8 +1628,8 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
         runtime_exports
             .iter()
             .any(|export| export.as_str()
-                == Some("build_sdkwork_api_cloud_gateway_api_server_router")),
-        "component spec must declare the canonical api-server router builder"
+                == Some("build_sdkwork_api_cloud_gateway_router")),
+        "component spec must declare the canonical standalone-gateway router builder"
     );
     for required_export in [
         "web_framework_enabled",
@@ -2225,7 +2225,7 @@ fn package_dev_entrypoint_is_declared_in_component_spec() {
     assert_eq!(
         package_json["scripts"]["dev"].as_str(),
         Some(
-            "cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example"
+            "cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example"
         ),
         "package.json must keep pnpm dev as the standard independent startup entrypoint"
     );

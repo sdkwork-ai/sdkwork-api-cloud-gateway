@@ -11,7 +11,7 @@ is single-port and integrated; split multi-upstream validation is internal-only.
 - `sdkwork-api-cloud-gateway-observability`: startup and route summaries.
 - `sdkwork-api-cloud-gateway`: Axum router builders, preflight validation, embedded routing, and
   split-mode HTTP/WebSocket proxying.
-- `crates/sdkwork-api-cloud-gateway-api-server`: independent binary entrypoint and tested service config loader.
+- `crates/sdkwork-api-cloud-gateway`: independent binary entrypoint and tested service config loader.
 
 Within the gateway crate, endpoint responsibilities are split into focused modules: `health.rs` owns
 `/healthz` and `/readyz`, `openapi.rs` owns OpenAPI metadata responses, and `diagnostics.rs` owns the
@@ -177,7 +177,7 @@ pnpm dev
 Equivalent Cargo command:
 
 ```powershell
-cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example
+cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example
 ```
 
 ## Server Packaging
@@ -251,8 +251,12 @@ resolution and authentication remain upstream responsibilities. Unclassified pat
 as public so hidden diagnostics and route-not-found handlers can return gateway-owned problem
 responses instead of framework `401` rejections.
 
-Embedded mode applies request identity only on the outer gateway router. Embedded dependency routers
-already mount their own framework layers and must not be double-wrapped during gateway merge.
+Embedded mode applies request identity only on the outer gateway router. Embedded dependency
+routers are registered by service id and dispatched through fallback delegation; each embedded
+router mounts its own web-framework layers and must not duplicate host infrastructure probes
+(`/healthz`, `/livez`, `/readyz`, `/metrics`). Prefer
+`sdkwork-<domain>-gateway-assembly::assemble_application_business_router` over raw route-crate
+builders when a sibling gateway assembly exists.
 
 Toggle the outer framework pipeline with `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by
 default). When disabled, split mode falls back to the legacy Tower `CorsLayer` and gateway security
@@ -391,7 +395,7 @@ probe closes the circuit.
 Standalone service startup uses:
 
 ```rust
-use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_api_server_router;
+use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
 ```
 
 Third-party embedding can use:

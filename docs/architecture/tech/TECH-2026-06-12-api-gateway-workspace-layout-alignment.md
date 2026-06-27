@@ -43,7 +43,7 @@
 - Modify: `README.md`
 - Modify: `package.json`
 - Modify: `scripts/package-server.mjs`
-- Modify: `crates/sdkwork-api-cloud-gateway-api-server/tests/service_config_tests.rs` before server move, then final path under `crates/`
+- Modify: `crates/sdkwork-api-cloud-gateway/tests/service_config_tests.rs` before server move, then final path under `crates/`
 - Modify: `crates/sdkwork-api-cloud-gateway-config/tests/config_tests.rs`
 
 - [x] Move source-controlled config templates to `configs/`.
@@ -55,13 +55,13 @@
 
 **Files:**
 - Move: `crates/sdkwork-api-cloud-gateway/` to `crates/sdkwork-api-cloud-gateway/`
-- Move: `crates/sdkwork-api-cloud-gateway-api-server/` to `crates/sdkwork-api-cloud-gateway-api-server/`
+- Move: `crates/sdkwork-api-cloud-gateway/` to `crates/sdkwork-api-cloud-gateway/`
 - Modify: `Cargo.toml`
 - Modify: `Cargo.lock`
 - Modify: `crates/sdkwork-api-cloud-gateway/Cargo.toml`
-- Modify: `crates/sdkwork-api-cloud-gateway-api-server/Cargo.toml`
-- Modify: `crates/sdkwork-api-cloud-gateway-api-server/src/main.rs`
-- Modify: `crates/sdkwork-api-cloud-gateway-api-server/tests/service_config_tests.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/Cargo.toml`
+- Modify: `crates/sdkwork-api-cloud-gateway/src/main.rs`
+- Modify: `crates/sdkwork-api-cloud-gateway/tests/service_config_tests.rs`
 - Modify: `package.json`
 - Modify: `scripts/package-server.mjs`
 - Modify: `README.md`
@@ -71,7 +71,7 @@
 
 - [x] Rename library package from `sdkwork-api-cloud-gateway` to `sdkwork-api-cloud-gateway`.
 - [x] Rename Rust import paths from `sdkwork_api_gateway` to `sdkwork_api_cloud_gateway`.
-- [x] Rename runnable server package from `sdkwork-api-cloud-gateway-api-server` to `sdkwork-api-cloud-gateway-api-server`.
+- [x] Rename runnable server package from `sdkwork-api-cloud-gateway` to `sdkwork-api-cloud-gateway`.
 - [x] Move runnable server into `crates/` and remove top-level `services/`.
 - [x] Update component spec entrypoints and verification commands.
 

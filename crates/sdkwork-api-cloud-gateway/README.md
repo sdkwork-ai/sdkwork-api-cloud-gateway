@@ -12,7 +12,7 @@ This crate owns Axum router construction, gateway runtime assembly, preflight va
 proxying, embedded router delegation, request policy enforcement, traffic controls, security
 controls, diagnostics, metrics, and resilience behavior.
 
-Public router builders include `build_sdkwork_api_cloud_gateway_api_server_router`,
+Public router builders include `build_sdkwork_api_cloud_gateway_router`,
 `build_sdkwork_api_cloud_gateway_router`, `build_sdkwork_api_cloud_gateway_router_with_registry`, and
 `build_sdkwork_api_cloud_gateway_router_with_embedded_routers`. Split mode finalizes routers through
 `sdkwork-web-framework` (`finalize_gateway_router`, `finalize_gateway_router_async`,

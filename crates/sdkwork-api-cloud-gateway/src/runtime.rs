@@ -162,6 +162,7 @@ impl GatewayRuntime {
 
         let mut router = Router::new()
             .route("/healthz", get(health::healthz))
+            .route("/livez", get(health::livez))
             .route("/readyz", get(health::readyz))
             .route("/openapi/index.json", get(openapi::openapi_index))
             .route("/openapi.json", get(openapi::openapi_document))
@@ -219,29 +220,33 @@ pub fn build_sdkwork_api_cloud_gateway_router(
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_sdkwork_api_cloud_gateway_api_server_router(
+pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     let finalize_config = config.clone();
     let router = match config.mode {
         GatewayMode::Split => GatewayRuntime::new(config)?.assemble_router(),
         GatewayMode::Embedded => {
-            let embedded_router = build_embedded_sdkwork_iam_app_api_router().await?;
+            let embedded_routers =
+                crate::embedded_dependency_routes::bootstrap_embedded_dependency_routers(&config)
+                    .await?;
             let registry =
                 sdkwork_api_cloud_gateway_registry::GatewayRouteRegistry::from_dependency_surfaces(
                     finalize_config.dependency_surfaces.as_slice(),
                 );
-            let embedded_routers =
-                HashMap::from([(APPBASE_APP_API_SERVICE_ID.to_owned(), embedded_router)]);
-            GatewayRuntime::with_registry_and_embedded_routers(config, registry, embedded_routers)?
-                .assemble_router()
+            GatewayRuntime::with_registry_and_embedded_routers(
+                config,
+                registry,
+                embedded_routers,
+            )?
+            .assemble_router()
         }
     };
     Ok(web_framework::finalize_gateway_router_async(&finalize_config, router).await)
 }
 
 #[cfg(not(feature = "foundation-appbase"))]
-pub fn build_sdkwork_api_cloud_gateway_api_server_router(
+pub fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     build_sdkwork_api_cloud_gateway_router(config)

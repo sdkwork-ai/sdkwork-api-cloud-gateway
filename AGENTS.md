@@ -21,7 +21,7 @@ layout is governed by `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`.
 
 - Application id: `sdkwork-api-cloud-gateway`
 - Runtime family: Rust backend service
-- Primary service process: `crates/sdkwork-api-cloud-gateway-api-server`
+- Primary service process: `crates/sdkwork-api-cloud-gateway`
 - Public gateway crate: `crates/sdkwork-api-cloud-gateway`
 - Manifest source of truth: `sdkwork.app.config.json`
 - Component contract: `specs/component.spec.json`
@@ -117,7 +117,7 @@ temporary bind address and stop the process after the check.
 
 ## Agent Execution Rules
 
-- The gateway supports independent startup through `crates/sdkwork-api-cloud-gateway-api-server` and
+- The gateway supports independent startup through `crates/sdkwork-api-cloud-gateway` and
   embedding through public router builders from `sdkwork-api-cloud-gateway`.
 - Gateway integration authority is Cargo-workspace-first. Do not create a separate gateway catalog;
   use root `Cargo.toml`, crate Cargo features, `sdkwork.app.config.json`, and

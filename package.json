@@ -8,7 +8,7 @@
     "check": "pnpm fmt && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
     "clean": "cargo clean",
     "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
-    "dev": "cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example",
+    "dev": "cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example",
     "fmt": "cargo fmt -- --check",
     "gateway:matrix": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --profile server --platform all --architecture all --format tar.gz",
     "gateway:matrix:standalone": "pnpm gateway:matrix",

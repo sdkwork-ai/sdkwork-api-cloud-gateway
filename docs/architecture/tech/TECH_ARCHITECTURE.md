@@ -23,7 +23,7 @@ and others) remain owned by their application roots.
 
 Two startup modes are first-class:
 
-- **Standalone service** — `crates/sdkwork-api-cloud-gateway-api-server` binary
+- **Standalone service** — `crates/sdkwork-api-cloud-gateway` binary
   `sdkwork-api-cloud-gateway`, driven by TOML config and `SDKWORK_API_CLOUD_GATEWAY_*` env overrides.
 - **Embedded router** — public builders from `crates/sdkwork-api-cloud-gateway` mount into a host
   Axum application without a separate gateway process.
@@ -57,7 +57,7 @@ Intentionally **not** integrated at this stage:
 | `sdkwork-api-cloud-gateway-registry` | Dependency surface metadata and executable routing rules |
 | `sdkwork-api-cloud-gateway-observability` | Startup summaries and observability wiring |
 | `sdkwork-api-cloud-gateway` | Router builders, policy chain, proxy, embedded routing, web-framework integration |
-| `sdkwork-api-cloud-gateway-api-server` | Binary entrypoint, config loader, service bootstrap |
+| `sdkwork-api-cloud-gateway` | Binary entrypoint, config loader, service bootstrap |
 
 Gateway-owned HTTP surfaces (public):
 

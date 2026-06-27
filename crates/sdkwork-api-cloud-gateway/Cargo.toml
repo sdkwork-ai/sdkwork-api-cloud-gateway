@@ -13,7 +13,11 @@ foundation-appbase = [
     "dep:sdkwork-iam-database-host",
     "dep:sdkwork-iam-embedded-application-bootstrap",
 ]
-foundation-course = ["dep:sdkwork_routes_course_app_api", "dep:sdkwork_routes_course_backend_api"]
+foundation-course = [
+    "dep:sdkwork_routes_course_app_api",
+    "dep:sdkwork_routes_course_backend_api",
+    "dep:sdkwork-course-gateway-assembly",
+]
 foundation-news = ["dep:sdkwork_routes_news_app_api", "dep:sdkwork_routes_news_backend_api", "dep:sdkwork_routes_news_open_api"]
 foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api"]
 foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api"]
@@ -54,6 +58,7 @@ sdkwork_routes_iam_app_api = { workspace = true, optional = true }
 sdkwork_routes_iam_backend_api = { workspace = true, optional = true }
 sdkwork_routes_course_app_api = { workspace = true, optional = true }
 sdkwork_routes_course_backend_api = { workspace = true, optional = true }
+sdkwork-course-gateway-assembly = { path = "../../../sdkwork-course/crates/sdkwork-course-gateway-assembly", optional = true }
 sdkwork_routes_news_app_api = { workspace = true, optional = true }
 sdkwork_routes_news_backend_api = { workspace = true, optional = true }
 sdkwork_routes_news_open_api = { workspace = true, optional = true }
@@ -85,3 +90,7 @@ sdkwork-web-core.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 serde_json.workspace = true
+
+[[bin]]
+name = "sdkwork-api-cloud-gateway"
+path = "src/listener_main.rs"

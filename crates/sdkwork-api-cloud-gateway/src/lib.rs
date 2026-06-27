@@ -3,6 +3,8 @@
 mod diagnostics;
 mod error;
 mod health;
+#[cfg(any(feature = "foundation-appbase", feature = "foundation-course"))]
+mod embedded_dependency_routes;
 #[cfg(feature = "foundation-appbase")]
 mod iam_application_bootstrap;
 mod metrics;
@@ -22,7 +24,7 @@ pub use runtime::{
     build_sdkwork_api_cloud_gateway_router_with_embedded_appbase,
 };
 pub use runtime::{
-    build_sdkwork_api_cloud_gateway_api_server_router, build_sdkwork_api_cloud_gateway_router,
+    build_sdkwork_api_cloud_gateway_router, build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers,
     build_sdkwork_api_cloud_gateway_router_with_registry, GatewayRuntime,
 };

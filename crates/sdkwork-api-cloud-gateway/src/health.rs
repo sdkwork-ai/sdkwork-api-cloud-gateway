@@ -17,6 +17,13 @@ pub(crate) async fn healthz() -> Json<serde_json::Value> {
     }))
 }
 
+pub(crate) async fn livez() -> Json<serde_json::Value> {
+    Json(json!({
+        "status": "ok",
+        "service": "sdkwork-api-cloud-gateway"
+    }))
+}
+
 pub(crate) async fn readyz(State(state): State<Arc<GatewayState>>) -> Response {
     let upstream_checks = if state.config.readiness.check_upstreams {
         check_required_upstreams(&state).await

@@ -5,7 +5,6 @@ members = [
     "crates/sdkwork-api-cloud-gateway-registry",
     "crates/sdkwork-api-cloud-gateway-observability",
     "crates/sdkwork-api-cloud-gateway",
-    "crates/sdkwork-api-cloud-gateway-api-server",
 ]
 
 [workspace.package]

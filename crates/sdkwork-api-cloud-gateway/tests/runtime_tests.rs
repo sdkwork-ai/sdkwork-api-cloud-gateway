@@ -21,7 +21,7 @@ use http_body_util::BodyExt;
 use sdkwork_api_cloud_gateway::{
     build_embedded_sdkwork_iam_app_api_router,
     build_embedded_sdkwork_iam_backend_api_router,
-    build_sdkwork_api_cloud_gateway_api_server_router, build_sdkwork_api_cloud_gateway_router,
+    build_sdkwork_api_cloud_gateway_router, build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers, GatewayRuntime,
 };
 use sdkwork_api_cloud_gateway_config::{
@@ -3285,7 +3285,7 @@ async fn split_mode_preserves_websocket_close_frame_details() {
 }
 
 #[tokio::test]
-async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
+async fn standalone_gateway_router_auto_mounts_appbase_when_running_embedded() {
     if !iam_embedded_database_configured() {
         eprintln!("skip: IAM database URL is not configured for embedded appbase integration");
         return;
@@ -3293,9 +3293,9 @@ async fn api_server_router_auto_mounts_appbase_when_running_embedded() {
 
     let config = embedded_config_without_upstreams();
 
-    let app = build_sdkwork_api_cloud_gateway_api_server_router(config)
+    let app = build_sdkwork_api_cloud_gateway_router(config)
         .await
-        .expect("api-server router mounts appbase");
+        .expect("standalone-gateway router mounts appbase");
     let response = app
         .oneshot(
             Request::builder()

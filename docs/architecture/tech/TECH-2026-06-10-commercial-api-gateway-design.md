@@ -9,7 +9,7 @@ Bring `sdkwork-api-cloud-gateway` from a working SDKWork dependency gateway to a
 foundation with observable, secure, traffic-controlled, resilient, and performant runtime behavior
 while preserving both startup modes:
 
-- standalone service through `crates/sdkwork-api-cloud-gateway-api-server`
+- standalone service through `crates/sdkwork-api-cloud-gateway`
 - same-process embedding through `sdkwork-api-cloud-gateway` router builders
 
 ## Constraints

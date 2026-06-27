@@ -1827,6 +1827,7 @@ dependencies = [
  "sdkwork-api-cloud-gateway-observability",
  "sdkwork-api-cloud-gateway-registry",
  "sdkwork-community-http-rust",
+ "sdkwork-course-gateway-assembly",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
@@ -1940,6 +1941,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-content-course-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-content-course-service",
+ "sdkwork-course-database-host",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "serde_json",
+ "sqlx",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-content-course-service"
 version = "0.1.0"
 dependencies = [
@@ -1947,6 +1963,46 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+]
+
+[[package]]
+name = "sdkwork-course-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-course-embedded-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "dotenvy",
+ "sdkwork-content-course-repository-sqlx",
+ "sdkwork-content-course-service",
+ "sdkwork-course-database-host",
+ "sdkwork-database-sqlx",
+ "sdkwork-routes-course-app-api",
+ "sdkwork-routes-course-backend-api",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "ureq",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-course-gateway-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "sdkwork-course-embedded-bootstrap",
+ "tokio",
 ]
 
 [[package]]
@@ -2001,6 +2057,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-database-id"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-id-core",
+ "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-database-lifecycle"
 version = "0.1.0"
 dependencies = [
@@ -2050,9 +2118,9 @@ dependencies = [
  "base64",
  "chrono",
  "rand_core 0.6.4",
+ "sdkwork-database-id",
  "sdkwork-iam-context-service",
  "sdkwork-iam-module-registry",
- "sdkwork-id-core",
  "sha2",
  "sqlx",
  "uuid",
@@ -2258,6 +2326,7 @@ name = "sdkwork-routes-course-app-api"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum",
  "sdkwork-content-course-service",
  "serde",
  "serde_json",
@@ -2268,6 +2337,7 @@ name = "sdkwork-routes-course-backend-api"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum",
  "sdkwork-content-course-service",
  "serde",
  "serde_json",
@@ -2435,11 +2505,14 @@ version = "0.1.0"
 name = "sdkwork-utils-rust"
 version = "0.10.0"
 dependencies = [
+ "aes-gcm",
  "base64",
  "chrono",
+ "hkdf",
  "hmac",
  "rand 0.8.6",
  "regex",
+ "serde",
  "serde_json",
  "sha2",
  "urlencoding",
@@ -3370,6 +3443,8 @@ dependencies = [
  "once_cell",
  "rustls",
  "rustls-pki-types",
+ "serde",
+ "serde_json",
  "url",
  "webpki-roots 0.26.11",
 ]

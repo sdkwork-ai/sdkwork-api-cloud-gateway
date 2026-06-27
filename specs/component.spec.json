@@ -101,10 +101,10 @@
   "contracts": {
     "publicExports": [
       "sdkwork-api-cloud-gateway",
-      "sdkwork-api-cloud-gateway-api-server"
+      "sdkwork-api-cloud-gateway"
     ],
     "runtimeEntrypoints": [
-      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_api_server_router",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router",
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router",
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_registry",
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
@@ -113,9 +113,9 @@
       "sdkwork_api_cloud_gateway::web_framework::split_proxy_call_chain",
       "sdkwork_api_cloud_gateway::web_framework::web_framework_enabled",
       "sdkwork_api_cloud_gateway::web_framework::parse_web_framework_toggle",
-      "sdkwork_api_cloud_gateway_api_server::load_gateway_config",
+      "sdkwork_api_cloud_gateway::load_gateway_config",
       "package.json#scripts.dev",
-      "cargo run -p sdkwork-api-cloud-gateway-api-server --bin sdkwork-api-cloud-gateway"
+      "cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway"
     ],
     "routeManifest": null,
     "sdkClients": [],
@@ -169,14 +169,14 @@
   "entrypoints": [
     {
       "kind": "binary",
-      "path": "crates/sdkwork-api-cloud-gateway-api-server",
+      "path": "crates/sdkwork-api-cloud-gateway",
       "name": "sdkwork-api-cloud-gateway"
     },
     {
       "kind": "library",
       "path": "crates/sdkwork-api-cloud-gateway",
       "exports": [
-        "build_sdkwork_api_cloud_gateway_api_server_router",
+        "build_sdkwork_api_cloud_gateway_router",
         "build_sdkwork_api_cloud_gateway_router",
         "build_sdkwork_api_cloud_gateway_router_with_registry",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
@@ -191,7 +191,7 @@
     },
     {
       "kind": "library",
-      "path": "crates/sdkwork-api-cloud-gateway-api-server",
+      "path": "crates/sdkwork-api-cloud-gateway",
       "exports": [
         "load_gateway_config",
         "config_path_from_args"
