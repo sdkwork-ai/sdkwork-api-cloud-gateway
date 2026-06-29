@@ -19,9 +19,8 @@ use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
 use sdkwork_api_cloud_gateway::{
-    build_embedded_sdkwork_iam_app_api_router,
-    build_embedded_sdkwork_iam_backend_api_router,
-    build_sdkwork_api_cloud_gateway_router, build_sdkwork_api_cloud_gateway_router,
+    build_embedded_sdkwork_iam_app_api_router, build_embedded_sdkwork_iam_backend_api_router,
+    build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers, GatewayRuntime,
 };
 use sdkwork_api_cloud_gateway_config::{
@@ -555,10 +554,7 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     env.insert("SDKWORK_IM_IM_HTTP_BASE_URL".to_string(), im_http);
 
     let im_backend = spawn_foundation_echo_upstream("/backend/v3/api/control").await;
-    env.insert(
-        "SDKWORK_IM_BACKEND_HTTP_BASE_URL".to_string(),
-        im_backend,
-    );
+    env.insert("SDKWORK_IM_BACKEND_HTTP_BASE_URL".to_string(), im_backend);
 
     let claw_gateway = spawn_foundation_echo_upstream("/v1").await;
     env.insert("SDKWORK_CLAW_GATEWAY_BASE_URL".to_string(), claw_gateway);
@@ -3338,8 +3334,7 @@ async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
             runtime_mode: sdkwork_api_cloud_gateway_config::DependencyRuntimeMode::Embedded,
             same_origin_allowed: true,
             executable_export: Some(
-                "sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router"
-                    .to_owned(),
+                "sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router".to_owned(),
             ),
             cargo_feature: Some("foundation-appbase".to_owned()),
             cargo_dependency: Some("sdkwork-routes-iam-backend-api".to_owned()),

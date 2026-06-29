@@ -65,8 +65,8 @@ Representative split upstream foundation surfaces. The complete machine-readable
 | `sdkwork-drive-app-api` | `sdkwork-drive-app-sdk` | `/app/v3/api/drive` | `SDKWORK_DRIVE_APP_API_BASE_URL` |
 | `sdkwork-notary-app-api` | `sdkwork-notary-app-sdk` | `/app/v3/api/notary` | `SDKWORK_NOTARY_APP_API_BASE_URL` |
 | `sdkwork-iam-backend-api` | `sdkwork-iam-backend-sdk` | `/backend/v3/api/iam` | `SDKWORK_APPBASE_BACKEND_API_BASE_URL` |
-| `sdkwork-commerce-app-api` | `sdkwork-commerce-app-sdk` | `/app/v3/api` | `SDKWORK_COMMERCE_APP_API_BASE_URL` |
-| `sdkwork-commerce-backend-api` | `sdkwork-commerce-backend-sdk` | `/backend/v3/api` | `SDKWORK_COMMERCE_BACKEND_API_BASE_URL` |
+| `sdkwork-commerce (deleted)-app-api` | `sdkwork-commerce (deleted)-app-sdk` | `/app/v3/api` | `SDKWORK_COMMERCE_APP_API_BASE_URL` |
+| `sdkwork-commerce (deleted)-backend-api` | `sdkwork-commerce (deleted)-backend-sdk` | `/backend/v3/api` | `SDKWORK_COMMERCE_BACKEND_API_BASE_URL` |
 | `sdkwork-rtc-app-api` | `sdkwork-rtc-app-sdk` | `/app/v3/api/rtc` | `SDKWORK_RTC_APP_API_BASE_URL` |
 | `sdkwork-rtc-backend-api` | `sdkwork-rtc-backend-sdk` | `/backend/v3/api/rtc` | `SDKWORK_RTC_BACKEND_API_BASE_URL` |
 | `sdkwork-agent-app-api` | `sdkwork-agent-app-sdk` | `/app/v3/api/ai` | `SDKWORK_AGENT_APP_API_BASE_URL` |

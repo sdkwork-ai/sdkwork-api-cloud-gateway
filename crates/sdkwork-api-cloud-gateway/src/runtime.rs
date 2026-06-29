@@ -213,12 +213,6 @@ impl fmt::Debug for GatewayRuntime {
     }
 }
 
-pub fn build_sdkwork_api_cloud_gateway_router(
-    config: GatewayRuntimeConfig,
-) -> Result<Router, GatewayRuntimeError> {
-    GatewayRuntime::new(config).map(GatewayRuntime::router)
-}
-
 #[cfg(feature = "foundation-appbase")]
 pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
@@ -234,12 +228,8 @@ pub async fn build_sdkwork_api_cloud_gateway_router(
                 sdkwork_api_cloud_gateway_registry::GatewayRouteRegistry::from_dependency_surfaces(
                     finalize_config.dependency_surfaces.as_slice(),
                 );
-            GatewayRuntime::with_registry_and_embedded_routers(
-                config,
-                registry,
-                embedded_routers,
-            )?
-            .assemble_router()
+            GatewayRuntime::with_registry_and_embedded_routers(config, registry, embedded_routers)?
+                .assemble_router()
         }
     };
     Ok(web_framework::finalize_gateway_router_async(&finalize_config, router).await)
@@ -249,7 +239,7 @@ pub async fn build_sdkwork_api_cloud_gateway_router(
 pub fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
-    build_sdkwork_api_cloud_gateway_router(config)
+    GatewayRuntime::new(config).map(GatewayRuntime::router)
 }
 
 pub fn build_sdkwork_api_cloud_gateway_router_with_registry(
@@ -291,14 +281,13 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_iam_backend_api_router(
-) -> Result<Router, GatewayRuntimeError> {
+pub async fn build_embedded_sdkwork_iam_backend_api_router() -> Result<Router, GatewayRuntimeError>
+{
     Ok(sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, GatewayRuntimeError>
-{
+pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, GatewayRuntimeError> {
     crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()
         .await
         .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
