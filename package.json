@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "cargo build --workspace",
-    "check": "pnpm fmt && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
+    "check": "pnpm run check:app-composition && pnpm fmt && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
     "clean": "cargo clean",
     "clippy": "cargo clippy --workspace --all-targets -- -D warnings",
     "dev": "cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example",
@@ -20,8 +20,9 @@
     "release:package:server": "pnpm gateway:package:standalone",
     "test": "cargo test --workspace",
     "test:iam-application-bootstrap-standard": "node scripts/dev/sdkwork-api-cloud-gateway-iam-application-bootstrap-standard.test.mjs",
-    "verify": "pnpm check && pnpm test && pnpm test:iam-application-bootstrap-standard && pnpm clippy",
+    "verify": "pnpm check && pnpm test && pnpm test:iam-application-bootstrap-standard && pnpm clippy && pnpm run check:app-composition",
     "workflow:matrix:server": "pnpm gateway:matrix",
-    "workflow:validate": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs validate --config sdkwork.workflow.json"
+    "workflow:validate": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs validate --config sdkwork.workflow.json",
+    "check:app-composition": "node ../sdkwork-specs/tools/verify-repo.mjs --root ."
   }
 }

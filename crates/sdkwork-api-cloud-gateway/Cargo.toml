@@ -58,7 +58,7 @@ sdkwork_routes_iam_app_api = { workspace = true, optional = true }
 sdkwork_routes_iam_backend_api = { workspace = true, optional = true }
 sdkwork_routes_course_app_api = { workspace = true, optional = true }
 sdkwork_routes_course_backend_api = { workspace = true, optional = true }
-sdkwork-course-gateway-assembly = { path = "../../../sdkwork-course/crates/sdkwork-course-gateway-assembly", optional = true }
+sdkwork-course-gateway-assembly = { workspace = true, optional = true }
 sdkwork_routes_news_app_api = { workspace = true, optional = true }
 sdkwork_routes_news_backend_api = { workspace = true, optional = true }
 sdkwork_routes_news_open_api = { workspace = true, optional = true }

@@ -13,6 +13,7 @@ edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
+sdkwork-course-gateway-assembly = { path = "../../../sdkwork-course/crates/sdkwork-course-gateway-assembly" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

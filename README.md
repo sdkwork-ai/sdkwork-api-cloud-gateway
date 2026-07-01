@@ -1,3 +1,5 @@
+repository-kind: application
+
 ﻿# SDKWork API Gateway
 
 SDKWork API Gateway is a Rust/Axum gateway application. It can run as an independent service or be
