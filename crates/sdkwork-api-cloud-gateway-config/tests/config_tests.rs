@@ -1627,8 +1627,7 @@ fn component_spec_uses_cargo_metadata_as_gateway_integration_authority() {
     assert!(
         runtime_exports
             .iter()
-            .any(|export| export.as_str()
-                == Some("build_sdkwork_api_cloud_gateway_router")),
+            .any(|export| export.as_str() == Some("build_sdkwork_api_cloud_gateway_router")),
         "component spec must declare the canonical standalone-gateway router builder"
     );
     for required_export in [

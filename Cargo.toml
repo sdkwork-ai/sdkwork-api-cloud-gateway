@@ -13,7 +13,22 @@ edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-sdkwork-course-gateway-assembly = { path = "../../../sdkwork-course/crates/sdkwork-course-gateway-assembly" }
+sdkwork-course-gateway-assembly = { path = "../sdkwork-course/crates/sdkwork-course-gateway-assembly" }
+sdkwork-voice-gateway-assembly = { path = "../sdkwork-voice/crates/sdkwork-voice-gateway-assembly" }
+sdkwork-music-gateway-assembly = { path = "../sdkwork-music/crates/sdkwork-music-gateway-assembly" }
+sdkwork-messaging-gateway-assembly = { path = "../sdkwork-messaging/crates/sdkwork-messaging-gateway-assembly" }
+sdkwork-image-gateway-assembly = { path = "../sdkwork-image/crates/sdkwork-image-gateway-assembly" }
+sdkwork-cms-gateway-assembly = { path = "../sdkwork-cms/crates/sdkwork-cms-gateway-assembly" }
+sdkwork-forum-gateway-assembly = { path = "../sdkwork-forum/crates/sdkwork-forum-gateway-assembly" }
+sdkwork-community-gateway-assembly = { path = "../sdkwork-community/crates/sdkwork-community-gateway-assembly" }
+sdkwork-comments-gateway-assembly = { path = "../sdkwork-comments/crates/sdkwork-comments-gateway-assembly" }
+sdkwork-clawrouter-gateway-assembly = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-gateway-assembly" }
+sdkwork-llm-gateway-assembly = { path = "../sdkwork-llm/crates/sdkwork-llm-gateway-assembly" }
+sdkwork-mcp-gateway-assembly = { path = "../sdkwork-mcp/crates/sdkwork-mcp-gateway-assembly" }
+sdkwork-im-gateway-assembly = { path = "../sdkwork-im/crates/sdkwork-im-gateway-assembly" }
+sdkwork-rtc-gateway-assembly = { path = "../sdkwork-rtc/crates/sdkwork-rtc-gateway-assembly" }
+sdkwork-notary-gateway-assembly = { path = "../sdkwork-notary/crates/sdkwork-notary-gateway-assembly" }
+sdkwork-mail-gateway-assembly = { path = "../sdkwork-mail/crates/sdkwork-mail-gateway-assembly" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

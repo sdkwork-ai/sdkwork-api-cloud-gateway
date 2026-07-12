@@ -473,6 +473,61 @@
         "name": "SDKWORK_APPSTORE_OPEN_API_BASE_URL",
         "required": false,
         "tracked": false
+      },
+      {
+        "name": "SDKWORK_LLM_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_LLM_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_LLM_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MAIL_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MAIL_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MCP_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MCP_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_SHOP_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_SHOP_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DEZHOU_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DEZHOU_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
       }
     ]
   },
@@ -980,6 +1035,72 @@
       "prefix": "/store/v3/api/automation",
       "owner": "dependency",
       "serviceId": "sdkwork-appstore-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/llm",
+      "owner": "dependency",
+      "serviceId": "sdkwork-llm-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/llm",
+      "owner": "dependency",
+      "serviceId": "sdkwork-llm-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/llm/v3/api",
+      "owner": "dependency",
+      "serviceId": "sdkwork-llm-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/mail",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mail-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/mail",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mail-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/mcp",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mcp-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/mcp",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mcp-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/shops",
+      "owner": "dependency",
+      "serviceId": "sdkwork-shop-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/shops",
+      "owner": "dependency",
+      "serviceId": "sdkwork-shop-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/tables",
+      "owner": "dependency",
+      "serviceId": "sdkwork-dezhou-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/tables",
+      "owner": "dependency",
+      "serviceId": "sdkwork-dezhou-backend-api"
     },
     {
       "surface": "backend",
@@ -1984,6 +2105,149 @@
       "cargoDependency": "sdkwork_routes_catalog_open_api",
       "executableExport": "sdkwork_routes_catalog_open_api::route_definitions",
       "coverage": "appstore-open-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-rtc-app-api",
+      "workspace": "sdkwork-rtc",
+      "sdkFamily": "sdkwork-rtc-app-sdk",
+      "apiAuthority": "sdkwork-rtc-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/rtc",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_RTC_APP_API_BASE_URL",
+      "coverage": "rtc-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-notes-app-api",
+      "workspace": "sdkwork-notes",
+      "sdkFamily": "sdkwork-notes-app-sdk",
+      "apiAuthority": "sdkwork-notes-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/notes",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_NOTES_APP_API_BASE_URL",
+      "coverage": "notes-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-llm-app-api",
+      "workspace": "sdkwork-llm",
+      "sdkFamily": "sdkwork-llm-app-sdk",
+      "apiAuthority": "sdkwork-llm-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/llm",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_LLM_APP_API_BASE_URL",
+      "coverage": "llm-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-llm-backend-api",
+      "workspace": "sdkwork-llm",
+      "sdkFamily": "sdkwork-llm-backend-sdk",
+      "apiAuthority": "sdkwork-llm-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/llm",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_LLM_BACKEND_API_BASE_URL",
+      "coverage": "llm-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-llm-open-api",
+      "workspace": "sdkwork-llm",
+      "sdkFamily": "sdkwork-llm-open-sdk",
+      "apiAuthority": "sdkwork-llm-open-api",
+      "surface": "open",
+      "apiPrefix": "/llm/v3/api",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_LLM_OPEN_API_BASE_URL",
+      "coverage": "llm-open-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mail-app-api",
+      "workspace": "sdkwork-mail",
+      "sdkFamily": "sdkwork-mail-app-sdk",
+      "apiAuthority": "sdkwork-mail-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/mail",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_MAIL_APP_API_BASE_URL",
+      "coverage": "mail-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mail-backend-api",
+      "workspace": "sdkwork-mail",
+      "sdkFamily": "sdkwork-mail-backend-sdk",
+      "apiAuthority": "sdkwork-mail-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/mail",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_MAIL_BACKEND_API_BASE_URL",
+      "coverage": "mail-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mcp-app-api",
+      "workspace": "sdkwork-mcp",
+      "sdkFamily": "sdkwork-mcp-app-sdk",
+      "apiAuthority": "sdkwork-mcp-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/mcp",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_MCP_APP_API_BASE_URL",
+      "coverage": "mcp-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mcp-backend-api",
+      "workspace": "sdkwork-mcp",
+      "sdkFamily": "sdkwork-mcp-backend-sdk",
+      "apiAuthority": "sdkwork-mcp-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/mcp",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_MCP_BACKEND_API_BASE_URL",
+      "coverage": "mcp-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-shop-app-api",
+      "workspace": "sdkwork-shop",
+      "sdkFamily": "sdkwork-shop-app-sdk",
+      "apiAuthority": "sdkwork-shop-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/shops",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_SHOP_APP_API_BASE_URL",
+      "coverage": "shop-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-shop-backend-api",
+      "workspace": "sdkwork-shop",
+      "sdkFamily": "sdkwork-shop-backend-sdk",
+      "apiAuthority": "sdkwork-shop-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/shops",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_SHOP_BACKEND_API_BASE_URL",
+      "coverage": "shop-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-dezhou-app-api",
+      "workspace": "sdkwork-dezhou",
+      "sdkFamily": "sdkwork-dezhou-app-sdk",
+      "apiAuthority": "sdkwork-dezhou-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/tables",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DEZHOU_APP_API_BASE_URL",
+      "coverage": "dezhou-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-dezhou-backend-api",
+      "workspace": "sdkwork-dezhou",
+      "sdkFamily": "sdkwork-dezhou-backend-sdk",
+      "apiAuthority": "sdkwork-dezhou-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/tables",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DEZHOU_BACKEND_API_BASE_URL",
+      "coverage": "dezhou-backend-api-upstream-routes"
     }
   ],
   "app": {

@@ -176,6 +176,13 @@ pub const SDKWORK_APPSTORE_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_APPSTORE_BA
 pub const SDKWORK_APPSTORE_OPEN_API_SERVICE_ID: &str = "sdkwork-appstore-open-api";
 pub const SDKWORK_APPSTORE_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19982";
 pub const SDKWORK_APPSTORE_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_APPSTORE_OPEN_API_BASE_URL";
+pub const LLM_APP_API_SERVICE_ID: &str = "sdkwork-llm-app-api";
+pub const LLM_BACKEND_API_SERVICE_ID: &str = "sdkwork-llm-backend-api";
+pub const LLM_OPEN_API_SERVICE_ID: &str = "sdkwork-llm-open-api";
+pub const MAIL_APP_API_SERVICE_ID: &str = "sdkwork-mail-app-api";
+pub const MAIL_BACKEND_API_SERVICE_ID: &str = "sdkwork-mail-backend-api";
+pub const MCP_APP_API_SERVICE_ID: &str = "sdkwork-mcp-app-api";
+pub const MCP_BACKEND_API_SERVICE_ID: &str = "sdkwork-mcp-backend-api";
 pub const DEFAULT_MAX_REQUEST_BODY_BYTES: usize = 32 * 1024 * 1024;
 pub const DEFAULT_UPSTREAM_READINESS_PATH: &str = "/healthz";
 

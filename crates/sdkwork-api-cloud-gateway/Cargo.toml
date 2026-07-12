@@ -19,17 +19,26 @@ foundation-course = [
     "dep:sdkwork-course-gateway-assembly",
 ]
 foundation-news = ["dep:sdkwork_routes_news_app_api", "dep:sdkwork_routes_news_backend_api", "dep:sdkwork_routes_news_open_api"]
-foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api"]
-foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api"]
-foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api"]
-foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api"]
-foundation-community = ["dep:sdkwork_routes_community_app_api"]
-foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api"]
-foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api"]
+foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api", "dep:sdkwork-image-gateway-assembly"]
+foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api", "dep:sdkwork-music-gateway-assembly"]
+foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api", "dep:sdkwork-messaging-gateway-assembly"]
+foundation-community = ["dep:sdkwork_routes_community_app_api", "dep:sdkwork-community-gateway-assembly"]
+foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api", "dep:sdkwork-cms-gateway-assembly"]
+foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api", "dep:sdkwork-voice-gateway-assembly"]
 foundation-aiot = ["dep:sdkwork_routes_aiot_app_api"]
 foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api"]
+foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api", "dep:sdkwork-forum-gateway-assembly"]
+foundation-comments = ["dep:sdkwork-comments-gateway-assembly"]
+foundation-clawrouter = ["dep:sdkwork-clawrouter-gateway-assembly"]
+foundation-llm = ["dep:sdkwork-llm-gateway-assembly"]
+foundation-mcp = ["dep:sdkwork-mcp-gateway-assembly"]
+foundation-im = ["dep:sdkwork-im-gateway-assembly"]
+foundation-rtc = ["dep:sdkwork-rtc-gateway-assembly"]
+foundation-notary = ["dep:sdkwork-notary-gateway-assembly"]
+foundation-mail = ["dep:sdkwork-mail-gateway-assembly"]
 
 [dependencies]
+anyhow.workspace = true
 async-trait.workspace = true
 axum.workspace = true
 bytes.workspace = true
@@ -44,6 +53,7 @@ tokio-tungstenite.workspace = true
 tower.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
+tracing-subscriber.workspace = true
 sdkwork-api-cloud-gateway-config.workspace = true
 sdkwork-api-cloud-gateway-observability.workspace = true
 sdkwork-api-cloud-gateway-registry.workspace = true
@@ -82,6 +92,21 @@ sdkwork_routes_aiot_app_api = { workspace = true, optional = true }
 sdkwork_routes_catalog_app_api = { workspace = true, optional = true }
 sdkwork_routes_catalog_backend_api = { workspace = true, optional = true }
 sdkwork_routes_catalog_open_api = { workspace = true, optional = true }
+sdkwork-voice-gateway-assembly = { workspace = true, optional = true }
+sdkwork-music-gateway-assembly = { workspace = true, optional = true }
+sdkwork-messaging-gateway-assembly = { workspace = true, optional = true }
+sdkwork-image-gateway-assembly = { workspace = true, optional = true }
+sdkwork-cms-gateway-assembly = { workspace = true, optional = true }
+sdkwork-forum-gateway-assembly = { workspace = true, optional = true }
+sdkwork-community-gateway-assembly = { workspace = true, optional = true }
+sdkwork-comments-gateway-assembly = { workspace = true, optional = true }
+sdkwork-clawrouter-gateway-assembly = { workspace = true, optional = true }
+sdkwork-llm-gateway-assembly = { workspace = true, optional = true }
+sdkwork-mcp-gateway-assembly = { workspace = true, optional = true }
+sdkwork-im-gateway-assembly = { workspace = true, optional = true }
+sdkwork-rtc-gateway-assembly = { workspace = true, optional = true }
+sdkwork-notary-gateway-assembly = { workspace = true, optional = true }
+sdkwork-mail-gateway-assembly = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures-util.workspace = true

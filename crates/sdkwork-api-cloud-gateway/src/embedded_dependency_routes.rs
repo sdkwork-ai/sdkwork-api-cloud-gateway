@@ -50,6 +50,363 @@ pub async fn bootstrap_embedded_dependency_routers(
         }
     }
 
+    #[cfg(feature = "foundation-voice")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            VOICE_APP_API_SERVICE_ID, VOICE_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, VOICE_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, VOICE_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_voice_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: VOICE_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let voice_router = assembly.router;
+            if dependency_surface_enabled(config, VOICE_APP_API_SERVICE_ID) {
+                routers.insert(VOICE_APP_API_SERVICE_ID.to_owned(), voice_router.clone());
+            }
+            if dependency_surface_enabled(config, VOICE_BACKEND_API_SERVICE_ID) {
+                routers.insert(VOICE_BACKEND_API_SERVICE_ID.to_owned(), voice_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-music")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            MUSIC_APP_API_SERVICE_ID, MUSIC_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, MUSIC_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, MUSIC_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_music_gateway_assembly::assemble_application_router();
+            let music_router = assembly.router;
+            if dependency_surface_enabled(config, MUSIC_APP_API_SERVICE_ID) {
+                routers.insert(MUSIC_APP_API_SERVICE_ID.to_owned(), music_router.clone());
+            }
+            if dependency_surface_enabled(config, MUSIC_BACKEND_API_SERVICE_ID) {
+                routers.insert(MUSIC_BACKEND_API_SERVICE_ID.to_owned(), music_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-messaging")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            MESSAGING_APP_API_SERVICE_ID, MESSAGING_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, MESSAGING_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, MESSAGING_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_messaging_gateway_assembly::assemble_application_router();
+            let messaging_router = assembly.router;
+            if dependency_surface_enabled(config, MESSAGING_APP_API_SERVICE_ID) {
+                routers.insert(
+                    MESSAGING_APP_API_SERVICE_ID.to_owned(),
+                    messaging_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, MESSAGING_BACKEND_API_SERVICE_ID) {
+                routers.insert(
+                    MESSAGING_BACKEND_API_SERVICE_ID.to_owned(),
+                    messaging_router,
+                );
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-image")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            IMAGE_APP_API_SERVICE_ID, IMAGE_BACKEND_API_SERVICE_ID, IMAGE_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, IMAGE_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, IMAGE_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, IMAGE_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_image_gateway_assembly::assemble_application_router_from_env()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: IMAGE_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let image_router = assembly.router;
+            if dependency_surface_enabled(config, IMAGE_APP_API_SERVICE_ID) {
+                routers.insert(IMAGE_APP_API_SERVICE_ID.to_owned(), image_router.clone());
+            }
+            if dependency_surface_enabled(config, IMAGE_BACKEND_API_SERVICE_ID) {
+                routers.insert(
+                    IMAGE_BACKEND_API_SERVICE_ID.to_owned(),
+                    image_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, IMAGE_OPEN_API_SERVICE_ID) {
+                routers.insert(IMAGE_OPEN_API_SERVICE_ID.to_owned(), image_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-cms")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            CMS_APP_API_SERVICE_ID, CMS_BACKEND_API_SERVICE_ID, CMS_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, CMS_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, CMS_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, CMS_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_cms_gateway_assembly::assemble_application_router();
+            let cms_router = assembly.router;
+            if dependency_surface_enabled(config, CMS_APP_API_SERVICE_ID) {
+                routers.insert(CMS_APP_API_SERVICE_ID.to_owned(), cms_router.clone());
+            }
+            if dependency_surface_enabled(config, CMS_BACKEND_API_SERVICE_ID) {
+                routers.insert(CMS_BACKEND_API_SERVICE_ID.to_owned(), cms_router.clone());
+            }
+            if dependency_surface_enabled(config, CMS_OPEN_API_SERVICE_ID) {
+                routers.insert(CMS_OPEN_API_SERVICE_ID.to_owned(), cms_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-forum")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            FORUM_APP_API_SERVICE_ID, FORUM_BACKEND_API_SERVICE_ID, FORUM_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, FORUM_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, FORUM_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, FORUM_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_forum_gateway_assembly::assemble_application_router();
+            let forum_router = assembly.router;
+            if dependency_surface_enabled(config, FORUM_APP_API_SERVICE_ID) {
+                routers.insert(FORUM_APP_API_SERVICE_ID.to_owned(), forum_router.clone());
+            }
+            if dependency_surface_enabled(config, FORUM_BACKEND_API_SERVICE_ID) {
+                routers.insert(
+                    FORUM_BACKEND_API_SERVICE_ID.to_owned(),
+                    forum_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, FORUM_OPEN_API_SERVICE_ID) {
+                routers.insert(FORUM_OPEN_API_SERVICE_ID.to_owned(), forum_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-community")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            COMMUNITY_APP_API_SERVICE_ID, COMMUNITY_BACKEND_API_SERVICE_ID,
+            COMMUNITY_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, COMMUNITY_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, COMMUNITY_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, COMMUNITY_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_community_gateway_assembly::assemble_application_router().await;
+            let community_router = assembly.router;
+            if dependency_surface_enabled(config, COMMUNITY_APP_API_SERVICE_ID) {
+                routers.insert(
+                    COMMUNITY_APP_API_SERVICE_ID.to_owned(),
+                    community_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, COMMUNITY_BACKEND_API_SERVICE_ID) {
+                routers.insert(
+                    COMMUNITY_BACKEND_API_SERVICE_ID.to_owned(),
+                    community_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, COMMUNITY_OPEN_API_SERVICE_ID) {
+                routers.insert(COMMUNITY_OPEN_API_SERVICE_ID.to_owned(), community_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-comments")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            COMMENTS_APP_API_SERVICE_ID, COMMENTS_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, COMMENTS_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, COMMENTS_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_comments_gateway_assembly::assemble_application_router();
+            let comments_router = assembly.router;
+            if dependency_surface_enabled(config, COMMENTS_APP_API_SERVICE_ID) {
+                routers.insert(
+                    COMMENTS_APP_API_SERVICE_ID.to_owned(),
+                    comments_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, COMMENTS_BACKEND_API_SERVICE_ID) {
+                routers.insert(COMMENTS_BACKEND_API_SERVICE_ID.to_owned(), comments_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-clawrouter")]
+    {
+        use sdkwork_api_cloud_gateway_config::SDKWORK_CLAW_GATEWAY_SERVICE_ID;
+        if dependency_surface_enabled(config, SDKWORK_CLAW_GATEWAY_SERVICE_ID) {
+            let assembly = sdkwork_clawrouter_gateway_assembly::assemble_application_router();
+            routers.insert(SDKWORK_CLAW_GATEWAY_SERVICE_ID.to_owned(), assembly.router);
+        }
+    }
+
+    #[cfg(feature = "foundation-llm")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            LLM_APP_API_SERVICE_ID, LLM_BACKEND_API_SERVICE_ID, LLM_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, LLM_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, LLM_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, LLM_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_llm_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: LLM_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let llm_router = assembly.router;
+            if dependency_surface_enabled(config, LLM_APP_API_SERVICE_ID) {
+                routers.insert(LLM_APP_API_SERVICE_ID.to_owned(), llm_router.clone());
+            }
+            if dependency_surface_enabled(config, LLM_BACKEND_API_SERVICE_ID) {
+                routers.insert(LLM_BACKEND_API_SERVICE_ID.to_owned(), llm_router.clone());
+            }
+            if dependency_surface_enabled(config, LLM_OPEN_API_SERVICE_ID) {
+                routers.insert(LLM_OPEN_API_SERVICE_ID.to_owned(), llm_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-mcp")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            MCP_APP_API_SERVICE_ID, MCP_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, MCP_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, MCP_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_mcp_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: MCP_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let mcp_router = assembly.router;
+            if dependency_surface_enabled(config, MCP_APP_API_SERVICE_ID) {
+                routers.insert(MCP_APP_API_SERVICE_ID.to_owned(), mcp_router.clone());
+            }
+            if dependency_surface_enabled(config, MCP_BACKEND_API_SERVICE_ID) {
+                routers.insert(MCP_BACKEND_API_SERVICE_ID.to_owned(), mcp_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-im")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            SDKWORK_IM_BACKEND_HTTP_SERVICE_ID, SDKWORK_IM_IM_HTTP_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, SDKWORK_IM_IM_HTTP_SERVICE_ID)
+            || dependency_surface_enabled(config, SDKWORK_IM_BACKEND_HTTP_SERVICE_ID)
+        {
+            let assembly = sdkwork_im_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: SDKWORK_IM_IM_HTTP_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let im_router = assembly.router;
+            if dependency_surface_enabled(config, SDKWORK_IM_IM_HTTP_SERVICE_ID) {
+                routers.insert(SDKWORK_IM_IM_HTTP_SERVICE_ID.to_owned(), im_router.clone());
+            }
+            if dependency_surface_enabled(config, SDKWORK_IM_BACKEND_HTTP_SERVICE_ID) {
+                routers.insert(SDKWORK_IM_BACKEND_HTTP_SERVICE_ID.to_owned(), im_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-rtc")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            RTC_APP_API_SERVICE_ID, RTC_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, RTC_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, RTC_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_rtc_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|error| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: RTC_APP_API_SERVICE_ID.to_owned(),
+                    message: error.to_string(),
+                })?;
+            let rtc_router = assembly.router;
+            if dependency_surface_enabled(config, RTC_APP_API_SERVICE_ID) {
+                routers.insert(RTC_APP_API_SERVICE_ID.to_owned(), rtc_router.clone());
+            }
+            if dependency_surface_enabled(config, RTC_BACKEND_API_SERVICE_ID) {
+                routers.insert(RTC_BACKEND_API_SERVICE_ID.to_owned(), rtc_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-notary")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            NOTARY_APP_API_SERVICE_ID, NOTARY_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, NOTARY_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, NOTARY_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_notary_gateway_assembly::assemble_application_business_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: NOTARY_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let notary_router = assembly.router;
+            if dependency_surface_enabled(config, NOTARY_APP_API_SERVICE_ID) {
+                routers.insert(NOTARY_APP_API_SERVICE_ID.to_owned(), notary_router.clone());
+            }
+            if dependency_surface_enabled(config, NOTARY_BACKEND_API_SERVICE_ID) {
+                routers.insert(NOTARY_BACKEND_API_SERVICE_ID.to_owned(), notary_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-mail")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            MAIL_APP_API_SERVICE_ID, MAIL_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, MAIL_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, MAIL_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_mail_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|error| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: MAIL_APP_API_SERVICE_ID.to_owned(),
+                    message: error.to_string(),
+                })?;
+            let mail_router = assembly.router;
+            if dependency_surface_enabled(config, MAIL_APP_API_SERVICE_ID) {
+                routers.insert(MAIL_APP_API_SERVICE_ID.to_owned(), mail_router.clone());
+            }
+            if dependency_surface_enabled(config, MAIL_BACKEND_API_SERVICE_ID) {
+                routers.insert(MAIL_BACKEND_API_SERVICE_ID.to_owned(), mail_router);
+            }
+        }
+    }
+
     Ok(routers)
 }
 
