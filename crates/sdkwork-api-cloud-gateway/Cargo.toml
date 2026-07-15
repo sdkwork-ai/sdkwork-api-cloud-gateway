@@ -18,15 +18,15 @@ foundation-course = [
     "dep:sdkwork_routes_course_backend_api",
     "dep:sdkwork-course-gateway-assembly",
 ]
-foundation-news = ["dep:sdkwork_routes_news_app_api", "dep:sdkwork_routes_news_backend_api", "dep:sdkwork_routes_news_open_api"]
+foundation-news = ["dep:sdkwork_routes_news_app_api", "dep:sdkwork_routes_news_backend_api", "dep:sdkwork_routes_news_open_api", "dep:sdkwork-news-gateway-assembly"]
 foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api", "dep:sdkwork-image-gateway-assembly"]
 foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api", "dep:sdkwork-music-gateway-assembly"]
 foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api", "dep:sdkwork-messaging-gateway-assembly"]
 foundation-community = ["dep:sdkwork_routes_community_app_api", "dep:sdkwork-community-gateway-assembly"]
 foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api", "dep:sdkwork-cms-gateway-assembly"]
 foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api", "dep:sdkwork-voice-gateway-assembly"]
-foundation-aiot = ["dep:sdkwork_routes_aiot_app_api"]
-foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api"]
+foundation-aiot = ["dep:sdkwork_routes_aiot_app_api", "dep:sdkwork-aiot-gateway-assembly"]
+foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api", "dep:sdkwork-appstore-gateway-assembly"]
 foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api", "dep:sdkwork-forum-gateway-assembly"]
 foundation-comments = ["dep:sdkwork-comments-gateway-assembly"]
 foundation-clawrouter = ["dep:sdkwork-clawrouter-gateway-assembly"]
@@ -107,6 +107,9 @@ sdkwork-im-gateway-assembly = { workspace = true, optional = true }
 sdkwork-rtc-gateway-assembly = { workspace = true, optional = true }
 sdkwork-notary-gateway-assembly = { workspace = true, optional = true }
 sdkwork-mail-gateway-assembly = { workspace = true, optional = true }
+sdkwork-news-gateway-assembly = { workspace = true, optional = true }
+sdkwork-aiot-gateway-assembly = { workspace = true, optional = true }
+sdkwork-appstore-gateway-assembly = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures-util.workspace = true

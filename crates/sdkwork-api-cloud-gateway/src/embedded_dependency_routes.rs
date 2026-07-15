@@ -407,6 +407,96 @@ pub async fn bootstrap_embedded_dependency_routers(
         }
     }
 
+    #[cfg(feature = "foundation-news")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            NEWS_APP_API_SERVICE_ID, NEWS_BACKEND_API_SERVICE_ID, NEWS_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, NEWS_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, NEWS_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, NEWS_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_news_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: NEWS_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let news_router = assembly.router;
+            if dependency_surface_enabled(config, NEWS_APP_API_SERVICE_ID) {
+                routers.insert(NEWS_APP_API_SERVICE_ID.to_owned(), news_router.clone());
+            }
+            if dependency_surface_enabled(config, NEWS_BACKEND_API_SERVICE_ID) {
+                routers.insert(NEWS_BACKEND_API_SERVICE_ID.to_owned(), news_router.clone());
+            }
+            if dependency_surface_enabled(config, NEWS_OPEN_API_SERVICE_ID) {
+                routers.insert(NEWS_OPEN_API_SERVICE_ID.to_owned(), news_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-aiot")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            AIOT_APP_API_SERVICE_ID, AIOT_BACKEND_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, AIOT_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, AIOT_BACKEND_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_aiot_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: AIOT_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let aiot_router = assembly.router;
+            if dependency_surface_enabled(config, AIOT_APP_API_SERVICE_ID) {
+                routers.insert(AIOT_APP_API_SERVICE_ID.to_owned(), aiot_router.clone());
+            }
+            if dependency_surface_enabled(config, AIOT_BACKEND_API_SERVICE_ID) {
+                routers.insert(AIOT_BACKEND_API_SERVICE_ID.to_owned(), aiot_router);
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-appstore")]
+    {
+        use sdkwork_api_cloud_gateway_config::{
+            SDKWORK_APPSTORE_APP_API_SERVICE_ID, SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID,
+            SDKWORK_APPSTORE_OPEN_API_SERVICE_ID,
+        };
+        if dependency_surface_enabled(config, SDKWORK_APPSTORE_APP_API_SERVICE_ID)
+            || dependency_surface_enabled(config, SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID)
+            || dependency_surface_enabled(config, SDKWORK_APPSTORE_OPEN_API_SERVICE_ID)
+        {
+            let assembly = sdkwork_appstore_gateway_assembly::assemble_application_router()
+                .await
+                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+                    service_id: SDKWORK_APPSTORE_APP_API_SERVICE_ID.to_owned(),
+                    message,
+                })?;
+            let appstore_router = assembly.router;
+            if dependency_surface_enabled(config, SDKWORK_APPSTORE_APP_API_SERVICE_ID) {
+                routers.insert(
+                    SDKWORK_APPSTORE_APP_API_SERVICE_ID.to_owned(),
+                    appstore_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID) {
+                routers.insert(
+                    SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID.to_owned(),
+                    appstore_router.clone(),
+                );
+            }
+            if dependency_surface_enabled(config, SDKWORK_APPSTORE_OPEN_API_SERVICE_ID) {
+                routers.insert(
+                    SDKWORK_APPSTORE_OPEN_API_SERVICE_ID.to_owned(),
+                    appstore_router,
+                );
+            }
+        }
+    }
+
     Ok(routers)
 }
 

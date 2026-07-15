@@ -18,7 +18,8 @@ mod diagnostics;
     feature = "foundation-im",
     feature = "foundation-rtc",
     feature = "foundation-notary",
-    feature = "foundation-mail"
+    feature = "foundation-mail",
+    feature = "foundation-news"
 ))]
 mod embedded_dependency_routes;
 mod error;

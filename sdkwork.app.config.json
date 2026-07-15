@@ -1246,8 +1246,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AIOT_APP_API_BASE_URL",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork_routes_aiot_app_api",
-      "executableExport": "sdkwork_routes_aiot_app_api::standard_api_route_contracts",
+      "cargoDependency": "sdkwork-aiot-gateway-assembly",
+      "executableExport": "sdkwork_aiot_gateway_assembly::assemble_application_router",
       "coverage": "aiot-app-api-upstream-routes"
     },
     {
@@ -1260,8 +1260,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AIOT_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork_routes_aiot_app_api",
-      "executableExport": "sdkwork_routes_aiot_app_api::standard_api_route_contracts",
+      "cargoDependency": "sdkwork-aiot-gateway-assembly",
+      "executableExport": "sdkwork_aiot_gateway_assembly::assemble_application_router",
       "coverage": "aiot-backend-api-upstream-routes"
     },
     {
@@ -1906,8 +1906,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1920,8 +1920,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1934,8 +1934,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1948,8 +1948,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1962,8 +1962,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1976,8 +1976,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -1990,8 +1990,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -2004,8 +2004,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_APP_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_app_api",
-      "executableExport": "sdkwork_routes_catalog_app_api::build_routes",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-app-api-upstream-routes"
     },
     {
@@ -2018,8 +2018,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2032,8 +2032,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2046,8 +2046,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2060,8 +2060,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2074,8 +2074,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2088,8 +2088,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_BACKEND_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_backend_api",
-      "executableExport": "sdkwork_routes_catalog_backend_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-backend-api-upstream-routes"
     },
     {
@@ -2102,8 +2102,8 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPSTORE_OPEN_API_BASE_URL",
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork_routes_catalog_open_api",
-      "executableExport": "sdkwork_routes_catalog_open_api::route_definitions",
+      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router",
       "coverage": "appstore-open-api-upstream-routes"
     },
     {
