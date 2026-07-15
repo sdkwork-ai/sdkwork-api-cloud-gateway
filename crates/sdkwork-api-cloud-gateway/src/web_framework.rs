@@ -153,11 +153,7 @@ where
 
 fn split_security_policy(config: &GatewayRuntimeConfig) -> SecurityPolicy {
     SecurityPolicy {
-        cors: CorsPolicy {
-            allow_all_origins: config.cors.allow_any_origin,
-            allowed_origins: config.cors.allowed_origins.clone(),
-            ..CorsPolicy::default()
-        },
+        cors: gateway_cors_policy(config),
         request_size_limit: RequestSizeLimitPolicy {
             max_content_length: Some(config.request.max_body_bytes as u64),
         },
@@ -180,6 +176,28 @@ fn split_security_policy(config: &GatewayRuntimeConfig) -> SecurityPolicy {
         },
         ..SecurityPolicy::default()
     }
+}
+
+pub(crate) fn gateway_cors_policy(config: &GatewayRuntimeConfig) -> CorsPolicy {
+    let mut policy = if matches!(
+        config
+            .service
+            .environment
+            .trim()
+            .to_ascii_lowercase()
+            .as_str(),
+        "dev" | "development" | "test" | "testing" | "local"
+    ) {
+        CorsPolicy::development_private_network()
+    } else {
+        CorsPolicy::default()
+    };
+    for origin in &config.cors.allowed_origins {
+        if !policy.allowed_origins.contains(origin) {
+            policy.allowed_origins.push(origin.clone());
+        }
+    }
+    policy
 }
 
 /// Split-mode proxy chain: standard 18-stage pipeline plus gateway unknown-surface bypass.

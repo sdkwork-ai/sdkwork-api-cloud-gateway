@@ -190,7 +190,9 @@ async fn split_mode_with_web_framework_disabled_applies_tower_cors() {
     };
     config.cors.allow_any_origin = false;
     config.cors.allowed_origins = vec!["https://console.example.com".to_string()];
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let allowed_response = app
         .clone()
@@ -241,7 +243,9 @@ async fn split_mode_with_web_framework_disabled_returns_gateway_fallback_for_unk
         mode: GatewayMode::Split,
         ..GatewayRuntimeConfig::default()
     };
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let response = app
         .oneshot(
@@ -273,7 +277,9 @@ async fn split_mode_with_web_framework_disabled_assigns_uuid_request_id() {
         mode: GatewayMode::Split,
         ..GatewayRuntimeConfig::default()
     };
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let response = app
         .oneshot(
@@ -307,7 +313,9 @@ async fn split_mode_with_web_framework_disabled_applies_gateway_secure_headers()
         ..GatewayRuntimeConfig::default()
     };
     config.security.secure_headers_enabled = true;
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let response = app
         .oneshot(

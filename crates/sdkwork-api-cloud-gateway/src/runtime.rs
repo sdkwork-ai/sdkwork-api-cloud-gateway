@@ -52,7 +52,6 @@ use tokio_tungstenite::{
     MaybeTlsStream, WebSocketStream,
 };
 use tower::ServiceExt;
-use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
 use crate::{
@@ -1653,19 +1652,8 @@ fn emit_access_log(
     );
 }
 
-fn cors_layer(config: &GatewayRuntimeConfig) -> CorsLayer {
-    let layer = CorsLayer::new().allow_methods(Any).allow_headers(Any);
-    if config.cors.allow_any_origin {
-        return layer.allow_origin(Any);
-    }
-
-    let origins = config
-        .cors
-        .allowed_origins
-        .iter()
-        .filter_map(|origin| HeaderValue::from_str(origin).ok())
-        .collect::<Vec<_>>();
-    layer.allow_origin(origins)
+fn cors_layer(config: &GatewayRuntimeConfig) -> tower_http::cors::CorsLayer {
+    sdkwork_web_axum::cors_layer_from_policy(web_framework::gateway_cors_policy(config))
 }
 
 fn problem_response(
