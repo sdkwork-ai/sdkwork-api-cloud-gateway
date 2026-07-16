@@ -21,6 +21,7 @@ const collapsedFeatures = [
 const embeddedDatabaseServices = [
   'IAM',
   'AGENTS',
+  'AGENTS_STORE',
   'AGENT_RUNTIME',
   'DEPLOY',
   'DEZHOU',

@@ -2323,6 +2323,7 @@ fn package_dev_entrypoint_is_declared_in_component_spec() {
     for service in [
         "IAM",
         "AGENTS",
+        "AGENTS_STORE",
         "AGENT_RUNTIME",
         "DEPLOY",
         "DEZHOU",
