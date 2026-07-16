@@ -36,7 +36,6 @@ use sdkwork_api_cloud_gateway_observability::{
 use sdkwork_api_cloud_gateway_registry::{
     GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget,
 };
-#[cfg(feature = "foundation-appbase")]
 use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tokio::{net::TcpStream, select};
@@ -212,7 +211,6 @@ impl fmt::Debug for GatewayRuntime {
     }
 }
 
-#[cfg(feature = "foundation-appbase")]
 pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
@@ -232,13 +230,6 @@ pub async fn build_sdkwork_api_cloud_gateway_router(
         }
     };
     Ok(web_framework::finalize_gateway_router_async(&finalize_config, router).await)
-}
-
-#[cfg(not(feature = "foundation-appbase"))]
-pub fn build_sdkwork_api_cloud_gateway_router(
-    config: GatewayRuntimeConfig,
-) -> Result<Router, GatewayRuntimeError> {
-    GatewayRuntime::new(config).map(GatewayRuntime::router)
 }
 
 pub fn build_sdkwork_api_cloud_gateway_router_with_registry(

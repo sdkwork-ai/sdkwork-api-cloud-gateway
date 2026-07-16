@@ -541,7 +541,7 @@ fn application_manifest_declares_drive_and_notary_split_dependency_surfaces() {
     assert_eq!(drive.api_authority, "sdkwork-drive-app-api");
     assert_eq!(drive.surface, "app");
     assert_eq!(drive.api_prefix, "/app/v3/api/drive");
-    assert_eq!(drive.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
+    assert_eq!(drive.runtime_mode, DependencyRuntimeMode::Split);
     assert_eq!(
         drive.required_base_url_key.as_deref(),
         Some("SDKWORK_DRIVE_APP_API_BASE_URL")
@@ -586,34 +586,122 @@ fn application_manifest_declares_drive_and_notary_split_dependency_surfaces() {
 }
 
 #[test]
-fn application_manifest_declares_claw_router_foundation_split_dependency_surfaces() {
+fn application_manifest_declares_collapsed_embedded_assembly_metadata() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     let config = GatewayRuntimeConfig::from_application_root(root).expect("manifest parses");
 
-    for (service_id, workspace, sdk_family, api_prefix, env_key, default_base_url) in [
+    for (service_id, workspace, cargo_feature, cargo_dependency, executable_export) in [
         (
-            "sdkwork-iam-backend-api",
-            "sdkwork-appbase",
-            "sdkwork-iam-backend-sdk",
-            "/backend/v3/api/iam",
-            "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
-            "http://127.0.0.1:3801",
+            "sdkwork-agent-app-api",
+            "sdkwork-kernel",
+            "foundation-kernel",
+            "sdkwork-agents-gateway-assembly",
+            "sdkwork_agents_gateway_assembly::assemble_application_business_router",
         ),
         (
-            "sdkwork-commerce-app-api",
-            "sdkwork-commerce",
-            "sdkwork-commerce-app-sdk",
-            "/app/v3/api",
-            "SDKWORK_COMMERCE_APP_API_BASE_URL",
-            "http://127.0.0.1:18180",
+            "sdkwork-agent-backend-api",
+            "sdkwork-kernel",
+            "foundation-kernel",
+            "sdkwork-agents-gateway-assembly",
+            "sdkwork_agents_gateway_assembly::assemble_application_business_router",
         ),
         (
-            "sdkwork-commerce-backend-api",
-            "sdkwork-commerce",
-            "sdkwork-commerce-backend-sdk",
-            "/backend/v3/api",
-            "SDKWORK_COMMERCE_BACKEND_API_BASE_URL",
-            "http://127.0.0.1:18181",
+            "sdkwork-agent-open-api",
+            "sdkwork-kernel",
+            "foundation-kernel",
+            "sdkwork-agents-gateway-assembly",
+            "sdkwork_agents_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-deploy-app-api",
+            "sdkwork-deployments",
+            "foundation-deployments",
+            "sdkwork-deployments-gateway-assembly",
+            "sdkwork_deployments_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-deploy-backend-api",
+            "sdkwork-deployments",
+            "foundation-deployments",
+            "sdkwork-deployments-gateway-assembly",
+            "sdkwork_deployments_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-dezhou-app-api",
+            "sdkwork-dezhou",
+            "foundation-dezhou",
+            "sdkwork-dezhou-gateway-assembly",
+            "sdkwork_dezhou_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-dezhou-backend-api",
+            "sdkwork-dezhou",
+            "foundation-dezhou",
+            "sdkwork-dezhou-gateway-assembly",
+            "sdkwork_dezhou_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-documents-app-api",
+            "sdkwork-documents",
+            "foundation-documents",
+            "sdkwork-documents-gateway-assembly",
+            "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env",
+        ),
+        (
+            "sdkwork-documents-backend-api",
+            "sdkwork-documents",
+            "foundation-documents",
+            "sdkwork-documents-gateway-assembly",
+            "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env",
+        ),
+        (
+            "sdkwork-documents-open-api",
+            "sdkwork-documents",
+            "foundation-documents",
+            "sdkwork-documents-gateway-assembly",
+            "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env",
+        ),
+        (
+            "sdkwork-modelkit-app-api",
+            "sdkwork-modelkit",
+            "foundation-modelkit",
+            "sdkwork-modelkit-gateway-assembly",
+            "sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env",
+        ),
+        (
+            "sdkwork-prompts-app-api",
+            "sdkwork-prompts",
+            "foundation-prompts",
+            "sdkwork-prompts-gateway-assembly",
+            "sdkwork_prompts_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-prompts-backend-api",
+            "sdkwork-prompts",
+            "foundation-prompts",
+            "sdkwork-prompts-gateway-assembly",
+            "sdkwork_prompts_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-prompts-open-api",
+            "sdkwork-prompts",
+            "foundation-prompts",
+            "sdkwork-prompts-gateway-assembly",
+            "sdkwork_prompts_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-web-app-api",
+            "sdkwork-web-server",
+            "foundation-web-server",
+            "sdkwork-web-server-gateway-assembly",
+            "sdkwork_web_server_gateway_assembly::assemble_application_business_router",
+        ),
+        (
+            "sdkwork-web-backend-api",
+            "sdkwork-web-server",
+            "foundation-web-server",
+            "sdkwork-web-server-gateway-assembly",
+            "sdkwork_web_server_gateway_assembly::assemble_application_business_router",
         ),
     ] {
         let surface = config
@@ -621,24 +709,53 @@ fn application_manifest_declares_claw_router_foundation_split_dependency_surface
             .iter()
             .find(|surface| surface.service_id == service_id)
             .unwrap_or_else(|| panic!("manifest declares {service_id} surface"));
-        assert_eq!(surface.workspace, workspace);
-        assert_eq!(surface.sdk_family, sdk_family);
-        assert_eq!(surface.api_authority, service_id);
-        assert_eq!(surface.api_prefix, api_prefix);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
-        assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
-        assert!(surface.executable_export.is_none());
-        assert!(surface.cargo_feature.is_none());
-        assert!(surface.cargo_dependency.is_none());
 
+        assert_eq!(surface.workspace, workspace);
+        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
+        assert_eq!(surface.cargo_feature.as_deref(), Some(cargo_feature));
+        assert_eq!(surface.cargo_dependency.as_deref(), Some(cargo_dependency));
         assert_eq!(
-            config
-                .upstream(service_id)
-                .unwrap_or_else(|| panic!("{service_id} upstream is derived"))
-                .base_url,
-            default_base_url
+            surface.executable_export.as_deref(),
+            Some(executable_export)
         );
     }
+}
+
+#[test]
+fn application_manifest_declares_claw_router_foundation_split_dependency_surfaces() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let config = GatewayRuntimeConfig::from_application_root(root).expect("manifest parses");
+
+    let (service_id, workspace, sdk_family, api_prefix, env_key, default_base_url) = (
+        "sdkwork-iam-backend-api",
+        "sdkwork-appbase",
+        "sdkwork-iam-backend-sdk",
+        "/backend/v3/api/iam",
+        "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
+        "http://127.0.0.1:3801",
+    );
+    let surface = config
+        .dependency_surfaces
+        .iter()
+        .find(|surface| surface.service_id == service_id)
+        .unwrap_or_else(|| panic!("manifest declares {service_id} surface"));
+    assert_eq!(surface.workspace, workspace);
+    assert_eq!(surface.sdk_family, sdk_family);
+    assert_eq!(surface.api_authority, service_id);
+    assert_eq!(surface.api_prefix, api_prefix);
+    assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
+    assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
+    assert!(surface.executable_export.is_none());
+    assert!(surface.cargo_feature.is_none());
+    assert!(surface.cargo_dependency.is_none());
+
+    assert_eq!(
+        config
+            .upstream(service_id)
+            .unwrap_or_else(|| panic!("{service_id} upstream is derived"))
+            .base_url,
+        default_base_url
+    );
 }
 
 #[test]
@@ -971,7 +1088,19 @@ fn application_manifest_declares_workspace_foundation_split_dependency_surfaces(
         assert_eq!(surface.api_authority, api_authority);
         assert_eq!(surface.surface, surface_kind);
         assert_eq!(surface.api_prefix, api_prefix);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
+        let expected_runtime_mode = if matches!(
+            workspace,
+            "sdkwork-drive"
+                | "sdkwork-memory"
+                | "sdkwork-knowledgebase"
+                | "sdkwork-notes"
+                | "sdkwork-generations"
+        ) {
+            DependencyRuntimeMode::Split
+        } else {
+            DependencyRuntimeMode::SplitOrEmbedded
+        };
+        assert_eq!(surface.runtime_mode, expected_runtime_mode);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
 
         assert_eq!(
@@ -1070,46 +1199,6 @@ fn application_manifest_declares_materialized_content_foundation_split_dependenc
             "http://127.0.0.1:19482",
         ),
         (
-            "sdkwork-comments-app-api",
-            "sdkwork-comments",
-            "sdkwork-comments-app-sdk",
-            "sdkwork-comments-app-api",
-            "app",
-            "/app/v3/api/comments",
-            "SDKWORK_COMMENTS_APP_API_BASE_URL",
-            "http://127.0.0.1:19580",
-        ),
-        (
-            "sdkwork-comments-app-api",
-            "sdkwork-comments",
-            "sdkwork-comments-app-sdk",
-            "sdkwork-comments-app-api",
-            "app",
-            "/app/v3/api/engagement",
-            "SDKWORK_COMMENTS_APP_API_BASE_URL",
-            "http://127.0.0.1:19580",
-        ),
-        (
-            "sdkwork-comments-backend-api",
-            "sdkwork-comments",
-            "sdkwork-comments-backend-sdk",
-            "sdkwork-comments-backend-api",
-            "backend",
-            "/backend/v3/api/comments",
-            "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-            "http://127.0.0.1:19581",
-        ),
-        (
-            "sdkwork-comments-backend-api",
-            "sdkwork-comments",
-            "sdkwork-comments-backend-sdk",
-            "sdkwork-comments-backend-api",
-            "backend",
-            "/backend/v3/api/engagement",
-            "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-            "http://127.0.0.1:19581",
-        ),
-        (
             "sdkwork-course-app-api",
             "sdkwork-course",
             "sdkwork-course-app-sdk",
@@ -1169,26 +1258,6 @@ fn application_manifest_declares_materialized_content_foundation_split_dependenc
             "SDKWORK_COURSE_BACKEND_API_BASE_URL",
             "http://127.0.0.1:19681",
         ),
-        (
-            "sdkwork-messaging-app-api",
-            "sdkwork-messaging",
-            "sdkwork-messaging-app-sdk",
-            "sdkwork-messaging-app-api",
-            "app",
-            "/app/v3/api/messaging",
-            "SDKWORK_MESSAGING_APP_API_BASE_URL",
-            "http://127.0.0.1:19780",
-        ),
-        (
-            "sdkwork-messaging-backend-api",
-            "sdkwork-messaging",
-            "sdkwork-messaging-backend-sdk",
-            "sdkwork-messaging-backend-api",
-            "backend",
-            "/backend/v3/api/messaging",
-            "SDKWORK_MESSAGING_BACKEND_API_BASE_URL",
-            "http://127.0.0.1:19781",
-        ),
     ] {
         let surface = config
             .dependency_surfaces
@@ -1199,7 +1268,12 @@ fn application_manifest_declares_materialized_content_foundation_split_dependenc
         assert_eq!(surface.sdk_family, sdk_family);
         assert_eq!(surface.api_authority, api_authority);
         assert_eq!(surface.surface, surface_kind);
-        assert_eq!(surface.runtime_mode, DependencyRuntimeMode::SplitOrEmbedded);
+        let expected_runtime_mode = if workspace == "sdkwork-search" {
+            DependencyRuntimeMode::Split
+        } else {
+            DependencyRuntimeMode::SplitOrEmbedded
+        };
+        assert_eq!(surface.runtime_mode, expected_runtime_mode);
         assert_eq!(surface.required_base_url_key.as_deref(), Some(env_key));
 
         assert_eq!(
@@ -1211,12 +1285,7 @@ fn application_manifest_declares_materialized_content_foundation_split_dependenc
         );
     }
 
-    for service_id in [
-        "sdkwork-comments-app-api",
-        "sdkwork-comments-backend-api",
-        "sdkwork-course-app-api",
-        "sdkwork-course-backend-api",
-    ] {
+    for service_id in ["sdkwork-course-app-api", "sdkwork-course-backend-api"] {
         assert_eq!(
             config
                 .upstreams
@@ -2223,10 +2292,57 @@ fn package_dev_entrypoint_is_declared_in_component_spec() {
     .expect("package.json parses");
     assert_eq!(
         package_json["scripts"]["dev"].as_str(),
-        Some(
-            "cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example"
-        ),
+        Some("node scripts/dev/run-sdkwork-api-cloud-gateway-dev.mjs"),
         "package.json must keep pnpm dev as the standard independent startup entrypoint"
+    );
+    let dev_runner_path = root.join("scripts/dev/run-sdkwork-api-cloud-gateway-dev.mjs");
+    let dev_runner = fs::read_to_string(&dev_runner_path).unwrap_or_else(|error| {
+        panic!(
+            "failed to read dev runner {}: {error}",
+            dev_runner_path.display()
+        )
+    });
+    assert!(
+        dev_runner.contains(
+            "SDKWORK_WEB_SNOWFLAKE_NODE_ID: process.env.SDKWORK_WEB_SNOWFLAKE_NODE_ID ?? '0'"
+        ),
+        "standalone development must supply the web-server Snowflake node id while preserving an explicit override"
+    );
+    assert!(
+        dev_runner.contains("process.env.SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE ?? 'postgres'"),
+        "standalone development must keep agents kernel runtime persistence on the initialized PostgreSQL profile"
+    );
+    assert!(
+        dev_runner.contains("SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: 'false'"),
+        "standalone development must disable public-schema fallback for application-owned tables"
+    );
+    assert!(
+        dev_runner.contains("PGOPTIONS: `-c search_path=${profile.config.database.schema}`"),
+        "standalone development must pin every embedded PostgreSQL connection to the initialized application schema"
+    );
+    for service in [
+        "IAM",
+        "AGENTS",
+        "AGENT_RUNTIME",
+        "DEPLOY",
+        "DEZHOU",
+        "DOCUMENTS",
+        "MODELKIT",
+        "PROMPTS",
+        "WEB",
+    ] {
+        assert!(
+            dev_runner.contains(&format!("  '{service}',")),
+            "standalone development must declare the {service} database service override"
+        );
+    }
+    assert!(
+        dev_runner.contains("childEnv[`SDKWORK_${service}_DATABASE_URL`]"),
+        "standalone development must supply service-scoped database URLs"
+    );
+    assert!(
+        dev_runner.contains("childEnv[`SDKWORK_${service}_DATABASE_SCHEMA`]"),
+        "standalone development must supply service-scoped database schemas"
     );
 
     let spec_path = root.join("specs/component.spec.json");
@@ -2299,11 +2415,34 @@ fn development_template_defaults_to_embedded_single_port_mode() {
         "default development config should not require split upstream ports"
     );
     assert_eq!(config.server.bind, "127.0.0.1:3900");
-    assert_eq!(config.dependency_surfaces.len(), 1);
-    assert_eq!(
-        config.dependency_surfaces[0].service_id,
-        "sdkwork-iam-app-api"
-    );
+    assert_eq!(config.dependency_surfaces.len(), 17);
+    for service_id in [
+        "sdkwork-iam-app-api",
+        "sdkwork-agent-app-api",
+        "sdkwork-agent-backend-api",
+        "sdkwork-agent-open-api",
+        "sdkwork-deploy-app-api",
+        "sdkwork-deploy-backend-api",
+        "sdkwork-dezhou-app-api",
+        "sdkwork-dezhou-backend-api",
+        "sdkwork-documents-app-api",
+        "sdkwork-documents-backend-api",
+        "sdkwork-documents-open-api",
+        "sdkwork-modelkit-app-api",
+        "sdkwork-prompts-app-api",
+        "sdkwork-prompts-backend-api",
+        "sdkwork-prompts-open-api",
+        "sdkwork-web-app-api",
+        "sdkwork-web-backend-api",
+    ] {
+        assert!(
+            config
+                .dependency_surfaces
+                .iter()
+                .any(|surface| surface.service_id == service_id),
+            "development config declares embedded surface {service_id}"
+        );
+    }
 }
 
 #[test]

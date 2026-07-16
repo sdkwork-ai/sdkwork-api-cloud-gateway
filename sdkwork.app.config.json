@@ -190,16 +190,6 @@
         "tracked": false
       },
       {
-        "name": "SDKWORK_COMMERCE_APP_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
-        "name": "SDKWORK_COMMERCE_BACKEND_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
         "name": "SDKWORK_RTC_APP_API_BASE_URL",
         "required": false,
         "tracked": false
@@ -415,32 +405,12 @@
         "tracked": false
       },
       {
-        "name": "SDKWORK_COMMENTS_APP_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
-        "name": "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
         "name": "SDKWORK_COURSE_APP_API_BASE_URL",
         "required": false,
         "tracked": false
       },
       {
         "name": "SDKWORK_COURSE_BACKEND_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
-        "name": "SDKWORK_MESSAGING_APP_API_BASE_URL",
-        "required": false,
-        "tracked": false
-      },
-      {
-        "name": "SDKWORK_MESSAGING_BACKEND_API_BASE_URL",
         "required": false,
         "tracked": false
       },
@@ -526,6 +496,101 @@
       },
       {
         "name": "SDKWORK_DEZHOU_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DOUDIZHU_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DOUDIZHU_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_GAMEENGINE_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_GAMEENGINE_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MAHJONG_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MAHJONG_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_XIANGQI_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_XIANGQI_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DOCUMENTS_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DOCUMENTS_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DOCUMENTS_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_PROMPTS_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_PROMPTS_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_PROMPTS_OPEN_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DEPLOY_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_DEPLOY_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_WEB_APP_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_WEB_BACKEND_API_BASE_URL",
+        "required": false,
+        "tracked": false
+      },
+      {
+        "name": "SDKWORK_MODELKIT_APP_API_BASE_URL",
         "required": false,
         "tracked": false
       }
@@ -810,30 +875,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/comments",
-      "owner": "dependency",
-      "serviceId": "sdkwork-comments-app-api"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/engagement",
-      "owner": "dependency",
-      "serviceId": "sdkwork-comments-app-api"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/comments",
-      "owner": "dependency",
-      "serviceId": "sdkwork-comments-backend-api"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/engagement",
-      "owner": "dependency",
-      "serviceId": "sdkwork-comments-backend-api"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/courses",
       "owner": "dependency",
       "serviceId": "sdkwork-course-app-api"
@@ -869,34 +910,10 @@
       "serviceId": "sdkwork-course-backend-api"
     },
     {
-      "surface": "app",
-      "prefix": "/app/v3/api/messaging",
-      "owner": "dependency",
-      "serviceId": "sdkwork-messaging-app-api"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/messaging",
-      "owner": "dependency",
-      "serviceId": "sdkwork-messaging-backend-api"
-    },
-    {
       "surface": "backend",
       "prefix": "/backend/v3/api/iam",
       "owner": "dependency",
       "serviceId": "sdkwork-iam-backend-api"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api",
-      "owner": "dependency",
-      "serviceId": "sdkwork-commerce-app-api"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api",
-      "owner": "dependency",
-      "serviceId": "sdkwork-commerce-backend-api"
     },
     {
       "surface": "app",
@@ -1103,6 +1120,120 @@
       "serviceId": "sdkwork-dezhou-backend-api"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/doudizhu",
+      "owner": "dependency",
+      "serviceId": "sdkwork-doudizhu-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/doudizhu",
+      "owner": "dependency",
+      "serviceId": "sdkwork-doudizhu-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/games",
+      "owner": "dependency",
+      "serviceId": "sdkwork-gameengine-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/games",
+      "owner": "dependency",
+      "serviceId": "sdkwork-gameengine-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/mahjong",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mahjong-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/mahjong",
+      "owner": "dependency",
+      "serviceId": "sdkwork-mahjong-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/xiangqi",
+      "owner": "dependency",
+      "serviceId": "sdkwork-xiangqi-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/xiangqi",
+      "owner": "dependency",
+      "serviceId": "sdkwork-xiangqi-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/documents",
+      "owner": "dependency",
+      "serviceId": "sdkwork-documents-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/documents",
+      "owner": "dependency",
+      "serviceId": "sdkwork-documents-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/doc/v3/api/documents",
+      "owner": "dependency",
+      "serviceId": "sdkwork-documents-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/prompts",
+      "owner": "dependency",
+      "serviceId": "sdkwork-prompts-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/prompts",
+      "owner": "dependency",
+      "serviceId": "sdkwork-prompts-backend-api"
+    },
+    {
+      "surface": "open",
+      "prefix": "/prompts/v3/api",
+      "owner": "dependency",
+      "serviceId": "sdkwork-prompts-open-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/deploy",
+      "owner": "dependency",
+      "serviceId": "sdkwork-deploy-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/deploy",
+      "owner": "dependency",
+      "serviceId": "sdkwork-deploy-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/web",
+      "owner": "dependency",
+      "serviceId": "sdkwork-web-app-api"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/web",
+      "owner": "dependency",
+      "serviceId": "sdkwork-web-backend-api"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/modelkit",
+      "owner": "dependency",
+      "serviceId": "sdkwork-modelkit-app-api"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api",
       "owner": "gateway"
@@ -1135,7 +1266,7 @@
       "apiAuthority": "sdkwork-drive-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api/drive",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_DRIVE_APP_API_BASE_URL",
       "coverage": "drive-app-api-upstream-routes"
     },
@@ -1212,7 +1343,10 @@
       "apiPrefix": "/app/v3/api/ai",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AGENT_APP_API_BASE_URL",
-      "coverage": "agent-app-api-upstream-routes"
+      "coverage": "agent-app-api-upstream-routes",
+      "cargoFeature": "foundation-kernel",
+      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_agents_gateway_assembly::assemble_application_business_router"
     },
     {
       "serviceId": "sdkwork-agent-backend-api",
@@ -1223,7 +1357,10 @@
       "apiPrefix": "/backend/v3/api/ai",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AGENT_BACKEND_API_BASE_URL",
-      "coverage": "agent-backend-api-upstream-routes"
+      "coverage": "agent-backend-api-upstream-routes",
+      "cargoFeature": "foundation-kernel",
+      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_agents_gateway_assembly::assemble_application_business_router"
     },
     {
       "serviceId": "sdkwork-agent-open-api",
@@ -1234,7 +1371,10 @@
       "apiPrefix": "/agent/v3/api",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_AGENT_OPEN_API_BASE_URL",
-      "coverage": "agent-open-api-upstream-routes"
+      "coverage": "agent-open-api-upstream-routes",
+      "cargoFeature": "foundation-kernel",
+      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_agents_gateway_assembly::assemble_application_business_router"
     },
     {
       "serviceId": "sdkwork-aiot-app-api",
@@ -1271,7 +1411,7 @@
       "apiAuthority": "sdkwork-drive.backend",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/drive",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_DRIVE_BACKEND_API_BASE_URL",
       "coverage": "drive-backend-api-upstream-routes"
     },
@@ -1282,7 +1422,7 @@
       "apiAuthority": "sdkwork-drive.open",
       "surface": "open",
       "apiPrefix": "/open/v3/api/drive",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_DRIVE_OPEN_API_BASE_URL",
       "coverage": "drive-open-api-upstream-routes"
     },
@@ -1293,7 +1433,7 @@
       "apiAuthority": "sdkwork-drive.admin.storage",
       "surface": "admin",
       "apiPrefix": "/admin/v3/api/drive",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL",
       "coverage": "drive-admin-storage-api-upstream-routes"
     },
@@ -1315,7 +1455,7 @@
       "apiAuthority": "sdkwork-memory.app",
       "surface": "app",
       "apiPrefix": "/app/v3/api/memory",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_MEMORY_APP_API_BASE_URL",
       "coverage": "memory-app-api-upstream-routes"
     },
@@ -1326,7 +1466,7 @@
       "apiAuthority": "sdkwork-memory.backend",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/memory",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_MEMORY_BACKEND_API_BASE_URL",
       "coverage": "memory-backend-api-upstream-routes"
     },
@@ -1337,7 +1477,7 @@
       "apiAuthority": "sdkwork-memory-open-api",
       "surface": "open",
       "apiPrefix": "/mem/v3/api/memory",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_MEMORY_OPEN_API_BASE_URL",
       "coverage": "memory-open-api-upstream-routes"
     },
@@ -1348,7 +1488,7 @@
       "apiAuthority": "sdkwork-knowledgebase.app",
       "surface": "app",
       "apiPrefix": "/app/v3/api/knowledge",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL",
       "coverage": "knowledgebase-app-api-upstream-routes"
     },
@@ -1359,7 +1499,7 @@
       "apiAuthority": "sdkwork-knowledgebase.backend",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/knowledge",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL",
       "coverage": "knowledgebase-backend-api-upstream-routes"
     },
@@ -1370,7 +1510,7 @@
       "apiAuthority": "sdkwork-knowledgebase.open",
       "surface": "open",
       "apiPrefix": "/knowledge/v3/api",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL",
       "coverage": "knowledgebase-open-api-upstream-routes"
     },
@@ -1465,7 +1605,7 @@
       "apiAuthority": "sdkwork-notes-backend-api",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/notes",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_NOTES_BACKEND_API_BASE_URL",
       "coverage": "notes-backend-api-upstream-routes"
     },
@@ -1476,7 +1616,7 @@
       "apiAuthority": "sdkwork-notes-open-api",
       "surface": "open",
       "apiPrefix": "/notes/v3/api",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_NOTES_OPEN_API_BASE_URL",
       "coverage": "notes-open-api-upstream-routes"
     },
@@ -1515,7 +1655,7 @@
       "apiAuthority": "sdkwork-generations-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api/generations",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_GENERATIONS_APP_API_BASE_URL",
       "coverage": "generations-app-api-upstream-routes"
     },
@@ -1526,7 +1666,7 @@
       "apiAuthority": "sdkwork-generations-backend-api",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/generations",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_GENERATIONS_BACKEND_API_BASE_URL",
       "coverage": "generations-backend-api-upstream-routes"
     },
@@ -1579,7 +1719,7 @@
       "apiAuthority": "sdkwork-search-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api/search",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_SEARCH_APP_API_BASE_URL",
       "coverage": "search-app-api-upstream-routes"
     },
@@ -1590,7 +1730,7 @@
       "apiAuthority": "sdkwork-search-backend-api",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/search",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_SEARCH_BACKEND_API_BASE_URL",
       "coverage": "search-backend-api-upstream-routes"
     },
@@ -1665,50 +1805,6 @@
       "coverage": "image-open-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-comments-app-api",
-      "workspace": "sdkwork-comments",
-      "sdkFamily": "sdkwork-comments-app-sdk",
-      "apiAuthority": "sdkwork-comments-app-api",
-      "surface": "app",
-      "apiPrefix": "/app/v3/api/comments",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_APP_API_BASE_URL",
-      "coverage": "comments-app-api-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-comments-app-api",
-      "workspace": "sdkwork-comments",
-      "sdkFamily": "sdkwork-comments-app-sdk",
-      "apiAuthority": "sdkwork-comments-app-api",
-      "surface": "app",
-      "apiPrefix": "/app/v3/api/engagement",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_APP_API_BASE_URL",
-      "coverage": "comments-app-api-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-comments-backend-api",
-      "workspace": "sdkwork-comments",
-      "sdkFamily": "sdkwork-comments-backend-sdk",
-      "apiAuthority": "sdkwork-comments-backend-api",
-      "surface": "backend",
-      "apiPrefix": "/backend/v3/api/comments",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-      "coverage": "comments-backend-api-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-comments-backend-api",
-      "workspace": "sdkwork-comments",
-      "sdkFamily": "sdkwork-comments-backend-sdk",
-      "apiAuthority": "sdkwork-comments-backend-api",
-      "surface": "backend",
-      "apiPrefix": "/backend/v3/api/engagement",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMENTS_BACKEND_API_BASE_URL",
-      "coverage": "comments-backend-api-upstream-routes"
-    },
-    {
       "serviceId": "sdkwork-course-app-api",
       "workspace": "sdkwork-course",
       "sdkFamily": "sdkwork-course-app-sdk",
@@ -1781,34 +1877,6 @@
       "coverage": "course-backend-api-upstream-routes"
     },
     {
-      "serviceId": "sdkwork-messaging-app-api",
-      "workspace": "sdkwork-messaging",
-      "sdkFamily": "sdkwork-messaging-app-sdk",
-      "apiAuthority": "sdkwork-messaging-app-api",
-      "surface": "app",
-      "apiPrefix": "/app/v3/api/messaging",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_MESSAGING_APP_API_BASE_URL",
-      "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork_routes_messaging_app_api",
-      "executableExport": "sdkwork_routes_messaging_app_api::messaging_app_api_manifest",
-      "coverage": "messaging-app-api-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-messaging-backend-api",
-      "workspace": "sdkwork-messaging",
-      "sdkFamily": "sdkwork-messaging-backend-sdk",
-      "apiAuthority": "sdkwork-messaging-backend-api",
-      "surface": "backend",
-      "apiPrefix": "/backend/v3/api/messaging",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_MESSAGING_BACKEND_API_BASE_URL",
-      "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork_routes_messaging_backend_api",
-      "executableExport": "sdkwork_routes_messaging_backend_api::messaging_backend_api_manifest",
-      "coverage": "messaging-backend-api-upstream-routes"
-    },
-    {
       "serviceId": "sdkwork-iam-backend-api",
       "workspace": "sdkwork-appbase",
       "sdkFamily": "sdkwork-iam-backend-sdk",
@@ -1818,28 +1886,6 @@
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_APPBASE_BACKEND_API_BASE_URL",
       "coverage": "appbase-backend-iam-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-commerce-app-api",
-      "workspace": "sdkwork-commerce",
-      "sdkFamily": "sdkwork-commerce-app-sdk",
-      "apiAuthority": "sdkwork-commerce-app-api",
-      "surface": "app",
-      "apiPrefix": "/app/v3/api",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMERCE_APP_API_BASE_URL",
-      "coverage": "commerce-app-api-upstream-routes"
-    },
-    {
-      "serviceId": "sdkwork-commerce-backend-api",
-      "workspace": "sdkwork-commerce",
-      "sdkFamily": "sdkwork-commerce-backend-sdk",
-      "apiAuthority": "sdkwork-commerce-backend-api",
-      "surface": "backend",
-      "apiPrefix": "/backend/v3/api",
-      "runtimeMode": "split-or-embedded",
-      "requiredBaseUrlKey": "SDKWORK_COMMERCE_BACKEND_API_BASE_URL",
-      "coverage": "commerce-backend-api-upstream-routes"
     },
     {
       "serviceId": "sdkwork-im-im-http",
@@ -2124,7 +2170,7 @@
       "apiAuthority": "sdkwork-notes-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api/notes",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_NOTES_APP_API_BASE_URL",
       "coverage": "notes-app-api-upstream-routes"
     },
@@ -2212,7 +2258,7 @@
       "apiAuthority": "sdkwork-shop-app-api",
       "surface": "app",
       "apiPrefix": "/app/v3/api/shops",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_SHOP_APP_API_BASE_URL",
       "coverage": "shop-app-api-upstream-routes"
     },
@@ -2223,7 +2269,7 @@
       "apiAuthority": "sdkwork-shop-backend-api",
       "surface": "backend",
       "apiPrefix": "/backend/v3/api/shops",
-      "runtimeMode": "split-or-embedded",
+      "runtimeMode": "split",
       "requiredBaseUrlKey": "SDKWORK_SHOP_BACKEND_API_BASE_URL",
       "coverage": "shop-backend-api-upstream-routes"
     },
@@ -2236,7 +2282,10 @@
       "apiPrefix": "/app/v3/api/tables",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_DEZHOU_APP_API_BASE_URL",
-      "coverage": "dezhou-app-api-upstream-routes"
+      "coverage": "dezhou-app-api-upstream-routes",
+      "cargoFeature": "foundation-dezhou",
+      "cargoDependency": "sdkwork-dezhou-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
     },
     {
       "serviceId": "sdkwork-dezhou-backend-api",
@@ -2247,7 +2296,252 @@
       "apiPrefix": "/backend/v3/api/tables",
       "runtimeMode": "split-or-embedded",
       "requiredBaseUrlKey": "SDKWORK_DEZHOU_BACKEND_API_BASE_URL",
-      "coverage": "dezhou-backend-api-upstream-routes"
+      "coverage": "dezhou-backend-api-upstream-routes",
+      "cargoFeature": "foundation-dezhou",
+      "cargoDependency": "sdkwork-dezhou-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-doudizhu-app-api",
+      "workspace": "sdkwork-doudizhu",
+      "sdkFamily": "sdkwork-doudizhu-app-sdk",
+      "apiAuthority": "sdkwork-doudizhu-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/doudizhu",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_DOUDIZHU_APP_API_BASE_URL",
+      "coverage": "doudizhu-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-doudizhu-backend-api",
+      "workspace": "sdkwork-doudizhu",
+      "sdkFamily": "sdkwork-doudizhu-backend-sdk",
+      "apiAuthority": "sdkwork-doudizhu-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/doudizhu",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_DOUDIZHU_BACKEND_API_BASE_URL",
+      "coverage": "doudizhu-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-gameengine-app-api",
+      "workspace": "sdkwork-gameengine",
+      "sdkFamily": "sdkwork-gameengine-app-sdk",
+      "apiAuthority": "sdkwork-gameengine-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/games",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_GAMEENGINE_APP_API_BASE_URL",
+      "coverage": "gameengine-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-gameengine-backend-api",
+      "workspace": "sdkwork-gameengine",
+      "sdkFamily": "sdkwork-gameengine-backend-sdk",
+      "apiAuthority": "sdkwork-gameengine-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/games",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_GAMEENGINE_BACKEND_API_BASE_URL",
+      "coverage": "gameengine-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mahjong-app-api",
+      "workspace": "sdkwork-mahjong",
+      "sdkFamily": "sdkwork-mahjong-app-sdk",
+      "apiAuthority": "sdkwork-mahjong-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/mahjong",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_MAHJONG_APP_API_BASE_URL",
+      "coverage": "mahjong-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-mahjong-backend-api",
+      "workspace": "sdkwork-mahjong",
+      "sdkFamily": "sdkwork-mahjong-backend-sdk",
+      "apiAuthority": "sdkwork-mahjong-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/mahjong",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_MAHJONG_BACKEND_API_BASE_URL",
+      "coverage": "mahjong-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-xiangqi-app-api",
+      "workspace": "sdkwork-xiangqi",
+      "sdkFamily": "sdkwork-xiangqi-app-sdk",
+      "apiAuthority": "sdkwork-xiangqi-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/xiangqi",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_XIANGQI_APP_API_BASE_URL",
+      "coverage": "xiangqi-app-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-xiangqi-backend-api",
+      "workspace": "sdkwork-xiangqi",
+      "sdkFamily": "sdkwork-xiangqi-backend-sdk",
+      "apiAuthority": "sdkwork-xiangqi-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/xiangqi",
+      "runtimeMode": "split",
+      "requiredBaseUrlKey": "SDKWORK_XIANGQI_BACKEND_API_BASE_URL",
+      "coverage": "xiangqi-backend-api-upstream-routes"
+    },
+    {
+      "serviceId": "sdkwork-documents-app-api",
+      "workspace": "sdkwork-documents",
+      "sdkFamily": "sdkwork-documents-app-sdk",
+      "apiAuthority": "sdkwork-documents.app",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/documents",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DOCUMENTS_APP_API_BASE_URL",
+      "coverage": "documents-app-api-upstream-routes",
+      "cargoFeature": "foundation-documents",
+      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+    },
+    {
+      "serviceId": "sdkwork-documents-backend-api",
+      "workspace": "sdkwork-documents",
+      "sdkFamily": "sdkwork-documents-backend-sdk",
+      "apiAuthority": "sdkwork-documents.backend",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/documents",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DOCUMENTS_BACKEND_API_BASE_URL",
+      "coverage": "documents-backend-api-upstream-routes",
+      "cargoFeature": "foundation-documents",
+      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+    },
+    {
+      "serviceId": "sdkwork-documents-open-api",
+      "workspace": "sdkwork-documents",
+      "sdkFamily": "sdkwork-documents-sdk",
+      "apiAuthority": "sdkwork-documents-open-api",
+      "surface": "open",
+      "apiPrefix": "/doc/v3/api/documents",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DOCUMENTS_OPEN_API_BASE_URL",
+      "coverage": "documents-open-api-upstream-routes",
+      "cargoFeature": "foundation-documents",
+      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+    },
+    {
+      "serviceId": "sdkwork-prompts-app-api",
+      "workspace": "sdkwork-prompts",
+      "sdkFamily": "sdkwork-prompts-app-sdk",
+      "apiAuthority": "sdkwork-prompts-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/prompts",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_PROMPTS_APP_API_BASE_URL",
+      "coverage": "prompts-app-api-upstream-routes",
+      "cargoFeature": "foundation-prompts",
+      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-prompts-backend-api",
+      "workspace": "sdkwork-prompts",
+      "sdkFamily": "sdkwork-prompts-backend-sdk",
+      "apiAuthority": "sdkwork-prompts-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/prompts",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_PROMPTS_BACKEND_API_BASE_URL",
+      "coverage": "prompts-backend-api-upstream-routes",
+      "cargoFeature": "foundation-prompts",
+      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-prompts-open-api",
+      "workspace": "sdkwork-prompts",
+      "sdkFamily": "sdkwork-prompts-sdk",
+      "apiAuthority": "sdkwork-prompts-open-api",
+      "surface": "open",
+      "apiPrefix": "/prompts/v3/api",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_PROMPTS_OPEN_API_BASE_URL",
+      "coverage": "prompts-open-api-upstream-routes",
+      "cargoFeature": "foundation-prompts",
+      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-deploy-app-api",
+      "workspace": "sdkwork-deployments",
+      "sdkFamily": "sdkwork-deploy-app-sdk",
+      "apiAuthority": "sdkwork-deploy-app-api",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/deploy",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DEPLOY_APP_API_BASE_URL",
+      "coverage": "deploy-app-api-upstream-routes",
+      "cargoFeature": "foundation-deployments",
+      "cargoDependency": "sdkwork-deployments-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-deploy-backend-api",
+      "workspace": "sdkwork-deployments",
+      "sdkFamily": "sdkwork-deploy-backend-sdk",
+      "apiAuthority": "sdkwork-deploy-backend-api",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/deploy",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_DEPLOY_BACKEND_API_BASE_URL",
+      "coverage": "deploy-backend-api-upstream-routes",
+      "cargoFeature": "foundation-deployments",
+      "cargoDependency": "sdkwork-deployments-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-web-app-api",
+      "workspace": "sdkwork-web-server",
+      "sdkFamily": "sdkwork-web-app-sdk",
+      "apiAuthority": "sdkwork-web.app",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/web",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_WEB_APP_API_BASE_URL",
+      "coverage": "web-app-api-upstream-routes",
+      "cargoFeature": "foundation-web-server",
+      "cargoDependency": "sdkwork-web-server-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-web-backend-api",
+      "workspace": "sdkwork-web-server",
+      "sdkFamily": "sdkwork-web-backend-sdk",
+      "apiAuthority": "sdkwork-web.backend",
+      "surface": "backend",
+      "apiPrefix": "/backend/v3/api/web",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_WEB_BACKEND_API_BASE_URL",
+      "coverage": "web-backend-api-upstream-routes",
+      "cargoFeature": "foundation-web-server",
+      "cargoDependency": "sdkwork-web-server-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
+    },
+    {
+      "serviceId": "sdkwork-modelkit-app-api",
+      "workspace": "sdkwork-modelkit",
+      "sdkFamily": "sdkwork-modelkit-app-sdk",
+      "apiAuthority": "sdkwork-modelkit-standalone-gateway",
+      "surface": "app",
+      "apiPrefix": "/app/v3/api/modelkit",
+      "runtimeMode": "split-or-embedded",
+      "requiredBaseUrlKey": "SDKWORK_MODELKIT_APP_API_BASE_URL",
+      "coverage": "modelkit-app-api-upstream-routes",
+      "cargoFeature": "foundation-modelkit",
+      "cargoDependency": "sdkwork-modelkit-gateway-assembly",
+      "embeddedExecutableExport": "sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env"
     }
   ],
   "app": {

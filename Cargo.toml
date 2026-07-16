@@ -32,6 +32,13 @@ sdkwork-mail-gateway-assembly = { path = "../sdkwork-mail/crates/sdkwork-mail-ga
 sdkwork-news-gateway-assembly = { path = "../sdkwork-news/crates/sdkwork-news-gateway-assembly" }
 sdkwork-aiot-gateway-assembly = { path = "../sdkwork-aiot/crates/sdkwork-aiot-gateway-assembly" }
 sdkwork-appstore-gateway-assembly = { path = "../sdkwork-appstore/crates/sdkwork-appstore-gateway-assembly" }
+sdkwork-agents-gateway-assembly = { path = "../sdkwork-agents/crates/sdkwork-agents-gateway-assembly" }
+sdkwork-deployments-gateway-assembly = { path = "../sdkwork-deployments/crates/sdkwork-deployments-gateway-assembly" }
+sdkwork-dezhou-gateway-assembly = { path = "../sdkwork-dezhou/crates/sdkwork-dezhou-gateway-assembly" }
+sdkwork-documents-gateway-assembly = { path = "../sdkwork-documents/crates/sdkwork-documents-gateway-assembly" }
+sdkwork-modelkit-gateway-assembly = { path = "../sdkwork-modelkit/crates/sdkwork-modelkit-gateway-assembly" }
+sdkwork-prompts-gateway-assembly = { path = "../sdkwork-prompts/crates/sdkwork-prompts-gateway-assembly" }
+sdkwork-web-server-gateway-assembly = { path = "../sdkwork-web-server/crates/sdkwork-web-server-gateway-assembly" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

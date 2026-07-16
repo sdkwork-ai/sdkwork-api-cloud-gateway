@@ -1,26 +1,6 @@
 //! Runtime router builders for the SDKWork API Gateway.
 
 mod diagnostics;
-#[cfg(any(
-    feature = "foundation-appbase",
-    feature = "foundation-course",
-    feature = "foundation-voice",
-    feature = "foundation-music",
-    feature = "foundation-messaging",
-    feature = "foundation-image",
-    feature = "foundation-cms",
-    feature = "foundation-forum",
-    feature = "foundation-community",
-    feature = "foundation-comments",
-    feature = "foundation-clawrouter",
-    feature = "foundation-llm",
-    feature = "foundation-mcp",
-    feature = "foundation-im",
-    feature = "foundation-rtc",
-    feature = "foundation-notary",
-    feature = "foundation-mail",
-    feature = "foundation-news"
-))]
 mod embedded_dependency_routes;
 mod error;
 mod health;

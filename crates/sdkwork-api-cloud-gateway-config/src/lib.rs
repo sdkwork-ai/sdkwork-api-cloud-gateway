@@ -564,7 +564,7 @@ struct SdkworkManifestDependency {
     runtime_mode: DependencyRuntimeMode,
     #[serde(default = "default_true")]
     same_origin_allowed: bool,
-    #[serde(default)]
+    #[serde(default, alias = "embeddedExecutableExport")]
     executable_export: Option<String>,
     #[serde(default)]
     cargo_feature: Option<String>,

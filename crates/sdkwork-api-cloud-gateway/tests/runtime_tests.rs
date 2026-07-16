@@ -18,8 +18,11 @@ use axum::{
 use bytes::Bytes;
 use futures_util::{SinkExt, StreamExt};
 use http_body_util::BodyExt;
+#[cfg(feature = "foundation-appbase")]
 use sdkwork_api_cloud_gateway::{
     build_embedded_sdkwork_iam_app_api_router, build_embedded_sdkwork_iam_backend_api_router,
+};
+use sdkwork_api_cloud_gateway::{
     build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers, GatewayRuntime,
 };
@@ -462,24 +465,6 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     let image_open = spawn_foundation_echo_upstream("/image/v3/api").await;
     env.insert("SDKWORK_IMAGE_OPEN_API_BASE_URL".to_string(), image_open);
 
-    let comments_app = spawn_foundation_multi_route_echo_upstream(&[
-        "/app/v3/api/comments/probe",
-        "/app/v3/api/comments/{*rest}",
-        "/app/v3/api/engagement/probe",
-        "/app/v3/api/engagement/{*rest}",
-    ])
-    .await;
-    env.insert(
-        "SDKWORK_COMMENTS_APP_API_BASE_URL".to_string(),
-        comments_app,
-    );
-
-    let comments_backend = spawn_foundation_echo_upstream("/backend/v3/api/comments").await;
-    env.insert(
-        "SDKWORK_COMMENTS_BACKEND_API_BASE_URL".to_string(),
-        comments_backend,
-    );
-
     let course_app = spawn_foundation_multi_route_echo_upstream(&[
         "/app/v3/api/courses/probe",
         "/app/v3/api/courses/{*rest}",
@@ -503,30 +488,6 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
     env.insert(
         "SDKWORK_COURSE_BACKEND_API_BASE_URL".to_string(),
         course_backend,
-    );
-
-    let messaging_app = spawn_foundation_echo_upstream("/app/v3/api/messaging").await;
-    env.insert(
-        "SDKWORK_MESSAGING_APP_API_BASE_URL".to_string(),
-        messaging_app,
-    );
-
-    let messaging_backend = spawn_foundation_echo_upstream("/backend/v3/api/messaging").await;
-    env.insert(
-        "SDKWORK_MESSAGING_BACKEND_API_BASE_URL".to_string(),
-        messaging_backend,
-    );
-
-    let commerce_app = spawn_foundation_echo_upstream("/app/v3/api").await;
-    env.insert(
-        "SDKWORK_COMMERCE_APP_API_BASE_URL".to_string(),
-        commerce_app,
-    );
-
-    let commerce_backend = spawn_foundation_echo_upstream("/backend/v3/api").await;
-    env.insert(
-        "SDKWORK_COMMERCE_BACKEND_API_BASE_URL".to_string(),
-        commerce_backend,
     );
 
     let cms_app = spawn_foundation_echo_upstream("/app/v3/api/cms").await;
@@ -619,6 +580,17 @@ async fn spawn_all_foundation_upstreams() -> HashMap<String, String> {
         appstore_open,
     );
 
+    let fallback_upstream = spawn_foundation_echo_upstream("").await;
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest = GatewayRuntimeConfig::from_application_root(root)
+        .expect("gateway application manifest parses for test upstream discovery");
+    for surface in manifest.dependency_surfaces {
+        if let Some(env_key) = surface.required_base_url_key {
+            env.entry(env_key)
+                .or_insert_with(|| fallback_upstream.clone());
+        }
+    }
+
     env
 }
 
@@ -691,8 +663,21 @@ async fn preflight_fails_when_split_dependency_upstream_is_missing() {
 }
 
 #[tokio::test]
+async fn preflight_fails_when_embedded_dependency_router_is_missing() {
+    let config = embedded_config_without_upstreams();
+
+    let error = GatewayRuntime::new(config)
+        .expect_err("missing required embedded router should fail")
+        .to_string();
+
+    assert!(error.contains("sdkwork-iam-app-api"));
+    assert!(error.contains("embedded router"));
+}
+
+#[tokio::test]
 async fn gateway_exposes_health_ready_and_openapi_index() {
     let app = build_sdkwork_api_cloud_gateway_router(GatewayRuntimeConfig::default())
+        .await
         .expect("default config builds");
 
     let response = app
@@ -765,7 +750,9 @@ async fn strict_cors_allows_configured_origin_and_rejects_others() {
     let mut config = GatewayRuntimeConfig::default();
     config.cors.allow_any_origin = false;
     config.cors.allowed_origins = vec!["https://console.example.com".to_string()];
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let allowed_response = app
         .clone()
@@ -780,7 +767,7 @@ async fn strict_cors_allows_configured_origin_and_rejects_others() {
         )
         .await
         .unwrap();
-    assert_eq!(allowed_response.status(), 200);
+    assert_eq!(allowed_response.status(), StatusCode::NO_CONTENT);
     assert_eq!(
         allowed_response
             .headers()
@@ -810,6 +797,7 @@ async fn strict_cors_allows_configured_origin_and_rejects_others() {
 #[tokio::test]
 async fn unknown_routes_return_problem_json() {
     let app = build_sdkwork_api_cloud_gateway_router(GatewayRuntimeConfig::default())
+        .await
         .expect("default config builds");
 
     let response = app
@@ -839,7 +827,9 @@ async fn unknown_routes_return_problem_json() {
 async fn secure_response_headers_are_added_when_enabled() {
     let mut config = GatewayRuntimeConfig::default();
     config.security.secure_headers_enabled = true;
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let response = app
         .oneshot(
@@ -886,7 +876,9 @@ async fn secure_response_headers_are_added_when_enabled() {
 async fn host_allowlist_rejects_untrusted_hosts() {
     let mut config = GatewayRuntimeConfig::default();
     config.security.allowed_hosts = vec!["api.example.com".to_string()];
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
 
     let rejected = app
         .clone()
@@ -927,7 +919,9 @@ async fn host_allowlist_rejects_untrusted_hosts() {
 async fn header_count_and_byte_limits_reject_oversized_requests() {
     let mut count_config = GatewayRuntimeConfig::default();
     count_config.security.max_header_count = 0;
-    let count_app = build_sdkwork_api_cloud_gateway_router(count_config).expect("router builds");
+    let count_app = build_sdkwork_api_cloud_gateway_router(count_config)
+        .await
+        .expect("router builds");
 
     let count_response = count_app
         .oneshot(
@@ -945,7 +939,9 @@ async fn header_count_and_byte_limits_reject_oversized_requests() {
 
     let mut bytes_config = GatewayRuntimeConfig::default();
     bytes_config.security.max_header_bytes = 8;
-    let bytes_app = build_sdkwork_api_cloud_gateway_router(bytes_config).expect("router builds");
+    let bytes_app = build_sdkwork_api_cloud_gateway_router(bytes_config)
+        .await
+        .expect("router builds");
 
     let bytes_response = bytes_app
         .oneshot(
@@ -976,7 +972,9 @@ async fn waf_monitor_mode_marks_suspicious_query_without_blocking() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1016,7 +1014,9 @@ async fn waf_enforce_mode_blocks_suspicious_query_with_problem_json() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1054,7 +1054,9 @@ async fn waf_enforce_mode_blocks_suspicious_headers_when_enabled() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1112,7 +1114,9 @@ async fn split_mode_proxies_dependency_route_to_configured_upstream() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1185,6 +1189,7 @@ async fn metrics_endpoint_is_hidden_by_default_and_exposed_when_enabled() {
 #[tokio::test]
 async fn diagnostics_endpoint_is_hidden_by_default() {
     let app = build_sdkwork_api_cloud_gateway_router(GatewayRuntimeConfig::default())
+        .await
         .expect("default router builds");
 
     let response = app
@@ -1233,7 +1238,9 @@ async fn diagnostics_endpoint_returns_safe_policy_and_route_inventory_when_enabl
     )
     .expect("diagnostics config parses");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("diagnostics router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("diagnostics router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1312,7 +1319,9 @@ async fn split_mode_metrics_count_proxied_dependency_requests() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .clone()
         .oneshot(
@@ -1368,8 +1377,9 @@ async fn metrics_count_waf_monitor_and_block_events() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url.clone();
 
-    let monitor_app =
-        build_sdkwork_api_cloud_gateway_router(monitor_config).expect("router builds");
+    let monitor_app = build_sdkwork_api_cloud_gateway_router(monitor_config)
+        .await
+        .expect("router builds");
     let monitor_response = monitor_app
         .clone()
         .oneshot(
@@ -1410,7 +1420,9 @@ async fn metrics_count_waf_monitor_and_block_events() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let block_app = build_sdkwork_api_cloud_gateway_router(block_config).expect("router builds");
+    let block_app = build_sdkwork_api_cloud_gateway_router(block_config)
+        .await
+        .expect("router builds");
     let block_response = block_app
         .clone()
         .oneshot(
@@ -1467,7 +1479,9 @@ async fn metrics_count_rate_limit_rejections() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let allowed = app
         .clone()
         .oneshot(
@@ -1535,7 +1549,9 @@ async fn route_prefix_rate_limit_rejects_with_standard_headers() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let allowed = app
         .clone()
         .oneshot(
@@ -1596,7 +1612,9 @@ async fn global_concurrency_limit_rejects_requests_over_capacity() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("bind gateway");
@@ -1651,7 +1669,9 @@ async fn split_mode_adds_forwarded_headers_to_upstream_requests() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1682,7 +1702,9 @@ async fn split_mode_generates_request_id_when_missing_and_forwards_it_upstream()
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1711,7 +1733,9 @@ async fn split_mode_forwards_traceparent_to_upstream_requests() {
         .base_url = upstream_base_url;
 
     let traceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01";
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1731,6 +1755,7 @@ async fn split_mode_forwards_traceparent_to_upstream_requests() {
 #[tokio::test]
 async fn problem_responses_include_trace_id_when_traceparent_is_present() {
     let app = build_sdkwork_api_cloud_gateway_router(GatewayRuntimeConfig::default())
+        .await
         .expect("default config builds");
 
     let response = app
@@ -1763,7 +1788,9 @@ async fn split_mode_returns_request_id_on_upstream_connection_failure_problem() 
         .expect("default appbase upstream")
         .base_url = "http://127.0.0.1:9".to_string();
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1806,7 +1833,9 @@ async fn split_mode_honors_per_upstream_timeout() {
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 10;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1842,7 +1871,9 @@ async fn split_mode_honors_gateway_request_timeout_before_upstream_timeout() {
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 1_000;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -1888,7 +1919,9 @@ async fn metrics_count_gateway_request_timeouts() {
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 1_000;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .clone()
         .oneshot(
@@ -1931,7 +1964,9 @@ async fn metrics_count_upstream_timeouts() {
     upstream.base_url = upstream_base_url;
     upstream.timeout_ms = 10;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .clone()
         .oneshot(
@@ -1987,7 +2022,9 @@ async fn metrics_count_retry_attempts_and_exhaustion() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .clone()
         .oneshot(
@@ -2037,7 +2074,9 @@ async fn split_mode_retries_retryable_upstream_statuses_when_enabled() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2075,7 +2114,9 @@ async fn split_mode_opens_circuit_after_repeated_upstream_failures() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     for expected_attempt in 1..=2 {
         let response = app
             .clone()
@@ -2148,7 +2189,9 @@ async fn split_mode_allows_half_open_probe_and_closes_circuit_after_success() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let first = app
         .clone()
         .oneshot(
@@ -2224,7 +2267,9 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("split router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("split router builds");
     let failing = app
         .clone()
         .oneshot(
@@ -2298,8 +2343,9 @@ async fn metrics_count_circuit_breaker_short_circuit_and_half_open_probe() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let half_open_app =
-        build_sdkwork_api_cloud_gateway_router(half_open_config).expect("split router builds");
+    let half_open_app = build_sdkwork_api_cloud_gateway_router(half_open_config)
+        .await
+        .expect("split router builds");
     let failing = half_open_app
         .clone()
         .oneshot(
@@ -2363,7 +2409,9 @@ async fn readyz_can_check_required_upstream_health() {
     upstream.base_url = upstream_base_url;
     upstream.readiness_path = "/healthz".to_string();
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2392,7 +2440,9 @@ async fn readyz_returns_unavailable_when_required_upstream_health_fails() {
     upstream.base_url = "http://127.0.0.1:9".to_string();
     upstream.readiness_path = "/healthz".to_string();
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2421,7 +2471,9 @@ async fn split_mode_rejects_request_bodies_over_configured_limit() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2464,7 +2516,9 @@ async fn policy_method_allowlist_rejects_disallowed_dependency_methods_and_recor
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .clone()
         .oneshot(
@@ -2531,7 +2585,9 @@ async fn policy_dry_run_allows_disallowed_method_and_records_observation_metrics
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .clone()
         .oneshot(
@@ -2607,7 +2663,9 @@ async fn policy_body_limit_overrides_global_limit_and_records_metrics() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .clone()
         .oneshot(
@@ -2670,7 +2728,9 @@ async fn policy_dry_run_allows_policy_body_limit_overflow_and_records_observatio
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .clone()
         .oneshot(
@@ -2747,7 +2807,9 @@ async fn policy_timeout_overrides_global_timeout_for_dependency_route() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2775,7 +2837,9 @@ async fn split_mode_returns_upstream_response_before_stream_body_completes() {
         .expect("default appbase upstream")
         .base_url = upstream_base_url;
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = tokio::time::timeout(
         Duration::from_millis(200),
         app.oneshot(
@@ -2804,7 +2868,9 @@ async fn split_mode_proxies_configured_dependency_prefix_to_upstream() {
         upstream_base_url,
     ));
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let response = app
         .oneshot(
             Request::builder()
@@ -2833,7 +2899,9 @@ async fn split_mode_proxies_manifest_drive_and_notary_surfaces_to_gateway_upstre
         .with_env_overrides(&env)
         .expect("foundation upstream env overrides apply");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let drive_response = app
         .clone()
         .oneshot(
@@ -2878,7 +2946,9 @@ async fn split_mode_proxies_manifest_claw_router_foundation_surfaces_with_route_
         .with_env_overrides(&env)
         .expect("foundation upstream env overrides apply");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let appbase_response = app
         .clone()
         .oneshot(
@@ -2929,39 +2999,6 @@ async fn split_mode_proxies_manifest_claw_router_foundation_surfaces_with_route_
         response_text(appbase_backend_response).await,
         "dependency=appbase-backend;body=hello-appbase-backend"
     );
-
-    let commerce_app_response = app
-        .clone()
-        .oneshot(
-            Request::builder()
-                .method("POST")
-                .uri("/app/v3/api/orders/probe?dependency=commerce-app")
-                .body(Body::from("hello-commerce-app"))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(commerce_app_response.status(), 200);
-    assert_eq!(
-        response_text(commerce_app_response).await,
-        "dependency=commerce-app;body=hello-commerce-app"
-    );
-
-    let commerce_backend_response = app
-        .oneshot(
-            Request::builder()
-                .method("POST")
-                .uri("/backend/v3/api/orders/probe?dependency=commerce-backend")
-                .body(Body::from("hello-commerce-backend"))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-    assert_eq!(commerce_backend_response.status(), 200);
-    assert_eq!(
-        response_text(commerce_backend_response).await,
-        "dependency=commerce-backend;body=hello-commerce-backend"
-    );
 }
 
 #[tokio::test]
@@ -2974,7 +3011,9 @@ async fn split_mode_proxies_manifest_sdkwork_im_foundation_surfaces_with_route_p
         .with_env_overrides(&env)
         .expect("foundation upstream env overrides apply");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     for (uri, dependency, body) in [
         (
             "/app/v3/api/rtc/probe?dependency=rtc-app",
@@ -3041,7 +3080,9 @@ async fn split_mode_proxies_workspace_foundation_surfaces_with_route_precedence(
         .with_env_overrides(&env)
         .expect("foundation upstream env overrides apply");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     for (uri, dependency, body) in [
         (
             "/app/v3/api/memory/probe?dependency=memory-app",
@@ -3103,7 +3144,9 @@ async fn split_mode_proxies_materialized_content_foundation_surfaces_with_route_
         .with_env_overrides(&env)
         .expect("materialized content foundation upstream env overrides apply");
 
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     for (uri, dependency, body) in [
         (
             "/app/v3/api/search/probe?dependency=search-app",
@@ -3121,16 +3164,6 @@ async fn split_mode_proxies_materialized_content_foundation_surfaces_with_route_
             "hello-image-open",
         ),
         (
-            "/app/v3/api/comments/probe?dependency=comments-app",
-            "comments-app",
-            "hello-comments-app",
-        ),
-        (
-            "/app/v3/api/engagement/probe?dependency=comments-engagement",
-            "comments-engagement",
-            "hello-comments-engagement",
-        ),
-        (
             "/backend/v3/api/courses/probe?dependency=course-backend",
             "course-backend",
             "hello-course-backend",
@@ -3139,11 +3172,6 @@ async fn split_mode_proxies_materialized_content_foundation_surfaces_with_route_
             "/backend/v3/api/course_lessons/probe?dependency=course-lessons",
             "course-lessons",
             "hello-course-lessons",
-        ),
-        (
-            "/app/v3/api/messaging/probe?dependency=messaging-app",
-            "messaging-app",
-            "hello-messaging-app",
         ),
     ] {
         let response = app
@@ -3208,7 +3236,9 @@ async fn split_mode_proxies_configured_websocket_dependency_to_upstream() {
         "custom-open-api",
         upstream_base_url,
     ));
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("bind gateway");
@@ -3249,7 +3279,9 @@ async fn split_mode_preserves_websocket_close_frame_details() {
         "custom-open-api",
         upstream_base_url,
     ));
-    let app = build_sdkwork_api_cloud_gateway_router(config).expect("router builds");
+    let app = build_sdkwork_api_cloud_gateway_router(config)
+        .await
+        .expect("router builds");
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
         .await
         .expect("bind gateway");
@@ -3281,6 +3313,7 @@ async fn split_mode_preserves_websocket_close_frame_details() {
 }
 
 #[tokio::test]
+#[cfg(feature = "foundation-appbase")]
 async fn standalone_gateway_router_auto_mounts_appbase_when_running_embedded() {
     if !iam_embedded_database_configured() {
         eprintln!("skip: IAM database URL is not configured for embedded appbase integration");
@@ -3309,6 +3342,7 @@ async fn standalone_gateway_router_auto_mounts_appbase_when_running_embedded() {
 }
 
 #[tokio::test]
+#[cfg(feature = "foundation-appbase")]
 async fn embedded_appbase_backend_router_is_reachable_in_embedded_mode() {
     if !iam_embedded_database_configured() {
         eprintln!("skip: IAM database URL is not configured for embedded appbase integration");

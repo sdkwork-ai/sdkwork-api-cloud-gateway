@@ -36,6 +36,13 @@ foundation-im = ["dep:sdkwork-im-gateway-assembly"]
 foundation-rtc = ["dep:sdkwork-rtc-gateway-assembly"]
 foundation-notary = ["dep:sdkwork-notary-gateway-assembly"]
 foundation-mail = ["dep:sdkwork-mail-gateway-assembly"]
+foundation-kernel = ["dep:sdkwork-agents-gateway-assembly"]
+foundation-deployments = ["dep:sdkwork-deployments-gateway-assembly"]
+foundation-dezhou = ["dep:sdkwork-dezhou-gateway-assembly"]
+foundation-documents = ["dep:sdkwork-documents-gateway-assembly"]
+foundation-modelkit = ["dep:sdkwork-modelkit-gateway-assembly"]
+foundation-prompts = ["dep:sdkwork-prompts-gateway-assembly"]
+foundation-web-server = ["dep:sdkwork-web-server-gateway-assembly"]
 
 [dependencies]
 anyhow.workspace = true
@@ -110,6 +117,13 @@ sdkwork-mail-gateway-assembly = { workspace = true, optional = true }
 sdkwork-news-gateway-assembly = { workspace = true, optional = true }
 sdkwork-aiot-gateway-assembly = { workspace = true, optional = true }
 sdkwork-appstore-gateway-assembly = { workspace = true, optional = true }
+sdkwork-agents-gateway-assembly = { workspace = true, optional = true }
+sdkwork-deployments-gateway-assembly = { workspace = true, optional = true }
+sdkwork-dezhou-gateway-assembly = { workspace = true, optional = true }
+sdkwork-documents-gateway-assembly = { workspace = true, optional = true }
+sdkwork-modelkit-gateway-assembly = { workspace = true, optional = true }
+sdkwork-prompts-gateway-assembly = { workspace = true, optional = true }
+sdkwork-web-server-gateway-assembly = { workspace = true, optional = true }
 
 [dev-dependencies]
 futures-util.workspace = true

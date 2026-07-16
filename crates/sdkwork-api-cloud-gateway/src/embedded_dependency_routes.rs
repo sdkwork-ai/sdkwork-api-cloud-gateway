@@ -497,7 +497,132 @@ pub async fn bootstrap_embedded_dependency_routers(
         }
     }
 
+    #[cfg(feature = "foundation-kernel")]
+    if workspace_surface_enabled(config, "sdkwork-kernel") {
+        let assembly = sdkwork_agents_gateway_assembly::assemble_application_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-kernel", format!("{error:#}")))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-kernel", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-deployments")]
+    if workspace_surface_enabled(config, "sdkwork-deployments") {
+        let assembly = sdkwork_deployments_gateway_assembly::assemble_application_business_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-deployments", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-deployments", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-dezhou")]
+    if workspace_surface_enabled(config, "sdkwork-dezhou") {
+        let assembly = sdkwork_dezhou_gateway_assembly::assemble_application_business_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-dezhou", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-dezhou", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-documents")]
+    if workspace_surface_enabled(config, "sdkwork-documents") {
+        let assembly =
+            sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env()
+                .await
+                .map_err(|error| workspace_build_error(config, "sdkwork-documents", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-documents", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-modelkit")]
+    if workspace_surface_enabled(config, "sdkwork-modelkit") {
+        let assembly =
+            sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env()
+                .await
+                .map_err(|error| workspace_build_error(config, "sdkwork-modelkit", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-modelkit", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-prompts")]
+    if workspace_surface_enabled(config, "sdkwork-prompts") {
+        let assembly = sdkwork_prompts_gateway_assembly::assemble_application_business_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-prompts", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-prompts", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-web-server")]
+    if workspace_surface_enabled(config, "sdkwork-web-server") {
+        let assembly = sdkwork_web_server_gateway_assembly::assemble_application_business_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-web-server", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-web-server", assembly.router);
+    }
+
     Ok(routers)
+}
+
+#[cfg(any(
+    feature = "foundation-kernel",
+    feature = "foundation-deployments",
+    feature = "foundation-dezhou",
+    feature = "foundation-documents",
+    feature = "foundation-modelkit",
+    feature = "foundation-prompts",
+    feature = "foundation-web-server"
+))]
+fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> bool {
+    config
+        .dependency_surfaces
+        .iter()
+        .any(|surface| surface.workspace == workspace)
+}
+
+#[cfg(any(
+    test,
+    feature = "foundation-kernel",
+    feature = "foundation-deployments",
+    feature = "foundation-dezhou",
+    feature = "foundation-documents",
+    feature = "foundation-modelkit",
+    feature = "foundation-prompts",
+    feature = "foundation-web-server"
+))]
+fn insert_workspace_router(
+    config: &GatewayRuntimeConfig,
+    routers: &mut HashMap<String, Router>,
+    workspace: &str,
+    router: Router,
+) {
+    for surface in config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| surface.workspace == workspace)
+    {
+        routers.insert(surface.service_id.clone(), router.clone());
+    }
+}
+
+#[cfg(any(
+    feature = "foundation-kernel",
+    feature = "foundation-deployments",
+    feature = "foundation-dezhou",
+    feature = "foundation-documents",
+    feature = "foundation-modelkit",
+    feature = "foundation-prompts",
+    feature = "foundation-web-server"
+))]
+fn workspace_build_error(
+    config: &GatewayRuntimeConfig,
+    workspace: &str,
+    message: String,
+) -> GatewayRuntimeError {
+    let service_id = config
+        .dependency_surfaces
+        .iter()
+        .find(|surface| surface.workspace == workspace)
+        .map(|surface| surface.service_id.clone())
+        .unwrap_or_else(|| workspace.to_owned());
+    GatewayRuntimeError::EmbeddedRouterBuild {
+        service_id,
+        message,
+    }
 }
 
 fn dependency_surface_enabled(config: &GatewayRuntimeConfig, service_id: &str) -> bool {
@@ -505,4 +630,50 @@ fn dependency_surface_enabled(config: &GatewayRuntimeConfig, service_id: &str) -
         .dependency_surfaces
         .iter()
         .any(|surface| surface.service_id == service_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashMap, path::PathBuf};
+
+    use axum::Router;
+    use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
+
+    use super::insert_workspace_router;
+
+    #[test]
+    fn collapsed_workspace_router_registration_covers_every_manifest_surface() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let config = GatewayRuntimeConfig::from_application_root(root)
+            .expect("gateway application manifest parses");
+        let workspaces = [
+            "sdkwork-kernel",
+            "sdkwork-deployments",
+            "sdkwork-dezhou",
+            "sdkwork-documents",
+            "sdkwork-modelkit",
+            "sdkwork-prompts",
+            "sdkwork-web-server",
+        ];
+        let expected_service_ids = config
+            .dependency_surfaces
+            .iter()
+            .filter(|surface| workspaces.contains(&surface.workspace.as_str()))
+            .map(|surface| surface.service_id.clone())
+            .collect::<Vec<_>>();
+        let mut routers = HashMap::new();
+
+        for workspace in workspaces {
+            insert_workspace_router(&config, &mut routers, workspace, Router::new());
+        }
+
+        assert_eq!(expected_service_ids.len(), 16);
+        assert_eq!(routers.len(), expected_service_ids.len());
+        for service_id in expected_service_ids {
+            assert!(
+                routers.contains_key(service_id.as_str()),
+                "embedded router registered for {service_id}"
+            );
+        }
+    }
 }
