@@ -127,8 +127,9 @@ temporary bind address and stop the process after the check.
 - Appbase IAM routes are dependency routes. Do not reimplement `/app/v3/api/auth`,
   `/app/v3/api/iam`, `/app/v3/api/oauth`, `/app/v3/api/system/iam`, or `/backend/v3/api/iam`
   handlers in this product.
-- Split mode requires upstream dependency base URLs at startup. Embedded mode requires an executable
-  embedded router for each required dependency surface when no upstream is configured.
+- Foundation dependency surfaces are embedded-only. Each published surface requires a Cargo
+  feature, an assembly dependency, and a verified executable router export; legacy split runtime
+  values and per-dependency base URL overrides are rejected.
 - `sdkwork-clawrouter`, `sdkwork-im`, and other applications should integrate foundation APIs through
   `sdkwork-api-cloud-gateway` instead of directly depending on those APIs themselves.
 - Do not hand-edit generated SDK output. Fix the source contract, generator input, approved facade,

@@ -53,63 +53,18 @@ catalog file: executable integration evidence comes from this repository's `Carg
 evidence stays in the existing `sdkwork.app.config.json`, `specs/component.spec.json`, and dependency
 SDK assembly metadata.
 
-Current foundation integrations:
+Every published foundation surface is embedded. The complete machine-readable list is
+`sdkwork.app.config.json` plus `specs/component.spec.json`; each entry names its Cargo feature,
+assembly dependency, stable API prefix, and executable router export. Representative integrations
+include `foundation-drive` with `sdkwork-drive-gateway-assembly`, `foundation-im` with
+`sdkwork-im-gateway-assembly`, and `foundation-clawrouter` with
+`sdkwork-clawrouter-gateway-assembly`.
 
-| Cargo feature | Cargo dependency | SDKWork service | Router export |
-| --- | --- | --- | --- |
-| `foundation-appbase` | `sdkwork_routes_iam_app_api` | `sdkwork-iam-app-api` | `sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router` |
-
-Representative split upstream foundation surfaces. The complete machine-readable list is
-`sdkwork.app.config.json` plus `specs/component.spec.json`:
-
-| SDKWork service | SDK family | API prefix | Base URL key |
-| --- | --- | --- | --- |
-| `sdkwork-drive-app-api` | `sdkwork-drive-app-sdk` | `/app/v3/api/drive` | `SDKWORK_DRIVE_APP_API_BASE_URL` |
-| `sdkwork-notary-app-api` | `sdkwork-notary-app-sdk` | `/app/v3/api/notary` | `SDKWORK_NOTARY_APP_API_BASE_URL` |
-| `sdkwork-iam-backend-api` | `sdkwork-iam-backend-sdk` | `/backend/v3/api/iam` | `SDKWORK_APPBASE_BACKEND_API_BASE_URL` |
-| `sdkwork-commerce (deleted)-app-api` | `sdkwork-commerce (deleted)-app-sdk` | `/app/v3/api` | `SDKWORK_COMMERCE_APP_API_BASE_URL` |
-| `sdkwork-commerce (deleted)-backend-api` | `sdkwork-commerce (deleted)-backend-sdk` | `/backend/v3/api` | `SDKWORK_COMMERCE_BACKEND_API_BASE_URL` |
-| `sdkwork-rtc-app-api` | `sdkwork-rtc-app-sdk` | `/app/v3/api/rtc` | `SDKWORK_RTC_APP_API_BASE_URL` |
-| `sdkwork-rtc-backend-api` | `sdkwork-rtc-backend-sdk` | `/backend/v3/api/rtc` | `SDKWORK_RTC_BACKEND_API_BASE_URL` |
-| `sdkwork-agent-app-api` | `sdkwork-agent-app-sdk` | `/app/v3/api/ai` | `SDKWORK_AGENT_APP_API_BASE_URL` |
-| `sdkwork-agent-backend-api` | `sdkwork-agent-backend-sdk` | `/backend/v3/api/ai` | `SDKWORK_AGENT_BACKEND_API_BASE_URL` |
-| `sdkwork-agent-open-api` | `sdkwork-agent-sdk` | `/agent/v3/api` | `SDKWORK_AGENT_OPEN_API_BASE_URL` |
-| `sdkwork-aiot-app-api` | `sdkwork-aiot-app-sdk` | `/app/v3/api/iot` | `SDKWORK_AIOT_APP_API_BASE_URL` |
-| `sdkwork-aiot-backend-api` | `sdkwork-aiot-backend-sdk` | `/backend/v3/api/iot` | `SDKWORK_AIOT_BACKEND_API_BASE_URL` |
-| `sdkwork-drive-backend-api` | `sdkwork-drive-backend-sdk` | `/backend/v3/api/drive` | `SDKWORK_DRIVE_BACKEND_API_BASE_URL` |
-| `sdkwork-drive-open-api` | `sdkwork-drive-sdk` | `/open/v3/api/drive` | `SDKWORK_DRIVE_OPEN_API_BASE_URL` |
-| `sdkwork-drive-admin-storage-api` | `sdkwork-drive-admin-storage-sdk` | `/admin/v3/api/drive` | `SDKWORK_DRIVE_ADMIN_STORAGE_API_BASE_URL` |
-| `sdkwork-memory-app-api` | `sdkwork-memory-app-sdk` | `/app/v3/api/memory` | `SDKWORK_MEMORY_APP_API_BASE_URL` |
-| `sdkwork-memory-backend-api` | `sdkwork-memory-backend-sdk` | `/backend/v3/api/memory` | `SDKWORK_MEMORY_BACKEND_API_BASE_URL` |
-| `sdkwork-memory-open-api` | `sdkwork-memory-sdk` | `/mem/v3/api/memory` | `SDKWORK_MEMORY_OPEN_API_BASE_URL` |
-| `sdkwork-knowledgebase-app-api` | `sdkwork-knowledgebase-app-sdk` | `/app/v3/api/knowledge` | `SDKWORK_KNOWLEDGEBASE_APP_API_BASE_URL` |
-| `sdkwork-knowledgebase-backend-api` | `sdkwork-knowledgebase-backend-sdk` | `/backend/v3/api/knowledge` | `SDKWORK_KNOWLEDGEBASE_BACKEND_API_BASE_URL` |
-| `sdkwork-knowledgebase-open-api` | `sdkwork-knowledgebase-sdk` | `/knowledge/v3/api` | `SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL` |
-| `sdkwork-news-open-api` | `sdkwork-news-sdk` | `/open/v3/api/news` | `SDKWORK_NEWS_OPEN_API_BASE_URL` |
-| `sdkwork-notes-open-api` | `sdkwork-notes-sdk` | `/notes/v3/api` | `SDKWORK_NOTES_OPEN_API_BASE_URL` |
-| `sdkwork-community-open-api` | `sdkwork-community-sdk` | `/community/v3/api` | `SDKWORK_COMMUNITY_OPEN_API_BASE_URL` |
-| `sdkwork-image-open-api` | `sdkwork-image-sdk` | `/image/v3/api` | `SDKWORK_IMAGE_OPEN_API_BASE_URL` |
-| `sdkwork-im-im-http` | `sdkwork-im-app-sdk` | `/im/v3/api` | `SDKWORK_IM_IM_HTTP_BASE_URL` |
-| `sdkwork-im-backend-http` | `sdkwork-im-backend-sdk` | `/backend/v3/api/control` | `SDKWORK_IM_BACKEND_HTTP_BASE_URL` |
-| `sdkwork-claw-gateway` | `sdkwork-claw-sdk` | `/v1` | `SDKWORK_CLAW_GATEWAY_BASE_URL` |
-| `sdkwork-appstore-app-api` | `sdkwork-appstore-app-sdk` | `/app/v3/api/catalog` | `SDKWORK_APPSTORE_APP_API_BASE_URL` |
-
-When adding another foundation API, add its source crate once in root `[workspace.dependencies]`,
-activate it through a focused gateway runtime feature only when the dependency exposes a compatible
-public router builder, and record the matching SDKWork service, surface, API authority, prefix, and
-router export in the existing manifest/component spec. Split upstream surfaces that are proxied by
-the gateway use the existing dependency surface and upstream config instead of fake Cargo feature
-evidence. Do not create a parallel gateway catalog or reimplement dependency-owned handlers in this
-product.
-
-Commerce app/backend surfaces are broad fallback routes while the workspace migrates product apps to
-the shared gateway. Fixed Appbase IAM routes and more specific app dependency prefixes such as Drive
-Notary, RTC, Agent, AIoT, Drive backend/open/admin, Memory, Knowledgebase, News, Notes, Community,
-Image, IM, Claw, Appstore, and other specific foundation prefixes are resolved before the broad Commerce fallbacks.
-Cargo metadata currently proves the embedded Appbase app surface only; Appbase backend, Drive,
-Notary, Commerce, RTC, Agent, AIoT, Memory, Knowledgebase, and the remaining foundation modules
-remain split upstream integrations until their production routers expose compatible, approved public
-builders.
+When adding another foundation API, add its assembly crate once in root
+`[workspace.dependencies]`, activate it through a focused gateway feature, and record the matching
+service, surface, API authority, prefix, and executable export in both machine contracts. A surface
+without executable assembly evidence is not published by this runtime. Do not add per-dependency
+base URLs, a proxy fallback, a parallel catalog, or dependency-owned handlers to this product.
 
 ## Configuration
 
@@ -125,9 +80,6 @@ Environment overrides are then applied:
 - `SDKWORK_API_CLOUD_GATEWAY_BIND`
 - `SDKWORK_API_CLOUD_GATEWAY_MODE`
 - `SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES`
-- `SDKWORK_API_CLOUD_GATEWAY_TIMEOUT_MS`
-- `SDKWORK_API_CLOUD_GATEWAY_READINESS_CHECK_UPSTREAMS`
-- `SDKWORK_API_CLOUD_GATEWAY_READINESS_TIMEOUT_MS`
 - `SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED`
 - `SDKWORK_API_CLOUD_GATEWAY_AUDIT_LOG_ENABLED`
 - `SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_SAMPLE_RATE_BASIS_POINTS`
@@ -141,31 +93,15 @@ Environment overrides are then applied:
 - `SDKWORK_API_CLOUD_GATEWAY_POLICY_DRY_RUN`
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_ENABLED`
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH`
-- `SDKWORK_API_CLOUD_GATEWAY_RETRY_ENABLED`
-- `SDKWORK_API_CLOUD_GATEWAY_RETRY_MAX_ATTEMPTS`
-- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_ENABLED`
-- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD`
-- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS`
-- `SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS`
 - `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`
-- dependency base URL keys such as `SDKWORK_APPBASE_APP_API_BASE_URL`,
-  `SDKWORK_DRIVE_APP_API_BASE_URL`, `SDKWORK_NOTARY_APP_API_BASE_URL`,
-  `SDKWORK_APPBASE_BACKEND_API_BASE_URL`, `SDKWORK_COMMERCE_APP_API_BASE_URL`, and
-  `SDKWORK_COMMERCE_BACKEND_API_BASE_URL`, plus shared foundation keys
-  `SDKWORK_RTC_APP_API_BASE_URL`, `SDKWORK_RTC_BACKEND_API_BASE_URL`,
-  `SDKWORK_AGENT_APP_API_BASE_URL`, `SDKWORK_AGENT_BACKEND_API_BASE_URL`,
-  `SDKWORK_AGENT_OPEN_API_BASE_URL`, `SDKWORK_AIOT_APP_API_BASE_URL`,
-  `SDKWORK_AIOT_BACKEND_API_BASE_URL`, `SDKWORK_DRIVE_OPEN_API_BASE_URL`,
-  `SDKWORK_MEMORY_OPEN_API_BASE_URL`, `SDKWORK_KNOWLEDGEBASE_OPEN_API_BASE_URL`,
-  and other dependency surface keys declared in `sdkwork.app.config.json`
 
 `sdkwork.app.config.json` drives the default SDKWork identity, bind address, API surfaces, and
 dependency SDK surfaces. TOML files under `configs/` are tracked templates for environment-specific
 deployment overlays.
 
 Config loading performs startup validation after TOML/manifest/env merging. The gateway rejects
-sample rates above `10000` basis points, zero request or policy body limits, empty upstream or
-dependency identifiers, empty traffic/policy rule ids, and non-positive concurrency limits before
+sample rates above `10000` basis points, zero request or policy body limits, empty dependency
+identifiers, empty traffic/policy rule ids, and non-positive concurrency limits before
 serving traffic.
 
 ## Run
@@ -214,87 +150,51 @@ sibling application workspaces that sit outside this repository's Cargo workspac
 
 ## SDKWork Surface Rules
 
-The gateway does not reimplement appbase IAM routes. The default development mode is embedded and
-auto-mounts the executable appbase IAM router through `foundation-appbase`, so normal local work
-uses one public gateway port. Split upstream proxying remains available for lower-level validation
-paths, but it is not the standard development workflow.
+The gateway does not reimplement dependency routes. It mounts selected assembly routers through
+Cargo features and exposes them on one platform gateway port. Legacy split values and dependency
+base URL overrides are rejected during configuration loading.
 
-For non-appbase dependency surfaces, the runtime generates dependency routes from
-`dependencySurfaces`: each configured `apiPrefix` is routed as `apiPrefix/{*path}`. When dependency
-prefixes overlap, the registry resolves more specific patterns before broad fallback prefixes.
-Embedded routers take precedence over split upstream HTTP proxying for the same dependency service
-id. In split mode, WebSocket upgrade requests on configured dependency prefixes are proxied to the
-dependency upstream with bidirectional message bridging. Close frames preserve the close code and
-reason.
-
-HTTP proxy requests add `X-Forwarded-Host` and `X-Forwarded-Proto` before forwarding upstream.
-Split mode runs the `sdkwork-web-framework` request-identity stage and assigns a server-generated
-UUID v4 `X-Request-Id` on every request. The gateway forwards that value to dependency upstreams and
-returns it on proxied HTTP responses and problem details. Client-supplied request ids are not
-preserved in split mode because framework identity assignment is authoritative.
+The runtime generates dependency routes from `dependencySurfaces`: each configured `apiPrefix` is
+routed as `apiPrefix/{*path}` to the assembly router registered for that service id. When prefixes
+overlap, the registry resolves more specific patterns before broad prefixes. A selected dependency
+without a registered embedded router fails preflight instead of falling through to a remote proxy.
 
 Request bodies are bounded by `request.maxBodyBytes` and return `413` with the
 `request_body_too_large` problem title when the configured limit is exceeded. Matching
-`policy.rules` can apply a stricter `maxBodyBytes` per dependency service or path prefix. Proxied
-upstream response bodies are streamed back to the caller instead of being fully buffered by the
-gateway. Gateway-level request timeout is configured with `request.timeoutMs`; `0` disables it.
-Matching `policy.rules` can override the gateway budget with `timeoutMs`. When enabled, split-mode
-dependency requests that exceed this gateway budget return `504` with the `gateway_request_timeout`
-problem title.
+`policy.rules` can apply a stricter `maxBodyBytes` per dependency service or path prefix.
 
 Unmatched or failed gateway routes return RFC 7807-style problem responses with
 `application/problem+json`.
 
 ## Web Framework Integration
 
-Split mode mounts the standard `sdkwork-web-framework` interceptor pipeline before gateway proxy
-dispatch. Dependency API prefixes are treated as public at the gateway boundary so credential
-resolution and authentication remain upstream responsibilities. Unclassified paths are also treated
-as public so hidden diagnostics and route-not-found handlers can return gateway-owned problem
-responses instead of framework `401` rejections.
-
-Embedded mode applies request identity only on the outer gateway router. Embedded dependency
-routers are registered by service id and dispatched through fallback delegation; each embedded
-router mounts its own web-framework layers and must not duplicate host infrastructure probes
+The outer gateway owns request identity, CORS, gateway security, and traffic controls. Embedded
+dependency routers are registered by service id and dispatched through fallback delegation; each
+assembly owns its dependency authentication and authorization layers and must not duplicate host probes
 (`/healthz`, `/livez`, `/readyz`, `/metrics`). Prefer
 `sdkwork-<domain>-gateway-assembly::assemble_application_business_router` over raw route-crate
 builders when a sibling gateway assembly exists.
 
-Toggle the outer framework pipeline with `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED` (`true` by
-default). When disabled, split mode falls back to the legacy Tower `CorsLayer` and gateway security
-middleware for CORS and secure response headers while still assigning UUID `x-request-id` on the outer
-router. Router builders `finalize_gateway_router`, `finalize_gateway_router_async`, and
-`split_proxy_call_chain` are exported from `sdkwork_api_cloud_gateway::web_framework`.
+Toggle outer web-framework integration with `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`
+(`true` by default). Router builders `finalize_gateway_router` and
+`finalize_gateway_router_async` are exported from `sdkwork_api_cloud_gateway::web_framework`.
 
-Each upstream can set `timeoutMs`/`timeout_ms` through the typed runtime config. Timed out upstream
-requests return `504` with the `upstream_timeout` problem title. `request.timeoutMs` is the
-gateway-level budget around the proxied dependency request and can fire before a longer per-upstream
-timeout.
-
-Readiness is exposed at `/readyz` and includes the service id, runtime mode, route count, configured
-upstreams, and dependency surfaces. When `readiness.checkUpstreams` is enabled, required upstreams
-are checked with `upstreams[].readinessPath` and failures return `503` with `status: "degraded"`.
+Readiness is exposed at `/readyz` and includes the service id, embedded runtime mode, route count,
+and dependency surfaces. Assembly registration is verified before the server accepts traffic.
 
 CORS is configured through `[cors]`. `allowAnyOrigin = true` allows any origin; strict mode uses
-`allowAnyOrigin = false` with an explicit `allowedOrigins` list. In split mode with the web framework
-enabled, CORS enforcement and response headers are owned by `sdkwork-web-framework`
-`SecurityPolicy.cors` rather than a duplicate Tower `CorsLayer`.
+`allowAnyOrigin = false` with an explicit `allowedOrigins` list.
 
 ## Commercial Gateway Controls
 
 Observability is configured through `[observability]`. Access logs are enabled with
-`accessLogEnabled` and redact headers listed in `redactHeaders`. Access log events include a bounded
-`failureClass` when the gateway can classify a failure, including gateway route misses, dependency
-timeouts, retry exhaustion, and circuit-breaker short circuits. `accessLogSampleRateBasisPoints`
+`accessLogEnabled` and redact headers listed in `redactHeaders`. Access log events include bounded
+failure classes for gateway route misses and embedded dependency errors. `accessLogSampleRateBasisPoints`
 controls deterministic access-log sampling; `10000` records all events and `0` records none.
 Metrics are disabled by default and can be exposed as Prometheus text with `metricsEnabled = true`
-and `metricsPath = "/metrics"`. Inbound `traceparent` headers are forwarded upstream and problem
-responses include `traceId` when a valid W3C trace context is present. The metrics endpoint exports
-low-cardinality counters for
-gateway HTTP requests, upstream dependency requests, WAF decisions, traffic-control rejections, and
-policy-governance rejections and dry-run observations, plus resilience events such as gateway request
-timeout, upstream timeout, retry attempt, retry exhausted, circuit-open, short-circuit, and half-open
-probe decisions. It also exports
+and `metricsPath = "/metrics"`. Problem responses include `traceId` when a valid W3C trace context
+is present. The metrics endpoint exports low-cardinality counters for gateway HTTP requests, WAF
+decisions, traffic-control rejections, and policy-governance rejections and dry-run observations. It also exports
 `sdkwork_api_cloud_gateway_http_request_duration_seconds` as a Prometheus histogram with stable second
 buckets from `0.005` through `10` plus `+Inf`; the current measurement is the gateway route duration
 until response headers are produced. Metric labels use bounded service, method, status, rule, scope,
@@ -306,8 +206,8 @@ production template. When `enabled = true`, the gateway exposes a JSON inventory
 to `/internal/gateway/diagnostics`. The response includes only safe configuration metadata: service
 name, environment, mode, dependency surface count, route inventory, and policy rule inventory. Route
 inventory contains route patterns, service ids, surfaces, execution targets, and methods. Policy
-inventory contains `enabled`, `dryRun`, rule ids, match fields, allowed methods, and boolean flags
-that indicate whether body-size or timeout limits exist. It deliberately omits upstream base URLs,
+inventory contains `enabled`, `dryRun`, rule ids, match fields, allowed methods, and a boolean flag
+that indicates whether a body-size limit exists. It deliberately omits
 raw live request paths, request ids, trace ids, headers, tokens, tenant/user/organization
 identifiers, IP addresses, and live request data. `includePolicyInventory` and
 `includeRouteInventory` can suppress the detailed policy or route item arrays while retaining counts.
@@ -322,10 +222,7 @@ Policy method and body-limit rejections are covered with `category = "policy"`.
 
 Security controls are configured through `[security]`. `secureHeadersEnabled` adds baseline response
 headers such as `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
-`Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. In split mode with
-the web framework enabled, baseline headers are applied by the framework `HeaderSecurity` stage and
-gateway-owned extensions such as `Content-Security-Policy` and
-`X-Permitted-Cross-Domain-Policies` remain gateway responsibilities. `allowedHosts`
+`Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. `allowedHosts`
 enforces a host allowlist and returns `421` with `host_not_allowed` when a request host is rejected.
 `maxHeaderBytes` and `maxHeaderCount` reject oversized request headers with `431` and the
 `request_headers_too_large` problem title.
@@ -345,8 +242,8 @@ with the `concurrency_limit_exceeded` problem title. These stores are process-lo
 Phase 1 defaults; shared Redis-backed policy state belongs in a later deployment phase.
 
 Policy governance is configured through `[policy]`. Empty `rules = []` is a no-op. Each rule can
-match `matchServiceId` and/or `matchPathPrefix`, then enforce `allowedMethods`, a stricter
-`maxBodyBytes`, or a route-specific gateway `timeoutMs`. Disallowed methods return `405` with the
+match `matchServiceId` and/or `matchPathPrefix`, then enforce `allowedMethods` or a stricter
+`maxBodyBytes`. Disallowed methods return `405` with the
 `method_not_allowed` problem title and an `Allow` header. Policy body-limit rejections return `413`
 with `request_body_too_large`. Policy rejections are counted in
 `sdkwork_api_cloud_gateway_policy_rejections_total{service,kind,scope,status}` where `scope` is the bounded
@@ -376,21 +273,7 @@ matchServiceId = "sdkwork-iam-app-api"
 matchPathPrefix = "/app/v3/api/auth"
 allowedMethods = ["POST"]
 maxBodyBytes = 4096
-timeoutMs = 250
 ```
-
-Resilience controls are configured through `[resilience]`. `retryEnabled` activates split-mode
-upstream retry for statuses listed in `retryStatuses`; `maxAttempts` caps total attempts and
-`retryBackoffMs` adds a simple per-attempt backoff. When a later attempt succeeds, proxied responses
-include `X-SDKWork-Gateway-Retry-Attempts`. Retry attempts and exhausted retry budgets are counted
-as bounded resilience events. Gateway request timeouts and per-upstream timeouts are also counted as
-separate resilience events so operations can tell which budget expired. `circuitBreakerEnabled`
-activates per-dependency in-memory circuit breaking for split-mode upstreams. Consecutive upstream
-`5xx` responses are counted against `failureThreshold`; once open, requests are short-circuited with
-`503`, the `circuit_breaker_open` problem title, `Retry-After`, and
-`X-SDKWork-Circuit-State: open`. After `openSeconds`, up to `halfOpenMaxAttempts` probe requests are
-allowed; half-open probe responses include `X-SDKWork-Circuit-State: half-open`, and a successful
-probe closes the circuit.
 
 ## Public Rust APIs
 

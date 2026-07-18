@@ -13,6 +13,11 @@ edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
+sdkwork-drive-gateway-assembly = { path = "../sdkwork-drive/crates/sdkwork-drive-gateway-assembly" }
+sdkwork-membership-gateway-assembly = { path = "../sdkwork-membership/crates/sdkwork-membership-gateway-assembly" }
+sdkwork-order-gateway-assembly = { path = "../sdkwork-order/crates/sdkwork-order-gateway-assembly" }
+sdkwork-promotion-gateway-assembly = { path = "../sdkwork-promotion/crates/sdkwork-promotion-gateway-assembly" }
+sdkwork-payment-gateway-assembly = { path = "../sdkwork-payment/crates/sdkwork-payment-gateway-assembly" }
 sdkwork-course-gateway-assembly = { path = "../sdkwork-course/crates/sdkwork-course-gateway-assembly" }
 sdkwork-voice-gateway-assembly = { path = "../sdkwork-voice/crates/sdkwork-voice-gateway-assembly" }
 sdkwork-music-gateway-assembly = { path = "../sdkwork-music/crates/sdkwork-music-gateway-assembly" }

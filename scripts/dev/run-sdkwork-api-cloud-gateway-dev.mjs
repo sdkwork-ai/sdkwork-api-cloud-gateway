@@ -10,6 +10,7 @@ import { resolvePostgresDevProfile } from '../../../sdkwork-specs/tools/postgres
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const collapsedFeatures = [
+  'manager-operations-suite',
   'foundation-kernel',
   'foundation-deployments',
   'foundation-dezhou',
@@ -19,6 +20,10 @@ const collapsedFeatures = [
   'foundation-web-server',
 ];
 const embeddedDatabaseServices = [
+  'DRIVE',
+  'ORDER',
+  'PROMOTION',
+  'PAYMENT',
   'IAM',
   'AGENTS',
   'AGENTS_STORE',

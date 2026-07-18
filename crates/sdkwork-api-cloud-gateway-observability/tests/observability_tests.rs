@@ -21,7 +21,7 @@ fn access_log_event_redacts_configured_headers_and_keeps_trace_context() {
             status: 201,
             route_target: "dependency",
             service_id: Some("sdkwork-iam-app-api"),
-            failure_class: Some("upstream_timeout"),
+            failure_class: Some("embedded_dependency_error"),
             request_id: Some("request-1"),
             traceparent: Some("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"),
             headers: vec![
@@ -36,7 +36,10 @@ fn access_log_event_redacts_configured_headers_and_keeps_trace_context() {
     assert_eq!(event.method, "POST");
     assert_eq!(event.status, 201);
     assert_eq!(event.service_id.as_deref(), Some("sdkwork-iam-app-api"));
-    assert_eq!(event.failure_class.as_deref(), Some("upstream_timeout"));
+    assert_eq!(
+        event.failure_class.as_deref(),
+        Some("embedded_dependency_error")
+    );
     assert_eq!(event.request_id.as_deref(), Some("request-1"));
     assert_eq!(
         event.traceparent.as_deref(),

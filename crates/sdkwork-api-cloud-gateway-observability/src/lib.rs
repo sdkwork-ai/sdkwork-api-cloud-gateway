@@ -13,7 +13,6 @@ pub struct GatewayStartupSummary {
     pub environment: String,
     pub bind: String,
     pub mode: GatewayMode,
-    pub upstream_count: usize,
     pub route_count: usize,
     pub dependency_services: Vec<String>,
 }
@@ -93,7 +92,6 @@ pub fn describe_gateway_startup(
         environment: config.service.environment.clone(),
         bind: config.server.bind.clone(),
         mode: config.mode,
-        upstream_count: config.upstreams.len(),
         route_count: registry.routes().len(),
         dependency_services,
     }

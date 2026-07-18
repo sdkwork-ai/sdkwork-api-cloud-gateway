@@ -23,6 +23,47 @@ pub async fn bootstrap_embedded_dependency_routers(
         }
     }
 
+    #[cfg(feature = "foundation-drive")]
+    if workspace_surface_enabled(config, "sdkwork-drive") {
+        let assembly =
+            sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env()
+                .await
+                .map_err(|error| workspace_build_error(config, "sdkwork-drive", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-drive", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-membership")]
+    if workspace_surface_enabled(config, "sdkwork-membership") {
+        let assembly = sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-membership", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-membership", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-order")]
+    if workspace_surface_enabled(config, "sdkwork-order") {
+        let assembly = sdkwork_order_gateway_assembly::assemble_application_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-order", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-order", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-promotion")]
+    if workspace_surface_enabled(config, "sdkwork-promotion") {
+        let assembly = sdkwork_promotion_gateway_assembly::assemble_application_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-promotion", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-promotion", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-payment")]
+    if workspace_surface_enabled(config, "sdkwork-payment") {
+        let assembly = sdkwork_payment_gateway_assembly::assemble_application_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-payment", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-payment", assembly.router);
+    }
+
     #[cfg(feature = "foundation-course")]
     {
         use sdkwork_api_cloud_gateway_config::{
@@ -501,7 +542,9 @@ pub async fn bootstrap_embedded_dependency_routers(
     if workspace_surface_enabled(config, "sdkwork-kernel") {
         let assembly = sdkwork_agents_gateway_assembly::assemble_application_router()
             .await
-            .map_err(|error| workspace_build_error(config, "sdkwork-kernel", format!("{error:#}")))?;
+            .map_err(|error| {
+                workspace_build_error(config, "sdkwork-kernel", format!("{error:#}"))
+            })?;
         insert_workspace_router(config, &mut routers, "sdkwork-kernel", assembly.router);
     }
 
@@ -559,6 +602,11 @@ pub async fn bootstrap_embedded_dependency_routers(
 }
 
 #[cfg(any(
+    feature = "foundation-drive",
+    feature = "foundation-membership",
+    feature = "foundation-order",
+    feature = "foundation-promotion",
+    feature = "foundation-payment",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -576,6 +624,11 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
 
 #[cfg(any(
     test,
+    feature = "foundation-drive",
+    feature = "foundation-membership",
+    feature = "foundation-order",
+    feature = "foundation-promotion",
+    feature = "foundation-payment",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -600,6 +653,11 @@ fn insert_workspace_router(
 }
 
 #[cfg(any(
+    feature = "foundation-drive",
+    feature = "foundation-membership",
+    feature = "foundation-order",
+    feature = "foundation-promotion",
+    feature = "foundation-payment",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -634,7 +692,10 @@ fn dependency_surface_enabled(config: &GatewayRuntimeConfig, service_id: &str) -
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, path::PathBuf};
+    use std::{
+        collections::{HashMap, HashSet},
+        path::PathBuf,
+    };
 
     use axum::Router;
     use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
@@ -647,6 +708,10 @@ mod tests {
         let config = GatewayRuntimeConfig::from_application_root(root)
             .expect("gateway application manifest parses");
         let workspaces = [
+            "sdkwork-membership",
+            "sdkwork-order",
+            "sdkwork-promotion",
+            "sdkwork-payment",
             "sdkwork-kernel",
             "sdkwork-deployments",
             "sdkwork-dezhou",
@@ -660,14 +725,14 @@ mod tests {
             .iter()
             .filter(|surface| workspaces.contains(&surface.workspace.as_str()))
             .map(|surface| surface.service_id.clone())
-            .collect::<Vec<_>>();
+            .collect::<HashSet<_>>();
         let mut routers = HashMap::new();
 
         for workspace in workspaces {
             insert_workspace_router(&config, &mut routers, workspace, Router::new());
         }
 
-        assert_eq!(expected_service_ids.len(), 16);
+        assert_eq!(expected_service_ids.len(), 21);
         assert_eq!(routers.len(), expected_service_ids.len());
         for service_id in expected_service_ids {
             assert!(

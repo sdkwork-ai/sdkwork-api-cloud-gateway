@@ -9,173 +9,84 @@ pub const DEFAULT_GATEWAY_SERVICE_NAME: &str = "sdkwork-api-cloud-gateway";
 pub const DEFAULT_GATEWAY_BIND: &str = "127.0.0.1:3900";
 pub const APPBASE_APP_API_SERVICE_ID: &str = "sdkwork-iam-app-api";
 pub const APPBASE_APP_API_PREFIX: &str = "/app/v3/api";
-pub const APPBASE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:3800";
-pub const APPBASE_APP_API_BASE_URL_ENV: &str = "SDKWORK_APPBASE_APP_API_BASE_URL";
 pub const APPBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-iam-backend-api";
 pub const APPBASE_BACKEND_API_PREFIX: &str = "/backend/v3/api/iam";
-pub const APPBASE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:3801";
-pub const APPBASE_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_APPBASE_BACKEND_API_BASE_URL";
 pub const DRIVE_APP_API_SERVICE_ID: &str = "sdkwork-drive-app-api";
 pub const DRIVE_APP_API_PREFIX: &str = "/app/v3/api/drive";
-pub const DRIVE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18080";
-pub const DRIVE_APP_API_BASE_URL_ENV: &str = "SDKWORK_DRIVE_APP_API_BASE_URL";
 pub const DRIVE_BACKEND_API_SERVICE_ID: &str = "sdkwork-drive-backend-api";
-pub const DRIVE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18081";
 pub const DRIVE_OPEN_API_SERVICE_ID: &str = "sdkwork-drive-open-api";
-pub const DRIVE_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18082";
-pub const DRIVE_ADMIN_STORAGE_API_SERVICE_ID: &str = "sdkwork-drive-admin-storage-api";
-pub const DRIVE_ADMIN_STORAGE_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18083";
 pub const NOTARY_APP_API_SERVICE_ID: &str = "sdkwork-notary-app-api";
 pub const NOTARY_APP_API_PREFIX: &str = "/app/v3/api/notary";
-pub const NOTARY_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18092";
-pub const NOTARY_APP_API_BASE_URL_ENV: &str = "SDKWORK_NOTARY_APP_API_BASE_URL";
 pub const NOTARY_BACKEND_API_SERVICE_ID: &str = "sdkwork-notary-backend-api";
-pub const NOTARY_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18093";
 pub const COMMERCE_APP_API_SERVICE_ID: &str = "sdkwork-commerce-app-api";
 pub const COMMERCE_APP_API_PREFIX: &str = "/app/v3/api";
-pub const COMMERCE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18180";
-pub const COMMERCE_APP_API_BASE_URL_ENV: &str = "SDKWORK_COMMERCE_APP_API_BASE_URL";
 pub const COMMERCE_BACKEND_API_SERVICE_ID: &str = "sdkwork-commerce-backend-api";
 pub const COMMERCE_BACKEND_API_PREFIX: &str = "/backend/v3/api";
-pub const COMMERCE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18181";
-pub const COMMERCE_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_COMMERCE_BACKEND_API_BASE_URL";
 pub const RTC_APP_API_SERVICE_ID: &str = "sdkwork-rtc-app-api";
 pub const RTC_APP_API_PREFIX: &str = "/app/v3/api/rtc";
-pub const RTC_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18280";
-pub const RTC_APP_API_BASE_URL_ENV: &str = "SDKWORK_RTC_APP_API_BASE_URL";
 pub const RTC_BACKEND_API_SERVICE_ID: &str = "sdkwork-rtc-backend-api";
 pub const RTC_BACKEND_API_PREFIX: &str = "/backend/v3/api/rtc";
-pub const RTC_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18281";
-pub const RTC_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_RTC_BACKEND_API_BASE_URL";
 pub const AGENT_APP_API_SERVICE_ID: &str = "sdkwork-agent-app-api";
 pub const AGENT_APP_API_PREFIX: &str = "/app/v3/api/ai";
-pub const AGENT_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18380";
-pub const AGENT_APP_API_BASE_URL_ENV: &str = "SDKWORK_AGENT_APP_API_BASE_URL";
 pub const AGENT_BACKEND_API_SERVICE_ID: &str = "sdkwork-agent-backend-api";
 pub const AGENT_BACKEND_API_PREFIX: &str = "/backend/v3/api/ai";
-pub const AGENT_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18381";
-pub const AGENT_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_AGENT_BACKEND_API_BASE_URL";
 pub const AGENT_OPEN_API_SERVICE_ID: &str = "sdkwork-agent-open-api";
 pub const AGENT_OPEN_API_PREFIX: &str = "/agent/v3/api";
-pub const AGENT_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18382";
-pub const AGENT_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_AGENT_OPEN_API_BASE_URL";
 pub const AIOT_APP_API_SERVICE_ID: &str = "sdkwork-aiot-app-api";
 pub const AIOT_APP_API_PREFIX: &str = "/app/v3/api/iot";
-pub const AIOT_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18480";
-pub const AIOT_APP_API_BASE_URL_ENV: &str = "SDKWORK_AIOT_APP_API_BASE_URL";
 pub const AIOT_BACKEND_API_SERVICE_ID: &str = "sdkwork-aiot-backend-api";
 pub const AIOT_BACKEND_API_PREFIX: &str = "/backend/v3/api/iot";
-pub const AIOT_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18481";
-pub const AIOT_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_AIOT_BACKEND_API_BASE_URL";
 pub const MEMORY_APP_API_SERVICE_ID: &str = "sdkwork-memory-app-api";
-pub const MEMORY_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18580";
 pub const MEMORY_BACKEND_API_SERVICE_ID: &str = "sdkwork-memory-backend-api";
-pub const MEMORY_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18581";
 pub const MEMORY_OPEN_API_SERVICE_ID: &str = "sdkwork-memory-open-api";
-pub const MEMORY_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18582";
 pub const KNOWLEDGEBASE_APP_API_SERVICE_ID: &str = "sdkwork-knowledgebase-app-api";
-pub const KNOWLEDGEBASE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18680";
 pub const KNOWLEDGEBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-knowledgebase-backend-api";
-pub const KNOWLEDGEBASE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18681";
 pub const KNOWLEDGEBASE_OPEN_API_SERVICE_ID: &str = "sdkwork-knowledgebase-open-api";
-pub const KNOWLEDGEBASE_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18682";
 pub const NEWS_APP_API_SERVICE_ID: &str = "sdkwork-news-app-api";
-pub const NEWS_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18780";
 pub const NEWS_BACKEND_API_SERVICE_ID: &str = "sdkwork-news-backend-api";
-pub const NEWS_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18781";
 pub const NEWS_OPEN_API_SERVICE_ID: &str = "sdkwork-news-open-api";
-pub const NEWS_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18782";
 pub const NOTES_APP_API_SERVICE_ID: &str = "sdkwork-notes-app-api";
-pub const NOTES_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18880";
 pub const NOTES_BACKEND_API_SERVICE_ID: &str = "sdkwork-notes-backend-api";
-pub const NOTES_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18881";
 pub const NOTES_OPEN_API_SERVICE_ID: &str = "sdkwork-notes-open-api";
-pub const NOTES_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18882";
 pub const MUSIC_APP_API_SERVICE_ID: &str = "sdkwork-music-app-api";
-pub const MUSIC_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18980";
 pub const MUSIC_BACKEND_API_SERVICE_ID: &str = "sdkwork-music-backend-api";
-pub const MUSIC_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18981";
 pub const GENERATIONS_APP_API_SERVICE_ID: &str = "sdkwork-generations-app-api";
-pub const GENERATIONS_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19080";
 pub const GENERATIONS_BACKEND_API_SERVICE_ID: &str = "sdkwork-generations-backend-api";
-pub const GENERATIONS_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19081";
 pub const COMMUNITY_APP_API_SERVICE_ID: &str = "sdkwork-community-app-api";
-pub const COMMUNITY_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19180";
 pub const COMMUNITY_BACKEND_API_SERVICE_ID: &str = "sdkwork-community-backend-api";
-pub const COMMUNITY_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19181";
 pub const COMMUNITY_OPEN_API_SERVICE_ID: &str = "sdkwork-community-open-api";
-pub const COMMUNITY_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19182";
 pub const SEARCH_APP_API_SERVICE_ID: &str = "sdkwork-search-app-api";
-pub const SEARCH_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19280";
 pub const SEARCH_BACKEND_API_SERVICE_ID: &str = "sdkwork-search-backend-api";
-pub const SEARCH_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19281";
 pub const VOICE_APP_API_SERVICE_ID: &str = "sdkwork-voice-app-api";
-pub const VOICE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19380";
 pub const VOICE_BACKEND_API_SERVICE_ID: &str = "sdkwork-voice-backend-api";
-pub const VOICE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19381";
 pub const IMAGE_APP_API_SERVICE_ID: &str = "sdkwork-image-app-api";
-pub const IMAGE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19480";
 pub const IMAGE_BACKEND_API_SERVICE_ID: &str = "sdkwork-image-backend-api";
-pub const IMAGE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19481";
 pub const IMAGE_OPEN_API_SERVICE_ID: &str = "sdkwork-image-open-api";
-pub const IMAGE_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19482";
 pub const COMMENTS_APP_API_SERVICE_ID: &str = "sdkwork-comments-app-api";
-pub const COMMENTS_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19580";
 pub const COMMENTS_BACKEND_API_SERVICE_ID: &str = "sdkwork-comments-backend-api";
-pub const COMMENTS_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19581";
 pub const COURSE_APP_API_SERVICE_ID: &str = "sdkwork-course-app-api";
-pub const COURSE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19680";
 pub const COURSE_BACKEND_API_SERVICE_ID: &str = "sdkwork-course-backend-api";
-pub const COURSE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19681";
 pub const MESSAGING_APP_API_SERVICE_ID: &str = "sdkwork-messaging-app-api";
-pub const MESSAGING_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19780";
 pub const MESSAGING_BACKEND_API_SERVICE_ID: &str = "sdkwork-messaging-backend-api";
-pub const MESSAGING_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19781";
 pub const CMS_APP_API_SERVICE_ID: &str = "sdkwork-cms-app-api";
 pub const CMS_APP_API_PREFIX: &str = "/app/v3/api/cms";
-pub const CMS_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19882";
-pub const CMS_APP_API_BASE_URL_ENV: &str = "SDKWORK_CMS_APP_API_BASE_URL";
 pub const CMS_BACKEND_API_SERVICE_ID: &str = "sdkwork-cms-backend-api";
 pub const CMS_BACKEND_API_PREFIX: &str = "/backend/v3/api/cms";
-pub const CMS_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19883";
-pub const CMS_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_CMS_BACKEND_API_BASE_URL";
 pub const CMS_OPEN_API_SERVICE_ID: &str = "sdkwork-cms-open-api";
 pub const CMS_OPEN_API_PREFIX: &str = "/cms/v3/api";
-pub const CMS_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19884";
-pub const CMS_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_CMS_OPEN_API_BASE_URL";
 pub const FORUM_APP_API_SERVICE_ID: &str = "sdkwork-forum-app-api";
 pub const FORUM_APP_API_PREFIX: &str = "/app/v3/api/forum";
-pub const FORUM_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19885";
-pub const FORUM_APP_API_BASE_URL_ENV: &str = "SDKWORK_FORUM_APP_API_BASE_URL";
 pub const FORUM_BACKEND_API_SERVICE_ID: &str = "sdkwork-forum-backend-api";
 pub const FORUM_BACKEND_API_PREFIX: &str = "/backend/v3/api/forum";
-pub const FORUM_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19886";
-pub const FORUM_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_FORUM_BACKEND_API_BASE_URL";
 pub const FORUM_OPEN_API_SERVICE_ID: &str = "sdkwork-forum-open-api";
 pub const FORUM_OPEN_API_PREFIX: &str = "/forum/v3/api";
-pub const FORUM_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19887";
-pub const FORUM_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_FORUM_OPEN_API_BASE_URL";
 pub const SDKWORK_IM_IM_HTTP_SERVICE_ID: &str = "sdkwork-im-im-http";
 pub const SDKWORK_IM_IM_HTTP_PREFIX: &str = "/im/v3/api";
-pub const SDKWORK_IM_IM_HTTP_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19880";
-pub const SDKWORK_IM_IM_HTTP_BASE_URL_ENV: &str = "SDKWORK_IM_IM_HTTP_BASE_URL";
-pub const SDKWORK_IM_IM_HTTP_BASE_URL_LEGACY_ENV: &str = "CRAW_CHAT_IM_HTTP_BASE_URL";
 pub const SDKWORK_IM_BACKEND_HTTP_SERVICE_ID: &str = "sdkwork-im-backend-http";
-pub const SDKWORK_IM_BACKEND_HTTP_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19881";
-pub const SDKWORK_IM_BACKEND_HTTP_BASE_URL_ENV: &str = "SDKWORK_IM_BACKEND_HTTP_BASE_URL";
-pub const SDKWORK_IM_BACKEND_HTTP_BASE_URL_LEGACY_ENV: &str = "CRAW_CHAT_BACKEND_HTTP_BASE_URL";
 pub const SDKWORK_CLAW_GATEWAY_SERVICE_ID: &str = "sdkwork-claw-gateway";
-pub const SDKWORK_CLAW_GATEWAY_DEFAULT_BASE_URL: &str = "http://127.0.0.1:18190";
-pub const SDKWORK_CLAW_GATEWAY_BASE_URL_ENV: &str = "SDKWORK_CLAW_GATEWAY_BASE_URL";
 pub const SDKWORK_APPSTORE_APP_API_SERVICE_ID: &str = "sdkwork-appstore-app-api";
-pub const SDKWORK_APPSTORE_APP_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19980";
-pub const SDKWORK_APPSTORE_APP_API_BASE_URL_ENV: &str = "SDKWORK_APPSTORE_APP_API_BASE_URL";
 pub const SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID: &str = "sdkwork-appstore-backend-api";
-pub const SDKWORK_APPSTORE_BACKEND_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19981";
-pub const SDKWORK_APPSTORE_BACKEND_API_BASE_URL_ENV: &str = "SDKWORK_APPSTORE_BACKEND_API_BASE_URL";
 pub const SDKWORK_APPSTORE_OPEN_API_SERVICE_ID: &str = "sdkwork-appstore-open-api";
-pub const SDKWORK_APPSTORE_OPEN_API_DEFAULT_BASE_URL: &str = "http://127.0.0.1:19982";
-pub const SDKWORK_APPSTORE_OPEN_API_BASE_URL_ENV: &str = "SDKWORK_APPSTORE_OPEN_API_BASE_URL";
 pub const LLM_APP_API_SERVICE_ID: &str = "sdkwork-llm-app-api";
 pub const LLM_BACKEND_API_SERVICE_ID: &str = "sdkwork-llm-backend-api";
 pub const LLM_OPEN_API_SERVICE_ID: &str = "sdkwork-llm-open-api";
@@ -184,7 +95,6 @@ pub const MAIL_BACKEND_API_SERVICE_ID: &str = "sdkwork-mail-backend-api";
 pub const MCP_APP_API_SERVICE_ID: &str = "sdkwork-mcp-app-api";
 pub const MCP_BACKEND_API_SERVICE_ID: &str = "sdkwork-mcp-backend-api";
 pub const DEFAULT_MAX_REQUEST_BODY_BYTES: usize = 32 * 1024 * 1024;
-pub const DEFAULT_UPSTREAM_READINESS_PATH: &str = "/healthz";
 
 #[derive(Debug, Error)]
 pub enum GatewayConfigError {
@@ -217,14 +127,10 @@ pub struct GatewayRuntimeConfig {
     pub server: GatewayServerConfig,
     #[serde(default)]
     pub mode: GatewayMode,
-    #[serde(default = "default_upstreams")]
-    pub upstreams: Vec<ServiceUpstreamConfig>,
     #[serde(default = "default_dependency_surfaces")]
     pub dependency_surfaces: Vec<DependencyApiSurfaceConfig>,
     #[serde(default)]
     pub request: GatewayRequestConfig,
-    #[serde(default)]
-    pub readiness: GatewayReadinessConfig,
     #[serde(default)]
     pub observability: GatewayObservabilityConfig,
     #[serde(default)]
@@ -235,8 +141,6 @@ pub struct GatewayRuntimeConfig {
     pub policy: GatewayPolicyConfig,
     #[serde(default)]
     pub diagnostics: GatewayDiagnosticsConfig,
-    #[serde(default)]
-    pub resilience: GatewayResilienceConfig,
     #[serde(default)]
     pub cors: CorsConfig,
 }
@@ -261,21 +165,7 @@ pub struct GatewayServerConfig {
 #[serde(rename_all = "kebab-case")]
 pub enum GatewayMode {
     #[default]
-    Split,
     Embedded,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ServiceUpstreamConfig {
-    pub service_id: String,
-    pub base_url: String,
-    #[serde(default = "default_true")]
-    pub required: bool,
-    #[serde(default = "default_timeout_ms")]
-    pub timeout_ms: u64,
-    #[serde(default = "default_readiness_path")]
-    pub readiness_path: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -299,17 +189,13 @@ pub struct DependencyApiSurfaceConfig {
     pub cargo_dependency: Option<String>,
     #[serde(default)]
     pub coverage: String,
-    #[serde(default)]
-    pub required_base_url_key: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum DependencyRuntimeMode {
-    Split,
-    Embedded,
     #[default]
-    SplitOrEmbedded,
+    Embedded,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -326,17 +212,6 @@ pub struct CorsConfig {
 pub struct GatewayRequestConfig {
     #[serde(default = "default_max_request_body_bytes")]
     pub max_body_bytes: usize,
-    #[serde(default = "default_request_timeout_ms")]
-    pub timeout_ms: u64,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GatewayReadinessConfig {
-    #[serde(default)]
-    pub check_upstreams: bool,
-    #[serde(default = "default_readiness_timeout_ms")]
-    pub timeout_ms: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -471,8 +346,6 @@ pub struct GatewayPolicyRuleConfig {
     pub allowed_methods: Vec<String>,
     #[serde(default)]
     pub max_body_bytes: Option<usize>,
-    #[serde(default)]
-    pub timeout_ms: Option<u64>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -488,43 +361,19 @@ pub struct GatewayDiagnosticsConfig {
     pub include_route_inventory: bool,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GatewayResilienceConfig {
-    #[serde(default)]
-    pub retry_enabled: bool,
-    #[serde(default = "default_retry_max_attempts")]
-    pub max_attempts: usize,
-    #[serde(default = "default_retry_statuses")]
-    pub retry_statuses: Vec<u16>,
-    #[serde(default)]
-    pub retry_backoff_ms: u64,
-    #[serde(default)]
-    pub circuit_breaker_enabled: bool,
-    #[serde(default = "default_circuit_breaker_failure_threshold")]
-    pub failure_threshold: usize,
-    #[serde(default = "default_circuit_breaker_open_seconds")]
-    pub open_seconds: u64,
-    #[serde(default = "default_circuit_breaker_half_open_max_attempts")]
-    pub half_open_max_attempts: usize,
-}
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct RawGatewayRuntimeConfig {
     service: Option<GatewayServiceConfig>,
     server: Option<RawGatewayServerConfig>,
     mode: Option<GatewayMode>,
-    upstreams: Option<Vec<ServiceUpstreamConfig>>,
     dependency_surfaces: Option<Vec<DependencyApiSurfaceConfig>>,
     request: Option<GatewayRequestConfig>,
-    readiness: Option<GatewayReadinessConfig>,
     observability: Option<GatewayObservabilityConfig>,
     security: Option<GatewaySecurityConfig>,
     traffic: Option<GatewayTrafficConfig>,
     policy: Option<GatewayPolicyConfig>,
     diagnostics: Option<GatewayDiagnosticsConfig>,
-    resilience: Option<GatewayResilienceConfig>,
     cors: Option<CorsConfig>,
 }
 
@@ -572,8 +421,6 @@ struct SdkworkManifestDependency {
     cargo_dependency: Option<String>,
     #[serde(default)]
     coverage: Option<String>,
-    #[serde(default)]
-    required_base_url_key: Option<String>,
 }
 
 impl Default for GatewayRuntimeConfig {
@@ -582,16 +429,13 @@ impl Default for GatewayRuntimeConfig {
             service: GatewayServiceConfig::default(),
             server: GatewayServerConfig::default(),
             mode: GatewayMode::default(),
-            upstreams: default_upstreams(),
             dependency_surfaces: default_dependency_surfaces(),
             request: GatewayRequestConfig::default(),
-            readiness: GatewayReadinessConfig::default(),
             observability: GatewayObservabilityConfig::default(),
             security: GatewaySecurityConfig::default(),
             traffic: GatewayTrafficConfig::default(),
             policy: GatewayPolicyConfig::default(),
             diagnostics: GatewayDiagnosticsConfig::default(),
-            resilience: GatewayResilienceConfig::default(),
             cors: CorsConfig::default(),
         }
     }
@@ -616,18 +460,11 @@ impl GatewayRuntimeConfig {
         if let Some(mode) = raw.mode {
             config.mode = mode;
         }
-        config.upstreams = match raw.upstreams {
-            Some(upstreams) => upstreams,
-            None => default_upstreams(),
-        };
         if let Some(dependency_surfaces) = raw.dependency_surfaces {
             config.dependency_surfaces = dependency_surfaces;
         }
         if let Some(request) = raw.request {
             config.request = request;
-        }
-        if let Some(readiness) = raw.readiness {
-            config.readiness = readiness;
         }
         if let Some(observability) = raw.observability {
             config.observability = observability;
@@ -643,9 +480,6 @@ impl GatewayRuntimeConfig {
         }
         if let Some(diagnostics) = raw.diagnostics {
             config.diagnostics = diagnostics;
-        }
-        if let Some(resilience) = raw.resilience {
-            config.resilience = resilience;
         }
         if let Some(cors) = raw.cors {
             config.cors = cors;
@@ -701,22 +535,6 @@ impl GatewayRuntimeConfig {
         if let Some(max_body_bytes) = env.get("SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES") {
             self.request.max_body_bytes =
                 parse_usize_env("SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES", max_body_bytes)?;
-        }
-        if let Some(timeout_ms) = env.get("SDKWORK_API_CLOUD_GATEWAY_TIMEOUT_MS") {
-            self.request.timeout_ms =
-                parse_u64_env("SDKWORK_API_CLOUD_GATEWAY_TIMEOUT_MS", timeout_ms)?;
-        }
-        if let Some(check_upstreams) =
-            env.get("SDKWORK_API_CLOUD_GATEWAY_READINESS_CHECK_UPSTREAMS")
-        {
-            self.readiness.check_upstreams = parse_bool_env(
-                "SDKWORK_API_CLOUD_GATEWAY_READINESS_CHECK_UPSTREAMS",
-                check_upstreams,
-            )?;
-        }
-        if let Some(timeout_ms) = env.get("SDKWORK_API_CLOUD_GATEWAY_READINESS_TIMEOUT_MS") {
-            self.readiness.timeout_ms =
-                parse_u64_env("SDKWORK_API_CLOUD_GATEWAY_READINESS_TIMEOUT_MS", timeout_ms)?;
         }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED") {
             self.observability.access_log_enabled =
@@ -778,95 +596,8 @@ impl GatewayRuntimeConfig {
         if let Some(path) = env.get("SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH") {
             self.diagnostics.path = path.clone();
         }
-        if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RETRY_ENABLED") {
-            self.resilience.retry_enabled =
-                parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RETRY_ENABLED", enabled)?;
-        }
-        if let Some(max_attempts) = env.get("SDKWORK_API_CLOUD_GATEWAY_RETRY_MAX_ATTEMPTS") {
-            self.resilience.max_attempts =
-                parse_usize_env("SDKWORK_API_CLOUD_GATEWAY_RETRY_MAX_ATTEMPTS", max_attempts)?;
-        }
-        if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_ENABLED") {
-            self.resilience.circuit_breaker_enabled =
-                parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_ENABLED", enabled)?;
-        }
-        if let Some(failure_threshold) =
-            env.get("SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD")
-        {
-            self.resilience.failure_threshold = parse_usize_env(
-                "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_FAILURE_THRESHOLD",
-                failure_threshold,
-            )?;
-        }
-        if let Some(open_seconds) =
-            env.get("SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS")
-        {
-            self.resilience.open_seconds = parse_u64_env(
-                "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_OPEN_SECONDS",
-                open_seconds,
-            )?;
-        }
-        if let Some(half_open_max_attempts) =
-            env.get("SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS")
-        {
-            self.resilience.half_open_max_attempts = parse_usize_env(
-                "SDKWORK_API_CLOUD_GATEWAY_CIRCUIT_BREAKER_HALF_OPEN_MAX_ATTEMPTS",
-                half_open_max_attempts,
-            )?;
-        }
-
-        let surfaces = self.dependency_surfaces.clone();
-        for surface in surfaces {
-            if let Some(key) = surface.required_base_url_key.as_deref() {
-                if let Some(base_url) = env.get(key).filter(|value| !value.trim().is_empty()) {
-                    self.set_upstream_base_url(surface.service_id.as_str(), base_url);
-                }
-            }
-        }
-
-        if let Some(base_url) = env
-            .get(APPBASE_APP_API_BASE_URL_ENV)
-            .filter(|value| !value.trim().is_empty())
-        {
-            self.set_upstream_base_url(APPBASE_APP_API_SERVICE_ID, base_url);
-        }
-
-        self.apply_legacy_im_upstream_env_overrides(env);
-
         self.validate()?;
         Ok(self)
-    }
-
-    fn apply_legacy_im_upstream_env_overrides(&mut self, env: &HashMap<String, String>) {
-        let overrides = [
-            (
-                SDKWORK_IM_IM_HTTP_SERVICE_ID,
-                SDKWORK_IM_IM_HTTP_BASE_URL_ENV,
-                SDKWORK_IM_IM_HTTP_BASE_URL_LEGACY_ENV,
-            ),
-            (
-                SDKWORK_IM_BACKEND_HTTP_SERVICE_ID,
-                SDKWORK_IM_BACKEND_HTTP_BASE_URL_ENV,
-                SDKWORK_IM_BACKEND_HTTP_BASE_URL_LEGACY_ENV,
-            ),
-        ];
-        for (service_id, canonical_key, legacy_key) in overrides {
-            if env
-                .get(canonical_key)
-                .is_some_and(|value| !value.trim().is_empty())
-            {
-                continue;
-            }
-            if let Some(base_url) = env.get(legacy_key).filter(|value| !value.trim().is_empty()) {
-                self.set_upstream_base_url(service_id, base_url);
-            }
-        }
-    }
-
-    pub fn upstream(&self, service_id: &str) -> Option<&ServiceUpstreamConfig> {
-        self.upstreams
-            .iter()
-            .find(|upstream| upstream.service_id == service_id)
     }
 
     pub fn required_dependency_surfaces(
@@ -886,10 +617,29 @@ impl GatewayRuntimeConfig {
         )?;
         validate_positive_usize("request.maxBodyBytes", self.request.max_body_bytes)?;
 
-        for upstream in &self.upstreams {
-            validate_non_empty("upstreams[].serviceId", upstream.service_id.as_str())?;
-            validate_non_empty("upstreams[].baseUrl", upstream.base_url.as_str())?;
+        if is_production_like_environment(self.service.environment.as_str())
+            && self
+                .dependency_surfaces
+                .iter()
+                .any(|surface| surface.surface.eq_ignore_ascii_case("app"))
+        {
+            if self.cors.allow_any_origin {
+                return Err(invalid_value(
+                    "cors.allowAnyOrigin",
+                    "must be false for a production-like gateway that exposes app-api",
+                ));
+            }
+            if self.cors.allowed_origins.is_empty() {
+                return Err(invalid_value(
+                    "cors.allowedOrigins",
+                    "must contain at least one exact HTTP(S) origin for a production-like gateway that exposes app-api",
+                ));
+            }
+            for origin in &self.cors.allowed_origins {
+                validate_exact_http_origin("cors.allowedOrigins[]", origin)?;
+            }
         }
+
         for surface in &self.dependency_surfaces {
             validate_non_empty(
                 "dependencySurfaces[].serviceId",
@@ -920,20 +670,6 @@ impl GatewayRuntimeConfig {
         Ok(())
     }
 
-    fn set_upstream_base_url(&mut self, service_id: &str, base_url: &str) {
-        if let Some(upstream) = self
-            .upstreams
-            .iter_mut()
-            .find(|upstream| upstream.service_id == service_id)
-        {
-            upstream.base_url = trim_trailing_slash(base_url);
-            return;
-        }
-
-        self.upstreams
-            .push(ServiceUpstreamConfig::new(service_id, base_url));
-    }
-
     fn from_sdkwork_manifest(manifest: SdkworkAppManifest) -> Self {
         let mut config = Self::default();
         let backend = manifest.backend;
@@ -956,19 +692,6 @@ impl GatewayRuntimeConfig {
                 .into_iter()
                 .map(DependencyApiSurfaceConfig::from_manifest_dependency)
                 .collect();
-            let mut upstreams = Vec::new();
-            for surface in &config.dependency_surfaces {
-                let Some(upstream) = default_upstream_for_dependency_surface(surface) else {
-                    continue;
-                };
-                if upstreams.iter().any(|candidate: &ServiceUpstreamConfig| {
-                    candidate.service_id == upstream.service_id
-                }) {
-                    continue;
-                }
-                upstreams.push(upstream);
-            }
-            config.upstreams = upstreams;
         }
 
         config
@@ -995,21 +718,8 @@ impl Default for GatewayServerConfig {
 impl GatewayMode {
     pub fn parse(value: &str) -> Result<Self, GatewayConfigError> {
         match value.trim().to_ascii_lowercase().as_str() {
-            "split" => Ok(Self::Split),
             "embedded" | "all-in-one" | "all_in_one" => Ok(Self::Embedded),
             other => Err(GatewayConfigError::InvalidMode(other.to_string())),
-        }
-    }
-}
-
-impl ServiceUpstreamConfig {
-    pub fn new(service_id: impl Into<String>, base_url: impl AsRef<str>) -> Self {
-        Self {
-            service_id: service_id.into(),
-            base_url: trim_trailing_slash(base_url.as_ref()),
-            required: true,
-            timeout_ms: default_timeout_ms(),
-            readiness_path: default_readiness_path(),
         }
     }
 }
@@ -1027,16 +737,6 @@ impl Default for GatewayRequestConfig {
     fn default() -> Self {
         Self {
             max_body_bytes: default_max_request_body_bytes(),
-            timeout_ms: default_request_timeout_ms(),
-        }
-    }
-}
-
-impl Default for GatewayReadinessConfig {
-    fn default() -> Self {
-        Self {
-            check_upstreams: false,
-            timeout_ms: default_readiness_timeout_ms(),
         }
     }
 }
@@ -1116,21 +816,6 @@ impl Default for GatewayDiagnosticsConfig {
     }
 }
 
-impl Default for GatewayResilienceConfig {
-    fn default() -> Self {
-        Self {
-            retry_enabled: false,
-            max_attempts: default_retry_max_attempts(),
-            retry_statuses: default_retry_statuses(),
-            retry_backoff_ms: 0,
-            circuit_breaker_enabled: false,
-            failure_threshold: default_circuit_breaker_failure_threshold(),
-            open_seconds: default_circuit_breaker_open_seconds(),
-            half_open_max_attempts: default_circuit_breaker_half_open_max_attempts(),
-        }
-    }
-}
-
 impl DependencyApiSurfaceConfig {
     fn from_manifest_dependency(dependency: SdkworkManifestDependency) -> Self {
         let executable_export = dependency
@@ -1153,16 +838,8 @@ impl DependencyApiSurfaceConfig {
             cargo_feature: dependency.cargo_feature,
             cargo_dependency: dependency.cargo_dependency,
             coverage,
-            required_base_url_key: dependency.required_base_url_key,
         }
     }
-}
-
-fn default_upstreams() -> Vec<ServiceUpstreamConfig> {
-    vec![ServiceUpstreamConfig::new(
-        APPBASE_APP_API_SERVICE_ID,
-        APPBASE_APP_API_DEFAULT_BASE_URL,
-    )]
 }
 
 fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
@@ -1173,7 +850,7 @@ fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
         api_authority: "sdkwork-iam-app-api".to_string(),
         surface: "app".to_string(),
         api_prefix: APPBASE_APP_API_PREFIX.to_string(),
-        runtime_mode: DependencyRuntimeMode::SplitOrEmbedded,
+        runtime_mode: DependencyRuntimeMode::Embedded,
         same_origin_allowed: true,
         executable_export: Some(
             "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router".to_string(),
@@ -1181,82 +858,7 @@ fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
         cargo_feature: Some("foundation-appbase".to_string()),
         cargo_dependency: Some("sdkwork_routes_iam_app_api".to_string()),
         coverage: "appbase-iam-routes".to_string(),
-        required_base_url_key: Some(APPBASE_APP_API_BASE_URL_ENV.to_string()),
     }]
-}
-
-fn default_upstream_for_dependency_surface(
-    surface: &DependencyApiSurfaceConfig,
-) -> Option<ServiceUpstreamConfig> {
-    let base_url = match surface.service_id.as_str() {
-        APPBASE_APP_API_SERVICE_ID => APPBASE_APP_API_DEFAULT_BASE_URL,
-        DRIVE_APP_API_SERVICE_ID => DRIVE_APP_API_DEFAULT_BASE_URL,
-        DRIVE_BACKEND_API_SERVICE_ID => DRIVE_BACKEND_API_DEFAULT_BASE_URL,
-        DRIVE_OPEN_API_SERVICE_ID => DRIVE_OPEN_API_DEFAULT_BASE_URL,
-        DRIVE_ADMIN_STORAGE_API_SERVICE_ID => DRIVE_ADMIN_STORAGE_API_DEFAULT_BASE_URL,
-        NOTARY_APP_API_SERVICE_ID => NOTARY_APP_API_DEFAULT_BASE_URL,
-        NOTARY_BACKEND_API_SERVICE_ID => NOTARY_BACKEND_API_DEFAULT_BASE_URL,
-        APPBASE_BACKEND_API_SERVICE_ID => APPBASE_BACKEND_API_DEFAULT_BASE_URL,
-        COMMERCE_APP_API_SERVICE_ID => COMMERCE_APP_API_DEFAULT_BASE_URL,
-        COMMERCE_BACKEND_API_SERVICE_ID => COMMERCE_BACKEND_API_DEFAULT_BASE_URL,
-        RTC_APP_API_SERVICE_ID => RTC_APP_API_DEFAULT_BASE_URL,
-        RTC_BACKEND_API_SERVICE_ID => RTC_BACKEND_API_DEFAULT_BASE_URL,
-        AGENT_APP_API_SERVICE_ID => AGENT_APP_API_DEFAULT_BASE_URL,
-        AGENT_BACKEND_API_SERVICE_ID => AGENT_BACKEND_API_DEFAULT_BASE_URL,
-        AGENT_OPEN_API_SERVICE_ID => AGENT_OPEN_API_DEFAULT_BASE_URL,
-        AIOT_APP_API_SERVICE_ID => AIOT_APP_API_DEFAULT_BASE_URL,
-        AIOT_BACKEND_API_SERVICE_ID => AIOT_BACKEND_API_DEFAULT_BASE_URL,
-        MEMORY_APP_API_SERVICE_ID => MEMORY_APP_API_DEFAULT_BASE_URL,
-        MEMORY_BACKEND_API_SERVICE_ID => MEMORY_BACKEND_API_DEFAULT_BASE_URL,
-        MEMORY_OPEN_API_SERVICE_ID => MEMORY_OPEN_API_DEFAULT_BASE_URL,
-        KNOWLEDGEBASE_APP_API_SERVICE_ID => KNOWLEDGEBASE_APP_API_DEFAULT_BASE_URL,
-        KNOWLEDGEBASE_BACKEND_API_SERVICE_ID => KNOWLEDGEBASE_BACKEND_API_DEFAULT_BASE_URL,
-        KNOWLEDGEBASE_OPEN_API_SERVICE_ID => KNOWLEDGEBASE_OPEN_API_DEFAULT_BASE_URL,
-        NEWS_APP_API_SERVICE_ID => NEWS_APP_API_DEFAULT_BASE_URL,
-        NEWS_BACKEND_API_SERVICE_ID => NEWS_BACKEND_API_DEFAULT_BASE_URL,
-        NEWS_OPEN_API_SERVICE_ID => NEWS_OPEN_API_DEFAULT_BASE_URL,
-        NOTES_APP_API_SERVICE_ID => NOTES_APP_API_DEFAULT_BASE_URL,
-        NOTES_BACKEND_API_SERVICE_ID => NOTES_BACKEND_API_DEFAULT_BASE_URL,
-        NOTES_OPEN_API_SERVICE_ID => NOTES_OPEN_API_DEFAULT_BASE_URL,
-        MUSIC_APP_API_SERVICE_ID => MUSIC_APP_API_DEFAULT_BASE_URL,
-        MUSIC_BACKEND_API_SERVICE_ID => MUSIC_BACKEND_API_DEFAULT_BASE_URL,
-        GENERATIONS_APP_API_SERVICE_ID => GENERATIONS_APP_API_DEFAULT_BASE_URL,
-        GENERATIONS_BACKEND_API_SERVICE_ID => GENERATIONS_BACKEND_API_DEFAULT_BASE_URL,
-        COMMUNITY_APP_API_SERVICE_ID => COMMUNITY_APP_API_DEFAULT_BASE_URL,
-        COMMUNITY_BACKEND_API_SERVICE_ID => COMMUNITY_BACKEND_API_DEFAULT_BASE_URL,
-        COMMUNITY_OPEN_API_SERVICE_ID => COMMUNITY_OPEN_API_DEFAULT_BASE_URL,
-        SEARCH_APP_API_SERVICE_ID => SEARCH_APP_API_DEFAULT_BASE_URL,
-        SEARCH_BACKEND_API_SERVICE_ID => SEARCH_BACKEND_API_DEFAULT_BASE_URL,
-        VOICE_APP_API_SERVICE_ID => VOICE_APP_API_DEFAULT_BASE_URL,
-        VOICE_BACKEND_API_SERVICE_ID => VOICE_BACKEND_API_DEFAULT_BASE_URL,
-        IMAGE_APP_API_SERVICE_ID => IMAGE_APP_API_DEFAULT_BASE_URL,
-        IMAGE_BACKEND_API_SERVICE_ID => IMAGE_BACKEND_API_DEFAULT_BASE_URL,
-        IMAGE_OPEN_API_SERVICE_ID => IMAGE_OPEN_API_DEFAULT_BASE_URL,
-        COMMENTS_APP_API_SERVICE_ID => COMMENTS_APP_API_DEFAULT_BASE_URL,
-        COMMENTS_BACKEND_API_SERVICE_ID => COMMENTS_BACKEND_API_DEFAULT_BASE_URL,
-        COURSE_APP_API_SERVICE_ID => COURSE_APP_API_DEFAULT_BASE_URL,
-        COURSE_BACKEND_API_SERVICE_ID => COURSE_BACKEND_API_DEFAULT_BASE_URL,
-        MESSAGING_APP_API_SERVICE_ID => MESSAGING_APP_API_DEFAULT_BASE_URL,
-        MESSAGING_BACKEND_API_SERVICE_ID => MESSAGING_BACKEND_API_DEFAULT_BASE_URL,
-        CMS_APP_API_SERVICE_ID => CMS_APP_API_DEFAULT_BASE_URL,
-        CMS_BACKEND_API_SERVICE_ID => CMS_BACKEND_API_DEFAULT_BASE_URL,
-        CMS_OPEN_API_SERVICE_ID => CMS_OPEN_API_DEFAULT_BASE_URL,
-        FORUM_APP_API_SERVICE_ID => FORUM_APP_API_DEFAULT_BASE_URL,
-        FORUM_BACKEND_API_SERVICE_ID => FORUM_BACKEND_API_DEFAULT_BASE_URL,
-        FORUM_OPEN_API_SERVICE_ID => FORUM_OPEN_API_DEFAULT_BASE_URL,
-        SDKWORK_IM_IM_HTTP_SERVICE_ID => SDKWORK_IM_IM_HTTP_DEFAULT_BASE_URL,
-        SDKWORK_IM_BACKEND_HTTP_SERVICE_ID => SDKWORK_IM_BACKEND_HTTP_DEFAULT_BASE_URL,
-        SDKWORK_CLAW_GATEWAY_SERVICE_ID => SDKWORK_CLAW_GATEWAY_DEFAULT_BASE_URL,
-        SDKWORK_APPSTORE_APP_API_SERVICE_ID => SDKWORK_APPSTORE_APP_API_DEFAULT_BASE_URL,
-        SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID => SDKWORK_APPSTORE_BACKEND_API_DEFAULT_BASE_URL,
-        SDKWORK_APPSTORE_OPEN_API_SERVICE_ID => SDKWORK_APPSTORE_OPEN_API_DEFAULT_BASE_URL,
-        _ => return None,
-    };
-
-    Some(ServiceUpstreamConfig::new(
-        surface.service_id.as_str(),
-        base_url,
-    ))
 }
 
 fn default_executable_export_for_service(service_id: &str) -> Option<String> {
@@ -1283,24 +885,8 @@ fn default_bind() -> String {
     DEFAULT_GATEWAY_BIND.to_string()
 }
 
-fn default_timeout_ms() -> u64 {
-    30_000
-}
-
-fn default_readiness_timeout_ms() -> u64 {
-    1_000
-}
-
 fn default_max_request_body_bytes() -> usize {
     DEFAULT_MAX_REQUEST_BODY_BYTES
-}
-
-fn default_request_timeout_ms() -> u64 {
-    0
-}
-
-fn default_readiness_path() -> String {
-    DEFAULT_UPSTREAM_READINESS_PATH.to_string()
 }
 
 fn default_metrics_path() -> String {
@@ -1352,32 +938,8 @@ fn default_rate_limit_reject_status() -> u16 {
     429
 }
 
-fn default_retry_max_attempts() -> usize {
-    1
-}
-
-fn default_retry_statuses() -> Vec<u16> {
-    vec![502, 503, 504]
-}
-
-fn default_circuit_breaker_failure_threshold() -> usize {
-    5
-}
-
-fn default_circuit_breaker_open_seconds() -> u64 {
-    30
-}
-
-fn default_circuit_breaker_half_open_max_attempts() -> usize {
-    1
-}
-
 fn default_true() -> bool {
     true
-}
-
-fn trim_trailing_slash(value: &str) -> String {
-    value.trim().trim_end_matches('/').to_string()
 }
 
 fn is_json_path(path: &Path) -> bool {
@@ -1410,16 +972,6 @@ fn parse_bool_env(key: &str, value: &str) -> Result<bool, GatewayConfigError> {
             value: value.to_string(),
         }
     })
-}
-
-fn parse_u64_env(key: &str, value: &str) -> Result<u64, GatewayConfigError> {
-    value
-        .trim()
-        .parse::<u64>()
-        .map_err(|_| GatewayConfigError::InvalidInteger {
-            key: key.to_string(),
-            value: value.to_string(),
-        })
 }
 
 fn parse_u32_env(key: &str, value: &str) -> Result<u32, GatewayConfigError> {
@@ -1482,6 +1034,34 @@ fn validate_non_empty(key: &str, value: &str) -> Result<(), GatewayConfigError> 
     }
 
     Err(invalid_value(key, "must be non-empty"))
+}
+
+fn is_production_like_environment(environment: &str) -> bool {
+    matches!(
+        environment.trim().to_ascii_lowercase().as_str(),
+        "prod" | "production" | "stage" | "staging" | "live"
+    )
+}
+
+fn validate_exact_http_origin(key: &str, origin: &str) -> Result<(), GatewayConfigError> {
+    let trimmed = origin.trim();
+    let Some(authority) = trimmed
+        .strip_prefix("https://")
+        .or_else(|| trimmed.strip_prefix("http://"))
+    else {
+        return Err(invalid_value(key, "must use the http or https scheme"));
+    };
+    if authority.is_empty()
+        || authority.contains(['/', '?', '#', '*'])
+        || authority.contains('@')
+        || trimmed != origin
+    {
+        return Err(invalid_value(
+            key,
+            "must be an exact origin without credentials, wildcard, path, query, or fragment",
+        ));
+    }
+    Ok(())
 }
 
 fn invalid_value(key: &str, reason: &str) -> GatewayConfigError {

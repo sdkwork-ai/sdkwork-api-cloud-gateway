@@ -1,5 +1,4 @@
 mode = "embedded"
-upstreams = []
 
 [service]
 name = "sdkwork-api-cloud-gateway"
@@ -15,268 +14,205 @@ sdkFamily = "sdkwork-iam-app-sdk"
 apiAuthority = "sdkwork-iam-app-api"
 surface = "app"
 apiPrefix = "/app/v3/api"
-runtimeMode = "split-or-embedded"
+runtimeMode = "embedded"
 sameOriginAllowed = true
 executableExport = "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router"
 cargoFeature = "foundation-appbase"
 cargoDependency = "sdkwork_routes_iam_app_api"
 coverage = "appbase-iam-routes"
-requiredBaseUrlKey = "SDKWORK_APPBASE_APP_API_BASE_URL"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-agent-app-api"
-workspace = "sdkwork-kernel"
-sdkFamily = "sdkwork-agent-app-sdk"
-apiAuthority = "sdkwork-agent-app-api"
-surface = "app"
-apiPrefix = "/app/v3/api/ai"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_agents_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-kernel"
-cargoDependency = "sdkwork-agents-gateway-assembly"
-coverage = "agent-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_AGENT_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-agent-backend-api"
-workspace = "sdkwork-kernel"
-sdkFamily = "sdkwork-agent-backend-sdk"
-apiAuthority = "sdkwork-agent-backend-api"
+serviceId = "sdkwork-drive-backend-api"
+workspace = "sdkwork-drive"
+sdkFamily = "sdkwork-drive-backend-sdk"
+apiAuthority = "sdkwork-drive-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/ai"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_agents_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-kernel"
-cargoDependency = "sdkwork-agents-gateway-assembly"
-coverage = "agent-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_AGENT_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/drive"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+cargoFeature = "foundation-drive"
+cargoDependency = "sdkwork-drive-gateway-assembly"
+coverage = "sdkwork-drive-backend-api-embedded-assembly-routes"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-agent-open-api"
-workspace = "sdkwork-kernel"
-sdkFamily = "sdkwork-agent-sdk"
-apiAuthority = "sdkwork-agent-open-api"
-surface = "open"
-apiPrefix = "/agent/v3/api"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_agents_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-kernel"
-cargoDependency = "sdkwork-agents-gateway-assembly"
-coverage = "agent-open-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_AGENT_OPEN_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-deploy-app-api"
-workspace = "sdkwork-deployments"
-sdkFamily = "sdkwork-deploy-app-sdk"
-apiAuthority = "sdkwork-deploy-app-api"
-surface = "app"
-apiPrefix = "/app/v3/api/deploy"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-deployments"
-cargoDependency = "sdkwork-deployments-gateway-assembly"
-coverage = "deploy-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DEPLOY_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-deploy-backend-api"
-workspace = "sdkwork-deployments"
-sdkFamily = "sdkwork-deploy-backend-sdk"
-apiAuthority = "sdkwork-deploy-backend-api"
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/deploy"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-deployments"
-cargoDependency = "sdkwork-deployments-gateway-assembly"
-coverage = "deploy-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DEPLOY_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/orders"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-dezhou-app-api"
-workspace = "sdkwork-dezhou"
-sdkFamily = "sdkwork-dezhou-app-sdk"
-apiAuthority = "sdkwork-dezhou-app-api"
-surface = "app"
-apiPrefix = "/app/v3/api/tables"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-dezhou"
-cargoDependency = "sdkwork-dezhou-gateway-assembly"
-coverage = "dezhou-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DEZHOU_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-dezhou-backend-api"
-workspace = "sdkwork-dezhou"
-sdkFamily = "sdkwork-dezhou-backend-sdk"
-apiAuthority = "sdkwork-dezhou-backend-api"
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/tables"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-dezhou"
-cargoDependency = "sdkwork-dezhou-gateway-assembly"
-coverage = "dezhou-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DEZHOU_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/after_sales"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-documents-app-api"
-workspace = "sdkwork-documents"
-sdkFamily = "sdkwork-documents-app-sdk"
-apiAuthority = "sdkwork-documents.app"
-surface = "app"
-apiPrefix = "/app/v3/api/documents"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
-cargoFeature = "foundation-documents"
-cargoDependency = "sdkwork-documents-gateway-assembly"
-coverage = "documents-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DOCUMENTS_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-documents-backend-api"
-workspace = "sdkwork-documents"
-sdkFamily = "sdkwork-documents-backend-sdk"
-apiAuthority = "sdkwork-documents.backend"
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/documents"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
-cargoFeature = "foundation-documents"
-cargoDependency = "sdkwork-documents-gateway-assembly"
-coverage = "documents-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DOCUMENTS_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/shipments"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-documents-open-api"
-workspace = "sdkwork-documents"
-sdkFamily = "sdkwork-documents-sdk"
-apiAuthority = "sdkwork-documents-open-api"
-surface = "open"
-apiPrefix = "/doc/v3/api/documents"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
-cargoFeature = "foundation-documents"
-cargoDependency = "sdkwork-documents-gateway-assembly"
-coverage = "documents-open-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_DOCUMENTS_OPEN_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-modelkit-app-api"
-workspace = "sdkwork-modelkit"
-sdkFamily = "sdkwork-modelkit-app-sdk"
-apiAuthority = "sdkwork-modelkit-standalone-gateway"
-surface = "app"
-apiPrefix = "/app/v3/api/modelkit"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env"
-cargoFeature = "foundation-modelkit"
-cargoDependency = "sdkwork-modelkit-gateway-assembly"
-coverage = "modelkit-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_MODELKIT_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-prompts-app-api"
-workspace = "sdkwork-prompts"
-sdkFamily = "sdkwork-prompts-app-sdk"
-apiAuthority = "sdkwork-prompts-app-api"
-surface = "app"
-apiPrefix = "/app/v3/api/prompts"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-prompts"
-cargoDependency = "sdkwork-prompts-gateway-assembly"
-coverage = "prompts-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_PROMPTS_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-prompts-backend-api"
-workspace = "sdkwork-prompts"
-sdkFamily = "sdkwork-prompts-backend-sdk"
-apiAuthority = "sdkwork-prompts-backend-api"
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/prompts"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-prompts"
-cargoDependency = "sdkwork-prompts-gateway-assembly"
-coverage = "prompts-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_PROMPTS_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/account_value_packages"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
 
 [[dependencySurfaces]]
-serviceId = "sdkwork-prompts-open-api"
-workspace = "sdkwork-prompts"
-sdkFamily = "sdkwork-prompts-sdk"
-apiAuthority = "sdkwork-prompts-open-api"
-surface = "open"
-apiPrefix = "/prompts/v3/api"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-prompts"
-cargoDependency = "sdkwork-prompts-gateway-assembly"
-coverage = "prompts-open-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_PROMPTS_OPEN_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-web-app-api"
-workspace = "sdkwork-web-server"
-sdkFamily = "sdkwork-web-app-sdk"
-apiAuthority = "sdkwork-web.app"
-surface = "app"
-apiPrefix = "/app/v3/api/web"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-web-server"
-cargoDependency = "sdkwork-web-server-gateway-assembly"
-coverage = "web-app-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_WEB_APP_API_BASE_URL"
-
-[[dependencySurfaces]]
-serviceId = "sdkwork-web-backend-api"
-workspace = "sdkwork-web-server"
-sdkFamily = "sdkwork-web-backend-sdk"
-apiAuthority = "sdkwork-web.backend"
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
 surface = "backend"
-apiPrefix = "/backend/v3/api/web"
-runtimeMode = "split-or-embedded"
-executableExport = "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
-cargoFeature = "foundation-web-server"
-cargoDependency = "sdkwork-web-server-gateway-assembly"
-coverage = "web-backend-api-upstream-routes"
-requiredBaseUrlKey = "SDKWORK_WEB_BACKEND_API_BASE_URL"
+apiPrefix = "/backend/v3/api/token_bank_plans"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/refund_requests"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-order-backend-api"
+workspace = "sdkwork-order"
+sdkFamily = "sdkwork-order-backend-sdk"
+apiAuthority = "sdkwork-order-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/withdrawal_requests"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-order"
+cargoDependency = "sdkwork-order-gateway-assembly"
+coverage = "sdkwork-order-backend-api-embedded-assembly-routes"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-promotion-backend-api"
+workspace = "sdkwork-promotion"
+sdkFamily = "sdkwork-promotion-backend-sdk"
+apiAuthority = "sdkwork-promotion-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/promotions"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_promotion_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-promotion"
+cargoDependency = "sdkwork-promotion-gateway-assembly"
+coverage = "sdkwork-promotion-backend-api-embedded-assembly-routes"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-payment-backend-api"
+workspace = "sdkwork-payment"
+sdkFamily = "sdkwork-payment-backend-sdk"
+apiAuthority = "sdkwork-payment-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/payments"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_payment_gateway_assembly::assemble_application_router_from_env"
+cargoFeature = "foundation-payment"
+cargoDependency = "sdkwork-payment-gateway-assembly"
+coverage = "sdkwork-payment-backend-api-embedded-assembly-routes"
+
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-membership-app-api"
+workspace = "sdkwork-membership"
+sdkFamily = "sdkwork-membership-app-sdk"
+apiAuthority = "sdkwork-membership-app-api"
+surface = "app"
+apiPrefix = "/app/v3/api/memberships"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env"
+cargoFeature = "foundation-membership"
+cargoDependency = "sdkwork-membership-gateway-assembly"
+coverage = "sdkwork-membership-app-api-embedded-assembly-routes"
+
+[[dependencySurfaces]]
+serviceId = "sdkwork-membership-backend-api"
+workspace = "sdkwork-membership"
+sdkFamily = "sdkwork-membership-backend-sdk"
+apiAuthority = "sdkwork-membership-backend-api"
+surface = "backend"
+apiPrefix = "/backend/v3/api/memberships"
+runtimeMode = "embedded"
+sameOriginAllowed = true
+executableExport = "sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env"
+cargoFeature = "foundation-membership"
+cargoDependency = "sdkwork-membership-gateway-assembly"
+coverage = "sdkwork-membership-backend-api-embedded-assembly-routes"
 
 [cors]
-allowAnyOrigin = true
-allowedOrigins = []
+allowAnyOrigin = false
+allowedOrigins = ["http://127.0.0.1:5173", "http://localhost:5173"]
 
 [request]
 maxBodyBytes = 33554432
-timeoutMs = 0
-
-[readiness]
-checkUpstreams = false
-timeoutMs = 1000
 
 [observability]
 accessLogEnabled = true
 auditLogEnabled = true
-accessLogSampleRateBasisPoints = 10000
-auditLogSampleRateBasisPoints = 10000
 metricsEnabled = false
 metricsPath = "/metrics"
 tracingEnabled = false
 redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
 
 [diagnostics]
-enabled = false
+enabled = true
 path = "/internal/gateway/diagnostics"
 includePolicyInventory = true
 includeRouteInventory = true
 
 [security]
-allowedHosts = []
+allowedHosts = ["127.0.0.1:3900", "localhost:3900"]
 trustedProxyCidrs = []
 secureHeadersEnabled = true
 maxHeaderBytes = 65536
@@ -294,7 +230,7 @@ inspectJsonBody = false
 [traffic]
 rateLimitEnabled = false
 compatXRateLimitHeaders = true
-globalMaxInFlight = 1024
+globalMaxInFlight = 256
 rateLimits = []
 concurrencyLimits = []
 
@@ -302,13 +238,3 @@ concurrencyLimits = []
 enabled = true
 dryRun = false
 rules = []
-
-[resilience]
-retryEnabled = false
-maxAttempts = 1
-retryStatuses = [502, 503, 504]
-retryBackoffMs = 0
-circuitBreakerEnabled = false
-failureThreshold = 5
-openSeconds = 30
-halfOpenMaxAttempts = 1

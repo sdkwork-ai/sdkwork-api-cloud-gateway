@@ -69,7 +69,6 @@ fn diagnostics_snapshot(state: &GatewayState) -> serde_json::Value {
                     "matchPathPrefix": rule.match_path_prefix,
                     "allowedMethods": rule.allowed_methods,
                     "hasMaxBodyBytes": rule.max_body_bytes.is_some(),
-                    "hasTimeoutMs": rule.timeout_ms.is_some(),
                 })
             })
             .collect::<Vec<_>>()

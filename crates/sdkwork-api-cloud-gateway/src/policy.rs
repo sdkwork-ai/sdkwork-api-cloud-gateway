@@ -5,7 +5,6 @@ use sdkwork_api_cloud_gateway_registry::RouteDescriptor;
 #[derive(Clone, Debug, Default)]
 pub(crate) struct PolicyDecision {
     max_body_bytes: Option<PolicyLimit<usize>>,
-    timeout_ms: Option<PolicyLimit<u64>>,
     dry_run_events: Vec<PolicyDryRunEvent>,
 }
 
@@ -83,15 +82,6 @@ pub(crate) fn evaluate_request(
             value,
             scope: scope.to_string(),
         });
-    let timeout_ms = matched_rules
-        .iter()
-        .filter_map(|rule| rule.timeout_ms.map(|value| (value, rule.id.as_str())))
-        .min_by_key(|(value, _scope)| *value)
-        .map(|(value, scope)| PolicyLimit {
-            value,
-            scope: scope.to_string(),
-        });
-
     if config.dry_run {
         if let Some(limit) = max_body_bytes.as_ref() {
             if content_length_exceeds(headers, limit.value) {
@@ -104,14 +94,12 @@ pub(crate) fn evaluate_request(
 
         return Ok(PolicyDecision {
             max_body_bytes: None,
-            timeout_ms: None,
             dry_run_events,
         });
     }
 
     Ok(PolicyDecision {
         max_body_bytes,
-        timeout_ms,
         dry_run_events,
     })
 }
@@ -128,13 +116,6 @@ impl PolicyDecision {
         self.max_body_bytes
             .as_ref()
             .map(|limit| limit.scope.as_str())
-    }
-
-    pub(crate) fn timeout_ms(&self, fallback: u64) -> u64 {
-        self.timeout_ms
-            .as_ref()
-            .map(|limit| limit.value)
-            .unwrap_or(fallback)
     }
 
     pub(crate) fn dry_run_events(&self) -> &[PolicyDryRunEvent] {

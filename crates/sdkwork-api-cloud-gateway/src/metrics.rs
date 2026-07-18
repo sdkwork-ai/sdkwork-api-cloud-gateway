@@ -19,12 +19,10 @@ pub(crate) struct GatewayMetrics {
 struct GatewayMetricsState {
     http_requests: BTreeMap<HttpRequestLabels, u64>,
     http_request_durations: BTreeMap<HttpRequestLabels, HistogramValue>,
-    upstream_requests: BTreeMap<UpstreamRequestLabels, u64>,
     security_events: BTreeMap<SecurityEventLabels, u64>,
     traffic_rejections: BTreeMap<TrafficRejectionLabels, u64>,
     policy_rejections: BTreeMap<PolicyRejectionLabels, u64>,
     policy_dry_runs: BTreeMap<PolicyDryRunLabels, u64>,
-    resilience_events: BTreeMap<ResilienceEventLabels, u64>,
 }
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -32,13 +30,6 @@ struct HttpRequestLabels {
     service: String,
     method: String,
     route_target: String,
-    service_id: String,
-    status: String,
-}
-
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct UpstreamRequestLabels {
-    service: String,
     service_id: String,
     status: String,
 }
@@ -73,13 +64,6 @@ struct PolicyDryRunLabels {
     kind: String,
     scope: String,
     status: String,
-}
-
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct ResilienceEventLabels {
-    service: String,
-    service_id: String,
-    event: String,
 }
 
 #[derive(Clone, Debug)]
@@ -128,21 +112,6 @@ impl GatewayMetrics {
         let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
         let histogram = state.http_request_durations.entry(labels).or_default();
         histogram.record(duration.as_secs_f64());
-    }
-
-    pub(crate) fn record_upstream_request(
-        &self,
-        service: &str,
-        service_id: &str,
-        status: StatusCode,
-    ) {
-        let labels = UpstreamRequestLabels {
-            service: service.to_string(),
-            service_id: service_id.to_string(),
-            status: status.as_u16().to_string(),
-        };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
-        *state.upstream_requests.entry(labels).or_insert(0) += 1;
     }
 
     pub(crate) fn record_security_event(
@@ -211,16 +180,6 @@ impl GatewayMetrics {
         };
         let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
         *state.policy_dry_runs.entry(labels).or_insert(0) += 1;
-    }
-
-    pub(crate) fn record_resilience_event(&self, service: &str, service_id: &str, event: &str) {
-        let labels = ResilienceEventLabels {
-            service: service.to_string(),
-            service_id: service_id.to_string(),
-            event: event.to_string(),
-        };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
-        *state.resilience_events.entry(labels).or_insert(0) += 1;
     }
 
     pub(crate) fn render(&self, service: &str) -> String {
@@ -295,19 +254,6 @@ impl GatewayMetrics {
             ));
         }
         output.push_str(
-            "# HELP sdkwork_api_cloud_gateway_upstream_requests_total Gateway upstream dependency requests.\n",
-        );
-        output.push_str("# TYPE sdkwork_api_cloud_gateway_upstream_requests_total counter\n");
-        for (labels, value) in &state.upstream_requests {
-            output.push_str(&format!(
-                "sdkwork_api_cloud_gateway_upstream_requests_total{{service=\"{}\",service_id=\"{}\",status=\"{}\"}} {}\n",
-                escape_label_value(labels.service.as_str()),
-                escape_label_value(labels.service_id.as_str()),
-                escape_label_value(labels.status.as_str()),
-                value
-            ));
-        }
-        output.push_str(
             "# HELP sdkwork_api_cloud_gateway_security_events_total Gateway security decisions by bounded rule.\n",
         );
         output.push_str("# TYPE sdkwork_api_cloud_gateway_security_events_total counter\n");
@@ -360,19 +306,6 @@ impl GatewayMetrics {
                 escape_label_value(labels.kind.as_str()),
                 escape_label_value(labels.scope.as_str()),
                 escape_label_value(labels.status.as_str()),
-                value
-            ));
-        }
-        output.push_str(
-            "# HELP sdkwork_api_cloud_gateway_resilience_events_total Gateway resilience state transitions and decisions.\n",
-        );
-        output.push_str("# TYPE sdkwork_api_cloud_gateway_resilience_events_total counter\n");
-        for (labels, value) in &state.resilience_events {
-            output.push_str(&format!(
-                "sdkwork_api_cloud_gateway_resilience_events_total{{service=\"{}\",service_id=\"{}\",event=\"{}\"}} {}\n",
-                escape_label_value(labels.service.as_str()),
-                escape_label_value(labels.service_id.as_str()),
-                escape_label_value(labels.event.as_str()),
                 value
             ));
         }

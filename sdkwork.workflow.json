@@ -25,6 +25,36 @@
       "submodules": "recursive"
     },
     {
+      "id": "sdkwork-drive",
+      "repository": "Sdkwork-Cloud/sdkwork-drive",
+      "refInput": "SDKWORK_DRIVE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-membership",
+      "repository": "Sdkwork-Cloud/sdkwork-membership",
+      "refInput": "SDKWORK_MEMBERSHIP_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-order",
+      "repository": "Sdkwork-Cloud/sdkwork-order",
+      "refInput": "SDKWORK_ORDER_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-promotion",
+      "repository": "Sdkwork-Cloud/sdkwork-promotion",
+      "refInput": "SDKWORK_PROMOTION_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-payment",
+      "repository": "Sdkwork-Cloud/sdkwork-payment",
+      "refInput": "SDKWORK_PAYMENT_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
       "id": "sdkwork-web-framework",
       "repository": "Sdkwork-Cloud/sdkwork-web-framework",
       "refInput": "SDKWORK_WEB_FRAMEWORK_REF",

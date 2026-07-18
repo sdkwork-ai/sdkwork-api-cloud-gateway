@@ -9,7 +9,6 @@ mod iam_application_bootstrap;
 mod metrics;
 mod openapi;
 mod policy;
-mod resilience;
 mod runtime;
 mod security;
 mod service_config_loader;
@@ -30,5 +29,5 @@ pub use runtime::{
 pub use service_config_loader::{config_path_from_args, load_gateway_config};
 pub use web_framework::{
     finalize_gateway_router, finalize_gateway_router_async, parse_web_framework_toggle,
-    split_proxy_call_chain, web_framework_enabled,
+    web_framework_enabled,
 };

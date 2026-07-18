@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -273,7 +273,16 @@ async function packageServer(context) {
 }
 
 function runCargoBuild(context) {
-  const args = ['build', '--release', '-p', 'sdkwork-api-cloud-gateway', '--bin', BINARY_NAME];
+  const args = [
+    'build',
+    '--release',
+    '-p',
+    'sdkwork-api-cloud-gateway',
+    '--bin',
+    BINARY_NAME,
+    '--features',
+    'manager-operations-suite',
+  ];
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
   }
@@ -322,7 +331,7 @@ curl http://127.0.0.1:3900/readyz
 \`\`\`
 
 Production deployments should copy the TOML example to a host-local protected config file before
-startup and provide dependency upstream base URLs through config or process environment.
+startup, compile every declared foundation assembly feature, and provide its runtime configuration.
 `;
 }
 
