@@ -13,6 +13,10 @@ function read(relativePath, root = repoRoot) {
 
 const bootstrapSource = read('crates/sdkwork-api-cloud-gateway/src/iam_application_bootstrap.rs');
 const runtimeSource = read('crates/sdkwork-api-cloud-gateway/src/runtime.rs');
+const backendRouterBuilderSource = runtimeSource.slice(
+  runtimeSource.indexOf('pub async fn build_embedded_sdkwork_iam_backend_api_router'),
+  runtimeSource.indexOf('pub async fn build_embedded_sdkwork_iam_app_api_router'),
+);
 const gatewayCargo = read('crates/sdkwork-api-cloud-gateway/Cargo.toml');
 const sharedBootstrapSource = read(
   'crates/sdkwork-iam-embedded-application-bootstrap/src/runtime.rs',
@@ -35,6 +39,12 @@ assert.match(
   runtimeSource,
   /ensure_embedded_iam_tenant_application_bootstrap/u,
   'Embedded IAM router build must provision tenant applications before credential-entry routes go live.',
+);
+
+assert.match(
+  backendRouterBuilderSource,
+  /ensure_embedded_iam_router_prerequisites/u,
+  'Embedded IAM backend-only startup must fail closed when database lifecycle bootstrap fails.',
 );
 
 assert.match(

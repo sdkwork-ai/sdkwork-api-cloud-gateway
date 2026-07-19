@@ -246,21 +246,29 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
 #[cfg(feature = "foundation-appbase")]
 pub async fn build_embedded_sdkwork_iam_backend_api_router() -> Result<Router, GatewayRuntimeError>
 {
+    ensure_embedded_iam_router_prerequisites(APPBASE_BACKEND_API_SERVICE_ID).await?;
     Ok(sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
 }
 
 #[cfg(feature = "foundation-appbase")]
 pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, GatewayRuntimeError> {
-    crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()
-        .await
-        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-            service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
-            message,
-        })?;
+    ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID).await?;
     sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router()
         .await
         .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
             service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
+            message,
+        })
+}
+
+#[cfg(feature = "foundation-appbase")]
+async fn ensure_embedded_iam_router_prerequisites(
+    service_id: &str,
+) -> Result<(), GatewayRuntimeError> {
+    crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()
+        .await
+        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+            service_id: service_id.to_owned(),
             message,
         })
 }

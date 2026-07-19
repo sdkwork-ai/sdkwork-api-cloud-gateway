@@ -17,6 +17,12 @@
       "schemaEnv": "SDKWORK_CLAW_DATABASE_SCHEMA",
       "maxConnectionsEnv": "SDKWORK_CLAW_DATABASE_MAX_CONNECTIONS",
       "temporaryDriverPoolCountEnv": "SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT",
+      "readiness": {
+        "path": "/readyz",
+        "poolRequiredWhenEnabled": true,
+        "check": "sdkwork_database_sqlx::DatabasePool::health_check",
+        "evidence": "crates/sdkwork-api-cloud-gateway/src/health.rs"
+      },
       "productionSourceRoots": ["crates/sdkwork-api-cloud-gateway/src"],
       "consumers": [
         {"module": "sdkwork-iam", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/iam_application_bootstrap.rs"]},
