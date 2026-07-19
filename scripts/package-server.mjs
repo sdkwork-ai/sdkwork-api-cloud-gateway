@@ -126,11 +126,11 @@ async function createPackageContext(options) {
     options.architecture ?? process.env.SDKWORK_PACKAGE_ARCHITECTURE ?? hostArchitecture
   );
   const format = options.format ?? process.env.SDKWORK_PACKAGE_FORMAT ?? SUPPORTED_FORMAT;
-  const deploymentProfile = normalizeDeploymentProfile(
-    options.deploymentProfile ??
-      process.env.SDKWORK_PACKAGE_DEPLOYMENT_PROFILE ??
-      DEFAULT_DEPLOYMENT_PROFILE
-  );
+  const deploymentProfile = resolveDeploymentProfile({
+    explicit: options.deploymentProfile,
+    standardEnvironment: process.env.SDKWORK_DEPLOYMENT_PROFILE,
+    legacyEnvironment: process.env.SDKWORK_PACKAGE_DEPLOYMENT_PROFILE,
+  });
   const version = normalizeVersion(
     options.version ?? process.env.SDKWORK_PACKAGE_VERSION ?? packageJson.version ?? '0.1.0'
   );
@@ -150,11 +150,20 @@ async function createPackageContext(options) {
   }
 
   const distRoot = path.join(appRoot, 'dist', SERVER_PROFILE);
-  const stageName = `${APP_ID}-${version}-${platform}-${architecture}-${SERVER_PROFILE}`;
+  const stageName = resolveServerStageName({
+    architecture,
+    deploymentProfile,
+    platform,
+    version,
+  });
   const stageRoot = path.join(distRoot, stageName);
   const archivePath = path.join(distRoot, `${stageName}.${SUPPORTED_FORMAT}`);
   const binaryName = platform === 'windows' ? `${BINARY_NAME}.exe` : BINARY_NAME;
-  const releaseDir = rustTarget ? path.join(appRoot, 'target', rustTarget, 'release') : path.join(appRoot, 'target', 'release');
+  const releaseDir = resolveCargoReleaseDir(
+    appRoot,
+    process.env.CARGO_TARGET_DIR,
+    rustTarget,
+  );
   const binaryPath = path.join(releaseDir, binaryName);
 
   return {
@@ -175,6 +184,26 @@ async function createPackageContext(options) {
     stageRoot,
     version,
   };
+}
+
+export function resolveCargoReleaseDir(root, cargoTargetDir, rustTarget = '') {
+  const targetRoot = String(cargoTargetDir ?? '').trim()
+    ? path.resolve(root, String(cargoTargetDir).trim())
+    : path.join(root, 'target');
+  return rustTarget
+    ? path.join(targetRoot, rustTarget, 'release')
+    : path.join(targetRoot, 'release');
+}
+
+export function resolveServerStageName({ architecture, deploymentProfile, platform, version }) {
+  return [
+    APP_ID,
+    version,
+    platform,
+    architecture,
+    deploymentProfile,
+    SERVER_PROFILE,
+  ].join('-');
 }
 
 function normalizeVersion(value) {
@@ -239,6 +268,16 @@ function normalizeDeploymentProfile(value) {
   throw new Error(`Unsupported deployment profile: ${value}`);
 }
 
+export function resolveDeploymentProfile({
+  explicit,
+  standardEnvironment,
+  legacyEnvironment,
+} = {}) {
+  return normalizeDeploymentProfile(
+    explicit ?? standardEnvironment ?? legacyEnvironment ?? DEFAULT_DEPLOYMENT_PROFILE,
+  );
+}
+
 async function packageServer(context) {
   if (!context.skipBuild) {
     runCargoBuild(context);
@@ -255,7 +294,7 @@ async function packageServer(context) {
   await mkdir(path.join(context.stageRoot, 'specs'), { recursive: true });
 
   await copyFile(context.binaryPath, path.join(context.stageRoot, 'bin', context.binaryName));
-  await copyConfigExamples(context.stageRoot);
+  await copyRuntimeConfigTemplates(context.stageRoot);
   await copyIfExists('README.md', path.join(context.stageRoot, 'README.md'));
   await copyIfExists('sdkwork.app.config.json', path.join(context.stageRoot, 'sdkwork.app.config.json'));
   await copyIfExists(path.join('specs', 'component.spec.json'), path.join(context.stageRoot, 'specs', 'component.spec.json'));
@@ -280,8 +319,9 @@ function runCargoBuild(context) {
     'sdkwork-api-cloud-gateway',
     '--bin',
     BINARY_NAME,
+    '--no-default-features',
     '--features',
-    'manager-operations-suite',
+    'platform-foundation-suite',
   ];
   if (context.rustTarget) {
     args.push('--target', context.rustTarget);
@@ -292,10 +332,10 @@ function runCargoBuild(context) {
   });
 }
 
-async function copyConfigExamples(stageRoot) {
-  const configRoot = path.join(appRoot, 'configs');
+async function copyRuntimeConfigTemplates(stageRoot) {
+  const configRoot = path.join(appRoot, 'etc');
   const files = await readdir(configRoot);
-  for (const file of files.filter((item) => item.endsWith('.toml.example')).sort()) {
+  for (const file of files.filter((item) => item.endsWith('.toml')).sort()) {
     await copyFile(path.join(configRoot, file), path.join(stageRoot, 'config', file));
   }
 }
@@ -320,7 +360,7 @@ Target: ${context.platform}/${context.architecture}
 ## Start
 
 \`\`\`sh
-${binaryPath} --config config/sdkwork-api-cloud-gateway.production.toml.example
+${binaryPath} --config config/sdkwork-api-cloud-gateway.production.toml
 \`\`\`
 
 ## Health Checks
@@ -330,8 +370,9 @@ curl http://127.0.0.1:3900/healthz
 curl http://127.0.0.1:3900/readyz
 \`\`\`
 
-Production deployments should copy the TOML example to a host-local protected config file before
-startup, compile every declared foundation assembly feature, and provide its runtime configuration.
+Production deployments must materialize the TOML template as protected operator configuration,
+inject the unified PostgreSQL profile and secrets separately, and compile every declared foundation
+assembly feature.
 `;
 }
 
@@ -347,10 +388,10 @@ function createInstallManifest(context) {
     format: context.format,
     version: context.version,
     binary: `bin/${context.binaryName}`,
-    configExamples: [
-      'config/sdkwork-api-cloud-gateway.development.toml.example',
-      'config/sdkwork-api-cloud-gateway.production.toml.example',
-      'config/sdkwork-api-cloud-gateway.test.toml.example',
+    configTemplates: [
+      'config/sdkwork-api-cloud-gateway.development.toml',
+      'config/sdkwork-api-cloud-gateway.production.toml',
+      'config/sdkwork-api-cloud-gateway.test.toml',
     ],
     healthPath: '/healthz',
     readinessPath: '/readyz',
@@ -401,7 +442,7 @@ async function validateArchive(context) {
   const listing = run('tar', ['-tzf', context.archivePath], { cwd: appRoot, capture: true });
   const requiredEntries = [
     `${context.stageName}/bin/${context.binaryName}`,
-    `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml.example`,
+    `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml`,
     `${context.stageName}/install-manifest.json`,
     `${context.stageName}/checksums.sha256`,
     `${context.stageName}/README.md`,
@@ -444,7 +485,9 @@ function toPosixPath(value) {
   return value.split(path.sep).join('/');
 }
 
-main().catch((error) => {
-  console.error(`[sdkwork-api-cloud-gateway] ${error instanceof Error ? error.message : String(error)}`);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
+  main().catch((error) => {
+    console.error(`[sdkwork-api-cloud-gateway] ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  });
+}

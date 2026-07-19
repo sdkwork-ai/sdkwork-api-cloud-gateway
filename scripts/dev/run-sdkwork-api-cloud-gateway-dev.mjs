@@ -1,107 +1,210 @@
 #!/usr/bin/env node
 
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 import { executePostgresInitWithNode } from '../../../sdkwork-specs/tools/postgres/postgres-init-node.mjs';
-import { resolvePostgresDevProfile } from '../../../sdkwork-specs/tools/postgres/postgres-dev-profile.mjs';
+import {
+  isPostgresDevProfile,
+  resolvePostgresDevProfile,
+} from '../../../sdkwork-specs/tools/postgres/postgres-dev-profile.mjs';
+import {
+  resolveEmbeddedDatabaseEnv,
+  resolveEmbeddedDependencyEnv,
+  resolveEmbeddedPostgresUrl,
+  resolveTemporaryDatabaseDriverEnv,
+} from './sdkwork-api-cloud-gateway-dev-env.mjs';
+import {
+  assertRemoteCloudDevelopmentProfile,
+  resolveGatewaySourceProfile,
+} from './sdkwork-api-cloud-gateway-source-config.mjs';
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const collapsedFeatures = [
-  'manager-operations-suite',
-  'foundation-kernel',
-  'foundation-deployments',
-  'foundation-dezhou',
-  'foundation-documents',
-  'foundation-modelkit',
-  'foundation-prompts',
-  'foundation-web-server',
+  'platform-foundation-suite',
 ];
-const embeddedDatabaseServices = [
-  'DRIVE',
-  'ORDER',
-  'PROMOTION',
-  'PAYMENT',
-  'IAM',
-  'AGENTS',
-  'AGENTS_STORE',
-  'AGENT_RUNTIME',
-  'DEPLOY',
-  'DEZHOU',
-  'DOCUMENTS',
-  'MODELKIT',
-  'PROMPTS',
-  'WEB',
+const requiredBuildCriticalSources = [
+  'Cargo.toml',
+  'crates/sdkwork-api-cloud-gateway/Cargo.toml',
+  'crates/sdkwork-api-cloud-gateway/src/listener_main.rs',
+  'etc/sdkwork.deployment.config.json',
+  'etc/sdkwork-api-cloud-gateway.development.toml',
+  'scripts/dev/sdkwork-api-cloud-gateway-dev-env.mjs',
+  'scripts/dev/sdkwork-api-cloud-gateway-source-config.mjs',
 ];
 
-const profile = resolvePostgresDevProfile({
-  repoRoot: appRoot,
-  extraEnv: {
-    SDKWORK_APP_ROOT: appRoot,
-    SDKWORK_DEPLOYMENT_ENV: 'development',
-    SDKWORK_DEPLOYMENT_PROFILE: 'standalone',
-    SDKWORK_RUNTIME_TARGET: 'server',
-    SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: 'false',
-    SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE:
-      process.env.SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE ?? 'postgres',
-    SDKWORK_WEB_SNOWFLAKE_NODE_ID: process.env.SDKWORK_WEB_SNOWFLAKE_NODE_ID ?? '0',
-  },
-});
+async function main() {
+  const selected = resolveSelectedProfile();
+  ensureBuildCriticalSources();
+  const sourceProfile = resolveGatewaySourceProfile({ appRoot, ...selected });
 
-await executePostgresInitWithNode(profile.config);
-process.stdout.write(
-  `[sdkwork-api-cloud-gateway] PostgreSQL ready: ${profile.config.database.database}/${profile.config.database.schema}\n`,
-);
-
-const embeddedDatabaseUrl = new URL(profile.databaseUrl);
-embeddedDatabaseUrl.searchParams.set(
-  'options',
-  `-c search_path=${profile.config.database.schema}`,
-);
-const childEnv = {
-  ...profile.env,
-  SDKWORK_CLAW_DATABASE_URL: embeddedDatabaseUrl.toString(),
-  SDKWORK_DATABASE_URL: embeddedDatabaseUrl.toString(),
-  PGOPTIONS: `-c search_path=${profile.config.database.schema}`,
-};
-for (const service of embeddedDatabaseServices) {
-  childEnv[`SDKWORK_${service}_DATABASE_URL`] = embeddedDatabaseUrl.toString();
-  childEnv[`SDKWORK_${service}_DATABASE_SCHEMA`] = profile.config.database.schema;
-}
-
-const child = spawn(
-  'cargo',
-  [
-    'run',
-    '-p',
-    'sdkwork-api-cloud-gateway',
-    '--bin',
-    'sdkwork-api-cloud-gateway',
-    '--features',
-    collapsedFeatures.join(','),
-    '--',
-    '--config',
-    'configs/sdkwork-api-cloud-gateway.development.toml.example',
-  ],
-  {
-    cwd: appRoot,
-    env: childEnv,
-    shell: false,
-    stdio: 'inherit',
-  },
-);
-
-child.on('error', (error) => {
-  process.stderr.write(`[sdkwork-api-cloud-gateway] failed to start cargo: ${error.message}\n`);
-  process.exitCode = 1;
-});
-
-child.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
+  if (selected.deploymentProfile === 'cloud') {
+    assertRemoteCloudDevelopmentProfile(sourceProfile);
+    process.stdout.write(
+      `[sdkwork-api-cloud-gateway] resolved profileId=${sourceProfile.profileId} `
+      + `runtimeTarget=${sourceProfile.env.SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET} `
+      + `remoteGateway=${sourceProfile.env.SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL}; `
+      + 'no local gateway or database process started\n',
+    );
     return;
   }
-  process.exitCode = code ?? 1;
+
+  if (selected.database !== 'postgres') {
+    throw new Error('standalone development requires --database postgres');
+  }
+  if (!sourceProfile.runtimeConfig) {
+    throw new Error(`${sourceProfile.profileId} must select a gateway runtime config`);
+  }
+
+  const profile = resolvePostgresDevProfile({
+    repoRoot: appRoot,
+    env: { ...sourceProfile.env, ...process.env },
+    extraEnv: {
+      SDKWORK_APP_ROOT: appRoot,
+      SDKWORK_DEPLOYMENT_ENV: selected.environment,
+      SDKWORK_DEPLOYMENT_PROFILE: selected.deploymentProfile,
+      SDKWORK_RUNTIME_TARGET: 'server',
+      SDKWORK_ENVIRONMENT: selected.environment,
+      SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: selected.environment,
+      SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: sourceProfile.profileId,
+      SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: 'false',
+      SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE:
+        process.env.SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE ?? 'postgres',
+      SDKWORK_WEB_SNOWFLAKE_NODE_ID: process.env.SDKWORK_WEB_SNOWFLAKE_NODE_ID ?? '0',
+    },
+  });
+  if (!isPostgresDevProfile(profile.env)) {
+    throw new Error(`${sourceProfile.profileId} must resolve the PostgreSQL development profile`);
+  }
+
+  await executePostgresInitWithNode(profile.config);
+  process.stdout.write(
+    `[sdkwork-api-cloud-gateway] resolved profileId=${sourceProfile.profileId} `
+    + `runtimeTarget=server databaseProfile=postgres config=${sourceProfile.runtimeConfig}\n`,
+  );
+  process.stdout.write(
+    `[sdkwork-api-cloud-gateway] PostgreSQL ready: ${profile.config.database.database}/${profile.config.database.schema}\n`,
+  );
+
+  const childEnv = resolveChildEnv(profile);
+  const runtimeConfig = process.env.SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE
+    ?? sourceProfile.runtimeConfig;
+  await runGateway(runtimeConfig, childEnv);
+}
+
+function resolveSelectedProfile() {
+  const { values } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      database: { type: 'string' },
+      'deployment-profile': { type: 'string' },
+      environment: { type: 'string' },
+    },
+    strict: true,
+  });
+  return {
+    database: values.database,
+    deploymentProfile: values['deployment-profile'] ?? 'standalone',
+    environment: values.environment ?? 'development',
+  };
+}
+
+function ensureBuildCriticalSources() {
+  const missing = requiredBuildCriticalSources.filter(
+    (relativePath) => !existsSync(path.join(appRoot, relativePath)),
+  );
+  if (missing.length === 0) {
+    return;
+  }
+  try {
+    execFileSync('git', ['checkout', 'HEAD', '--', ...missing], {
+      cwd: appRoot,
+      stdio: 'ignore',
+    });
+  } catch {
+    // The error below names every source that could not be recovered from git.
+  }
+  const unrecovered = missing.filter(
+    (relativePath) => !existsSync(path.join(appRoot, relativePath)),
+  );
+  if (unrecovered.length > 0) {
+    throw new Error(
+      `Missing build-critical source files: ${unrecovered.join(', ')}. `
+      + `Recover with: git checkout HEAD -- ${unrecovered.join(' ')}`,
+    );
+  }
+}
+
+function resolveChildEnv(profile) {
+  const embeddedDatabaseUrl = resolveEmbeddedPostgresUrl(
+    profile.databaseUrl,
+    profile.config.database.schema,
+  );
+  const childEnv = {
+    ...profile.env,
+    ...resolveTemporaryDatabaseDriverEnv(profile.env),
+    ...resolveEmbeddedDependencyEnv(profile.env),
+    ...resolveEmbeddedDatabaseEnv({
+      databaseUrl: embeddedDatabaseUrl,
+      env: profile.env,
+      schema: profile.config.database.schema,
+    }),
+    SDKWORK_CLAW_DATABASE_URL: embeddedDatabaseUrl,
+    SDKWORK_DATABASE_URL: embeddedDatabaseUrl,
+    PGOPTIONS: `-csearch_path=${profile.config.database.schema}`,
+  };
+  return childEnv;
+}
+
+function runGateway(runtimeConfig, childEnv) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      'cargo',
+      [
+        'run',
+        '-p',
+        'sdkwork-api-cloud-gateway',
+        '--bin',
+        'sdkwork-api-cloud-gateway',
+        '--no-default-features',
+        '--features',
+        collapsedFeatures.join(','),
+        '--',
+        '--config',
+        runtimeConfig,
+      ],
+      {
+        cwd: appRoot,
+        env: childEnv,
+        shell: false,
+        stdio: 'inherit',
+      },
+    );
+
+    child.once('error', (error) => {
+      reject(new Error(`failed to start cargo: ${error.message}`, { cause: error }));
+    });
+    child.once('exit', (code, signal) => {
+      if (signal) {
+        reject(new Error(`cargo exited from signal ${signal}`));
+        return;
+      }
+      if (code !== 0) {
+        reject(new Error(`cargo exited with code ${code ?? 'unknown'}`));
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+main().catch((error) => {
+  process.stderr.write(
+    `[sdkwork-api-cloud-gateway] ${error instanceof Error ? error.message : String(error)}\n`,
+  );
+  process.exitCode = 1;
 });

@@ -20,7 +20,7 @@ to build bounded, redacted observability records for runtime logging and diagnos
 
 Observability behavior is driven by `GatewayRuntimeConfig`, especially the access log, audit log,
 metrics, tracing, diagnostics, and redaction fields documented in `../../README.md` and configured
-through `../../configs/` templates.
+through `../../etc/` runtime config.
 
 ## SaaS/Private/Local Behavior
 

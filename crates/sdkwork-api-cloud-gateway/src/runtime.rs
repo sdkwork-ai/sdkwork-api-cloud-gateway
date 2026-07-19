@@ -16,9 +16,11 @@ use axum::{
     Router,
 };
 use http_body_util::LengthLimitError;
-#[cfg(feature = "foundation-appbase")]
-use sdkwork_api_cloud_gateway_config::APPBASE_APP_API_SERVICE_ID;
 use sdkwork_api_cloud_gateway_config::{GatewayMode, GatewayRuntimeConfig};
+#[cfg(feature = "foundation-appbase")]
+use sdkwork_api_cloud_gateway_config::{
+    APPBASE_APP_API_SERVICE_ID, APPBASE_BACKEND_API_SERVICE_ID,
+};
 use sdkwork_api_cloud_gateway_observability::{
     build_gateway_access_log_event, build_gateway_audit_log_event, describe_gateway_startup,
     GatewayAccessLogInput, GatewayAuditLogInput,
@@ -217,13 +219,28 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
     mut config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     config.mode = GatewayMode::Embedded;
-    build_sdkwork_api_cloud_gateway_router_with_embedded_routers(
-        config,
-        [(
+    let mut embedded_routers = Vec::new();
+    if config
+        .dependency_surfaces
+        .iter()
+        .any(|surface| surface.service_id == APPBASE_APP_API_SERVICE_ID)
+    {
+        embedded_routers.push((
             APPBASE_APP_API_SERVICE_ID,
             build_embedded_sdkwork_iam_app_api_router().await?,
-        )],
-    )
+        ));
+    }
+    if config
+        .dependency_surfaces
+        .iter()
+        .any(|surface| surface.service_id == APPBASE_BACKEND_API_SERVICE_ID)
+    {
+        embedded_routers.push((
+            APPBASE_BACKEND_API_SERVICE_ID,
+            build_embedded_sdkwork_iam_backend_api_router().await?,
+        ));
+    }
+    build_sdkwork_api_cloud_gateway_router_with_embedded_routers(config, embedded_routers)
 }
 
 #[cfg(feature = "foundation-appbase")]
@@ -262,11 +279,7 @@ async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
 }
 
 fn apply_configured_secure_response_headers(state: &GatewayState, response: Response) -> Response {
-    security::apply_secure_response_headers(
-        &state.config.security,
-        false,
-        response,
-    )
+    security::apply_secure_response_headers(&state.config.security, false, response)
 }
 
 async fn security_middleware(
@@ -703,10 +716,7 @@ async fn route_dependency_request(
     problem_response(
         StatusCode::INTERNAL_SERVER_ERROR,
         "embedded_dependency_not_available",
-        format!(
-            "dependency `{}` has no embedded router",
-            route.service_id
-        ),
+        format!("dependency `{}` has no embedded router", route.service_id),
     )
 }
 

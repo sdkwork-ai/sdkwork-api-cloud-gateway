@@ -15,4 +15,4 @@ Related specs: `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`,
 `../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md`, and `../sdkwork-specs/RELEASE_SPEC.md`.
 
 Verification: run `pnpm workflow:validate`, `pnpm workflow:matrix:server`, and
-`pnpm package:server:validate` after changing packaging or workflow scripts.
+`pnpm gateway:validate:standalone` and `pnpm gateway:validate:cloud` after changing packaging or workflow scripts.

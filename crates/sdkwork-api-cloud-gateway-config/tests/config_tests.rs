@@ -1,8 +1,6 @@
 use std::{collections::HashMap, fs};
 
-use sdkwork_api_cloud_gateway_config::{
-    DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig,
-};
+use sdkwork_api_cloud_gateway_config::{DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig};
 
 #[test]
 fn default_config_is_embedded_only() {
@@ -35,6 +33,60 @@ fn retired_dependency_modes_are_rejected() {
         runtimeMode = "split"
     "#;
     assert!(toml::from_str::<GatewayRuntimeConfig>(toml).is_err());
+}
+
+#[test]
+fn per_dependency_base_urls_are_rejected() {
+    let toml = r#"
+        [[dependencySurfaces]]
+        serviceId = "sdkwork-drive-app-api"
+        workspace = "sdkwork-drive"
+        sdkFamily = "sdkwork-drive-app-sdk"
+        apiAuthority = "sdkwork-drive-app-api"
+        surface = "app"
+        apiPrefix = "/app/v3/api/drive"
+        runtimeMode = "embedded"
+        baseUrl = "http://127.0.0.1:4900"
+        executableExport = "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+        cargoFeature = "foundation-drive"
+        cargoDependency = "sdkwork-drive-gateway-assembly"
+        coverage = "embedded-assembly-routes"
+    "#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
+
+    let manifest = r#"{
+      "appId": "sdkwork-api-cloud-gateway",
+      "sdkDependencies": [{
+        "serviceId": "sdkwork-drive-app-api",
+        "workspace": "sdkwork-drive",
+        "sdkFamily": "sdkwork-drive-app-sdk",
+        "apiAuthority": "sdkwork-drive-app-api",
+        "surface": "app",
+        "apiPrefix": "/app/v3/api/drive",
+        "runtimeMode": "embedded",
+        "upstreamUrl": "http://127.0.0.1:4900",
+        "executableExport": "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env",
+        "cargoFeature": "foundation-drive",
+        "cargoDependency": "sdkwork-drive-gateway-assembly",
+        "coverage": "embedded-assembly-routes"
+      }]
+    }"#;
+    assert!(GatewayRuntimeConfig::from_sdkwork_manifest_str(manifest).is_err());
+}
+
+#[test]
+fn embedded_surfaces_require_complete_assembly_evidence() {
+    let toml = r#"
+        [[dependencySurfaces]]
+        serviceId = "sdkwork-drive-app-api"
+        workspace = "sdkwork-drive"
+        sdkFamily = "sdkwork-drive-app-sdk"
+        apiAuthority = "sdkwork-drive-app-api"
+        surface = "app"
+        apiPrefix = "/app/v3/api/drive"
+        runtimeMode = "embedded"
+    "#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
 }
 
 #[test]
@@ -79,6 +131,10 @@ fn production_app_api_accepts_exact_cors_origins() {
         surface = "app"
         apiPrefix = "/app/v3/api"
         runtimeMode = "embedded"
+        executableExport = "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router"
+        cargoFeature = "foundation-appbase"
+        cargoDependency = "sdkwork_routes_iam_app_api"
+        coverage = "embedded-assembly-routes"
 
         [cors]
         allowAnyOrigin = false
@@ -123,7 +179,7 @@ fn production_app_api_rejects_non_origin_cors_entries() {
 }
 
 #[test]
-fn application_manifest_publishes_only_embedded_assembly_surfaces() {
+fn application_component_publishes_only_embedded_assembly_surfaces() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -133,14 +189,23 @@ fn application_manifest_publishes_only_embedded_assembly_surfaces() {
     assert!(!config.dependency_surfaces.is_empty());
     for surface in &config.dependency_surfaces {
         assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Embedded);
-        assert!(surface.cargo_feature.as_deref().is_some_and(|value| !value.is_empty()));
-        assert!(surface.cargo_dependency.as_deref().is_some_and(|value| !value.is_empty()));
-        assert!(surface.executable_export.as_deref().is_some_and(|value| !value.is_empty()));
+        assert!(surface
+            .cargo_feature
+            .as_deref()
+            .is_some_and(|value| !value.is_empty()));
+        assert!(surface
+            .cargo_dependency
+            .as_deref()
+            .is_some_and(|value| !value.is_empty()));
+        assert!(surface
+            .executable_export
+            .as_deref()
+            .is_some_and(|value| !value.is_empty()));
     }
 }
 
 #[test]
-fn packaged_configs_publish_the_manager_operations_suite() {
+fn source_runtime_configs_publish_the_manager_operations_suite() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -160,10 +225,11 @@ fn packaged_configs_publish_the_manager_operations_suite() {
 
     for profile in ["development", "production", "test"] {
         let path = root
-            .join("configs")
-            .join(format!("sdkwork-api-cloud-gateway.{profile}.toml.example"));
+            .join("etc")
+            .join(format!("sdkwork-api-cloud-gateway.{profile}.toml"));
         let config = GatewayRuntimeConfig::from_path(&path)
-            .unwrap_or_else(|error| panic!("parse {}: {error}", path.display()));
+            .and_then(|config| config.with_application_component_surfaces(root))
+            .unwrap_or_else(|error| panic!("load {}: {error}", path.display()));
         assert_eq!(config.mode, GatewayMode::Embedded);
         for prefix in expected_prefixes {
             assert!(
@@ -204,7 +270,10 @@ fn im_and_clawrouter_use_their_gateway_assemblies() {
         .find(|surface| surface.workspace == "sdkwork-clawrouter")
         .expect("ClawRouter surface");
     assert_eq!(clawrouter.api_prefix, "/v1");
-    assert_eq!(clawrouter.cargo_feature.as_deref(), Some("foundation-clawrouter"));
+    assert_eq!(
+        clawrouter.cargo_feature.as_deref(),
+        Some("foundation-clawrouter")
+    );
     assert_eq!(
         clawrouter.cargo_dependency.as_deref(),
         Some("sdkwork-clawrouter-gateway-assembly")
@@ -249,7 +318,9 @@ fn env_cannot_select_a_retired_gateway_mode() {
         "SDKWORK_API_CLOUD_GATEWAY_MODE".to_string(),
         "split".to_string(),
     )]);
-    assert!(GatewayRuntimeConfig::default().with_env_overrides(&env).is_err());
+    assert!(GatewayRuntimeConfig::default()
+        .with_env_overrides(&env)
+        .is_err());
 }
 
 #[test]

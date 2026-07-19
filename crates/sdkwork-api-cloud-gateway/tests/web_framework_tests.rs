@@ -18,7 +18,12 @@ async fn embedded_outer_router_assigns_request_identity() {
         Router::new().route("/healthz", get(|| async { "ok" })),
     );
     let response = router
-        .oneshot(Request::builder().uri("/healthz").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/healthz")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert!(response.headers().contains_key("x-request-id"));

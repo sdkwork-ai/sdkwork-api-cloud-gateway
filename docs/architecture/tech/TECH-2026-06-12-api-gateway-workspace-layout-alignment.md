@@ -85,9 +85,8 @@
 - [x] Run `cargo test --workspace`.
 - [x] Run `pnpm workflow:validate`.
 - [x] Run `pnpm workflow:matrix:server`.
-- [x] Run `pnpm package:server`.
-- [x] Run `pnpm package:server:validate`.
+- [x] Run `pnpm gateway:package:standalone`.
+- [x] Run `pnpm gateway:validate:standalone`.
 - [x] Smoke `pnpm dev` against `/healthz` on a temporary port.
 - [x] Run `git diff --check`.
 - [x] Confirm `git status --short` separates pre-existing user changes from this alignment work.
-

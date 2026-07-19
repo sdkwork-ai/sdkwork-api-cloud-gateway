@@ -42,9 +42,6 @@ pub const MEMORY_OPEN_API_SERVICE_ID: &str = "sdkwork-memory-open-api";
 pub const KNOWLEDGEBASE_APP_API_SERVICE_ID: &str = "sdkwork-knowledgebase-app-api";
 pub const KNOWLEDGEBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-knowledgebase-backend-api";
 pub const KNOWLEDGEBASE_OPEN_API_SERVICE_ID: &str = "sdkwork-knowledgebase-open-api";
-pub const NEWS_APP_API_SERVICE_ID: &str = "sdkwork-news-app-api";
-pub const NEWS_BACKEND_API_SERVICE_ID: &str = "sdkwork-news-backend-api";
-pub const NEWS_OPEN_API_SERVICE_ID: &str = "sdkwork-news-open-api";
 pub const NOTES_APP_API_SERVICE_ID: &str = "sdkwork-notes-app-api";
 pub const NOTES_BACKEND_API_SERVICE_ID: &str = "sdkwork-notes-backend-api";
 pub const NOTES_OPEN_API_SERVICE_ID: &str = "sdkwork-notes-open-api";
@@ -87,9 +84,6 @@ pub const SDKWORK_CLAW_GATEWAY_SERVICE_ID: &str = "sdkwork-claw-gateway";
 pub const SDKWORK_APPSTORE_APP_API_SERVICE_ID: &str = "sdkwork-appstore-app-api";
 pub const SDKWORK_APPSTORE_BACKEND_API_SERVICE_ID: &str = "sdkwork-appstore-backend-api";
 pub const SDKWORK_APPSTORE_OPEN_API_SERVICE_ID: &str = "sdkwork-appstore-open-api";
-pub const LLM_APP_API_SERVICE_ID: &str = "sdkwork-llm-app-api";
-pub const LLM_BACKEND_API_SERVICE_ID: &str = "sdkwork-llm-backend-api";
-pub const LLM_OPEN_API_SERVICE_ID: &str = "sdkwork-llm-open-api";
 pub const MAIL_APP_API_SERVICE_ID: &str = "sdkwork-mail-app-api";
 pub const MAIL_BACKEND_API_SERVICE_ID: &str = "sdkwork-mail-backend-api";
 pub const MCP_APP_API_SERVICE_ID: &str = "sdkwork-mcp-app-api";
@@ -169,7 +163,7 @@ pub enum GatewayMode {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DependencyApiSurfaceConfig {
     pub service_id: String,
     pub workspace: String,
@@ -388,8 +382,15 @@ struct RawGatewayServerConfig {
 #[serde(rename_all = "camelCase")]
 struct SdkworkAppManifest {
     app_id: Option<String>,
+    app: Option<SdkworkManifestApp>,
     backend: Option<SdkworkManifestBackend>,
     sdk_dependencies: Option<Vec<SdkworkManifestDependency>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SdkworkManifestApp {
+    key: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -401,7 +402,7 @@ struct SdkworkManifestBackend {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct SdkworkManifestDependency {
     service_id: String,
     workspace: String,
@@ -413,6 +414,43 @@ struct SdkworkManifestDependency {
     runtime_mode: DependencyRuntimeMode,
     #[serde(default = "default_true")]
     same_origin_allowed: bool,
+    #[serde(default, alias = "embeddedExecutableExport")]
+    executable_export: Option<String>,
+    #[serde(default)]
+    cargo_feature: Option<String>,
+    #[serde(default)]
+    cargo_dependency: Option<String>,
+    #[serde(default)]
+    coverage: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SdkworkComponentSpec {
+    #[serde(default)]
+    api_surfaces: Vec<SdkworkComponentApiSurface>,
+    #[serde(default)]
+    dependencies: Vec<SdkworkComponentDependency>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SdkworkComponentApiSurface {
+    surface: String,
+    prefix: String,
+    ownership: String,
+    dependency_service_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SdkworkComponentDependency {
+    service_id: String,
+    workspace: String,
+    sdk_family: String,
+    api_authority: String,
+    #[serde(default)]
+    runtime_modes: Vec<DependencyRuntimeMode>,
     #[serde(default, alias = "embeddedExecutableExport")]
     executable_export: Option<String>,
     #[serde(default)]
@@ -518,8 +556,55 @@ impl GatewayRuntimeConfig {
         Self::from_sdkwork_manifest_str(input.as_str())
     }
 
+    pub fn from_component_spec_str(input: &str) -> Result<Self, GatewayConfigError> {
+        let component = serde_json::from_str::<SdkworkComponentSpec>(input)?;
+        let config = Self {
+            dependency_surfaces: dependency_surfaces_from_component(component)?,
+            ..Self::default()
+        };
+        config.validate()?;
+        Ok(config)
+    }
+
+    pub fn from_component_spec_path(path: impl AsRef<Path>) -> Result<Self, GatewayConfigError> {
+        let path = path.as_ref();
+        let input = fs::read_to_string(path).map_err(|source| GatewayConfigError::ReadFile {
+            path: path.display().to_string(),
+            source,
+        })?;
+        Self::from_component_spec_str(input.as_str())
+    }
+
     pub fn from_application_root(path: impl AsRef<Path>) -> Result<Self, GatewayConfigError> {
-        Self::from_sdkwork_manifest_path(path.as_ref().join("sdkwork.app.config.json"))
+        let application_root = path.as_ref();
+        let config =
+            Self::from_sdkwork_manifest_path(application_root.join("sdkwork.app.config.json"))?;
+        config.with_application_component_surfaces(application_root)
+    }
+
+    /// Synchronize executable dependency surfaces from the application component contract.
+    ///
+    /// Runtime TOML files own operational settings such as bind, security, traffic, and
+    /// observability. The component spec joins dependency API prefixes with Cargo integration
+    /// evidence, so an explicit runtime profile cannot replace that contract with a partial list.
+    pub fn with_application_component_surfaces(
+        mut self,
+        application_root: impl AsRef<Path>,
+    ) -> Result<Self, GatewayConfigError> {
+        let component = Self::from_component_spec_path(
+            application_root.as_ref().join("specs/component.spec.json"),
+        )?;
+        self.dependency_surfaces = component.dependency_surfaces;
+        self.validate()?;
+        Ok(self)
+    }
+
+    /// Compatibility alias for callers compiled against the earlier method name.
+    pub fn with_application_manifest_surfaces(
+        self,
+        application_root: impl AsRef<Path>,
+    ) -> Result<Self, GatewayConfigError> {
+        self.with_application_component_surfaces(application_root)
     }
 
     pub fn with_env_overrides(
@@ -645,10 +730,33 @@ impl GatewayRuntimeConfig {
                 "dependencySurfaces[].serviceId",
                 surface.service_id.as_str(),
             )?;
+            validate_non_empty("dependencySurfaces[].workspace", surface.workspace.as_str())?;
+            validate_non_empty(
+                "dependencySurfaces[].sdkFamily",
+                surface.sdk_family.as_str(),
+            )?;
+            validate_non_empty(
+                "dependencySurfaces[].apiAuthority",
+                surface.api_authority.as_str(),
+            )?;
+            validate_non_empty("dependencySurfaces[].surface", surface.surface.as_str())?;
             validate_non_empty(
                 "dependencySurfaces[].apiPrefix",
                 surface.api_prefix.as_str(),
             )?;
+            validate_non_empty(
+                "dependencySurfaces[].executableExport",
+                surface.executable_export.as_deref().unwrap_or_default(),
+            )?;
+            validate_non_empty(
+                "dependencySurfaces[].cargoFeature",
+                surface.cargo_feature.as_deref().unwrap_or_default(),
+            )?;
+            validate_non_empty(
+                "dependencySurfaces[].cargoDependency",
+                surface.cargo_dependency.as_deref().unwrap_or_default(),
+            )?;
+            validate_non_empty("dependencySurfaces[].coverage", surface.coverage.as_str())?;
         }
         for rule in &self.traffic.rate_limits {
             validate_non_empty("traffic.rateLimits[].id", rule.id.as_str())?;
@@ -677,6 +785,7 @@ impl GatewayRuntimeConfig {
             .as_ref()
             .and_then(|backend| backend.service_id.clone())
             .or_else(|| backend.as_ref().and_then(|backend| backend.app_id.clone()))
+            .or_else(|| manifest.app.and_then(|app| app.key))
             .or(manifest.app_id);
         if let Some(service_name) = service_name.filter(|value| !value.trim().is_empty()) {
             config.service.name = service_name;
@@ -696,6 +805,57 @@ impl GatewayRuntimeConfig {
 
         config
     }
+}
+
+fn dependency_surfaces_from_component(
+    component: SdkworkComponentSpec,
+) -> Result<Vec<DependencyApiSurfaceConfig>, GatewayConfigError> {
+    let mut dependencies = HashMap::new();
+    for dependency in component.dependencies {
+        let service_id = dependency.service_id.clone();
+        if dependencies
+            .insert(service_id.clone(), dependency)
+            .is_some()
+        {
+            return Err(invalid_value(
+                "specs/component.spec.json#dependencies[].serviceId",
+                format!("duplicate dependency service id `{service_id}`"),
+            ));
+        }
+    }
+
+    component
+        .api_surfaces
+        .into_iter()
+        .filter(|surface| surface.ownership.eq_ignore_ascii_case("dependency"))
+        .map(|surface| {
+            let service_id = surface
+                .dependency_service_id
+                .as_deref()
+                .filter(|value| !value.trim().is_empty())
+                .ok_or_else(|| {
+                    invalid_value(
+                        "specs/component.spec.json#apiSurfaces[].dependencyServiceId",
+                        format!(
+                            "dependency surface `{}` must name its dependency service",
+                            surface.prefix
+                        ),
+                    )
+                })?;
+            let dependency = dependencies.get(service_id).ok_or_else(|| {
+                invalid_value(
+                    "specs/component.spec.json#apiSurfaces[].dependencyServiceId",
+                    format!(
+                        "dependency surface `{}` references undeclared service `{service_id}`",
+                        surface.prefix
+                    ),
+                )
+            })?;
+            Ok(DependencyApiSurfaceConfig::from_component_surface(
+                surface, dependency,
+            ))
+        })
+        .collect()
 }
 
 impl Default for GatewayServiceConfig {
@@ -840,12 +1000,36 @@ impl DependencyApiSurfaceConfig {
             coverage,
         }
     }
+
+    fn from_component_surface(
+        surface: SdkworkComponentApiSurface,
+        dependency: &SdkworkComponentDependency,
+    ) -> Self {
+        Self {
+            service_id: dependency.service_id.clone(),
+            workspace: dependency.workspace.clone(),
+            sdk_family: dependency.sdk_family.clone(),
+            api_authority: dependency.api_authority.clone(),
+            surface: surface.surface,
+            api_prefix: surface.prefix,
+            runtime_mode: dependency
+                .runtime_modes
+                .first()
+                .copied()
+                .unwrap_or_default(),
+            same_origin_allowed: true,
+            executable_export: dependency.executable_export.clone(),
+            cargo_feature: dependency.cargo_feature.clone(),
+            cargo_dependency: dependency.cargo_dependency.clone(),
+            coverage: dependency.coverage.clone().unwrap_or_default(),
+        }
+    }
 }
 
 fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
     vec![DependencyApiSurfaceConfig {
         service_id: APPBASE_APP_API_SERVICE_ID.to_string(),
-        workspace: "sdkwork-appbase".to_string(),
+        workspace: "sdkwork-iam".to_string(),
         sdk_family: "sdkwork-iam-app-sdk".to_string(),
         api_authority: "sdkwork-iam-app-api".to_string(),
         surface: "app".to_string(),
@@ -1064,9 +1248,9 @@ fn validate_exact_http_origin(key: &str, origin: &str) -> Result<(), GatewayConf
     Ok(())
 }
 
-fn invalid_value(key: &str, reason: &str) -> GatewayConfigError {
+fn invalid_value(key: &str, reason: impl Into<String>) -> GatewayConfigError {
     GatewayConfigError::InvalidValue {
         key: key.to_string(),
-        reason: reason.to_string(),
+        reason: reason.into(),
     }
 }

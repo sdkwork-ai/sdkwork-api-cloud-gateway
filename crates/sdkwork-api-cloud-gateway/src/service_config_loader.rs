@@ -17,11 +17,19 @@ where
 {
     let application_root = application_root.as_ref();
     let config = if let Some(path) = config_path_from_args(args).or_else(|| {
-        env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG")
+        env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE")
+            .or_else(|| env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG"))
             .map(PathBuf::from)
     }) {
-        GatewayRuntimeConfig::from_path(resolve_config_path(application_root, path))
-            .context("failed to load explicit gateway config")?
+        let config = GatewayRuntimeConfig::from_path(resolve_config_path(application_root, path))
+            .context("failed to load explicit gateway config")?;
+        if application_root.join("sdkwork.app.config.json").exists() {
+            config
+                .with_application_component_surfaces(application_root)
+                .context("failed to synchronize gateway dependency surfaces from component spec")?
+        } else {
+            config
+        }
     } else if application_root.join("sdkwork.app.config.json").exists() {
         GatewayRuntimeConfig::from_application_root(application_root)
             .context("failed to load sdkwork app manifest")?

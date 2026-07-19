@@ -15,11 +15,17 @@ pub async fn bootstrap_embedded_dependency_routers(
 
     #[cfg(feature = "foundation-appbase")]
     {
-        use sdkwork_api_cloud_gateway_config::APPBASE_APP_API_SERVICE_ID;
+        use sdkwork_api_cloud_gateway_config::{
+            APPBASE_APP_API_SERVICE_ID, APPBASE_BACKEND_API_SERVICE_ID,
+        };
 
         if dependency_surface_enabled(config, APPBASE_APP_API_SERVICE_ID) {
             let router = crate::runtime::build_embedded_sdkwork_iam_app_api_router().await?;
             routers.insert(APPBASE_APP_API_SERVICE_ID.to_owned(), router);
+        }
+        if dependency_surface_enabled(config, APPBASE_BACKEND_API_SERVICE_ID) {
+            let router = crate::runtime::build_embedded_sdkwork_iam_backend_api_router().await?;
+            routers.insert(APPBASE_BACKEND_API_SERVICE_ID.to_owned(), router);
         }
     }
 
@@ -34,9 +40,10 @@ pub async fn bootstrap_embedded_dependency_routers(
 
     #[cfg(feature = "foundation-membership")]
     if workspace_surface_enabled(config, "sdkwork-membership") {
-        let assembly = sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env()
-            .await
-            .map_err(|error| workspace_build_error(config, "sdkwork-membership", error))?;
+        let assembly =
+            sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env()
+                .await
+                .map_err(|error| workspace_build_error(config, "sdkwork-membership", error))?;
         insert_workspace_router(config, &mut routers, "sdkwork-membership", assembly.router);
     }
 
@@ -62,6 +69,12 @@ pub async fn bootstrap_embedded_dependency_routers(
             .await
             .map_err(|error| workspace_build_error(config, "sdkwork-payment", error))?;
         insert_workspace_router(config, &mut routers, "sdkwork-payment", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-audio")]
+    if workspace_surface_enabled(config, "sdkwork-audio") {
+        let assembly = sdkwork_audio_gateway_assembly::assemble_application_router();
+        insert_workspace_router(config, &mut routers, "sdkwork-audio", assembly.router);
     }
 
     #[cfg(feature = "foundation-course")]
@@ -249,7 +262,7 @@ pub async fn bootstrap_embedded_dependency_routers(
             || dependency_surface_enabled(config, COMMUNITY_BACKEND_API_SERVICE_ID)
             || dependency_surface_enabled(config, COMMUNITY_OPEN_API_SERVICE_ID)
         {
-            let assembly = sdkwork_community_gateway_assembly::assemble_application_router().await;
+            let assembly = sdkwork_community_gateway_assembly::assemble_application_router();
             let community_router = assembly.router;
             if dependency_surface_enabled(config, COMMUNITY_APP_API_SERVICE_ID) {
                 routers.insert(
@@ -297,34 +310,6 @@ pub async fn bootstrap_embedded_dependency_routers(
         if dependency_surface_enabled(config, SDKWORK_CLAW_GATEWAY_SERVICE_ID) {
             let assembly = sdkwork_clawrouter_gateway_assembly::assemble_application_router();
             routers.insert(SDKWORK_CLAW_GATEWAY_SERVICE_ID.to_owned(), assembly.router);
-        }
-    }
-
-    #[cfg(feature = "foundation-llm")]
-    {
-        use sdkwork_api_cloud_gateway_config::{
-            LLM_APP_API_SERVICE_ID, LLM_BACKEND_API_SERVICE_ID, LLM_OPEN_API_SERVICE_ID,
-        };
-        if dependency_surface_enabled(config, LLM_APP_API_SERVICE_ID)
-            || dependency_surface_enabled(config, LLM_BACKEND_API_SERVICE_ID)
-            || dependency_surface_enabled(config, LLM_OPEN_API_SERVICE_ID)
-        {
-            let assembly = sdkwork_llm_gateway_assembly::assemble_application_router()
-                .await
-                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-                    service_id: LLM_APP_API_SERVICE_ID.to_owned(),
-                    message,
-                })?;
-            let llm_router = assembly.router;
-            if dependency_surface_enabled(config, LLM_APP_API_SERVICE_ID) {
-                routers.insert(LLM_APP_API_SERVICE_ID.to_owned(), llm_router.clone());
-            }
-            if dependency_surface_enabled(config, LLM_BACKEND_API_SERVICE_ID) {
-                routers.insert(LLM_BACKEND_API_SERVICE_ID.to_owned(), llm_router.clone());
-            }
-            if dependency_surface_enabled(config, LLM_OPEN_API_SERVICE_ID) {
-                routers.insert(LLM_OPEN_API_SERVICE_ID.to_owned(), llm_router);
-            }
         }
     }
 
@@ -444,34 +429,6 @@ pub async fn bootstrap_embedded_dependency_routers(
             }
             if dependency_surface_enabled(config, MAIL_BACKEND_API_SERVICE_ID) {
                 routers.insert(MAIL_BACKEND_API_SERVICE_ID.to_owned(), mail_router);
-            }
-        }
-    }
-
-    #[cfg(feature = "foundation-news")]
-    {
-        use sdkwork_api_cloud_gateway_config::{
-            NEWS_APP_API_SERVICE_ID, NEWS_BACKEND_API_SERVICE_ID, NEWS_OPEN_API_SERVICE_ID,
-        };
-        if dependency_surface_enabled(config, NEWS_APP_API_SERVICE_ID)
-            || dependency_surface_enabled(config, NEWS_BACKEND_API_SERVICE_ID)
-            || dependency_surface_enabled(config, NEWS_OPEN_API_SERVICE_ID)
-        {
-            let assembly = sdkwork_news_gateway_assembly::assemble_application_router()
-                .await
-                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-                    service_id: NEWS_APP_API_SERVICE_ID.to_owned(),
-                    message,
-                })?;
-            let news_router = assembly.router;
-            if dependency_surface_enabled(config, NEWS_APP_API_SERVICE_ID) {
-                routers.insert(NEWS_APP_API_SERVICE_ID.to_owned(), news_router.clone());
-            }
-            if dependency_surface_enabled(config, NEWS_BACKEND_API_SERVICE_ID) {
-                routers.insert(NEWS_BACKEND_API_SERVICE_ID.to_owned(), news_router.clone());
-            }
-            if dependency_surface_enabled(config, NEWS_OPEN_API_SERVICE_ID) {
-                routers.insert(NEWS_OPEN_API_SERVICE_ID.to_owned(), news_router);
             }
         }
     }
@@ -607,6 +564,7 @@ pub async fn bootstrap_embedded_dependency_routers(
     feature = "foundation-order",
     feature = "foundation-promotion",
     feature = "foundation-payment",
+    feature = "foundation-audio",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -629,6 +587,7 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
     feature = "foundation-order",
     feature = "foundation-promotion",
     feature = "foundation-payment",
+    feature = "foundation-audio",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -658,6 +617,7 @@ fn insert_workspace_router(
     feature = "foundation-order",
     feature = "foundation-promotion",
     feature = "foundation-payment",
+    feature = "foundation-audio",
     feature = "foundation-kernel",
     feature = "foundation-deployments",
     feature = "foundation-dezhou",
@@ -712,6 +672,7 @@ mod tests {
             "sdkwork-order",
             "sdkwork-promotion",
             "sdkwork-payment",
+            "sdkwork-audio",
             "sdkwork-kernel",
             "sdkwork-deployments",
             "sdkwork-dezhou",
@@ -732,7 +693,7 @@ mod tests {
             insert_workspace_router(&config, &mut routers, workspace, Router::new());
         }
 
-        assert_eq!(expected_service_ids.len(), 21);
+        assert_eq!(expected_service_ids.len(), 23);
         assert_eq!(routers.len(), expected_service_ids.len());
         for service_id in expected_service_ids {
             assert!(

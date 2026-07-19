@@ -2,7 +2,7 @@
 
 Status: active
 Owner: SDKWork maintainers
-Updated: 2026-06-24
+Updated: 2026-07-19
 Specs: ARCHITECTURE_DECISION_SPEC.md, DOCUMENTATION_SPEC.md
 
 ## Document Map
@@ -16,8 +16,8 @@ Specs: ARCHITECTURE_DECISION_SPEC.md, DOCUMENTATION_SPEC.md
 ## 1. Architecture Overview
 
 `sdkwork-api-cloud-gateway` is the SDKWork commercial API gateway application. It exposes a single
-Axum HTTP surface that either embeds dependency routers in-process or proxies to configured upstream
-base URLs in split mode. The gateway owns health, readiness, OpenAPI inventory, diagnostics, policy,
+Axum HTTP surface that embeds dependency assembly routers in-process. The gateway owns health,
+readiness, OpenAPI inventory, diagnostics, policy,
 observability, and traffic-control behavior; dependency APIs (IAM, drive, commerce, IM, CMS, forum,
 and others) remain owned by their application roots.
 
@@ -28,15 +28,15 @@ Two startup modes are first-class:
 - **Embedded router** — public builders from `crates/sdkwork-api-cloud-gateway` mount into a host
   Axum application without a separate gateway process.
 
-Default development topology is single-port integrated; split multi-upstream validation is supported
-for production and CI matrix packaging (`standalone` and `cloud` deployment profiles).
+Development and production are single-port integrated. The `standalone` and `cloud` deployment
+profiles package the same embedded assembly graph with different deployment metadata.
 
 ## 2. Technology Choices
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
 | Runtime | Rust + Axum | Workspace members under `crates/` |
-| Web pipeline | `sdkwork-web-framework` | 19-stage interceptor chain in split mode via `web_framework.rs` |
+| Web pipeline | `sdkwork-web-framework` | Outer request identity, security, CORS, policy, and observability pipeline |
 | Config | Typed TOML + env merge | `sdkwork-api-cloud-gateway-config`; prefix `SDKWORK_API_CLOUD_GATEWAY_*` |
 | Route registry | In-repo metadata | `sdkwork-api-cloud-gateway-registry` |
 | Observability | Prometheus + structured logs | `sdkwork-api-cloud-gateway-observability`; series prefix `sdkwork_api_cloud_gateway_*` |
@@ -47,16 +47,18 @@ for production and CI matrix packaging (`standalone` and `cloud` deployment prof
 Intentionally **not** integrated at this stage:
 
 - `sdkwork-discovery` — deferred until RPC service registration is required.
-- `sdkwork-database` — not owned by the gateway; embedded IAM may require appbase DB URL at runtime.
+
+The host uses `sdkwork-database` process-pool bootstrap for embedded assemblies while owning no
+domain tables or migrations itself.
 
 ## 3. System Boundaries And Modules
 
 | Crate | Responsibility |
 | --- | --- |
-| `sdkwork-api-cloud-gateway-config` | Runtime config, upstream defaults, env binding merge, route path normalization |
+| `sdkwork-api-cloud-gateway-config` | Strict embedded runtime config, env binding merge, route path normalization |
 | `sdkwork-api-cloud-gateway-registry` | Dependency surface metadata and executable routing rules |
 | `sdkwork-api-cloud-gateway-observability` | Startup summaries and observability wiring |
-| `sdkwork-api-cloud-gateway` | Router builders, policy chain, proxy, embedded routing, web-framework integration |
+| `sdkwork-api-cloud-gateway` | Router builders, policy chain, embedded routing, web-framework integration |
 | `sdkwork-api-cloud-gateway` | Binary entrypoint, config loader, service bootstrap |
 
 Gateway-owned HTTP surfaces (public):
@@ -68,15 +70,16 @@ Gateway-owned HTTP surfaces (public):
 
 Dependency surfaces are **not** reimplemented in this repository. Appbase IAM routes
 (`/app/v3/api/auth`, `/app/v3/api/iam`, `/app/v3/api/oauth`, `/backend/v3/api/iam`, etc.) remain
-appbase-owned and are mounted or proxied only.
+dependency-owned and are mounted only through their executable assembly exports.
 
 ## 4. Directory And Package Layout
 
 Authoritative layout follows `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`:
 
-- `sdkwork.app.config.json` — application identity, env bindings, apiSurfaces, sdkDependencies
-- `specs/component.spec.json` — executable exports, dependency surfaces, observability series
-- `configs/sdkwork-api-cloud-gateway.{development,test,production}.toml.example` — safe templates
+- `sdkwork.app.config.json` — SDKWork App Standard v3 identity and release declaration
+- `specs/component.spec.json` — executable exports, dependency surfaces, Cargo evidence, observability series
+- `etc/sdkwork.deployment.config.json` — typed source deployment profile index
+- `etc/sdkwork-api-cloud-gateway.{development,test,production}.toml` — safe runtime config
 - `apis/gateway-api/` — gateway-owned OpenAPI contract inputs
 - `scripts/package-server.mjs` — standalone server packaging and validation
 
@@ -86,18 +89,18 @@ Cargo workspace integration is the gateway catalog authority: root `Cargo.toml`,
 ## 5. API, SDK, And Data Ownership
 
 - **Gateway-owned API**: health, readiness, OpenAPI inventory, diagnostics, metrics.
-- **Dependency APIs**: owned by sibling SDKWork applications; gateway registers routes and upstreams
-  from `sdkwork.app.config.json` and `specs/component.spec.json`.
+- **Dependency APIs**: owned by sibling SDKWork applications; gateway registers embedded routers
+  from `specs/component.spec.json` and Cargo workspace evidence.
 - **SDK families**: consumers integrate through dependency application SDKs; the gateway does not
   hand-edit generated SDK output.
-- **Drive file upload**: proxy-only routing to `sdkwork-drive-*` surfaces; no local file storage.
+- **Drive file upload**: delegated to embedded `sdkwork-drive-gateway-assembly`; no local file storage.
 
-Split mode requires upstream base URLs at startup for each required dependency surface. Embedded mode
-requires an executable embedded router export when no upstream is configured.
+Every dependency surface requires a Cargo feature, gateway assembly dependency, executable router
+export, and verified coverage. Legacy split modes and per-dependency base URLs are rejected.
 
 ## 6. Security, Privacy, And Observability
 
-Security and traffic control run in-process before proxying or embedded delegation:
+Security and traffic control run in-process before embedded delegation:
 
 1. Request identity and trace context
 2. Route resolution and surface classification
@@ -107,16 +110,13 @@ Security and traffic control run in-process before proxying or embedded delegati
 6. Security guard and WAF-lite rules
 7. Rate limit, quota, concurrency limit
 8. Idempotency and replay guard
-9. Upstream selection, timeout, retry, circuit breaker, health
+9. Assembly router selection and readiness enforcement
 10. Response headers, rate-limit headers, security headers
 11. Metrics, trace spans, access logs, audit/security events
 
 Key env toggles (non-exhaustive): `SDKWORK_API_CLOUD_GATEWAY_SECURITY_HEADERS_ENABLED`,
 `SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED`, `SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED`,
 `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`.
-
-IM split upstreams use canonical keys `SDKWORK_IM_IM_HTTP_BASE_URL` and
-`SDKWORK_IM_BACKEND_HTTP_BASE_URL`. Legacy `CRAW_CHAT_*` aliases remain supported during migration.
 
 Prometheus series use the `sdkwork_api_cloud_gateway_*` prefix (see `specs/component.spec.json`
 observability section). Tracked config templates must not contain live secrets.
@@ -127,7 +127,6 @@ observability section). Tracked config templates must not contain live secrets.
 flowchart LR
   Client --> Gateway["sdkwork-api-cloud-gateway"]
   Gateway -->|embedded| Embedded["Dependency Axum routers"]
-  Gateway -->|split| Upstream["Dependency HTTP services"]
 ```
 
 | Profile | Use case | Packaging |
@@ -137,7 +136,7 @@ flowchart LR
 
 Verification commands (repository root):
 
-- `pnpm verify` — fmt, workflow validate, tests, clippy
+- `pnpm verify` — standards, format, workflow, tests, and lint checks
 - `pnpm gateway:validate:standalone` — archive manifest and checksum validation
 - `cargo test --workspace`
 

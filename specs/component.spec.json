@@ -62,6 +62,31 @@
       "purpose": "Typed embedded runtime config and environment boundaries."
     },
     {
+      "file": "SOURCE_CONFIG_SPEC.md",
+      "path": "../sdkwork-specs/SOURCE_CONFIG_SPEC.md",
+      "purpose": "Source-controlled etc ownership and runtime materialization."
+    },
+    {
+      "file": "RUNTIME_DIRECTORY_SPEC.md",
+      "path": "../sdkwork-specs/RUNTIME_DIRECTORY_SPEC.md",
+      "purpose": "Installed runtime config, data, log, cache, and secret paths."
+    },
+    {
+      "file": "PNPM_SCRIPT_SPEC.md",
+      "path": "../sdkwork-specs/PNPM_SCRIPT_SPEC.md",
+      "purpose": "Standard development, verification, and gateway command surface."
+    },
+    {
+      "file": "APPLICATION_GATEWAY_SPEC.md",
+      "path": "../sdkwork-specs/APPLICATION_GATEWAY_SPEC.md",
+      "purpose": "Platform gateway composition and executable dependency routing."
+    },
+    {
+      "file": "APP_RUNTIME_TOPOLOGY_SPEC.md",
+      "path": "../sdkwork-specs/APP_RUNTIME_TOPOLOGY_SPEC.md",
+      "purpose": "Deployment profile and runtime topology selection."
+    },
+    {
       "file": "GITHUB_WORKFLOW_SPEC.md",
       "path": "../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md",
       "purpose": "Reusable GitHub packaging workflow integration."
@@ -82,6 +107,11 @@
       "purpose": "Mandatory sdkwork-web-framework integration for embedded HTTP surfaces."
     },
     {
+      "file": "WEB_BACKEND_SPEC.md",
+      "path": "../sdkwork-specs/WEB_BACKEND_SPEC.md",
+      "purpose": "HTTP backend and gateway runtime boundaries."
+    },
+    {
       "file": "SECURITY_SPEC.md",
       "path": "../sdkwork-specs/SECURITY_SPEC.md",
       "purpose": "Gateway security headers, WAF, rate limits, CORS, and credential forwarding rules."
@@ -99,7 +129,7 @@
     {
       "file": "APP_MANIFEST_SPEC.md",
       "path": "../sdkwork-specs/APP_MANIFEST_SPEC.md",
-      "purpose": "sdkwork.app.config.json identity, env bindings, and API surface authority."
+      "purpose": "SDKWork App Standard v3 identity and release declaration."
     }
   ],
   "contracts": {
@@ -135,13 +165,14 @@
     ],
     "events": [],
     "configKeys": [
-      "sdkwork.app.config.json#envBindings.variables",
-      "configs/*.toml.example",
+      "etc/sdkwork.deployment.config.json",
+      "etc/sdkwork-api-cloud-gateway.*.toml",
+      ".env.postgres",
       "sdkwork.workflow.json"
     ]
   },
   "componentId": "sdkwork-api-cloud-gateway",
-  "componentType": "backend-service",
+  "componentType": "rust-platform-cloud-gateway",
   "runtime": "rust-axum",
   "gatewayIntegration": {
     "authority": "cargo-workspace",
@@ -370,27 +401,6 @@
       "prefix": "/backend/v3/api/notary",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-notary-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/news",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-news-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/news",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-news-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/open/v3/api/news",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-news-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -720,27 +730,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/llm",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-llm-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/llm",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-llm-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/llm/v3/api",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-llm-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/mail",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-mail-app-api",
@@ -859,20 +848,66 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "backend",
-      "prefix": "/backend/v3/api",
-      "ownership": "gateway"
+      "surface": "app",
+      "prefix": "/app/v3/api/comments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-comments-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "open",
-      "prefix": "/v1",
-      "ownership": "gateway"
+      "surface": "app",
+      "prefix": "/app/v3/api/engagement",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-comments-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/comments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-comments-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/engagement",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-comments-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/messaging",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-messaging-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/messaging",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-messaging-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/audio",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-audio-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/audio",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-audio-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
     }
   ],
   "dependencies": [
     {
       "serviceId": "sdkwork-iam-app-api",
-      "workspace": "sdkwork-appbase",
+      "workspace": "sdkwork-iam",
       "apiAuthority": "sdkwork-iam-app-api",
       "sdkFamily": "sdkwork-iam-app-sdk",
       "cargoFeature": "foundation-appbase",
@@ -1036,7 +1071,7 @@
     },
     {
       "serviceId": "sdkwork-iam-backend-api",
-      "workspace": "sdkwork-appbase",
+      "workspace": "sdkwork-iam",
       "apiAuthority": "sdkwork-iam-backend-api",
       "sdkFamily": "sdkwork-iam-backend-sdk",
       "coverage": "sdkwork-iam-backend-api-embedded-assembly-routes",
@@ -1044,8 +1079,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-appbase",
-      "cargoDependency": "sdkwork_routes_iam_app_api",
-      "executableExport": "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router"
+      "cargoDependency": "sdkwork_routes_iam_backend_api",
+      "executableExport": "sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-course-app-api",
@@ -1189,45 +1224,6 @@
       "cargoFeature": "foundation-rtc",
       "cargoDependency": "sdkwork-rtc-gateway-assembly",
       "executableExport": "sdkwork_rtc_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-llm-app-api",
-      "workspace": "sdkwork-llm",
-      "apiAuthority": "sdkwork-llm-app-api",
-      "sdkFamily": "sdkwork-llm-app-sdk",
-      "coverage": "sdkwork-llm-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "cargoFeature": "foundation-llm",
-      "cargoDependency": "sdkwork-llm-gateway-assembly",
-      "executableExport": "sdkwork_llm_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-llm-backend-api",
-      "workspace": "sdkwork-llm",
-      "apiAuthority": "sdkwork-llm-backend-api",
-      "sdkFamily": "sdkwork-llm-backend-sdk",
-      "coverage": "sdkwork-llm-backend-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "cargoFeature": "foundation-llm",
-      "cargoDependency": "sdkwork-llm-gateway-assembly",
-      "executableExport": "sdkwork_llm_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-llm-open-api",
-      "workspace": "sdkwork-llm",
-      "apiAuthority": "sdkwork-llm-open-api",
-      "sdkFamily": "sdkwork-llm-open-sdk",
-      "coverage": "sdkwork-llm-open-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "cargoFeature": "foundation-llm",
-      "cargoDependency": "sdkwork-llm-gateway-assembly",
-      "executableExport": "sdkwork_llm_gateway_assembly::assemble_application_router"
     },
     {
       "serviceId": "sdkwork-mail-app-api",
@@ -1397,45 +1393,6 @@
         "embedded"
       ],
       "executableExport": "sdkwork_aiot_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-news-app-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news-app-api",
-      "sdkFamily": "sdkwork-news-app-sdk",
-      "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork-news-gateway-assembly",
-      "coverage": "sdkwork-news-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_news_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-news-backend-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news-backend-api",
-      "sdkFamily": "sdkwork-news-backend-sdk",
-      "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork-news-gateway-assembly",
-      "coverage": "sdkwork-news-backend-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_news_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-news-open-api",
-      "workspace": "sdkwork-news",
-      "apiAuthority": "sdkwork-news-open-api",
-      "sdkFamily": "sdkwork-news-sdk",
-      "cargoFeature": "foundation-news",
-      "cargoDependency": "sdkwork-news-gateway-assembly",
-      "coverage": "sdkwork-news-open-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_news_gateway_assembly::assemble_application_router"
     },
     {
       "serviceId": "sdkwork-community-app-api",
@@ -1763,6 +1720,78 @@
         "embedded"
       ],
       "executableExport": "sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env"
+    },
+    {
+      "serviceId": "sdkwork-comments-app-api",
+      "workspace": "sdkwork-comments",
+      "apiAuthority": "sdkwork-comments-app-api",
+      "sdkFamily": "sdkwork-comments-app-sdk",
+      "apiPrefixes": ["/app/v3/api/comments", "/app/v3/api/engagement"],
+      "coverage": "sdkwork-comments-app-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-comments",
+      "cargoDependency": "sdkwork-comments-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_comments_gateway_assembly::assemble_application_router"
+    },
+    {
+      "serviceId": "sdkwork-comments-backend-api",
+      "workspace": "sdkwork-comments",
+      "apiAuthority": "sdkwork-comments-backend-api",
+      "sdkFamily": "sdkwork-comments-backend-sdk",
+      "apiPrefixes": ["/backend/v3/api/comments", "/backend/v3/api/engagement"],
+      "coverage": "sdkwork-comments-backend-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-comments",
+      "cargoDependency": "sdkwork-comments-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_comments_gateway_assembly::assemble_application_router"
+    },
+    {
+      "serviceId": "sdkwork-messaging-app-api",
+      "workspace": "sdkwork-messaging",
+      "apiAuthority": "sdkwork-messaging-app-api",
+      "sdkFamily": "sdkwork-messaging-app-sdk",
+      "apiPrefixes": ["/app/v3/api/messaging"],
+      "coverage": "sdkwork-messaging-app-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-messaging",
+      "cargoDependency": "sdkwork-messaging-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_messaging_gateway_assembly::assemble_application_router"
+    },
+    {
+      "serviceId": "sdkwork-messaging-backend-api",
+      "workspace": "sdkwork-messaging",
+      "apiAuthority": "sdkwork-messaging-backend-api",
+      "sdkFamily": "sdkwork-messaging-backend-sdk",
+      "apiPrefixes": ["/backend/v3/api/messaging"],
+      "coverage": "sdkwork-messaging-backend-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-messaging",
+      "cargoDependency": "sdkwork-messaging-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_messaging_gateway_assembly::assemble_application_router"
+    },
+    {
+      "serviceId": "sdkwork-audio-app-api",
+      "workspace": "sdkwork-audio",
+      "apiAuthority": "sdkwork-audio-app-api",
+      "sdkFamily": "sdkwork-audio-app-sdk",
+      "apiPrefixes": ["/app/v3/api/audio"],
+      "coverage": "sdkwork-audio-app-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-audio",
+      "cargoDependency": "sdkwork-audio-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_audio_gateway_assembly::assemble_application_router"
+    },
+    {
+      "serviceId": "sdkwork-audio-backend-api",
+      "workspace": "sdkwork-audio",
+      "apiAuthority": "sdkwork-audio-backend-api",
+      "sdkFamily": "sdkwork-audio-backend-sdk",
+      "apiPrefixes": ["/backend/v3/api/audio"],
+      "coverage": "sdkwork-audio-backend-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-audio",
+      "cargoDependency": "sdkwork-audio-gateway-assembly",
+      "runtimeModes": ["embedded"],
+      "executableExport": "sdkwork_audio_gateway_assembly::assemble_application_router"
     }
   ],
   "routeRegistry": {
@@ -1788,10 +1817,14 @@
   "verification": {
     "commands": [
       "cargo metadata --no-deps --format-version 1",
+      "cargo check -p sdkwork-api-cloud-gateway --all-features",
       "cargo test -p sdkwork-api-cloud-gateway-config",
       "cargo test -p sdkwork-api-cloud-gateway",
       "cargo fmt -- --check",
       "cargo test --workspace",
+      "node ../sdkwork-specs/tools/check-source-config-standard.mjs --root .",
+      "node ../sdkwork-specs/tools/check-app-manifest-standard.mjs --root .",
+      "node ../sdkwork-specs/tools/check-pnpm-script-standard.mjs --root .",
       "pnpm check",
       "pnpm verify",
       "pnpm workflow:validate",

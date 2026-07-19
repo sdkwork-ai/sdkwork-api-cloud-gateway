@@ -4,20 +4,20 @@ repository-kind: application
 
 SDKWork API Gateway is a Rust/Axum gateway application. It can run as an independent service or be
 embedded into another Rust service through public router builders. The default development topology
-is single-port and integrated; split multi-upstream validation is internal-only.
+is single-port and integrated; foundation dependency APIs are always linked as embedded assemblies.
 
 ## Architecture
 
 - `sdkwork-api-cloud-gateway-config`: typed runtime configuration.
 - `sdkwork-api-cloud-gateway-registry`: SDKWork route metadata and executable dependency routing rules.
 - `sdkwork-api-cloud-gateway-observability`: startup and route summaries.
-- `sdkwork-api-cloud-gateway`: Axum router builders, preflight validation, embedded routing, and
-  split-mode HTTP/WebSocket proxying.
+- `sdkwork-api-cloud-gateway`: Axum router builders, preflight validation, and embedded dependency
+  routing.
 - `crates/sdkwork-api-cloud-gateway`: independent binary entrypoint and tested service config loader.
 
-Within the gateway crate, endpoint responsibilities are split into focused modules: `health.rs` owns
+Within the gateway crate, endpoint responsibilities are separated into focused modules: `health.rs` owns
 `/healthz` and `/readyz`, `openapi.rs` owns OpenAPI metadata responses, and `diagnostics.rs` owns the
-safe diagnostics inventory. `runtime.rs` remains the gateway assembly and proxy execution layer.
+safe diagnostics inventory. `runtime.rs` remains the gateway assembly and embedded dispatch layer.
 
 ## Root Layout
 
@@ -35,7 +35,7 @@ represented with tracked content so active and inactive capabilities are easy to
 | `tools/` | placeholder | Reusable validators, generators, migration tools, and operator utilities. |
 | `plugins/` | placeholder | Application/runtime plugin source packages. Agent plugins stay in `.sdkwork/plugins/`. |
 | `examples/` | placeholder | Runnable and copyable consumer examples. |
-| `configs/` | active | Safe TOML config templates and non-secret runtime defaults. |
+| `etc/` | active | Typed deployment profiles, safe TOML runtime config, and non-secret defaults. |
 | `deployments/` | placeholder | Deployment descriptors, topology, and release handoff documents. |
 | `scripts/` | active | Thin command entrypoints for packaging and workflow integration. |
 | `docs/` | active | Design notes, implementation plans, runbooks, and architecture records. |
@@ -50,11 +50,10 @@ in this README, `AGENTS.md`, `specs/component.spec.json`, and `../sdkwork-specs/
 Foundation API integration is Cargo-workspace-first. The gateway does not use a separate gateway
 catalog file: executable integration evidence comes from this repository's `Cargo.toml`
 `[workspace.dependencies]`, crate-level Cargo features, and public router exports. SDKWork semantic
-evidence stays in the existing `sdkwork.app.config.json`, `specs/component.spec.json`, and dependency
-SDK assembly metadata.
+evidence stays in `specs/component.spec.json` and dependency SDK assembly metadata.
 
 Every published foundation surface is embedded. The complete machine-readable list is
-`sdkwork.app.config.json` plus `specs/component.spec.json`; each entry names its Cargo feature,
+`specs/component.spec.json`; each entry names its Cargo feature,
 assembly dependency, stable API prefix, and executable router export. Representative integrations
 include `foundation-drive` with `sdkwork-drive-gateway-assembly`, `foundation-im` with
 `sdkwork-im-gateway-assembly`, and `foundation-clawrouter` with
@@ -62,18 +61,18 @@ include `foundation-drive` with `sdkwork-drive-gateway-assembly`, `foundation-im
 
 When adding another foundation API, add its assembly crate once in root
 `[workspace.dependencies]`, activate it through a focused gateway feature, and record the matching
-service, surface, API authority, prefix, and executable export in both machine contracts. A surface
+service, surface, API authority, prefix, and executable export in the component contract. A surface
 without executable assembly evidence is not published by this runtime. Do not add per-dependency
 base URLs, a proxy fallback, a parallel catalog, or dependency-owned handlers to this product.
 
 ## Configuration
 
-Configuration is resolved in this order:
-
-1. `--config <path>` or `--config=<path>`
-2. `SDKWORK_API_CLOUD_GATEWAY_CONFIG`
-3. `sdkwork.app.config.json` in the application root
-4. built-in defaults
+`pnpm dev` selects `standalone.development` from `etc/sdkwork.deployment.config.json`. That source
+profile selects `etc/sdkwork-api-cloud-gateway.development.toml` and the unified PostgreSQL
+development profile from ignored `.env.postgres`. Runtime configuration follows SDKWork precedence:
+selected source profile, protected operator config/secrets, process environment, then explicit CLI
+overrides. The binary accepts `--config` and `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE`; the retired
+`SDKWORK_API_CLOUD_GATEWAY_CONFIG` key remains a read-only compatibility fallback.
 
 Environment overrides are then applied:
 
@@ -94,15 +93,17 @@ Environment overrides are then applied:
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_ENABLED`
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH`
 - `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`
+- `SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION`
+- `SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT`
 
-`sdkwork.app.config.json` drives the default SDKWork identity, bind address, API surfaces, and
-dependency SDK surfaces. TOML files under `configs/` are tracked templates for environment-specific
-deployment overlays.
+`sdkwork.app.config.json` declares application and release identity. `specs/component.spec.json`
+declares dependency surfaces and Cargo assembly evidence. Source TOML under `etc/` owns bind,
+security, traffic, policy, diagnostics, and observability values.
 
 Config loading performs startup validation after TOML/manifest/env merging. The gateway rejects
 sample rates above `10000` basis points, zero request or policy body limits, empty dependency
-identifiers, empty traffic/policy rule ids, and non-positive concurrency limits before
-serving traffic.
+identifiers, incomplete assembly evidence, per-dependency base URL fields, empty traffic/policy rule
+ids, and non-positive concurrency limits before serving traffic.
 
 ## Run
 
@@ -112,29 +113,35 @@ Preferred SDKWork application entrypoint:
 pnpm dev
 ```
 
+`pnpm dev` delegates to `pnpm dev:standalone`, initializes PostgreSQL, and starts the local gateway.
+`pnpm dev:cloud` validates the explicit deployed development gateway and starts no local gateway or
+database process.
+
 Equivalent Cargo command:
 
 ```powershell
-cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config configs/sdkwork-api-cloud-gateway.development.toml.example
+cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config etc/sdkwork-api-cloud-gateway.development.toml
 ```
 
 ## Server Packaging
 
 The gateway integrates with `sdkwork-github-workflow` through `sdkwork.workflow.json` and the thin
-`.github/workflows/package.yml` reusable workflow call. The standard server target is
-`linux-x64-server-tar-gz`, and the workflow declares `sdkwork-appbase` as a release dependency so the
-Cargo sibling path used by the gateway workspace is available in CI.
+`.github/workflows/package.yml` reusable workflow call. The standard targets are
+`linux-x64-standalone-server-tar-gz` and `linux-x64-cloud-server-tar-gz`; workflow dependencies make
+the sibling Cargo assemblies available in CI.
 
 Local server archive packaging uses the same lifecycle command:
 
 ```powershell
-pnpm package:server
-pnpm package:server:validate
+pnpm gateway:package:standalone
+pnpm gateway:validate:standalone
+pnpm gateway:package:cloud
+pnpm gateway:validate:cloud
 pnpm workflow:validate
 pnpm workflow:matrix:server
 ```
 
-`pnpm package:server` packages the current host platform by default. CI supplies
+The gateway package commands package the current host platform by default. CI supplies
 `SDKWORK_PACKAGE_PLATFORM`, `SDKWORK_PACKAGE_ARCHITECTURE`, `SDKWORK_PACKAGE_FORMAT`, and
 `SDKWORK_PACKAGE_VERSION` through the reusable workflow matrix.
 
@@ -142,6 +149,7 @@ pnpm workflow:matrix:server
 
 ```powershell
 cargo fmt -- --check
+cargo check -p sdkwork-api-cloud-gateway --all-features
 cargo test --workspace
 ```
 

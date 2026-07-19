@@ -1,0 +1,57 @@
+mode = "embedded"
+
+[service]
+name = "sdkwork-api-cloud-gateway"
+environment = "development"
+
+[server]
+bind = "127.0.0.1:3900"
+
+[cors]
+allowAnyOrigin = false
+allowedOrigins = ["http://127.0.0.1:5173", "http://localhost:5173"]
+
+[request]
+maxBodyBytes = 33554432
+
+[observability]
+accessLogEnabled = true
+auditLogEnabled = true
+metricsEnabled = false
+metricsPath = "/metrics"
+tracingEnabled = false
+redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
+
+[diagnostics]
+enabled = true
+path = "/internal/gateway/diagnostics"
+includePolicyInventory = true
+includeRouteInventory = true
+
+[security]
+allowedHosts = ["127.0.0.1:3900", "localhost:3900"]
+trustedProxyCidrs = []
+secureHeadersEnabled = true
+maxHeaderBytes = 65536
+maxHeaderCount = 128
+rejectCredentialHeadersOnAnonymousAuthRoutes = true
+csrfGuardEnabled = false
+
+[security.waf]
+enabled = false
+mode = "monitor"
+inspectQuery = true
+inspectHeaders = true
+inspectJsonBody = false
+
+[traffic]
+rateLimitEnabled = false
+compatXRateLimitHeaders = true
+globalMaxInFlight = 256
+rateLimits = []
+concurrencyLimits = []
+
+[policy]
+enabled = true
+dryRun = false
+rules = []

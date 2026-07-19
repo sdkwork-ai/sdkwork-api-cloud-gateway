@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "kind": "sdkwork.process-database-pool",
+  "profile": {
+    "exampleFile": ".env.postgres.example",
+    "database": "sdkwork_ai_dev",
+    "schema": "sdkwork_ai_dev"
+  },
+  "processes": [
+    {
+      "id": "sdkwork-api-cloud-gateway",
+      "entrypoint": "crates/sdkwork-api-cloud-gateway/src/listener_main.rs",
+      "poolOwner": "crates/sdkwork-api-cloud-gateway/src/listener_main.rs",
+      "driver": "sqlx::PgPool",
+      "poolCount": 1,
+      "databaseUrlEnv": "SDKWORK_CLAW_DATABASE_URL or SDKWORK_CLAW_DATABASE_*",
+      "schemaEnv": "SDKWORK_CLAW_DATABASE_SCHEMA",
+      "maxConnectionsEnv": "SDKWORK_CLAW_DATABASE_MAX_CONNECTIONS",
+      "temporaryDriverPoolCountEnv": "SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT",
+      "productionSourceRoots": ["crates/sdkwork-api-cloud-gateway/src"],
+      "consumers": [
+        {"module": "sdkwork-iam", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/iam_application_bootstrap.rs"]},
+        {"module": "sdkwork-drive", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
+        {"module": "sdkwork-membership", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
+        {"module": "sdkwork-order", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
+        {"module": "sdkwork-promotion", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
+        {"module": "sdkwork-payment", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
+        {"module": "optional foundation modules", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]}
+      ],
+      "temporaryDriverExceptions": [
+        {
+          "driver": "sqlx::AnyPool",
+          "owner": "sdkwork-drive maintainers",
+          "removalMilestone": "Migrate Drive embedded repositories to sqlx::PgPool before the next gateway production release",
+          "combinedConnectionBudget": 10,
+          "adr": "docs/architecture/decisions/ADR-20260719-embedded-database-driver-migration.md",
+          "evidence": ["../sdkwork-drive/crates/sdkwork-drive-workspace-service/src/infrastructure/sql/installer.rs"]
+        },
+        {
+          "driver": "r2d2",
+          "owner": "sdkwork-im maintainers",
+          "removalMilestone": "Migrate IM synchronous repositories to the canonical SQLx pool before the next gateway production release",
+          "combinedConnectionBudget": 10,
+          "adr": "docs/architecture/decisions/ADR-20260719-embedded-database-driver-migration.md",
+          "evidence": ["../sdkwork-im/crates/sdkwork-im-database-pool/src/lib.rs"]
+        }
+      ]
+    }
+  ],
+  "verification": [
+    "node ../sdkwork-specs/tools/check-process-shared-database-pool.mjs --root .",
+    "cargo check -p sdkwork-api-cloud-gateway"
+  ]
+}

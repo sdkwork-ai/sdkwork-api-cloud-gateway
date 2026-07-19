@@ -18,9 +18,9 @@
   },
   "dependencies": [
     {
-      "id": "sdkwork-appbase",
-      "repository": "Sdkwork-Cloud/sdkwork-appbase",
-      "refInput": "SDKWORK_APPBASE_REF",
+      "id": "sdkwork-iam",
+      "repository": "Sdkwork-Cloud/sdkwork-iam",
+      "refInput": "SDKWORK_IAM_REF",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN",
       "submodules": "recursive"
     },
@@ -65,6 +65,162 @@
       "repository": "Sdkwork-Cloud/sdkwork-utils",
       "refInput": "SDKWORK_UTILS_REF",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-agents",
+      "repository": "Sdkwork-Cloud/sdkwork-agents",
+      "refInput": "SDKWORK_AGENTS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-aiot",
+      "repository": "Sdkwork-Cloud/sdkwork-aiot",
+      "refInput": "SDKWORK_AIOT_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-appstore",
+      "repository": "Sdkwork-Cloud/sdkwork-appstore",
+      "refInput": "SDKWORK_APPSTORE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-audio",
+      "repository": "Sdkwork-Cloud/sdkwork-audio",
+      "refInput": "SDKWORK_AUDIO_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-clawrouter",
+      "repository": "Sdkwork-Cloud/sdkwork-clawrouter",
+      "refInput": "SDKWORK_CLAWROUTER_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-cms",
+      "repository": "Sdkwork-Cloud/sdkwork-cms",
+      "refInput": "SDKWORK_CMS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-comments",
+      "repository": "Sdkwork-Cloud/sdkwork-comments",
+      "refInput": "SDKWORK_COMMENTS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-community",
+      "repository": "Sdkwork-Cloud/sdkwork-community",
+      "refInput": "SDKWORK_COMMUNITY_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-course",
+      "repository": "Sdkwork-Cloud/sdkwork-course",
+      "refInput": "SDKWORK_COURSE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-database",
+      "repository": "Sdkwork-Cloud/sdkwork-database",
+      "refInput": "SDKWORK_DATABASE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-deployments",
+      "repository": "Sdkwork-Cloud/sdkwork-deployments",
+      "refInput": "SDKWORK_DEPLOYMENTS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-dezhou",
+      "repository": "Sdkwork-Cloud/sdkwork-dezhou",
+      "refInput": "SDKWORK_DEZHOU_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-documents",
+      "repository": "Sdkwork-Cloud/sdkwork-documents",
+      "refInput": "SDKWORK_DOCUMENTS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-forum",
+      "repository": "Sdkwork-Cloud/sdkwork-forum",
+      "refInput": "SDKWORK_FORUM_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-im",
+      "repository": "Sdkwork-Cloud/sdkwork-im",
+      "refInput": "SDKWORK_IM_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-image",
+      "repository": "Sdkwork-Cloud/sdkwork-image",
+      "refInput": "SDKWORK_IMAGE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-mail",
+      "repository": "Sdkwork-Cloud/sdkwork-mail",
+      "refInput": "SDKWORK_MAIL_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-mcp",
+      "repository": "Sdkwork-Cloud/sdkwork-mcp",
+      "refInput": "SDKWORK_MCP_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-messaging",
+      "repository": "Sdkwork-Cloud/sdkwork-messaging",
+      "refInput": "SDKWORK_MESSAGING_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-modelkit",
+      "repository": "Sdkwork-Cloud/sdkwork-modelkit",
+      "refInput": "SDKWORK_MODELKIT_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-music",
+      "repository": "Sdkwork-Cloud/sdkwork-music",
+      "refInput": "SDKWORK_MUSIC_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-notary",
+      "repository": "Sdkwork-Cloud/sdkwork-notary",
+      "refInput": "SDKWORK_NOTARY_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-prompts",
+      "repository": "Sdkwork-Cloud/sdkwork-prompts",
+      "refInput": "SDKWORK_PROMPTS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-rtc",
+      "repository": "Sdkwork-Cloud/sdkwork-rtc",
+      "refInput": "SDKWORK_RTC_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-voice",
+      "repository": "Sdkwork-Cloud/sdkwork-voice",
+      "refInput": "SDKWORK_VOICE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-web-server",
+      "repository": "Sdkwork-Cloud/sdkwork-web-server",
+      "refInput": "SDKWORK_WEB_SERVER_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     }
   ],
   "toolchains": {
@@ -84,7 +240,7 @@
       {
         "name": "Package server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm gateway:package:standalone"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm gateway:package"
       }
     ],
     "sign": [
@@ -105,7 +261,7 @@
       {
         "name": "Validate server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm gateway:validate:standalone"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm gateway:validate"
       }
     ]
   },
@@ -122,7 +278,22 @@
       "deploymentProfile": "standalone",
       "runtimeTarget": "server",
       "outputGlobs": [
-        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-server.tar.gz"
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz"
+      ]
+    },
+    {
+      "id": "linux-x64-cloud-server-tar-gz",
+      "profile": "server",
+      "platform": "linux",
+      "architecture": "x64",
+      "formats": [
+        "tar.gz"
+      ],
+      "runner": "ubuntu-24.04",
+      "deploymentProfile": "cloud",
+      "runtimeTarget": "server",
+      "outputGlobs": [
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz"
       ]
     }
   ],

@@ -4,7 +4,8 @@
 /.vscode/
 *.log
 *.local
-configs/*.local.toml
+etc/**/*.local.*
+etc/secrets/
 .env
 .env.*
 !.env.example

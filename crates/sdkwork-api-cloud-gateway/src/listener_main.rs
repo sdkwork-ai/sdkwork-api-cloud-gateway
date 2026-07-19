@@ -10,6 +10,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     init_tracing();
+    sdkwork_database_sqlx::enable_process_shared_database_pool();
 
     let env = env::vars().collect::<HashMap<_, _>>();
     let config = load_gateway_config(env::args().skip(1), &env, ".")?;

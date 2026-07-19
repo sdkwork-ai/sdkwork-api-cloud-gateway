@@ -4,11 +4,14 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_routers;
+use sdkwork_api_cloud_gateway::{
+    build_sdkwork_api_cloud_gateway_router_with_embedded_routers, load_gateway_config,
+};
 use sdkwork_api_cloud_gateway_config::{
     DependencyApiSurfaceConfig, DependencyRuntimeMode, GatewayRuntimeConfig,
 };
 use serde_json::{json, Value};
+use std::{collections::HashMap, path::Path};
 use tower::ServiceExt;
 
 fn surface(service_id: &str, prefix: &str) -> DependencyApiSurfaceConfig {
@@ -21,7 +24,9 @@ fn surface(service_id: &str, prefix: &str) -> DependencyApiSurfaceConfig {
         api_prefix: prefix.to_string(),
         runtime_mode: DependencyRuntimeMode::Embedded,
         same_origin_allowed: true,
-        executable_export: Some("sdkwork_test_gateway_assembly::assemble_application_router".to_string()),
+        executable_export: Some(
+            "sdkwork_test_gateway_assembly::assemble_application_router".to_string(),
+        ),
         cargo_feature: Some("foundation-test".to_string()),
         cargo_dependency: Some("sdkwork-test-gateway-assembly".to_string()),
         coverage: "embedded-assembly-routes".to_string(),
@@ -32,6 +37,53 @@ fn config(surfaces: Vec<DependencyApiSurfaceConfig>) -> GatewayRuntimeConfig {
     GatewayRuntimeConfig {
         dependency_surfaces: surfaces,
         ..GatewayRuntimeConfig::default()
+    }
+}
+
+#[test]
+fn explicit_profile_configs_keep_component_dependency_surface_parity() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .expect("workspace root");
+    let manifest = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let expected = manifest
+        .dependency_surfaces
+        .iter()
+        .map(|surface| {
+            (
+                surface.service_id.as_str(),
+                surface.api_prefix.as_str(),
+                surface.surface.as_str(),
+            )
+        })
+        .collect::<std::collections::BTreeSet<_>>();
+
+    for profile in ["development", "production", "test"] {
+        let config = load_gateway_config(
+            [
+                "--config".to_string(),
+                format!("etc/sdkwork-api-cloud-gateway.{profile}.toml"),
+            ],
+            &HashMap::new(),
+            root,
+        )
+        .unwrap_or_else(|error| panic!("load {profile} gateway config: {error}"));
+        let actual = config
+            .dependency_surfaces
+            .iter()
+            .map(|surface| {
+                (
+                    surface.service_id.as_str(),
+                    surface.api_prefix.as_str(),
+                    surface.surface.as_str(),
+                )
+            })
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(
+            actual, expected,
+            "{profile} config diverges from app manifest"
+        );
     }
 }
 
@@ -66,10 +118,8 @@ async fn dependency_request_is_delegated_to_embedded_router() {
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let body: Value = serde_json::from_slice(
-        &to_bytes(response.into_body(), usize::MAX).await.unwrap(),
-    )
-    .unwrap();
+    let body: Value =
+        serde_json::from_slice(&to_bytes(response.into_body(), usize::MAX).await.unwrap()).unwrap();
     assert_eq!(body["code"], 0);
 }
 
@@ -107,7 +157,12 @@ async fn unknown_route_returns_standard_not_found_problem() {
     )
     .expect("empty embedded gateway router");
     let response = router
-        .oneshot(Request::builder().uri("/missing").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/missing")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
