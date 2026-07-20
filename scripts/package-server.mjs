@@ -538,6 +538,7 @@ function run(command, args, { cwd, capture = false, env } = {}) {
     cwd,
     encoding: 'utf8',
     env: env ?? process.env,
+    maxBuffer: 64 * 1024 * 1024,
     shell: false,
     stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
   });
