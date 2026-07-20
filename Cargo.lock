@@ -5707,40 +5707,67 @@ dependencies = [
  "axum 0.8.9",
  "bytes",
  "http-body-util",
+ "sdkwork-agents-database-host",
  "sdkwork-agents-gateway-assembly",
+ "sdkwork-aiot-database-host",
  "sdkwork-aiot-gateway-assembly",
  "sdkwork-api-cloud-gateway-config",
  "sdkwork-api-cloud-gateway-observability",
  "sdkwork-api-cloud-gateway-registry",
+ "sdkwork-appstore-database-host",
  "sdkwork-appstore-gateway-assembly",
+ "sdkwork-audio-database-host",
  "sdkwork-audio-gateway-assembly",
+ "sdkwork-clawrouter-database-host",
  "sdkwork-clawrouter-gateway-assembly",
+ "sdkwork-cms-database-host",
  "sdkwork-cms-gateway-assembly",
+ "sdkwork-comments-database-host",
  "sdkwork-comments-gateway-assembly",
+ "sdkwork-community-database-host",
  "sdkwork-community-gateway-assembly",
  "sdkwork-community-http-rust",
+ "sdkwork-course-database-host",
  "sdkwork-course-gateway-assembly",
  "sdkwork-database-sqlx",
+ "sdkwork-deploy-database-host",
  "sdkwork-deployments-gateway-assembly",
+ "sdkwork-dezhou-database-host",
  "sdkwork-dezhou-gateway-assembly",
+ "sdkwork-documents-database-host",
  "sdkwork-documents-gateway-assembly",
+ "sdkwork-drive-database-host",
  "sdkwork-drive-gateway-assembly",
+ "sdkwork-forum-database-host",
  "sdkwork-forum-gateway-assembly",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
+ "sdkwork-im-database-host",
  "sdkwork-im-gateway-assembly",
+ "sdkwork-image-database-host",
  "sdkwork-image-gateway-assembly",
+ "sdkwork-mail-database-host",
  "sdkwork-mail-gateway-assembly",
+ "sdkwork-mcp-database-host",
  "sdkwork-mcp-gateway-assembly",
+ "sdkwork-membership-database-host",
  "sdkwork-membership-gateway-assembly",
+ "sdkwork-messaging-database-host",
  "sdkwork-messaging-gateway-assembly",
+ "sdkwork-modelkit-database-host",
  "sdkwork-modelkit-gateway-assembly",
+ "sdkwork-music-database-host",
  "sdkwork-music-gateway-assembly",
+ "sdkwork-notary-database-host",
  "sdkwork-notary-gateway-assembly",
+ "sdkwork-order-database-host",
  "sdkwork-order-gateway-assembly",
+ "sdkwork-payment-database-host",
  "sdkwork-payment-gateway-assembly",
+ "sdkwork-promotion-database-host",
  "sdkwork-promotion-gateway-assembly",
+ "sdkwork-prompts-database-host",
  "sdkwork-prompts-gateway-assembly",
  "sdkwork-routes-catalog-app-api",
  "sdkwork-routes-catalog-backend-api",
@@ -5765,13 +5792,16 @@ dependencies = [
  "sdkwork-routes-music-backend-api",
  "sdkwork-routes-voice-app-api",
  "sdkwork-routes-voice-backend-api",
+ "sdkwork-rtc-database-host",
  "sdkwork-rtc-gateway-assembly",
  "sdkwork-utils-rust",
+ "sdkwork-voice-database-host",
  "sdkwork-voice-gateway-assembly",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "sdkwork-web-server-gateway-assembly",
+ "sdkwork-webserver-database-host",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -6063,6 +6093,17 @@ dependencies = [
  "sdkwork-assets-ingestion",
  "sdkwork-drive-workspace-service",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "sdkwork-audio-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
 ]
 
 [[package]]
@@ -6372,6 +6413,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-cms-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
 name = "sdkwork-cms-gateway-assembly"
 version = "0.1.0"
 dependencies = [
@@ -6387,6 +6439,17 @@ name = "sdkwork-code-kernel"
 version = "0.1.0"
 dependencies = [
  "sdkwork-agent-kernel",
+]
+
+[[package]]
+name = "sdkwork-comments-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
 ]
 
 [[package]]
@@ -7208,6 +7271,17 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "sdkwork-forum-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
 ]
 
 [[package]]
@@ -8216,6 +8290,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-messaging-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
 name = "sdkwork-messaging-gateway-assembly"
 version = "0.1.0"
 dependencies = [
@@ -8251,6 +8336,9 @@ name = "sdkwork-modelkit-database-host"
 version = "0.1.0"
 dependencies = [
  "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
  "sdkwork-modelkit-catalog-repository-sqlx",
  "sdkwork-modelkit-catalog-service",
  "sdkwork-modelkit-preferences-repository-sqlx",
@@ -8348,6 +8436,17 @@ version = "0.1.0"
 [[package]]
 name = "sdkwork-music-core-rust"
 version = "0.1.0"
+
+[[package]]
+name = "sdkwork-music-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
 
 [[package]]
 name = "sdkwork-music-gateway-assembly"

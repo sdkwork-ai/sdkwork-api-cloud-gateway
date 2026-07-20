@@ -17,6 +17,12 @@
       "schemaEnv": "SDKWORK_CLAW_DATABASE_SCHEMA",
       "maxConnectionsEnv": "SDKWORK_CLAW_DATABASE_MAX_CONNECTIONS",
       "temporaryDriverPoolCountEnv": "SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT",
+      "bootstrap": {
+        "orchestrator": "crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs",
+        "orderingAuthority": "specs/component.spec.json#dependencies",
+        "phase": "after-process-pool-before-router-assembly",
+        "failurePolicy": "fail-closed"
+      },
       "readiness": {
         "path": "/readyz",
         "poolRequiredWhenEnabled": true,
@@ -25,22 +31,49 @@
       },
       "productionSourceRoots": ["crates/sdkwork-api-cloud-gateway/src"],
       "consumers": [
-        {"module": "sdkwork-iam", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/iam_application_bootstrap.rs"]},
-        {"module": "sdkwork-drive", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-membership", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-order", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-promotion", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-payment", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "optional foundation modules", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]}
+        {"module": "sdkwork-iam", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-drive", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-membership", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-notary", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-voice", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-rtc", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-clawrouter", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-appstore", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-course", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-cms", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-forum", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-im", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-mail", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-mcp", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-dezhou", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-music", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-image", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-aiot", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-community", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-agents", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-order", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-promotion", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-payment", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-documents", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-prompts", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-deployments", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-web-server", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-modelkit", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs", "../sdkwork-modelkit/crates/sdkwork-modelkit-database-host/src/lib.rs"]},
+        {"module": "sdkwork-comments", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-messaging", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-audio", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]}
       ],
       "temporaryDriverExceptions": [
         {
           "driver": "sqlx::AnyPool",
-          "owner": "sdkwork-drive maintainers",
-          "removalMilestone": "Migrate Drive embedded repositories to sqlx::PgPool before the next gateway production release",
+          "owner": "sdkwork-drive and sdkwork-modelkit maintainers",
+          "removalMilestone": "Migrate Drive and Modelkit embedded repositories to sqlx::PgPool before the next gateway production release",
           "combinedConnectionBudget": 10,
           "adr": "docs/architecture/decisions/ADR-20260719-embedded-database-driver-migration.md",
-          "evidence": ["../sdkwork-drive/crates/sdkwork-drive-workspace-service/src/infrastructure/sql/installer.rs"]
+          "evidence": [
+            "../sdkwork-drive/crates/sdkwork-drive-workspace-service/src/infrastructure/sql/installer.rs",
+            "../sdkwork-modelkit/crates/sdkwork-modelkit-database-host/src/lib.rs"
+          ]
         },
         {
           "driver": "r2d2",

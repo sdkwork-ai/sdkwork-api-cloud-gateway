@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { cp, copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -22,10 +22,12 @@ async function main() {
   const context = await createPackageContext(options);
 
   if (command === 'package') {
+    context.databaseModules = await resolveDatabaseAssetModules();
     await packageServer(context);
     return;
   }
   if (command === 'validate') {
+    context.databaseModules = await resolveDatabaseAssetModules();
     await validateArchive(context);
     return;
   }
@@ -292,9 +294,11 @@ async function packageServer(context) {
   await mkdir(path.join(context.stageRoot, 'bin'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'config'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'specs'), { recursive: true });
+  await mkdir(path.join(context.stageRoot, 'database-modules'), { recursive: true });
 
   await copyFile(context.binaryPath, path.join(context.stageRoot, 'bin', context.binaryName));
   await copyRuntimeConfigTemplates(context.stageRoot);
+  await copyDatabaseModuleAssets(context);
   await copyIfExists('README.md', path.join(context.stageRoot, 'README.md'));
   await copyIfExists('sdkwork.app.config.json', path.join(context.stageRoot, 'sdkwork.app.config.json'));
   await copyIfExists(path.join('specs', 'component.spec.json'), path.join(context.stageRoot, 'specs', 'component.spec.json'));
@@ -337,6 +341,71 @@ async function copyRuntimeConfigTemplates(stageRoot) {
   const files = await readdir(configRoot);
   for (const file of files.filter((item) => item.endsWith('.toml')).sort()) {
     await copyFile(path.join(configRoot, file), path.join(stageRoot, 'config', file));
+  }
+}
+
+async function resolveDatabaseAssetModules() {
+  const metadata = JSON.parse(run(
+    'cargo',
+    ['metadata', '--format-version', '1', '--locked'],
+    { cwd: appRoot, capture: true },
+  ));
+  const hostCrates = resolveDatabaseHostCratesFromMetadata(metadata);
+  const modules = [];
+
+  for (const hostCrate of hostCrates) {
+    const workspaceRoot = path.resolve(hostCrate.crateRoot, '..', '..');
+    const workspace = path.basename(workspaceRoot);
+    const databaseRoot = path.join(workspaceRoot, 'database');
+    const manifestPath = path.join(databaseRoot, 'database.manifest.json');
+    if (!existsSync(manifestPath)) {
+      throw new Error(`${hostCrate.name} is missing ${manifestPath}`);
+    }
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    if (typeof manifest.moduleId !== 'string' || !manifest.moduleId.trim()) {
+      throw new Error(`${manifestPath} must declare a non-empty moduleId`);
+    }
+    modules.push({
+      databaseRoot,
+      hostCrate: hostCrate.name,
+      moduleId: manifest.moduleId,
+      workspace,
+    });
+  }
+
+  modules.sort((left, right) => left.workspace.localeCompare(right.workspace));
+  return modules;
+}
+
+export function resolveDatabaseHostCratesFromMetadata(metadata) {
+  const gateway = metadata?.packages?.find((candidate) =>
+    candidate.name === BINARY_NAME
+      && path.resolve(candidate.manifest_path) === path.join(appRoot, 'crates', BINARY_NAME, 'Cargo.toml')
+  );
+  if (!gateway) {
+    throw new Error(`Cargo metadata is missing ${BINARY_NAME}`);
+  }
+
+  const hosts = gateway.dependencies
+    .filter((dependency) =>
+      dependency.name.endsWith('-database-host') && typeof dependency.path === 'string'
+    )
+    .map((dependency) => ({ name: dependency.name, crateRoot: dependency.path }));
+  if (hosts.length === 0) {
+    throw new Error(`${BINARY_NAME} has no convention-named database host dependencies`);
+  }
+  return hosts;
+}
+
+async function copyDatabaseModuleAssets(context) {
+  for (const module of context.databaseModules) {
+    const destination = path.join(
+      context.stageRoot,
+      'database-modules',
+      module.workspace,
+      'database',
+    );
+    await cp(module.databaseRoot, destination, { recursive: true });
   }
 }
 
@@ -393,6 +462,11 @@ function createInstallManifest(context) {
       'config/sdkwork-api-cloud-gateway.production.toml',
       'config/sdkwork-api-cloud-gateway.test.toml',
     ],
+    databaseModules: context.databaseModules.map((module) => ({
+      moduleId: module.moduleId,
+      workspace: module.workspace,
+      assets: `database-modules/${module.workspace}/database`,
+    })),
     healthPath: '/healthz',
     readinessPath: '/readyz',
   };
@@ -446,6 +520,9 @@ async function validateArchive(context) {
     `${context.stageName}/install-manifest.json`,
     `${context.stageName}/checksums.sha256`,
     `${context.stageName}/README.md`,
+    ...context.databaseModules.map(
+      (module) => `${context.stageName}/database-modules/${module.workspace}/database/database.manifest.json`,
+    ),
   ];
 
   for (const entry of requiredEntries) {

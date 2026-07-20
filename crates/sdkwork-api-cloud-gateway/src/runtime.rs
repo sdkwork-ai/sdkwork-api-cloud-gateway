@@ -178,6 +178,7 @@ pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     let finalize_config = config.clone();
+    crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config).await?;
     let embedded_routers =
         crate::embedded_dependency_routes::bootstrap_embedded_dependency_routers(&config).await?;
     let registry =

@@ -13,11 +13,11 @@ foundation-appbase = [
     "dep:sdkwork-iam-database-host",
     "dep:sdkwork-iam-embedded-application-bootstrap",
 ]
-foundation-drive = ["dep:sdkwork-drive-gateway-assembly"]
-foundation-membership = ["dep:sdkwork-membership-gateway-assembly"]
-foundation-order = ["dep:sdkwork-order-gateway-assembly"]
-foundation-promotion = ["dep:sdkwork-promotion-gateway-assembly"]
-foundation-payment = ["dep:sdkwork-payment-gateway-assembly"]
+foundation-drive = ["dep:sdkwork-drive-gateway-assembly", "dep:sdkwork-drive-database-host"]
+foundation-membership = ["dep:sdkwork-membership-gateway-assembly", "dep:sdkwork-membership-database-host"]
+foundation-order = ["dep:sdkwork-order-gateway-assembly", "dep:sdkwork-order-database-host"]
+foundation-promotion = ["dep:sdkwork-promotion-gateway-assembly", "dep:sdkwork-promotion-database-host"]
+foundation-payment = ["dep:sdkwork-payment-gateway-assembly", "dep:sdkwork-payment-database-host"]
 manager-operations-suite = [
     "foundation-drive",
     "foundation-membership",
@@ -29,31 +29,32 @@ foundation-course = [
     "dep:sdkwork_routes_course_app_api",
     "dep:sdkwork_routes_course_backend_api",
     "dep:sdkwork-course-gateway-assembly",
+    "dep:sdkwork-course-database-host",
 ]
-foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api", "dep:sdkwork-image-gateway-assembly"]
-foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api", "dep:sdkwork-music-gateway-assembly"]
-foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api", "dep:sdkwork-messaging-gateway-assembly"]
-foundation-community = ["dep:sdkwork_routes_community_app_api", "dep:sdkwork-community-gateway-assembly"]
-foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api", "dep:sdkwork-cms-gateway-assembly"]
-foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api", "dep:sdkwork-voice-gateway-assembly"]
-foundation-aiot = ["dep:sdkwork_routes_aiot_app_api", "dep:sdkwork-aiot-gateway-assembly"]
-foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api", "dep:sdkwork-appstore-gateway-assembly"]
-foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api", "dep:sdkwork-forum-gateway-assembly"]
-foundation-comments = ["dep:sdkwork-comments-gateway-assembly"]
-foundation-audio = ["dep:sdkwork-audio-gateway-assembly"]
-foundation-clawrouter = ["dep:sdkwork-clawrouter-gateway-assembly"]
-foundation-mcp = ["dep:sdkwork-mcp-gateway-assembly"]
-foundation-im = ["dep:sdkwork-im-gateway-assembly"]
-foundation-rtc = ["dep:sdkwork-rtc-gateway-assembly"]
-foundation-notary = ["dep:sdkwork-notary-gateway-assembly"]
-foundation-mail = ["dep:sdkwork-mail-gateway-assembly"]
-foundation-kernel = ["dep:sdkwork-agents-gateway-assembly"]
-foundation-deployments = ["dep:sdkwork-deployments-gateway-assembly"]
-foundation-dezhou = ["dep:sdkwork-dezhou-gateway-assembly"]
-foundation-documents = ["dep:sdkwork-documents-gateway-assembly"]
-foundation-modelkit = ["dep:sdkwork-modelkit-gateway-assembly"]
-foundation-prompts = ["dep:sdkwork-prompts-gateway-assembly"]
-foundation-web-server = ["dep:sdkwork-web-server-gateway-assembly"]
+foundation-image = ["dep:sdkwork_routes_image_app_api", "dep:sdkwork_routes_image_backend_api", "dep:sdkwork_routes_image_open_api", "dep:sdkwork-image-gateway-assembly", "dep:sdkwork-image-database-host"]
+foundation-music = ["dep:sdkwork_routes_music_app_api", "dep:sdkwork_routes_music_backend_api", "dep:sdkwork-music-gateway-assembly", "dep:sdkwork-music-database-host"]
+foundation-messaging = ["dep:sdkwork_routes_messaging_app_api", "dep:sdkwork_routes_messaging_backend_api", "dep:sdkwork-messaging-gateway-assembly", "dep:sdkwork-messaging-database-host"]
+foundation-community = ["dep:sdkwork_routes_community_app_api", "dep:sdkwork-community-gateway-assembly", "dep:sdkwork-community-database-host"]
+foundation-cms = ["dep:sdkwork_routes_cms_app_api", "dep:sdkwork_routes_cms_backend_api", "dep:sdkwork_routes_cms_open_api", "dep:sdkwork-cms-gateway-assembly", "dep:sdkwork-cms-database-host"]
+foundation-voice = ["dep:sdkwork_routes_voice_app_api", "dep:sdkwork_routes_voice_backend_api", "dep:sdkwork-voice-gateway-assembly", "dep:sdkwork-voice-database-host"]
+foundation-aiot = ["dep:sdkwork_routes_aiot_app_api", "dep:sdkwork-aiot-gateway-assembly", "dep:sdkwork-aiot-database-host"]
+foundation-appstore = ["dep:sdkwork_routes_catalog_app_api", "dep:sdkwork_routes_catalog_backend_api", "dep:sdkwork_routes_catalog_open_api", "dep:sdkwork-appstore-gateway-assembly", "dep:sdkwork-appstore-database-host"]
+foundation-forum = ["dep:sdkwork_routes_forum_app_api", "dep:sdkwork_routes_forum_backend_api", "dep:sdkwork_routes_forum_open_api", "dep:sdkwork-forum-gateway-assembly", "dep:sdkwork-forum-database-host"]
+foundation-comments = ["dep:sdkwork-comments-gateway-assembly", "dep:sdkwork-comments-database-host"]
+foundation-audio = ["dep:sdkwork-audio-gateway-assembly", "dep:sdkwork-audio-database-host"]
+foundation-clawrouter = ["dep:sdkwork-clawrouter-gateway-assembly", "dep:sdkwork-clawrouter-database-host"]
+foundation-mcp = ["dep:sdkwork-mcp-gateway-assembly", "dep:sdkwork-mcp-database-host"]
+foundation-im = ["dep:sdkwork-im-gateway-assembly", "dep:sdkwork-im-database-host"]
+foundation-rtc = ["dep:sdkwork-rtc-gateway-assembly", "dep:sdkwork-rtc-database-host"]
+foundation-notary = ["dep:sdkwork-notary-gateway-assembly", "dep:sdkwork-notary-database-host"]
+foundation-mail = ["dep:sdkwork-mail-gateway-assembly", "dep:sdkwork-mail-database-host"]
+foundation-kernel = ["dep:sdkwork-agents-gateway-assembly", "dep:sdkwork-agents-database-host"]
+foundation-deployments = ["dep:sdkwork-deployments-gateway-assembly", "dep:sdkwork-deploy-database-host"]
+foundation-dezhou = ["dep:sdkwork-dezhou-gateway-assembly", "dep:sdkwork-dezhou-database-host"]
+foundation-documents = ["dep:sdkwork-documents-gateway-assembly", "dep:sdkwork-documents-database-host"]
+foundation-modelkit = ["dep:sdkwork-modelkit-gateway-assembly", "dep:sdkwork-modelkit-database-host"]
+foundation-prompts = ["dep:sdkwork-prompts-gateway-assembly", "dep:sdkwork-prompts-database-host"]
+foundation-web-server = ["dep:sdkwork-web-server-gateway-assembly", "dep:sdkwork-webserver-database-host"]
 platform-foundation-suite = [
     "foundation-appbase",
     "manager-operations-suite",
@@ -162,6 +163,36 @@ sdkwork-documents-gateway-assembly = { workspace = true, optional = true }
 sdkwork-modelkit-gateway-assembly = { workspace = true, optional = true }
 sdkwork-prompts-gateway-assembly = { workspace = true, optional = true }
 sdkwork-web-server-gateway-assembly = { workspace = true, optional = true }
+sdkwork-drive-database-host = { workspace = true, optional = true }
+sdkwork-membership-database-host = { workspace = true, optional = true }
+sdkwork-order-database-host = { workspace = true, optional = true }
+sdkwork-promotion-database-host = { workspace = true, optional = true }
+sdkwork-payment-database-host = { workspace = true, optional = true }
+sdkwork-course-database-host = { workspace = true, optional = true }
+sdkwork-voice-database-host = { workspace = true, optional = true }
+sdkwork-music-database-host = { workspace = true, optional = true }
+sdkwork-messaging-database-host = { workspace = true, optional = true }
+sdkwork-image-database-host = { workspace = true, optional = true }
+sdkwork-cms-database-host = { workspace = true, optional = true }
+sdkwork-forum-database-host = { workspace = true, optional = true }
+sdkwork-community-database-host = { workspace = true, optional = true }
+sdkwork-comments-database-host = { workspace = true, optional = true }
+sdkwork-audio-database-host = { workspace = true, optional = true }
+sdkwork-clawrouter-database-host = { workspace = true, optional = true }
+sdkwork-mcp-database-host = { workspace = true, optional = true }
+sdkwork-im-database-host = { workspace = true, optional = true }
+sdkwork-rtc-database-host = { workspace = true, optional = true }
+sdkwork-notary-database-host = { workspace = true, optional = true }
+sdkwork-mail-database-host = { workspace = true, optional = true }
+sdkwork-aiot-database-host = { workspace = true, optional = true }
+sdkwork-appstore-database-host = { workspace = true, optional = true }
+sdkwork-agents-database-host = { workspace = true, optional = true }
+sdkwork-deploy-database-host = { workspace = true, optional = true }
+sdkwork-dezhou-database-host = { workspace = true, optional = true }
+sdkwork-documents-database-host = { workspace = true, optional = true }
+sdkwork-modelkit-database-host = { workspace = true, optional = true }
+sdkwork-prompts-database-host = { workspace = true, optional = true }
+sdkwork-webserver-database-host = { workspace = true, optional = true }
 
 [dev-dependencies]
 http-body-util.workspace = true

@@ -1,6 +1,7 @@
 //! Runtime router builders for the SDKWork API Gateway.
 
 mod diagnostics;
+mod embedded_database_bootstrap;
 mod embedded_dependency_routes;
 mod error;
 mod health;

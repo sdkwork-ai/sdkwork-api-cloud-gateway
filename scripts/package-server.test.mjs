@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import {
   resolveCargoReleaseDir,
+  resolveDatabaseHostCratesFromMetadata,
   resolveDeploymentProfile,
   resolveServerStageName,
 } from './package-server.mjs';
@@ -73,4 +74,44 @@ test('deployment profile follows workflow standard with legacy compatibility', (
     }),
     'cloud',
   );
+});
+
+test('database assets are discovered from convention-named gateway host dependencies', () => {
+  const gatewayManifest = path.join(
+    path.resolve('.'),
+    'crates',
+    'sdkwork-api-cloud-gateway',
+    'Cargo.toml',
+  );
+  const metadata = {
+    packages: [
+      {
+        name: 'sdkwork-api-cloud-gateway',
+        manifest_path: gatewayManifest,
+        dependencies: [
+          {
+            name: 'sdkwork-audio-database-host',
+            path: path.resolve('..', 'sdkwork-audio', 'crates', 'sdkwork-audio-database-host'),
+          },
+          {
+            name: 'sdkwork-audio-gateway-assembly',
+            path: path.resolve('..', 'sdkwork-audio', 'crates', 'sdkwork-audio-gateway-assembly'),
+          },
+          { name: 'serde', path: null },
+        ],
+      },
+    ],
+  };
+
+  assert.deepEqual(resolveDatabaseHostCratesFromMetadata(metadata), [
+    {
+      name: 'sdkwork-audio-database-host',
+      crateRoot: path.resolve(
+        '..',
+        'sdkwork-audio',
+        'crates',
+        'sdkwork-audio-database-host',
+      ),
+    },
+  ]);
 });

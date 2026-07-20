@@ -28,7 +28,7 @@
     "gateway:validate": "node scripts/package-server.mjs validate",
     "gateway:validate:standalone": "node scripts/package-server.mjs validate --deployment-profile standalone",
     "gateway:validate:cloud": "node scripts/package-server.mjs validate --deployment-profile cloud",
-    "test": "cargo test --workspace && node --test scripts/package-server.test.mjs scripts/dev/sdkwork-api-cloud-gateway-dev-env.test.mjs scripts/dev/sdkwork-api-cloud-gateway-source-config.test.mjs",
+    "test": "cargo test --workspace && node --test scripts/package-server.test.mjs scripts/dev/sdkwork-api-cloud-gateway-dev-env.test.mjs scripts/dev/sdkwork-api-cloud-gateway-source-config.test.mjs && node scripts/dev/sdkwork-api-cloud-gateway-database-bootstrap-standard.test.mjs",
     "test:iam-application-bootstrap-standard": "node scripts/dev/sdkwork-api-cloud-gateway-iam-application-bootstrap-standard.test.mjs",
     "verify": "pnpm check && pnpm test && pnpm test:iam-application-bootstrap-standard && pnpm lint && pnpm run check:app-composition",
     "workflow:matrix:server": "pnpm gateway:matrix",
