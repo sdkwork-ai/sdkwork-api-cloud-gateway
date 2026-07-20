@@ -13,9 +13,9 @@ function read(relativePath, root = repoRoot) {
 
 const bootstrapSource = read('crates/sdkwork-api-cloud-gateway/src/iam_application_bootstrap.rs');
 const runtimeSource = read('crates/sdkwork-api-cloud-gateway/src/runtime.rs');
-const backendRouterBuilderSource = runtimeSource.slice(
-  runtimeSource.indexOf('pub async fn build_embedded_sdkwork_iam_backend_api_router'),
-  runtimeSource.indexOf('pub async fn build_embedded_sdkwork_iam_app_api_router'),
+const embeddedAppbaseBuilderSource = runtimeSource.slice(
+  runtimeSource.indexOf('pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase'),
+  runtimeSource.indexOf('async fn metrics_endpoint'),
 );
 const gatewayCargo = read('crates/sdkwork-api-cloud-gateway/Cargo.toml');
 const sharedBootstrapSource = read(
@@ -36,15 +36,27 @@ assert.match(
 );
 
 assert.match(
-  runtimeSource,
+  embeddedAppbaseBuilderSource,
   /ensure_embedded_iam_tenant_application_bootstrap/u,
-  'Embedded IAM router build must provision tenant applications before credential-entry routes go live.',
+  'Embedded IAM assembly build must provision tenant applications before credential-entry routes go live.',
 );
 
 assert.match(
-  backendRouterBuilderSource,
-  /ensure_embedded_iam_router_prerequisites/u,
-  'Embedded IAM backend-only startup must fail closed when database lifecycle bootstrap fails.',
+  embeddedAppbaseBuilderSource,
+  /sdkwork_api_iam_assembly::assemble_business_router/u,
+  'API cloud gateway must integrate IAM through the canonical API assembly.',
+);
+
+assert.match(
+  gatewayCargo,
+  /sdkwork-api-iam-assembly/u,
+  'API cloud gateway must depend on sdkwork-api-iam-assembly.',
+);
+
+assert.doesNotMatch(
+  gatewayCargo,
+  /sdkwork_routes_iam_(?:app|backend)_api/u,
+  'API cloud gateway must not depend directly on IAM route crates.',
 );
 
 assert.match(

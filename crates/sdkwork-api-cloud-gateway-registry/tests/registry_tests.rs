@@ -13,7 +13,7 @@ fn surface(service_id: &str, prefix: &str) -> DependencyApiSurfaceConfig {
         same_origin_allowed: true,
         executable_export: Some("assembly::router".to_string()),
         cargo_feature: Some("foundation-test".to_string()),
-        cargo_dependency: Some("test-gateway-assembly".to_string()),
+        cargo_dependency: Some("sdkwork-api-test-assembly".to_string()),
         coverage: "embedded-assembly-routes".to_string(),
     }
 }

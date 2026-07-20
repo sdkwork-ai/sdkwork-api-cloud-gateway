@@ -204,16 +204,6 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-music")]
-    if workspace_enabled(config, "sdkwork-music") {
-        run_module(
-            "sdkwork-music",
-            "music",
-            sdkwork_music_database_host::bootstrap_music_database(pool.clone()),
-        )
-        .await?;
-    }
-
     #[cfg(feature = "foundation-image")]
     if workspace_enabled(config, "sdkwork-image") {
         run_module(
@@ -330,26 +320,6 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-modelkit",
             "modelkit",
             sdkwork_modelkit_database_host::bootstrap_modelkit_database(pool.clone()),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-comments")]
-    if workspace_enabled(config, "sdkwork-comments") {
-        run_module(
-            "sdkwork-comments",
-            "comments",
-            sdkwork_comments_database_host::bootstrap_comments_database(pool.clone()),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-messaging")]
-    if workspace_enabled(config, "sdkwork-messaging") {
-        run_module(
-            "sdkwork-messaging",
-            "messaging",
-            sdkwork_messaging_database_host::bootstrap_messaging_database(pool.clone()),
         )
         .await?;
     }

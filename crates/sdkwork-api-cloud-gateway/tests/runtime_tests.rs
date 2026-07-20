@@ -24,11 +24,9 @@ fn surface(service_id: &str, prefix: &str) -> DependencyApiSurfaceConfig {
         api_prefix: prefix.to_string(),
         runtime_mode: DependencyRuntimeMode::Embedded,
         same_origin_allowed: true,
-        executable_export: Some(
-            "sdkwork_test_gateway_assembly::assemble_application_router".to_string(),
-        ),
+        executable_export: Some("sdkwork_api_test_assembly::assemble_api_router".to_string()),
         cargo_feature: Some("foundation-test".to_string()),
-        cargo_dependency: Some("sdkwork-test-gateway-assembly".to_string()),
+        cargo_dependency: Some("sdkwork-api-test-assembly".to_string()),
         coverage: "embedded-assembly-routes".to_string(),
     }
 }

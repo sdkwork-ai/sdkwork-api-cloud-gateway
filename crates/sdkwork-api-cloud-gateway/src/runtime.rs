@@ -221,49 +221,34 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
 ) -> Result<Router, GatewayRuntimeError> {
     config.mode = GatewayMode::Embedded;
     let mut embedded_routers = Vec::new();
-    if config
-        .dependency_surfaces
-        .iter()
-        .any(|surface| surface.service_id == APPBASE_APP_API_SERVICE_ID)
-    {
-        embedded_routers.push((
-            APPBASE_APP_API_SERVICE_ID,
-            build_embedded_sdkwork_iam_app_api_router().await?,
-        ));
-    }
-    if config
-        .dependency_surfaces
-        .iter()
-        .any(|surface| surface.service_id == APPBASE_BACKEND_API_SERVICE_ID)
-    {
-        embedded_routers.push((
-            APPBASE_BACKEND_API_SERVICE_ID,
-            build_embedded_sdkwork_iam_backend_api_router().await?,
-        ));
+    if config.dependency_surfaces.iter().any(|surface| {
+        surface.service_id == APPBASE_APP_API_SERVICE_ID
+            || surface.service_id == APPBASE_BACKEND_API_SERVICE_ID
+    }) {
+        ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID).await?;
+        let iam_router = sdkwork_api_iam_assembly::assemble_business_router()
+            .await
+            .router;
+        if config
+            .dependency_surfaces
+            .iter()
+            .any(|surface| surface.service_id == APPBASE_APP_API_SERVICE_ID)
+        {
+            embedded_routers.push((APPBASE_APP_API_SERVICE_ID, iam_router.clone()));
+        }
+        if config
+            .dependency_surfaces
+            .iter()
+            .any(|surface| surface.service_id == APPBASE_BACKEND_API_SERVICE_ID)
+        {
+            embedded_routers.push((APPBASE_BACKEND_API_SERVICE_ID, iam_router));
+        }
     }
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers(config, embedded_routers)
 }
 
 #[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_iam_backend_api_router() -> Result<Router, GatewayRuntimeError>
-{
-    ensure_embedded_iam_router_prerequisites(APPBASE_BACKEND_API_SERVICE_ID).await?;
-    Ok(sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env().await)
-}
-
-#[cfg(feature = "foundation-appbase")]
-pub async fn build_embedded_sdkwork_iam_app_api_router() -> Result<Router, GatewayRuntimeError> {
-    ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID).await?;
-    sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router()
-        .await
-        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-            service_id: APPBASE_APP_API_SERVICE_ID.to_owned(),
-            message,
-        })
-}
-
-#[cfg(feature = "foundation-appbase")]
-async fn ensure_embedded_iam_router_prerequisites(
+pub(crate) async fn ensure_embedded_iam_router_prerequisites(
     service_id: &str,
 ) -> Result<(), GatewayRuntimeError> {
     crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()

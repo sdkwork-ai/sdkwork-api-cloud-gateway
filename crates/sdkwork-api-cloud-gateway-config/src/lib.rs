@@ -45,8 +45,6 @@ pub const KNOWLEDGEBASE_OPEN_API_SERVICE_ID: &str = "sdkwork-knowledgebase-open-
 pub const NOTES_APP_API_SERVICE_ID: &str = "sdkwork-notes-app-api";
 pub const NOTES_BACKEND_API_SERVICE_ID: &str = "sdkwork-notes-backend-api";
 pub const NOTES_OPEN_API_SERVICE_ID: &str = "sdkwork-notes-open-api";
-pub const MUSIC_APP_API_SERVICE_ID: &str = "sdkwork-music-app-api";
-pub const MUSIC_BACKEND_API_SERVICE_ID: &str = "sdkwork-music-backend-api";
 pub const GENERATIONS_APP_API_SERVICE_ID: &str = "sdkwork-generations-app-api";
 pub const GENERATIONS_BACKEND_API_SERVICE_ID: &str = "sdkwork-generations-backend-api";
 pub const COMMUNITY_APP_API_SERVICE_ID: &str = "sdkwork-community-app-api";
@@ -59,12 +57,8 @@ pub const VOICE_BACKEND_API_SERVICE_ID: &str = "sdkwork-voice-backend-api";
 pub const IMAGE_APP_API_SERVICE_ID: &str = "sdkwork-image-app-api";
 pub const IMAGE_BACKEND_API_SERVICE_ID: &str = "sdkwork-image-backend-api";
 pub const IMAGE_OPEN_API_SERVICE_ID: &str = "sdkwork-image-open-api";
-pub const COMMENTS_APP_API_SERVICE_ID: &str = "sdkwork-comments-app-api";
-pub const COMMENTS_BACKEND_API_SERVICE_ID: &str = "sdkwork-comments-backend-api";
 pub const COURSE_APP_API_SERVICE_ID: &str = "sdkwork-course-app-api";
 pub const COURSE_BACKEND_API_SERVICE_ID: &str = "sdkwork-course-backend-api";
-pub const MESSAGING_APP_API_SERVICE_ID: &str = "sdkwork-messaging-app-api";
-pub const MESSAGING_BACKEND_API_SERVICE_ID: &str = "sdkwork-messaging-backend-api";
 pub const CMS_APP_API_SERVICE_ID: &str = "sdkwork-cms-app-api";
 pub const CMS_APP_API_PREFIX: &str = "/app/v3/api/cms";
 pub const CMS_BACKEND_API_SERVICE_ID: &str = "sdkwork-cms-backend-api";
@@ -662,6 +656,15 @@ impl GatewayRuntimeConfig {
         if let Some(allowed_hosts) = env.get("SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS") {
             self.security.allowed_hosts = parse_csv_env(allowed_hosts);
         }
+        if let Some(allow_any_origin) = env.get("SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN") {
+            self.cors.allow_any_origin = parse_bool_env(
+                "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN",
+                allow_any_origin,
+            )?;
+        }
+        if let Some(allowed_origins) = env.get("SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOWED_ORIGINS") {
+            self.cors.allowed_origins = parse_csv_env(allowed_origins);
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED") {
             self.traffic.rate_limit_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED", enabled)?;
@@ -1036,18 +1039,16 @@ fn default_dependency_surfaces() -> Vec<DependencyApiSurfaceConfig> {
         api_prefix: APPBASE_APP_API_PREFIX.to_string(),
         runtime_mode: DependencyRuntimeMode::Embedded,
         same_origin_allowed: true,
-        executable_export: Some(
-            "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router".to_string(),
-        ),
+        executable_export: Some("sdkwork_api_iam_assembly::assemble_business_router".to_string()),
         cargo_feature: Some("foundation-appbase".to_string()),
-        cargo_dependency: Some("sdkwork_routes_iam_app_api".to_string()),
+        cargo_dependency: Some("sdkwork-api-iam-assembly".to_string()),
         coverage: "appbase-iam-routes".to_string(),
     }]
 }
 
 fn default_executable_export_for_service(service_id: &str) -> Option<String> {
     (service_id == APPBASE_APP_API_SERVICE_ID)
-        .then(|| "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router".to_string())
+        .then(|| "sdkwork_api_iam_assembly::assemble_business_router".to_string())
 }
 
 fn default_coverage_for_service(service_id: &str) -> String {

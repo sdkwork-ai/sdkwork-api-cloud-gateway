@@ -94,8 +94,8 @@ test('database assets are discovered from convention-named gateway host dependen
             path: path.resolve('..', 'sdkwork-audio', 'crates', 'sdkwork-audio-database-host'),
           },
           {
-            name: 'sdkwork-audio-gateway-assembly',
-            path: path.resolve('..', 'sdkwork-audio', 'crates', 'sdkwork-audio-gateway-assembly'),
+            name: 'sdkwork-api-audio-assembly',
+            path: path.resolve('..', 'sdkwork-audio', 'crates', 'sdkwork-api-audio-assembly'),
           },
           { name: 'serde', path: null },
         ],

@@ -13,36 +13,33 @@ edition = "2021"
 license = "Apache-2.0"
 
 [workspace.dependencies]
-sdkwork-drive-gateway-assembly = { path = "../sdkwork-drive/crates/sdkwork-drive-gateway-assembly" }
-sdkwork-membership-gateway-assembly = { path = "../sdkwork-membership/crates/sdkwork-membership-gateway-assembly" }
-sdkwork-order-gateway-assembly = { path = "../sdkwork-order/crates/sdkwork-order-gateway-assembly" }
-sdkwork-promotion-gateway-assembly = { path = "../sdkwork-promotion/crates/sdkwork-promotion-gateway-assembly" }
-sdkwork-payment-gateway-assembly = { path = "../sdkwork-payment/crates/sdkwork-payment-gateway-assembly" }
-sdkwork-course-gateway-assembly = { path = "../sdkwork-course/crates/sdkwork-course-gateway-assembly" }
-sdkwork-voice-gateway-assembly = { path = "../sdkwork-voice/crates/sdkwork-voice-gateway-assembly" }
-sdkwork-music-gateway-assembly = { path = "../sdkwork-music/crates/sdkwork-music-gateway-assembly" }
-sdkwork-messaging-gateway-assembly = { path = "../sdkwork-messaging/crates/sdkwork-messaging-gateway-assembly" }
-sdkwork-image-gateway-assembly = { path = "../sdkwork-image/crates/sdkwork-image-gateway-assembly" }
-sdkwork-cms-gateway-assembly = { path = "../sdkwork-cms/crates/sdkwork-cms-gateway-assembly" }
-sdkwork-forum-gateway-assembly = { path = "../sdkwork-forum/crates/sdkwork-forum-gateway-assembly" }
-sdkwork-community-gateway-assembly = { path = "../sdkwork-community/crates/sdkwork-community-gateway-assembly" }
-sdkwork-comments-gateway-assembly = { path = "../sdkwork-comments/crates/sdkwork-comments-gateway-assembly" }
-sdkwork-audio-gateway-assembly = { path = "../sdkwork-audio/crates/sdkwork-audio-gateway-assembly" }
-sdkwork-clawrouter-gateway-assembly = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-gateway-assembly" }
-sdkwork-mcp-gateway-assembly = { path = "../sdkwork-mcp/crates/sdkwork-mcp-gateway-assembly" }
-sdkwork-im-gateway-assembly = { path = "../sdkwork-im/crates/sdkwork-im-gateway-assembly" }
-sdkwork-rtc-gateway-assembly = { path = "../sdkwork-rtc/crates/sdkwork-rtc-gateway-assembly" }
-sdkwork-notary-gateway-assembly = { path = "../sdkwork-notary/crates/sdkwork-notary-gateway-assembly" }
-sdkwork-mail-gateway-assembly = { path = "../sdkwork-mail/crates/sdkwork-mail-gateway-assembly" }
-sdkwork-aiot-gateway-assembly = { path = "../sdkwork-aiot/crates/sdkwork-aiot-gateway-assembly" }
-sdkwork-appstore-gateway-assembly = { path = "../sdkwork-appstore/crates/sdkwork-appstore-gateway-assembly" }
-sdkwork-agents-gateway-assembly = { path = "../sdkwork-agents/crates/sdkwork-agents-gateway-assembly" }
-sdkwork-deployments-gateway-assembly = { path = "../sdkwork-deployments/crates/sdkwork-deployments-gateway-assembly" }
-sdkwork-dezhou-gateway-assembly = { path = "../sdkwork-dezhou/crates/sdkwork-dezhou-gateway-assembly" }
-sdkwork-documents-gateway-assembly = { path = "../sdkwork-documents/crates/sdkwork-documents-gateway-assembly" }
-sdkwork-modelkit-gateway-assembly = { path = "../sdkwork-modelkit/crates/sdkwork-modelkit-gateway-assembly" }
-sdkwork-prompts-gateway-assembly = { path = "../sdkwork-prompts/crates/sdkwork-prompts-gateway-assembly" }
-sdkwork-web-server-gateway-assembly = { path = "../sdkwork-web-server/crates/sdkwork-web-server-gateway-assembly" }
+sdkwork-api-drive-assembly = { path = "../sdkwork-drive/crates/sdkwork-api-drive-assembly" }
+sdkwork-api-membership-assembly = { path = "../sdkwork-membership/crates/sdkwork-api-membership-assembly" }
+sdkwork-api-order-assembly = { path = "../sdkwork-order/crates/sdkwork-api-order-assembly" }
+sdkwork-api-promotion-assembly = { path = "../sdkwork-promotion/crates/sdkwork-api-promotion-assembly" }
+sdkwork-api-payment-assembly = { path = "../sdkwork-payment/crates/sdkwork-api-payment-assembly" }
+sdkwork-api-course-assembly = { path = "../sdkwork-course/crates/sdkwork-api-course-assembly" }
+sdkwork-api-voice-assembly = { path = "../sdkwork-voice/crates/sdkwork-api-voice-assembly" }
+sdkwork-api-image-assembly = { path = "../sdkwork-image/crates/sdkwork-api-image-assembly" }
+sdkwork-api-cms-assembly = { path = "../sdkwork-cms/crates/sdkwork-api-cms-assembly" }
+sdkwork-api-forum-assembly = { path = "../sdkwork-forum/crates/sdkwork-api-forum-assembly" }
+sdkwork-api-community-assembly = { path = "../sdkwork-community/crates/sdkwork-api-community-assembly" }
+sdkwork-api-audio-assembly = { path = "../sdkwork-audio/crates/sdkwork-api-audio-assembly" }
+sdkwork-api-clawrouter-assembly = { path = "../sdkwork-clawrouter/crates/sdkwork-api-clawrouter-assembly" }
+sdkwork-api-mcp-assembly = { path = "../sdkwork-mcp/crates/sdkwork-api-mcp-assembly" }
+sdkwork-api-im-assembly = { path = "../sdkwork-im/crates/sdkwork-api-im-assembly" }
+sdkwork-api-rtc-assembly = { path = "../sdkwork-rtc/crates/sdkwork-api-rtc-assembly" }
+sdkwork-api-notary-assembly = { path = "../sdkwork-notary/crates/sdkwork-api-notary-assembly" }
+sdkwork-api-mail-assembly = { path = "../sdkwork-mail/crates/sdkwork-api-mail-assembly" }
+sdkwork-api-aiot-assembly = { path = "../sdkwork-aiot/crates/sdkwork-api-aiot-assembly" }
+sdkwork-api-appstore-assembly = { path = "../sdkwork-appstore/crates/sdkwork-api-appstore-assembly" }
+sdkwork-api-agents-assembly = { path = "../sdkwork-agents/crates/sdkwork-api-agents-assembly" }
+sdkwork-api-deployments-assembly = { path = "../sdkwork-deployments/crates/sdkwork-api-deployments-assembly" }
+sdkwork-api-dezhou-assembly = { path = "../sdkwork-dezhou/crates/sdkwork-api-dezhou-assembly" }
+sdkwork-api-documents-assembly = { path = "../sdkwork-documents/crates/sdkwork-api-documents-assembly" }
+sdkwork-api-modelkit-assembly = { path = "../sdkwork-modelkit/crates/sdkwork-api-modelkit-assembly" }
+sdkwork-api-prompts-assembly = { path = "../sdkwork-prompts/crates/sdkwork-api-prompts-assembly" }
+sdkwork-api-web-server-assembly = { path = "../sdkwork-web-server/crates/sdkwork-api-web-server-assembly" }
 sdkwork-drive-database-host = { path = "../sdkwork-drive/crates/sdkwork-drive-database-host" }
 sdkwork-membership-database-host = { path = "../sdkwork-membership/crates/sdkwork-membership-database-host" }
 sdkwork-order-database-host = { path = "../sdkwork-order/crates/sdkwork-order-database-host" }
@@ -50,13 +47,10 @@ sdkwork-promotion-database-host = { path = "../sdkwork-promotion/crates/sdkwork-
 sdkwork-payment-database-host = { path = "../sdkwork-payment/crates/sdkwork-payment-database-host" }
 sdkwork-course-database-host = { path = "../sdkwork-course/crates/sdkwork-course-database-host" }
 sdkwork-voice-database-host = { path = "../sdkwork-voice/crates/sdkwork-voice-database-host" }
-sdkwork-music-database-host = { path = "../sdkwork-music/crates/sdkwork-music-database-host" }
-sdkwork-messaging-database-host = { path = "../sdkwork-messaging/crates/sdkwork-messaging-database-host" }
 sdkwork-image-database-host = { path = "../sdkwork-image/crates/sdkwork-image-database-host" }
 sdkwork-cms-database-host = { path = "../sdkwork-cms/crates/sdkwork-cms-database-host" }
 sdkwork-forum-database-host = { path = "../sdkwork-forum/crates/sdkwork-forum-database-host" }
 sdkwork-community-database-host = { path = "../sdkwork-community/crates/sdkwork-community-database-host" }
-sdkwork-comments-database-host = { path = "../sdkwork-comments/crates/sdkwork-comments-database-host" }
 sdkwork-audio-database-host = { path = "../sdkwork-audio/crates/sdkwork-audio-database-host" }
 sdkwork-clawrouter-database-host = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-database-host" }
 sdkwork-mcp-database-host = { path = "../sdkwork-mcp/crates/sdkwork-mcp-database-host" }
@@ -96,32 +90,7 @@ sdkwork-api-cloud-gateway-observability = { path = "crates/sdkwork-api-cloud-gat
 sdkwork-api-cloud-gateway-registry = { path = "crates/sdkwork-api-cloud-gateway-registry" }
 sdkwork-api-cloud-gateway = { path = "crates/sdkwork-api-cloud-gateway" }
 
-sdkwork_routes_iam_app_api = { package = "sdkwork-routes-iam-app-api", path = "../sdkwork-iam/crates/sdkwork-routes-iam-app-api" }
-sdkwork_routes_iam_backend_api = { package = "sdkwork-routes-iam-backend-api", path = "../sdkwork-iam/crates/sdkwork-routes-iam-backend-api" }
-
-sdkwork_routes_course_app_api = { package = "sdkwork-routes-course-app-api", path = "../sdkwork-course/crates/sdkwork-routes-course-app-api" }
-sdkwork_routes_course_backend_api = { package = "sdkwork-routes-course-backend-api", path = "../sdkwork-course/crates/sdkwork-routes-course-backend-api" }
-sdkwork_routes_image_app_api = { package = "sdkwork-routes-image-app-api", path = "../sdkwork-image/crates/sdkwork-routes-image-app-api" }
-sdkwork_routes_image_backend_api = { package = "sdkwork-routes-image-backend-api", path = "../sdkwork-image/crates/sdkwork-routes-image-backend-api" }
-sdkwork_routes_image_open_api = { package = "sdkwork-routes-image-open-api", path = "../sdkwork-image/crates/sdkwork-routes-image-open-api" }
-sdkwork_routes_forum_app_api = { package = "sdkwork-routes-forum-app-api", path = "../sdkwork-forum/crates/sdkwork-routes-forum-app-api" }
-sdkwork_routes_forum_backend_api = { package = "sdkwork-routes-forum-backend-api", path = "../sdkwork-forum/crates/sdkwork-routes-forum-backend-api" }
-sdkwork_routes_forum_open_api = { package = "sdkwork-routes-forum-open-api", path = "../sdkwork-forum/crates/sdkwork-routes-forum-open-api" }
-sdkwork_routes_music_app_api = { package = "sdkwork-routes-music-app-api", path = "../sdkwork-music/crates/sdkwork-routes-music-app-api" }
-sdkwork_routes_music_backend_api = { package = "sdkwork-routes-music-backend-api", path = "../sdkwork-music/crates/sdkwork-routes-music-backend-api" }
-sdkwork_routes_messaging_app_api = { package = "sdkwork-routes-messaging-app-api", path = "../sdkwork-messaging/crates/sdkwork-routes-messaging-app-api" }
-sdkwork_routes_messaging_backend_api = { package = "sdkwork-routes-messaging-backend-api", path = "../sdkwork-messaging/crates/sdkwork-routes-messaging-backend-api" }
-sdkwork_routes_community_app_api = { package = "sdkwork-community-http-rust", path = "../sdkwork-community/crates/sdkwork-community-http-rust" }
-sdkwork_routes_cms_app_api = { package = "sdkwork-routes-cms-app-api", path = "../sdkwork-cms/crates/sdkwork-routes-cms-app-api" }
-sdkwork_routes_cms_backend_api = { package = "sdkwork-routes-cms-backend-api", path = "../sdkwork-cms/crates/sdkwork-routes-cms-backend-api" }
-sdkwork_routes_cms_open_api = { package = "sdkwork-routes-cms-open-api", path = "../sdkwork-cms/crates/sdkwork-routes-cms-open-api" }
-sdkwork_routes_voice_app_api = { package = "sdkwork-routes-voice-app-api", path = "../sdkwork-voice/crates/sdkwork-routes-voice-app-api" }
-sdkwork_routes_voice_backend_api = { package = "sdkwork-routes-voice-backend-api", path = "../sdkwork-voice/crates/sdkwork-routes-voice-backend-api" }
-sdkwork_routes_aiot_app_api = { package = "sdkwork-routes-iot-app-api", path = "../sdkwork-aiot/crates/sdkwork-routes-iot-app-api" }
-
-sdkwork_routes_catalog_app_api = { package = "sdkwork-routes-catalog-app-api", path = "../sdkwork-appstore/crates/sdkwork-routes-catalog-app-api" }
-sdkwork_routes_catalog_backend_api = { package = "sdkwork-routes-catalog-backend-api", path = "../sdkwork-appstore/crates/sdkwork-routes-catalog-backend-api" }
-sdkwork_routes_catalog_open_api = { package = "sdkwork-routes-catalog-open-api", path = "../sdkwork-appstore/crates/sdkwork-routes-catalog-open-api" }
+sdkwork-api-iam-assembly = { path = "../sdkwork-iam/crates/sdkwork-api-iam-assembly" }
 
 sdkwork-web-contract = { path = "../sdkwork-web-framework/crates/sdkwork-web-contract" }
 sdkwork-web-core = { path = "../sdkwork-web-framework/crates/sdkwork-web-core" }

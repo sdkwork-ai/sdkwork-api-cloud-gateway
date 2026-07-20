@@ -47,9 +47,9 @@ fn per_dependency_base_urls_are_rejected() {
         apiPrefix = "/app/v3/api/drive"
         runtimeMode = "embedded"
         baseUrl = "http://127.0.0.1:4900"
-        executableExport = "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+        executableExport = "sdkwork_api_drive_assembly::assemble_business_routes_from_env"
         cargoFeature = "foundation-drive"
-        cargoDependency = "sdkwork-drive-gateway-assembly"
+        cargoDependency = "sdkwork-api-drive-assembly"
         coverage = "embedded-assembly-routes"
     "#;
     assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
@@ -65,9 +65,9 @@ fn per_dependency_base_urls_are_rejected() {
         "apiPrefix": "/app/v3/api/drive",
         "runtimeMode": "embedded",
         "upstreamUrl": "http://127.0.0.1:4900",
-        "executableExport": "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env",
+        "executableExport": "sdkwork_api_drive_assembly::assemble_business_routes_from_env",
         "cargoFeature": "foundation-drive",
-        "cargoDependency": "sdkwork-drive-gateway-assembly",
+        "cargoDependency": "sdkwork-api-drive-assembly",
         "coverage": "embedded-assembly-routes"
       }]
     }"#;
@@ -131,9 +131,9 @@ fn production_app_api_accepts_exact_cors_origins() {
         surface = "app"
         apiPrefix = "/app/v3/api"
         runtimeMode = "embedded"
-        executableExport = "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router"
+        executableExport = "sdkwork_api_iam_assembly::assemble_business_router"
         cargoFeature = "foundation-appbase"
-        cargoDependency = "sdkwork_routes_iam_app_api"
+        cargoDependency = "sdkwork-api-iam-assembly"
         coverage = "embedded-assembly-routes"
 
         [cors]
@@ -141,6 +141,59 @@ fn production_app_api_accepts_exact_cors_origins() {
         allowedOrigins = ["https://app.sdkwork.com", "http://127.0.0.1:1420"]
     "#;
     GatewayRuntimeConfig::from_toml_str(toml).expect("exact origins should be accepted");
+}
+
+#[test]
+fn development_cors_can_be_overridden_for_lan_clients() {
+    let mut env = HashMap::new();
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN".to_owned(),
+        "true".to_owned(),
+    );
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOWED_ORIGINS".to_owned(),
+        String::new(),
+    );
+
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "development"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["http://127.0.0.1:5173"]
+        "#,
+    )
+    .expect("development config")
+    .with_env_overrides(&env)
+    .expect("LAN CORS overrides");
+
+    assert!(config.cors.allow_any_origin);
+    assert!(config.cors.allowed_origins.is_empty());
+}
+
+#[test]
+fn production_cors_env_override_cannot_enable_any_origin() {
+    let mut env = HashMap::new();
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN".to_owned(),
+        "true".to_owned(),
+    );
+
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://app.sdkwork.com"]
+        "#,
+    )
+    .expect("production config");
+
+    assert!(config.with_env_overrides(&env).is_err());
 }
 
 #[test]
@@ -245,7 +298,7 @@ fn source_runtime_configs_publish_the_manager_operations_suite() {
 }
 
 #[test]
-fn im_and_clawrouter_use_their_gateway_assemblies() {
+fn im_and_clawrouter_use_their_api_assemblies() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -259,9 +312,9 @@ fn im_and_clawrouter_use_their_gateway_assemblies() {
     assert_eq!(im.len(), 4);
     assert!(im.iter().all(|surface| {
         surface.cargo_feature.as_deref() == Some("foundation-im")
-            && surface.cargo_dependency.as_deref() == Some("sdkwork-im-gateway-assembly")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-im-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_im_gateway_assembly::assemble_application_router")
+                == Some("sdkwork_api_im_assembly::assemble_api_router")
     }));
 
     let clawrouter = config
@@ -276,12 +329,12 @@ fn im_and_clawrouter_use_their_gateway_assemblies() {
     );
     assert_eq!(
         clawrouter.cargo_dependency.as_deref(),
-        Some("sdkwork-clawrouter-gateway-assembly")
+        Some("sdkwork-api-clawrouter-assembly")
     );
 }
 
 #[test]
-fn membership_app_and_backend_use_one_embedded_gateway_assembly() {
+fn membership_app_and_backend_use_one_embedded_api_assembly() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -303,12 +356,9 @@ fn membership_app_and_backend_use_one_embedded_gateway_assembly() {
     assert!(membership.iter().all(|surface| {
         surface.runtime_mode == DependencyRuntimeMode::Embedded
             && surface.cargo_feature.as_deref() == Some("foundation-membership")
-            && surface.cargo_dependency.as_deref()
-                == Some("sdkwork-membership-gateway-assembly")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-membership-assembly")
             && surface.executable_export.as_deref()
-                == Some(
-                    "sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env",
-                )
+                == Some("sdkwork_api_membership_assembly::assemble_api_router_from_env")
     }));
 }
 

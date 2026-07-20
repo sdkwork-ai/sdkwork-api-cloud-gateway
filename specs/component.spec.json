@@ -222,7 +222,6 @@
         "build_sdkwork_api_cloud_gateway_router_with_registry",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_appbase",
-        "build_embedded_sdkwork_iam_app_api_router",
         "web_framework_enabled",
         "parse_web_framework_toggle",
         "finalize_gateway_router",
@@ -411,20 +410,6 @@
       "prefix": "/backend/v3/api/notary",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-notary-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/music",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-music-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/music",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-music-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -859,48 +844,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/comments",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-comments-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/engagement",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-comments-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/comments",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-comments-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/engagement",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-comments-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/messaging",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-messaging-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/messaging",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-messaging-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/audio",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-audio-app-api",
@@ -921,11 +864,11 @@
       "apiAuthority": "sdkwork-iam-app-api",
       "sdkFamily": "sdkwork-iam-app-sdk",
       "cargoFeature": "foundation-appbase",
-      "cargoDependency": "sdkwork_routes_iam_app_api",
+      "cargoDependency": "sdkwork-api-iam-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_routes_iam_app_api::build_sdkwork_iam_app_api_router",
+      "executableExport": "sdkwork_api_iam_assembly::assemble_business_router",
       "coverage": "sdkwork-iam-app-api-embedded-assembly-routes"
     },
     {
@@ -934,12 +877,12 @@
       "apiAuthority": "sdkwork-drive-app-api",
       "sdkFamily": "sdkwork-drive-app-sdk",
       "cargoFeature": "foundation-drive",
-      "cargoDependency": "sdkwork-drive-gateway-assembly",
+      "cargoDependency": "sdkwork-api-drive-assembly",
       "coverage": "sdkwork-drive-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_drive_assembly::assemble_business_routes_from_env"
     },
     {
       "serviceId": "sdkwork-membership-app-api",
@@ -947,12 +890,12 @@
       "apiAuthority": "sdkwork-membership-app-api",
       "sdkFamily": "sdkwork-membership-app-sdk",
       "cargoFeature": "foundation-membership",
-      "cargoDependency": "sdkwork-membership-gateway-assembly",
+      "cargoDependency": "sdkwork-api-membership-assembly",
       "coverage": "sdkwork-membership-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-notary-app-api",
@@ -964,8 +907,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-notary",
-      "cargoDependency": "sdkwork-notary-gateway-assembly",
-      "executableExport": "sdkwork_notary_gateway_assembly::assemble_application_business_router"
+      "cargoDependency": "sdkwork-api-notary-assembly",
+      "executableExport": "sdkwork_api_notary_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-voice-app-api",
@@ -973,12 +916,12 @@
       "apiAuthority": "sdkwork-voice-app-api",
       "sdkFamily": "sdkwork-voice-app-sdk",
       "cargoFeature": "foundation-voice",
-      "cargoDependency": "sdkwork-voice-gateway-assembly",
+      "cargoDependency": "sdkwork-api-voice-assembly",
       "coverage": "sdkwork-voice-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_voice_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_voice_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-voice-backend-api",
@@ -986,12 +929,12 @@
       "apiAuthority": "sdkwork-voice-backend-api",
       "sdkFamily": "sdkwork-voice-backend-sdk",
       "cargoFeature": "foundation-voice",
-      "cargoDependency": "sdkwork-voice-gateway-assembly",
+      "cargoDependency": "sdkwork-api-voice-assembly",
       "coverage": "sdkwork-voice-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_voice_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_voice_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-rtc-backend-api",
@@ -1003,8 +946,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-rtc",
-      "cargoDependency": "sdkwork-rtc-gateway-assembly",
-      "executableExport": "sdkwork_rtc_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-rtc-assembly",
+      "executableExport": "sdkwork_api_rtc_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-claw-gateway",
@@ -1016,8 +959,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-clawrouter",
-      "cargoDependency": "sdkwork-clawrouter-gateway-assembly",
-      "executableExport": "sdkwork_clawrouter_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-clawrouter-assembly",
+      "executableExport": "sdkwork_api_clawrouter_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-appstore-app-api",
@@ -1035,12 +978,12 @@
         "/app/v3/api/downloadGrants"
       ],
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "cargoDependency": "sdkwork-api-appstore-assembly",
       "coverage": "sdkwork-appstore-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_appstore_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-appstore-backend-api",
@@ -1056,12 +999,12 @@
         "/backend/v3/api/metrics"
       ],
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "cargoDependency": "sdkwork-api-appstore-assembly",
       "coverage": "sdkwork-appstore-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_appstore_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-appstore-open-api",
@@ -1072,12 +1015,12 @@
         "/store/v3/api"
       ],
       "cargoFeature": "foundation-appstore",
-      "cargoDependency": "sdkwork-appstore-gateway-assembly",
+      "cargoDependency": "sdkwork-api-appstore-assembly",
       "coverage": "sdkwork-appstore-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_appstore_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_appstore_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-iam-backend-api",
@@ -1089,8 +1032,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-appbase",
-      "cargoDependency": "sdkwork_routes_iam_backend_api",
-      "executableExport": "sdkwork_routes_iam_backend_api::build_sdkwork_iam_backend_api_router_from_env"
+      "cargoDependency": "sdkwork-api-iam-assembly",
+      "executableExport": "sdkwork_api_iam_assembly::assemble_business_router"
     },
     {
       "serviceId": "sdkwork-course-app-api",
@@ -1098,12 +1041,12 @@
       "apiAuthority": "sdkwork-course-app-api",
       "sdkFamily": "sdkwork-course-app-sdk",
       "cargoFeature": "foundation-course",
-      "cargoDependency": "sdkwork-course-gateway-assembly",
+      "cargoDependency": "sdkwork-api-course-assembly",
       "coverage": "sdkwork-course-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_course_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_course_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-course-backend-api",
@@ -1111,12 +1054,12 @@
       "apiAuthority": "sdkwork-course-backend-api",
       "sdkFamily": "sdkwork-course-backend-sdk",
       "cargoFeature": "foundation-course",
-      "cargoDependency": "sdkwork-course-gateway-assembly",
+      "cargoDependency": "sdkwork-api-course-assembly",
       "coverage": "sdkwork-course-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_course_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_course_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-cms-app-api",
@@ -1124,12 +1067,12 @@
       "apiAuthority": "sdkwork-cms-app-api",
       "sdkFamily": "sdkwork-cms-app-sdk",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork-cms-gateway-assembly",
+      "cargoDependency": "sdkwork-api-cms-assembly",
       "coverage": "sdkwork-cms-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_cms_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-cms-backend-api",
@@ -1137,12 +1080,12 @@
       "apiAuthority": "sdkwork-cms-backend-api",
       "sdkFamily": "sdkwork-cms-backend-sdk",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork-cms-gateway-assembly",
+      "cargoDependency": "sdkwork-api-cms-assembly",
       "coverage": "sdkwork-cms-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_cms_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-cms-open-api",
@@ -1150,12 +1093,12 @@
       "apiAuthority": "sdkwork-cms-open-api",
       "sdkFamily": "sdkwork-cms-sdk",
       "cargoFeature": "foundation-cms",
-      "cargoDependency": "sdkwork-cms-gateway-assembly",
+      "cargoDependency": "sdkwork-api-cms-assembly",
       "coverage": "sdkwork-cms-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_cms_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-forum-app-api",
@@ -1163,12 +1106,12 @@
       "apiAuthority": "sdkwork-forum-app-api",
       "sdkFamily": "sdkwork-forum-app-sdk",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork-forum-gateway-assembly",
+      "cargoDependency": "sdkwork-api-forum-assembly",
       "coverage": "sdkwork-forum-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_forum_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-forum-backend-api",
@@ -1176,12 +1119,12 @@
       "apiAuthority": "sdkwork-forum-backend-api",
       "sdkFamily": "sdkwork-forum-backend-sdk",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork-forum-gateway-assembly",
+      "cargoDependency": "sdkwork-api-forum-assembly",
       "coverage": "sdkwork-forum-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_forum_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-forum-open-api",
@@ -1189,12 +1132,12 @@
       "apiAuthority": "sdkwork-forum-open-api",
       "sdkFamily": "sdkwork-forum-sdk",
       "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork-forum-gateway-assembly",
+      "cargoDependency": "sdkwork-api-forum-assembly",
       "coverage": "sdkwork-forum-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_forum_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-im-im-http",
@@ -1206,8 +1149,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-im",
-      "cargoDependency": "sdkwork-im-gateway-assembly",
-      "executableExport": "sdkwork_im_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-im-assembly",
+      "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-im-backend-http",
@@ -1219,8 +1162,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-im",
-      "cargoDependency": "sdkwork-im-gateway-assembly",
-      "executableExport": "sdkwork_im_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-im-assembly",
+      "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-rtc-app-api",
@@ -1232,8 +1175,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-rtc",
-      "cargoDependency": "sdkwork-rtc-gateway-assembly",
-      "executableExport": "sdkwork_rtc_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-rtc-assembly",
+      "executableExport": "sdkwork_api_rtc_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-mail-app-api",
@@ -1245,8 +1188,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-mail",
-      "cargoDependency": "sdkwork-mail-gateway-assembly",
-      "executableExport": "sdkwork_mail_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-mail-assembly",
+      "executableExport": "sdkwork_api_mail_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-mail-backend-api",
@@ -1258,8 +1201,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-mail",
-      "cargoDependency": "sdkwork-mail-gateway-assembly",
-      "executableExport": "sdkwork_mail_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-mail-assembly",
+      "executableExport": "sdkwork_api_mail_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-mcp-app-api",
@@ -1271,8 +1214,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-mcp",
-      "cargoDependency": "sdkwork-mcp-gateway-assembly",
-      "executableExport": "sdkwork_mcp_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-mcp-assembly",
+      "executableExport": "sdkwork_api_mcp_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-mcp-backend-api",
@@ -1284,8 +1227,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-mcp",
-      "cargoDependency": "sdkwork-mcp-gateway-assembly",
-      "executableExport": "sdkwork_mcp_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-mcp-assembly",
+      "executableExport": "sdkwork_api_mcp_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-dezhou-app-api",
@@ -1294,11 +1237,11 @@
       "sdkFamily": "sdkwork-dezhou-app-sdk",
       "coverage": "sdkwork-dezhou-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-dezhou",
-      "cargoDependency": "sdkwork-dezhou-gateway-assembly",
+      "cargoDependency": "sdkwork-api-dezhou-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_dezhou_assembly::assemble_business_routes"
     },
     {
       "serviceId": "sdkwork-dezhou-backend-api",
@@ -1307,37 +1250,11 @@
       "sdkFamily": "sdkwork-dezhou-backend-sdk",
       "coverage": "sdkwork-dezhou-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-dezhou",
-      "cargoDependency": "sdkwork-dezhou-gateway-assembly",
+      "cargoDependency": "sdkwork-api-dezhou-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_dezhou_gateway_assembly::assemble_application_business_router"
-    },
-    {
-      "serviceId": "sdkwork-music-app-api",
-      "workspace": "sdkwork-music",
-      "apiAuthority": "sdkwork-music-app-api",
-      "sdkFamily": "sdkwork-music-app-sdk",
-      "cargoFeature": "foundation-music",
-      "cargoDependency": "sdkwork-music-gateway-assembly",
-      "coverage": "sdkwork-music-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_music_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-music-backend-api",
-      "workspace": "sdkwork-music",
-      "apiAuthority": "sdkwork-music-backend-api",
-      "sdkFamily": "sdkwork-music-backend-sdk",
-      "cargoFeature": "foundation-music",
-      "cargoDependency": "sdkwork-music-gateway-assembly",
-      "coverage": "sdkwork-music-backend-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_music_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_dezhou_assembly::assemble_business_routes"
     },
     {
       "serviceId": "sdkwork-image-app-api",
@@ -1345,12 +1262,12 @@
       "apiAuthority": "sdkwork-image-app-api",
       "sdkFamily": "sdkwork-image-app-sdk",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork-image-gateway-assembly",
+      "cargoDependency": "sdkwork-api-image-assembly",
       "coverage": "sdkwork-image-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_image_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-image-backend-api",
@@ -1358,12 +1275,12 @@
       "apiAuthority": "sdkwork-image-backend-api",
       "sdkFamily": "sdkwork-image-backend-sdk",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork-image-gateway-assembly",
+      "cargoDependency": "sdkwork-api-image-assembly",
       "coverage": "sdkwork-image-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_image_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-image-open-api",
@@ -1371,12 +1288,12 @@
       "apiAuthority": "sdkwork-image-open-api",
       "sdkFamily": "sdkwork-image-sdk",
       "cargoFeature": "foundation-image",
-      "cargoDependency": "sdkwork-image-gateway-assembly",
+      "cargoDependency": "sdkwork-api-image-assembly",
       "coverage": "sdkwork-image-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_image_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-aiot-app-api",
@@ -1384,12 +1301,12 @@
       "apiAuthority": "sdkwork-aiot-app-api",
       "sdkFamily": "sdkwork-aiot-app-sdk",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork-aiot-gateway-assembly",
+      "cargoDependency": "sdkwork-api-aiot-assembly",
       "coverage": "sdkwork-aiot-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_aiot_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_aiot_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-aiot-backend-api",
@@ -1397,12 +1314,12 @@
       "apiAuthority": "sdkwork-aiot-backend-api",
       "sdkFamily": "sdkwork-aiot-backend-sdk",
       "cargoFeature": "foundation-aiot",
-      "cargoDependency": "sdkwork-aiot-gateway-assembly",
+      "cargoDependency": "sdkwork-api-aiot-assembly",
       "coverage": "sdkwork-aiot-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_aiot_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_aiot_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-community-app-api",
@@ -1410,12 +1327,12 @@
       "apiAuthority": "sdkwork-community-app-api",
       "sdkFamily": "sdkwork-community-app-sdk",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork-community-gateway-assembly",
+      "cargoDependency": "sdkwork-api-community-assembly",
       "coverage": "sdkwork-community-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_community_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-community-backend-api",
@@ -1423,12 +1340,12 @@
       "apiAuthority": "sdkwork-community-backend-api",
       "sdkFamily": "sdkwork-community-backend-sdk",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork-community-gateway-assembly",
+      "cargoDependency": "sdkwork-api-community-assembly",
       "coverage": "sdkwork-community-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_community_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-community-open-api",
@@ -1436,12 +1353,12 @@
       "apiAuthority": "sdkwork-community-open-api",
       "sdkFamily": "sdkwork-community-sdk",
       "cargoFeature": "foundation-community",
-      "cargoDependency": "sdkwork-community-gateway-assembly",
+      "cargoDependency": "sdkwork-api-community-assembly",
       "coverage": "sdkwork-community-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_community_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-agent-app-api",
@@ -1450,11 +1367,11 @@
       "sdkFamily": "sdkwork-agent-app-sdk",
       "coverage": "sdkwork-agent-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-kernel",
-      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-agents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_agents_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-agent-backend-api",
@@ -1463,11 +1380,11 @@
       "sdkFamily": "sdkwork-agent-backend-sdk",
       "coverage": "sdkwork-agent-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-kernel",
-      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-agents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_agents_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-agent-open-api",
@@ -1476,11 +1393,11 @@
       "sdkFamily": "sdkwork-agent-sdk",
       "coverage": "sdkwork-agent-open-api-embedded-assembly-routes",
       "cargoFeature": "foundation-kernel",
-      "cargoDependency": "sdkwork-agents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-agents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_agents_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-drive-backend-api",
@@ -1488,12 +1405,12 @@
       "apiAuthority": "sdkwork-drive-backend-api",
       "sdkFamily": "sdkwork-drive-backend-sdk",
       "cargoFeature": "foundation-drive",
-      "cargoDependency": "sdkwork-drive-gateway-assembly",
+      "cargoDependency": "sdkwork-api-drive-assembly",
       "coverage": "sdkwork-drive-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_drive_assembly::assemble_business_routes_from_env"
     },
     {
       "serviceId": "sdkwork-membership-backend-api",
@@ -1501,12 +1418,12 @@
       "apiAuthority": "sdkwork-membership-backend-api",
       "sdkFamily": "sdkwork-membership-backend-sdk",
       "cargoFeature": "foundation-membership",
-      "cargoDependency": "sdkwork-membership-gateway-assembly",
+      "cargoDependency": "sdkwork-api-membership-assembly",
       "coverage": "sdkwork-membership-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_membership_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-order-backend-api",
@@ -1523,12 +1440,12 @@
         "/backend/v3/api/withdrawal_requests"
       ],
       "cargoFeature": "foundation-order",
-      "cargoDependency": "sdkwork-order-gateway-assembly",
+      "cargoDependency": "sdkwork-api-order-assembly",
       "coverage": "sdkwork-order-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_order_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_order_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-promotion-backend-api",
@@ -1539,12 +1456,12 @@
         "/backend/v3/api/promotions"
       ],
       "cargoFeature": "foundation-promotion",
-      "cargoDependency": "sdkwork-promotion-gateway-assembly",
+      "cargoDependency": "sdkwork-api-promotion-assembly",
       "coverage": "sdkwork-promotion-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_promotion_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-payment-backend-api",
@@ -1555,12 +1472,12 @@
         "/backend/v3/api/payments"
       ],
       "cargoFeature": "foundation-payment",
-      "cargoDependency": "sdkwork-payment-gateway-assembly",
+      "cargoDependency": "sdkwork-api-payment-assembly",
       "coverage": "sdkwork-payment-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_payment_gateway_assembly::assemble_application_router_from_env"
+      "executableExport": "sdkwork_api_payment_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-drive-open-api",
@@ -1568,12 +1485,12 @@
       "apiAuthority": "sdkwork-drive-open-api",
       "sdkFamily": "sdkwork-drive-sdk",
       "cargoFeature": "foundation-drive",
-      "cargoDependency": "sdkwork-drive-gateway-assembly",
+      "cargoDependency": "sdkwork-api-drive-assembly",
       "coverage": "sdkwork-drive-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_drive_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_drive_assembly::assemble_business_routes_from_env"
     },
     {
       "serviceId": "sdkwork-notary-backend-api",
@@ -1585,8 +1502,8 @@
         "embedded"
       ],
       "cargoFeature": "foundation-notary",
-      "cargoDependency": "sdkwork-notary-gateway-assembly",
-      "executableExport": "sdkwork_notary_gateway_assembly::assemble_application_business_router"
+      "cargoDependency": "sdkwork-api-notary-assembly",
+      "executableExport": "sdkwork_api_notary_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-documents-app-api",
@@ -1595,11 +1512,11 @@
       "sdkFamily": "sdkwork-documents-app-sdk",
       "coverage": "sdkwork-documents-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-documents",
-      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-documents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-documents-backend-api",
@@ -1608,11 +1525,11 @@
       "sdkFamily": "sdkwork-documents-backend-sdk",
       "coverage": "sdkwork-documents-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-documents",
-      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-documents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-documents-open-api",
@@ -1621,11 +1538,11 @@
       "sdkFamily": "sdkwork-documents-sdk",
       "coverage": "sdkwork-documents-open-api-embedded-assembly-routes",
       "cargoFeature": "foundation-documents",
-      "cargoDependency": "sdkwork-documents-gateway-assembly",
+      "cargoDependency": "sdkwork-api-documents-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_documents_gateway_assembly::assemble_application_business_router_from_env"
+      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-prompts-app-api",
@@ -1634,11 +1551,11 @@
       "sdkFamily": "sdkwork-prompts-app-sdk",
       "coverage": "sdkwork-prompts-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
-      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "cargoDependency": "sdkwork-api-prompts-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-prompts-backend-api",
@@ -1647,11 +1564,11 @@
       "sdkFamily": "sdkwork-prompts-backend-sdk",
       "coverage": "sdkwork-prompts-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
-      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "cargoDependency": "sdkwork-api-prompts-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-prompts-open-api",
@@ -1660,11 +1577,11 @@
       "sdkFamily": "sdkwork-prompts-sdk",
       "coverage": "sdkwork-prompts-open-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
-      "cargoDependency": "sdkwork-prompts-gateway-assembly",
+      "cargoDependency": "sdkwork-api-prompts-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_prompts_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-deploy-app-api",
@@ -1673,11 +1590,11 @@
       "sdkFamily": "sdkwork-deploy-app-sdk",
       "coverage": "sdkwork-deploy-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
-      "cargoDependency": "sdkwork-deployments-gateway-assembly",
+      "cargoDependency": "sdkwork-api-deployments-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-deploy-backend-api",
@@ -1686,11 +1603,11 @@
       "sdkFamily": "sdkwork-deploy-backend-sdk",
       "coverage": "sdkwork-deploy-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
-      "cargoDependency": "sdkwork-deployments-gateway-assembly",
+      "cargoDependency": "sdkwork-api-deployments-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_deployments_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-web-app-api",
@@ -1699,11 +1616,11 @@
       "sdkFamily": "sdkwork-web-app-sdk",
       "coverage": "sdkwork-web-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-web-server",
-      "cargoDependency": "sdkwork-web-server-gateway-assembly",
+      "cargoDependency": "sdkwork-api-web-server-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_web_server_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-web-backend-api",
@@ -1712,11 +1629,11 @@
       "sdkFamily": "sdkwork-web-backend-sdk",
       "coverage": "sdkwork-web-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-web-server",
-      "cargoDependency": "sdkwork-web-server-gateway-assembly",
+      "cargoDependency": "sdkwork-api-web-server-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_web_server_gateway_assembly::assemble_application_business_router"
+      "executableExport": "sdkwork_api_web_server_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-modelkit-app-api",
@@ -1725,83 +1642,43 @@
       "sdkFamily": "sdkwork-modelkit-app-sdk",
       "coverage": "sdkwork-modelkit-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-modelkit",
-      "cargoDependency": "sdkwork-modelkit-gateway-assembly",
+      "cargoDependency": "sdkwork-api-modelkit-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_modelkit_gateway_assembly::assemble_application_business_router_from_env"
-    },
-    {
-      "serviceId": "sdkwork-comments-app-api",
-      "workspace": "sdkwork-comments",
-      "apiAuthority": "sdkwork-comments-app-api",
-      "sdkFamily": "sdkwork-comments-app-sdk",
-      "apiPrefixes": ["/app/v3/api/comments", "/app/v3/api/engagement"],
-      "coverage": "sdkwork-comments-app-api-embedded-assembly-routes",
-      "cargoFeature": "foundation-comments",
-      "cargoDependency": "sdkwork-comments-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_comments_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-comments-backend-api",
-      "workspace": "sdkwork-comments",
-      "apiAuthority": "sdkwork-comments-backend-api",
-      "sdkFamily": "sdkwork-comments-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/comments", "/backend/v3/api/engagement"],
-      "coverage": "sdkwork-comments-backend-api-embedded-assembly-routes",
-      "cargoFeature": "foundation-comments",
-      "cargoDependency": "sdkwork-comments-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_comments_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-messaging-app-api",
-      "workspace": "sdkwork-messaging",
-      "apiAuthority": "sdkwork-messaging-app-api",
-      "sdkFamily": "sdkwork-messaging-app-sdk",
-      "apiPrefixes": ["/app/v3/api/messaging"],
-      "coverage": "sdkwork-messaging-app-api-embedded-assembly-routes",
-      "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork-messaging-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_messaging_gateway_assembly::assemble_application_router"
-    },
-    {
-      "serviceId": "sdkwork-messaging-backend-api",
-      "workspace": "sdkwork-messaging",
-      "apiAuthority": "sdkwork-messaging-backend-api",
-      "sdkFamily": "sdkwork-messaging-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/messaging"],
-      "coverage": "sdkwork-messaging-backend-api-embedded-assembly-routes",
-      "cargoFeature": "foundation-messaging",
-      "cargoDependency": "sdkwork-messaging-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_messaging_gateway_assembly::assemble_application_router"
+      "executableExport": "sdkwork_api_modelkit_assembly::assemble_api_router_from_env"
     },
     {
       "serviceId": "sdkwork-audio-app-api",
       "workspace": "sdkwork-audio",
       "apiAuthority": "sdkwork-audio-app-api",
       "sdkFamily": "sdkwork-audio-app-sdk",
-      "apiPrefixes": ["/app/v3/api/audio"],
+      "apiPrefixes": [
+        "/app/v3/api/audio"
+      ],
       "coverage": "sdkwork-audio-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-audio",
-      "cargoDependency": "sdkwork-audio-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_audio_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-audio-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_audio_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-audio-backend-api",
       "workspace": "sdkwork-audio",
       "apiAuthority": "sdkwork-audio-backend-api",
       "sdkFamily": "sdkwork-audio-backend-sdk",
-      "apiPrefixes": ["/backend/v3/api/audio"],
+      "apiPrefixes": [
+        "/backend/v3/api/audio"
+      ],
       "coverage": "sdkwork-audio-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-audio",
-      "cargoDependency": "sdkwork-audio-gateway-assembly",
-      "runtimeModes": ["embedded"],
-      "executableExport": "sdkwork_audio_gateway_assembly::assemble_application_router"
+      "cargoDependency": "sdkwork-api-audio-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_audio_assembly::assemble_api_router"
     }
   ],
   "routeRegistry": {
