@@ -1,4 +1,4 @@
-[workspace]
+﻿[workspace]
 resolver = "2"
 members = [
     "crates/sdkwork-api-cloud-gateway-config",
@@ -10,7 +10,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0"
+license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
 sdkwork-api-drive-assembly = { path = "../sdkwork-drive/crates/sdkwork-api-drive-assembly" }
@@ -24,7 +24,6 @@ sdkwork-api-image-assembly = { path = "../sdkwork-image/crates/sdkwork-api-image
 sdkwork-api-cms-assembly = { path = "../sdkwork-cms/crates/sdkwork-api-cms-assembly" }
 sdkwork-api-forum-assembly = { path = "../sdkwork-forum/crates/sdkwork-api-forum-assembly" }
 sdkwork-api-community-assembly = { path = "../sdkwork-community/crates/sdkwork-api-community-assembly" }
-sdkwork-api-audio-assembly = { path = "../sdkwork-audio/crates/sdkwork-api-audio-assembly" }
 sdkwork-api-clawrouter-assembly = { path = "../sdkwork-clawrouter/crates/sdkwork-api-clawrouter-assembly" }
 sdkwork-api-mcp-assembly = { path = "../sdkwork-mcp/crates/sdkwork-api-mcp-assembly" }
 sdkwork-api-im-assembly = { path = "../sdkwork-im/crates/sdkwork-api-im-assembly" }
@@ -40,6 +39,10 @@ sdkwork-api-documents-assembly = { path = "../sdkwork-documents/crates/sdkwork-a
 sdkwork-api-modelkit-assembly = { path = "../sdkwork-modelkit/crates/sdkwork-api-modelkit-assembly" }
 sdkwork-api-prompts-assembly = { path = "../sdkwork-prompts/crates/sdkwork-api-prompts-assembly" }
 sdkwork-api-web-server-assembly = { path = "../sdkwork-web-server/crates/sdkwork-api-web-server-assembly" }
+sdkwork-api-browser-assembly = { path = "../sdkwork-browser/crates/sdkwork-api-browser-assembly" }
+sdkwork-api-knowledgebase-assembly = { path = "../sdkwork-knowledgebase/crates/sdkwork-api-knowledgebase-assembly" }
+sdkwork-api-llm-assembly = { path = "../sdkwork-llm/crates/sdkwork-api-llm-assembly" }
+sdkwork-api-mahjong-assembly = { path = "../sdkwork-mahjong/crates/sdkwork-api-mahjong-assembly" }
 sdkwork-drive-database-host = { path = "../sdkwork-drive/crates/sdkwork-drive-database-host" }
 sdkwork-membership-database-host = { path = "../sdkwork-membership/crates/sdkwork-membership-database-host" }
 sdkwork-order-database-host = { path = "../sdkwork-order/crates/sdkwork-order-database-host" }
@@ -51,7 +54,6 @@ sdkwork-image-database-host = { path = "../sdkwork-image/crates/sdkwork-image-da
 sdkwork-cms-database-host = { path = "../sdkwork-cms/crates/sdkwork-cms-database-host" }
 sdkwork-forum-database-host = { path = "../sdkwork-forum/crates/sdkwork-forum-database-host" }
 sdkwork-community-database-host = { path = "../sdkwork-community/crates/sdkwork-community-database-host" }
-sdkwork-audio-database-host = { path = "../sdkwork-audio/crates/sdkwork-audio-database-host" }
 sdkwork-clawrouter-database-host = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-database-host" }
 sdkwork-mcp-database-host = { path = "../sdkwork-mcp/crates/sdkwork-mcp-database-host" }
 sdkwork-im-database-host = { path = "../sdkwork-im/crates/sdkwork-im-database-host" }
@@ -67,6 +69,10 @@ sdkwork-documents-database-host = { path = "../sdkwork-documents/crates/sdkwork-
 sdkwork-modelkit-database-host = { path = "../sdkwork-modelkit/crates/sdkwork-modelkit-database-host" }
 sdkwork-prompts-database-host = { path = "../sdkwork-prompts/crates/sdkwork-prompts-database-host" }
 sdkwork-webserver-database-host = { path = "../sdkwork-web-server/crates/sdkwork-webserver-database-host" }
+sdkwork-browser-database-host = { path = "../sdkwork-browser/crates/sdkwork-browser-database-host" }
+sdkwork-knowledgebase-database-host = { path = "../sdkwork-knowledgebase/crates/sdkwork-knowledgebase-database-host" }
+sdkwork-llm-database-host = { path = "../sdkwork-llm/crates/sdkwork-llm-database-host" }
+sdkwork-mahjong-database-host = { path = "../sdkwork-mahjong/crates/sdkwork-mahjong-database-host" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

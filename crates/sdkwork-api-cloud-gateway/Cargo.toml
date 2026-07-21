@@ -35,7 +35,6 @@ foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-databas
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly", "dep:sdkwork-aiot-database-host"]
 foundation-appstore = ["dep:sdkwork-api-appstore-assembly", "dep:sdkwork-appstore-database-host"]
 foundation-forum = ["dep:sdkwork-api-forum-assembly", "dep:sdkwork-forum-database-host"]
-foundation-audio = ["dep:sdkwork-api-audio-assembly", "dep:sdkwork-audio-database-host"]
 foundation-clawrouter = ["dep:sdkwork-api-clawrouter-assembly", "dep:sdkwork-clawrouter-database-host"]
 foundation-mcp = ["dep:sdkwork-api-mcp-assembly", "dep:sdkwork-mcp-database-host"]
 foundation-im = ["dep:sdkwork-api-im-assembly", "dep:sdkwork-im-database-host"]
@@ -49,6 +48,10 @@ foundation-documents = ["dep:sdkwork-api-documents-assembly", "dep:sdkwork-docum
 foundation-modelkit = ["dep:sdkwork-api-modelkit-assembly", "dep:sdkwork-modelkit-database-host"]
 foundation-prompts = ["dep:sdkwork-api-prompts-assembly", "dep:sdkwork-prompts-database-host"]
 foundation-web-server = ["dep:sdkwork-api-web-server-assembly", "dep:sdkwork-webserver-database-host"]
+foundation-browser = ["dep:sdkwork-api-browser-assembly", "dep:sdkwork-browser-database-host"]
+foundation-knowledgebase = ["dep:sdkwork-api-knowledgebase-assembly", "dep:sdkwork-knowledgebase-database-host"]
+foundation-llm = ["dep:sdkwork-api-llm-assembly", "dep:sdkwork-llm-database-host"]
+foundation-mahjong = ["dep:sdkwork-api-mahjong-assembly", "dep:sdkwork-mahjong-database-host"]
 platform-foundation-suite = [
     "foundation-appbase",
     "manager-operations-suite",
@@ -60,7 +63,6 @@ platform-foundation-suite = [
     "foundation-aiot",
     "foundation-appstore",
     "foundation-forum",
-    "foundation-audio",
     "foundation-clawrouter",
     "foundation-mcp",
     "foundation-im",
@@ -74,6 +76,10 @@ platform-foundation-suite = [
     "foundation-modelkit",
     "foundation-prompts",
     "foundation-web-server",
+    "foundation-browser",
+    "foundation-knowledgebase",
+    "foundation-llm",
+    "foundation-mahjong",
 ]
 
 [dependencies]
@@ -112,7 +118,6 @@ sdkwork-api-image-assembly = { workspace = true, optional = true }
 sdkwork-api-cms-assembly = { workspace = true, optional = true }
 sdkwork-api-forum-assembly = { workspace = true, optional = true }
 sdkwork-api-community-assembly = { workspace = true, optional = true }
-sdkwork-api-audio-assembly = { workspace = true, optional = true }
 sdkwork-api-clawrouter-assembly = { workspace = true, optional = true }
 sdkwork-api-mcp-assembly = { workspace = true, optional = true }
 sdkwork-api-im-assembly = { workspace = true, optional = true }
@@ -128,6 +133,10 @@ sdkwork-api-documents-assembly = { workspace = true, optional = true }
 sdkwork-api-modelkit-assembly = { workspace = true, optional = true }
 sdkwork-api-prompts-assembly = { workspace = true, optional = true }
 sdkwork-api-web-server-assembly = { workspace = true, optional = true }
+sdkwork-api-browser-assembly = { workspace = true, optional = true }
+sdkwork-api-knowledgebase-assembly = { workspace = true, optional = true }
+sdkwork-api-llm-assembly = { workspace = true, optional = true }
+sdkwork-api-mahjong-assembly = { workspace = true, optional = true }
 sdkwork-drive-database-host = { workspace = true, optional = true }
 sdkwork-membership-database-host = { workspace = true, optional = true }
 sdkwork-order-database-host = { workspace = true, optional = true }
@@ -139,7 +148,6 @@ sdkwork-image-database-host = { workspace = true, optional = true }
 sdkwork-cms-database-host = { workspace = true, optional = true }
 sdkwork-forum-database-host = { workspace = true, optional = true }
 sdkwork-community-database-host = { workspace = true, optional = true }
-sdkwork-audio-database-host = { workspace = true, optional = true }
 sdkwork-clawrouter-database-host = { workspace = true, optional = true }
 sdkwork-mcp-database-host = { workspace = true, optional = true }
 sdkwork-im-database-host = { workspace = true, optional = true }
@@ -155,6 +163,10 @@ sdkwork-documents-database-host = { workspace = true, optional = true }
 sdkwork-modelkit-database-host = { workspace = true, optional = true }
 sdkwork-prompts-database-host = { workspace = true, optional = true }
 sdkwork-webserver-database-host = { workspace = true, optional = true }
+sdkwork-browser-database-host = { workspace = true, optional = true }
+sdkwork-knowledgebase-database-host = { workspace = true, optional = true }
+sdkwork-llm-database-host = { workspace = true, optional = true }
+sdkwork-mahjong-database-host = { workspace = true, optional = true }
 
 [dev-dependencies]
 http-body-util.workspace = true

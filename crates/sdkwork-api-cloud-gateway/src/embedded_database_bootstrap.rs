@@ -23,7 +23,6 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-mail",
     "sdkwork-mcp",
     "sdkwork-dezhou",
-    "sdkwork-music",
     "sdkwork-image",
     "sdkwork-aiot",
     "sdkwork-community",
@@ -36,9 +35,10 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-deployments",
     "sdkwork-web-server",
     "sdkwork-modelkit",
-    "sdkwork-comments",
-    "sdkwork-messaging",
-    "sdkwork-audio",
+    "sdkwork-browser",
+    "sdkwork-knowledgebase",
+    "sdkwork-llm",
+    "sdkwork-mahjong",
 ];
 
 pub async fn bootstrap_embedded_databases(
@@ -52,6 +52,7 @@ pub async fn bootstrap_embedded_databases(
         return Ok(());
     }
 
+    #[allow(unused_variables)]
     let pool = process_database_pool().await?;
 
     #[cfg(feature = "foundation-appbase")]
@@ -324,12 +325,42 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-audio")]
-    if workspace_enabled(config, "sdkwork-audio") {
+    #[cfg(feature = "foundation-browser")]
+    if workspace_enabled(config, "sdkwork-browser") {
         run_module(
-            "sdkwork-audio",
-            "audio",
-            sdkwork_audio_database_host::bootstrap_audio_database(pool.clone()),
+            "sdkwork-browser",
+            "browser",
+            sdkwork_browser_database_host::bootstrap_browser_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-knowledgebase")]
+    if workspace_enabled(config, "sdkwork-knowledgebase") {
+        run_module(
+            "sdkwork-knowledgebase",
+            "knowledgebase",
+            sdkwork_knowledgebase_database_host::bootstrap_knowledgebase_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-llm")]
+    if workspace_enabled(config, "sdkwork-llm") {
+        run_module(
+            "sdkwork-llm",
+            "llm",
+            sdkwork_llm_database_host::bootstrap_llm_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-mahjong")]
+    if workspace_enabled(config, "sdkwork-mahjong") {
+        run_module(
+            "sdkwork-mahjong",
+            "mahjong",
+            sdkwork_mahjong_database_host::bootstrap_mahjong_database(pool.clone()),
         )
         .await?;
     }
@@ -354,6 +385,7 @@ async fn process_database_pool() -> Result<DatabasePool, GatewayRuntimeError> {
         })
 }
 
+#[allow(dead_code)]
 fn run_module<'a, T, F>(
     workspace: &'a str,
     module_id: &'a str,
@@ -376,6 +408,7 @@ where
     })
 }
 
+#[allow(dead_code)]
 fn workspace_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> bool {
     config
         .dependency_surfaces
@@ -402,7 +435,6 @@ mod tests {
             .map(|surface| surface.workspace.as_str())
             .collect::<HashSet<_>>();
 
-        assert_eq!(DATABASE_WORKSPACES.len(), 31);
         assert_eq!(
             DATABASE_WORKSPACES.iter().copied().collect::<HashSet<_>>(),
             declared

@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fs};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+};
 
 use sdkwork_api_cloud_gateway_config::{DependencyRuntimeMode, GatewayMode, GatewayRuntimeConfig};
 
@@ -309,7 +312,23 @@ fn im_and_clawrouter_use_their_api_assemblies() {
         .iter()
         .filter(|surface| surface.workspace == "sdkwork-im")
         .collect::<Vec<_>>();
-    assert_eq!(im.len(), 4);
+    let im_prefixes = im
+        .iter()
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
+    let expected_im_prefixes = HashSet::from([
+        "/app/v3/api/automation",
+        "/app/v3/api/chat/conversations",
+        "/app/v3/api/media",
+        "/app/v3/api/notifications",
+        "/app/v3/api/portal",
+        "/app/v3/api/streams",
+        "/im/v3/api",
+        "/backend/v3/api/control",
+        "/backend/v3/api/audit",
+        "/backend/v3/api/ops",
+    ]);
+    assert_eq!(im_prefixes, expected_im_prefixes);
     assert!(im.iter().all(|surface| {
         surface.cargo_feature.as_deref() == Some("foundation-im")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-im-assembly")
@@ -320,17 +339,30 @@ fn im_and_clawrouter_use_their_api_assemblies() {
     let clawrouter = config
         .dependency_surfaces
         .iter()
-        .find(|surface| surface.workspace == "sdkwork-clawrouter")
-        .expect("ClawRouter surface");
-    assert_eq!(clawrouter.api_prefix, "/v1");
+        .filter(|surface| surface.workspace == "sdkwork-clawrouter")
+        .collect::<Vec<_>>();
+    let clawrouter_prefixes = clawrouter
+        .iter()
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
     assert_eq!(
-        clawrouter.cargo_feature.as_deref(),
-        Some("foundation-clawrouter")
+        clawrouter_prefixes,
+        HashSet::from([
+            "/anthropic/v1",
+            "/google/v1beta",
+            "/vidu/ent",
+            "/suno/v1",
+            "/volcengine/api",
+            "/kling/v1",
+            "/midjourney/v1",
+            "/nano-banana/v1",
+            "/v1",
+        ])
     );
-    assert_eq!(
-        clawrouter.cargo_dependency.as_deref(),
-        Some("sdkwork-api-clawrouter-assembly")
-    );
+    assert!(clawrouter.iter().all(|surface| {
+        surface.cargo_feature.as_deref() == Some("foundation-clawrouter")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-clawrouter-assembly")
+    }));
 }
 
 #[test]

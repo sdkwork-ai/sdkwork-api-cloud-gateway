@@ -16,10 +16,12 @@ use axum::{
     Router,
 };
 use http_body_util::LengthLimitError;
-use sdkwork_api_cloud_gateway_config::{GatewayMode, GatewayRuntimeConfig};
+#[cfg(feature = "foundation-appbase")]
+use sdkwork_api_cloud_gateway_config::GatewayMode;
+use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 #[cfg(feature = "foundation-appbase")]
 use sdkwork_api_cloud_gateway_config::{
-    APPBASE_APP_API_SERVICE_ID, APPBASE_BACKEND_API_SERVICE_ID,
+    APPBASE_APP_API_SERVICE_ID, APPBASE_BACKEND_API_SERVICE_ID, APPBASE_OPEN_API_SERVICE_ID,
 };
 use sdkwork_api_cloud_gateway_observability::{
     build_gateway_access_log_event, build_gateway_audit_log_event, describe_gateway_startup,
@@ -224,6 +226,7 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
     if config.dependency_surfaces.iter().any(|surface| {
         surface.service_id == APPBASE_APP_API_SERVICE_ID
             || surface.service_id == APPBASE_BACKEND_API_SERVICE_ID
+            || surface.service_id == APPBASE_OPEN_API_SERVICE_ID
     }) {
         ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID).await?;
         let iam_router = sdkwork_api_iam_assembly::assemble_business_router()
@@ -241,7 +244,14 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
             .iter()
             .any(|surface| surface.service_id == APPBASE_BACKEND_API_SERVICE_ID)
         {
-            embedded_routers.push((APPBASE_BACKEND_API_SERVICE_ID, iam_router));
+            embedded_routers.push((APPBASE_BACKEND_API_SERVICE_ID, iam_router.clone()));
+        }
+        if config
+            .dependency_surfaces
+            .iter()
+            .any(|surface| surface.service_id == APPBASE_OPEN_API_SERVICE_ID)
+        {
+            embedded_routers.push((APPBASE_OPEN_API_SERVICE_ID, iam_router));
         }
     }
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers(config, embedded_routers)
