@@ -24,6 +24,10 @@ must be backed by the relevant Cargo, pnpm, workflow, or package verification co
 | Product PRD | [product/prd/PRD.md](product/prd/PRD.md) |
 | Technical architecture | [architecture/tech/TECH_ARCHITECTURE.md](architecture/tech/TECH_ARCHITECTURE.md) |
 
+## Operations
+
+- [Ubuntu 与 Windows 源码发布和生产部署](guides/operator/SOURCE_DEPLOYMENT_UBUNTU_WINDOWS.md)
+
 ## Canon Documents
 
 | Document | Path |
