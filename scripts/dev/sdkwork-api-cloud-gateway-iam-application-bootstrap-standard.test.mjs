@@ -43,7 +43,7 @@ assert.match(
 
 assert.match(
   embeddedAppbaseBuilderSource,
-  /sdkwork_api_iam_assembly::assemble_business_router/u,
+  /sdkwork_api_iam_assembly::assemble_api_router/u,
   'API cloud gateway must integrate IAM through the canonical API assembly.',
 );
 

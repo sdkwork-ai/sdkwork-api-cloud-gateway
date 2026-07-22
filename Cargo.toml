@@ -33,6 +33,18 @@ sdkwork-api-mail-assembly = { path = "../sdkwork-mail/crates/sdkwork-api-mail-as
 sdkwork-api-aiot-assembly = { path = "../sdkwork-aiot/crates/sdkwork-api-aiot-assembly" }
 sdkwork-api-appstore-assembly = { path = "../sdkwork-appstore/crates/sdkwork-api-appstore-assembly" }
 sdkwork-api-agents-assembly = { path = "../sdkwork-agents/crates/sdkwork-api-agents-assembly" }
+sdkwork-api-account-assembly = { path = "../sdkwork-account/crates/sdkwork-api-account-assembly" }
+sdkwork-api-catalog-assembly = { path = "../sdkwork-catalog/crates/sdkwork-api-catalog-assembly" }
+sdkwork-api-customerservice-assembly = { path = "../sdkwork-customerservice/crates/sdkwork-api-customerservice-assembly" }
+sdkwork-api-gameengine-assembly = { path = "../sdkwork-gameengine/crates/sdkwork-api-gameengine-assembly" }
+sdkwork-api-inventory-assembly = { path = "../sdkwork-inventory/crates/sdkwork-api-inventory-assembly" }
+sdkwork-api-invoice-assembly = { path = "../sdkwork-invoice/crates/sdkwork-api-invoice-assembly" }
+sdkwork-api-skills-assembly = { path = "../sdkwork-skills/crates/sdkwork-api-skills-assembly" }
+sdkwork-api-local-router-assembly = { path = "../sdkwork-local-router/crates/sdkwork-api-local-router-assembly" }
+sdkwork-api-manager-assembly = { path = "../sdkwork-manager/crates/sdkwork-api-manager-assembly" }
+sdkwork-api-news-assembly = { path = "../sdkwork-news/crates/sdkwork-api-news-assembly" }
+sdkwork-api-portal-assembly = { path = "../sdkwork-portal/crates/sdkwork-api-portal-assembly" }
+sdkwork-api-shop-assembly = { path = "../sdkwork-shop/crates/sdkwork-api-shop-assembly" }
 sdkwork-api-deployments-assembly = { path = "../sdkwork-deployments/crates/sdkwork-api-deployments-assembly" }
 sdkwork-api-dezhou-assembly = { path = "../sdkwork-dezhou/crates/sdkwork-api-dezhou-assembly" }
 sdkwork-api-documents-assembly = { path = "../sdkwork-documents/crates/sdkwork-api-documents-assembly" }
@@ -43,6 +55,8 @@ sdkwork-api-browser-assembly = { path = "../sdkwork-browser/crates/sdkwork-api-b
 sdkwork-api-knowledgebase-assembly = { path = "../sdkwork-knowledgebase/crates/sdkwork-api-knowledgebase-assembly" }
 sdkwork-api-llm-assembly = { path = "../sdkwork-llm/crates/sdkwork-api-llm-assembly" }
 sdkwork-api-mahjong-assembly = { path = "../sdkwork-mahjong/crates/sdkwork-api-mahjong-assembly" }
+sdkwork-api-doudizhu-assembly = { path = "../sdkwork-doudizhu/crates/sdkwork-api-doudizhu-assembly" }
+sdkwork-api-xiangqi-assembly = { path = "../sdkwork-xiangqi/crates/sdkwork-api-xiangqi-assembly" }
 sdkwork-drive-database-host = { path = "../sdkwork-drive/crates/sdkwork-drive-database-host" }
 sdkwork-membership-database-host = { path = "../sdkwork-membership/crates/sdkwork-membership-database-host" }
 sdkwork-order-database-host = { path = "../sdkwork-order/crates/sdkwork-order-database-host" }
@@ -63,6 +77,19 @@ sdkwork-mail-database-host = { path = "../sdkwork-mail/crates/sdkwork-mail-datab
 sdkwork-aiot-database-host = { path = "../sdkwork-aiot/crates/sdkwork-aiot-database-host" }
 sdkwork-appstore-database-host = { path = "../sdkwork-appstore/crates/sdkwork-appstore-database-host" }
 sdkwork-agents-database-host = { path = "../sdkwork-agents/crates/sdkwork-agents-database-host" }
+sdkwork-account-database-host = { path = "../sdkwork-account/crates/sdkwork-account-database-host" }
+sdkwork-catalog-database-host = { path = "../sdkwork-catalog/crates/sdkwork-catalog-database-host" }
+sdkwork-customerservice-database-host = { path = "../sdkwork-customerservice/crates/sdkwork-customerservice-database-host" }
+sdkwork-gameengine-database-host = { path = "../sdkwork-gameengine/crates/sdkwork-gameengine-database-host" }
+sdkwork-inventory-database-host = { path = "../sdkwork-inventory/crates/sdkwork-inventory-database-host" }
+sdkwork-invoice-database-host = { path = "../sdkwork-invoice/crates/sdkwork-invoice-database-host" }
+sdkwork-skills-database-host = { path = "../sdkwork-skills/crates/sdkwork-skills-database-host" }
+sdkwork-local-router-database-host = { path = "../sdkwork-local-router/crates/sdkwork-local-router-database-host" }
+sdkwork-manager-database-host = { path = "../sdkwork-manager/crates/sdkwork-manager-database-host" }
+sdkwork-news-database-host = { path = "../sdkwork-news/crates/sdkwork-news-database-host" }
+sdkwork-portal-database-host = { path = "../sdkwork-portal/crates/sdkwork-portal-database-host" }
+sdkwork-shop-database-host = { path = "../sdkwork-shop/crates/sdkwork-shop-database-host" }
+sdkwork-merchandise-database-host = { path = "../sdkwork-merchandise/crates/sdkwork-merchandise-database-host" }
 sdkwork-deploy-database-host = { path = "../sdkwork-deployments/crates/sdkwork-deploy-database-host" }
 sdkwork-dezhou-database-host = { path = "../sdkwork-dezhou/crates/sdkwork-dezhou-database-host" }
 sdkwork-documents-database-host = { path = "../sdkwork-documents/crates/sdkwork-documents-database-host" }
@@ -73,6 +100,8 @@ sdkwork-browser-database-host = { path = "../sdkwork-browser/crates/sdkwork-brow
 sdkwork-knowledgebase-database-host = { path = "../sdkwork-knowledgebase/crates/sdkwork-knowledgebase-database-host" }
 sdkwork-llm-database-host = { path = "../sdkwork-llm/crates/sdkwork-llm-database-host" }
 sdkwork-mahjong-database-host = { path = "../sdkwork-mahjong/crates/sdkwork-mahjong-database-host" }
+sdkwork-doudizhu-database-host = { path = "../sdkwork-doudizhu/crates/sdkwork-doudizhu-database-host" }
+sdkwork-xiangqi-database-host = { path = "../sdkwork-xiangqi/crates/sdkwork-xiangqi-database-host" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

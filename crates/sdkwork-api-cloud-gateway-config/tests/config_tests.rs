@@ -261,6 +261,40 @@ fn application_component_publishes_only_embedded_assembly_surfaces() {
 }
 
 #[test]
+fn catalog_app_authority_publishes_every_owned_prefix() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let config = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let catalog = config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| surface.service_id == "sdkwork-catalog-app-api")
+        .collect::<Vec<_>>();
+    let prefixes = catalog
+        .iter()
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
+
+    assert_eq!(
+        prefixes,
+        HashSet::from([
+            "/app/v3/api/addresses",
+            "/app/v3/api/cart",
+            "/app/v3/api/catalog",
+        ])
+    );
+    assert!(catalog.iter().all(|surface| {
+        surface.workspace == "sdkwork-catalog"
+            && surface.cargo_feature.as_deref() == Some("foundation-catalog")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-catalog-assembly")
+            && surface.executable_export.as_deref()
+                == Some("sdkwork_api_catalog_assembly::assemble_api_router_from_env")
+    }));
+}
+
+#[test]
 fn source_runtime_configs_publish_the_manager_operations_suite() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -321,7 +355,15 @@ fn im_and_clawrouter_use_their_api_assemblies() {
         "/app/v3/api/chat/conversations",
         "/app/v3/api/media",
         "/app/v3/api/notifications",
-        "/app/v3/api/portal",
+        "/app/v3/api/portal/access",
+        "/app/v3/api/portal/automation",
+        "/app/v3/api/portal/conversations",
+        "/app/v3/api/portal/dashboard",
+        "/app/v3/api/portal/governance",
+        "/app/v3/api/portal/home",
+        "/app/v3/api/portal/media",
+        "/app/v3/api/portal/realtime",
+        "/app/v3/api/portal/workspace",
         "/app/v3/api/streams",
         "/im/v3/api",
         "/backend/v3/api/control",
@@ -329,6 +371,18 @@ fn im_and_clawrouter_use_their_api_assemblies() {
         "/backend/v3/api/ops",
     ]);
     assert_eq!(im_prefixes, expected_im_prefixes);
+    let im_service_ids = im
+        .iter()
+        .map(|surface| surface.service_id.as_str())
+        .collect::<HashSet<_>>();
+    assert_eq!(
+        im_service_ids,
+        HashSet::from([
+            "sdkwork-im-app-api",
+            "sdkwork-im-backend-api",
+            "sdkwork-im-open-api",
+        ])
+    );
     assert!(im.iter().all(|surface| {
         surface.cargo_feature.as_deref() == Some("foundation-im")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-im-assembly")
@@ -348,6 +402,21 @@ fn im_and_clawrouter_use_their_api_assemblies() {
     assert_eq!(
         clawrouter_prefixes,
         HashSet::from([
+            "/app/v3/api/ai/channel_groups",
+            "/app/v3/api/ai/dashboard",
+            "/app/v3/api/ai/gateway",
+            "/app/v3/api/ai/generations",
+            "/app/v3/api/ai/routing",
+            "/app/v3/api/ai/usage",
+            "/app/v3/api/memory",
+            "/app/v3/api/notification",
+            "/app/v3/api/runtime",
+            "/app/v3/api/system/site",
+            "/backend/v3/api/ai/channel_groups",
+            "/backend/v3/api/ai/route_explain",
+            "/backend/v3/api/integration",
+            "/backend/v3/api/sites",
+            "/backend/v3/api/system",
             "/anthropic/v1",
             "/google/v1beta",
             "/vidu/ent",
@@ -359,10 +428,46 @@ fn im_and_clawrouter_use_their_api_assemblies() {
             "/v1",
         ])
     );
+    let clawrouter_service_ids = clawrouter
+        .iter()
+        .map(|surface| surface.service_id.as_str())
+        .collect::<HashSet<_>>();
+    assert_eq!(
+        clawrouter_service_ids,
+        HashSet::from([
+            "sdkwork-clawrouter-app-api",
+            "sdkwork-clawrouter-backend-api",
+            "sdkwork-clawrouter-open-api",
+        ])
+    );
     assert!(clawrouter.iter().all(|surface| {
         surface.cargo_feature.as_deref() == Some("foundation-clawrouter")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-clawrouter-assembly")
     }));
+}
+
+#[test]
+fn local_router_uses_conflict_free_canonical_open_api_prefixes() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let config = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let prefixes = config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| surface.workspace == "sdkwork-local-router")
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
+
+    assert!(prefixes.contains("/app/v3/api/local_router"));
+    assert!(prefixes.contains("/backend/v3/api/local_router"));
+    assert!(prefixes.contains("/local-router/v1"));
+    assert!(prefixes.contains("/local-router/anthropic"));
+    assert!(prefixes.contains("/local-router/google"));
+    assert!(!prefixes.contains("/v1"));
+    assert!(!prefixes.contains("/anthropic"));
+    assert!(!prefixes.contains("/google"));
 }
 
 #[test]

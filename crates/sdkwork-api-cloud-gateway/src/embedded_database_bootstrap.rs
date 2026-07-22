@@ -26,7 +26,7 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-image",
     "sdkwork-aiot",
     "sdkwork-community",
-    "sdkwork-kernel",
+    "sdkwork-agents",
     "sdkwork-order",
     "sdkwork-promotion",
     "sdkwork-payment",
@@ -34,11 +34,25 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-prompts",
     "sdkwork-deployments",
     "sdkwork-web-server",
-    "sdkwork-modelkit",
     "sdkwork-browser",
     "sdkwork-knowledgebase",
     "sdkwork-llm",
     "sdkwork-mahjong",
+    "sdkwork-doudizhu",
+    "sdkwork-xiangqi",
+    "sdkwork-modelkit",
+    "sdkwork-account",
+    "sdkwork-catalog",
+    "sdkwork-customerservice",
+    "sdkwork-gameengine",
+    "sdkwork-inventory",
+    "sdkwork-invoice",
+    "sdkwork-skills",
+    "sdkwork-local-router",
+    "sdkwork-manager",
+    "sdkwork-news",
+    "sdkwork-portal",
+    "sdkwork-shop",
 ];
 
 pub async fn bootstrap_embedded_databases(
@@ -235,10 +249,10 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-kernel")]
-    if workspace_enabled(config, "sdkwork-kernel") {
+    #[cfg(feature = "foundation-agents")]
+    if workspace_enabled(config, "sdkwork-agents") {
         run_module(
-            "sdkwork-kernel",
+            "sdkwork-agents",
             "agents",
             sdkwork_agents_database_host::bootstrap_agents_database(pool.clone()),
         )
@@ -315,16 +329,6 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-modelkit")]
-    if workspace_enabled(config, "sdkwork-modelkit") {
-        run_module(
-            "sdkwork-modelkit",
-            "modelkit",
-            sdkwork_modelkit_database_host::bootstrap_modelkit_database(pool.clone()),
-        )
-        .await?;
-    }
-
     #[cfg(feature = "foundation-browser")]
     if workspace_enabled(config, "sdkwork-browser") {
         run_module(
@@ -361,6 +365,166 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-mahjong",
             "mahjong",
             sdkwork_mahjong_database_host::bootstrap_mahjong_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-doudizhu")]
+    if workspace_enabled(config, "sdkwork-doudizhu") {
+        run_module(
+            "sdkwork-doudizhu",
+            "doudizhu",
+            sdkwork_doudizhu_database_host::bootstrap_doudizhu_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-xiangqi")]
+    if workspace_enabled(config, "sdkwork-xiangqi") {
+        run_module(
+            "sdkwork-xiangqi",
+            "xiangqi",
+            sdkwork_xiangqi_database_host::bootstrap_xiangqi_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-modelkit")]
+    if workspace_enabled(config, "sdkwork-modelkit") {
+        run_module(
+            "sdkwork-modelkit",
+            "modelkit",
+            sdkwork_modelkit_database_host::bootstrap_modelkit_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-account")]
+    if workspace_enabled(config, "sdkwork-account") {
+        run_module(
+            "sdkwork-account",
+            "account",
+            sdkwork_account_database_host::bootstrap_account_database_from_env(),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-catalog")]
+    if workspace_enabled(config, "sdkwork-catalog") {
+        run_module(
+            "sdkwork-catalog",
+            "catalog",
+            sdkwork_catalog_database_host::bootstrap_catalog_database_from_env(),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-customerservice")]
+    if workspace_enabled(config, "sdkwork-customerservice") {
+        run_module(
+            "sdkwork-customerservice",
+            "customerservice",
+            sdkwork_customerservice_database_host::bootstrap_customerservice_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-gameengine")]
+    if workspace_enabled(config, "sdkwork-gameengine") {
+        run_module(
+            "sdkwork-gameengine",
+            "games",
+            sdkwork_gameengine_database_host::bootstrap_games_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-inventory")]
+    if workspace_enabled(config, "sdkwork-inventory") {
+        run_module(
+            "sdkwork-inventory",
+            "inventory",
+            sdkwork_inventory_database_host::bootstrap_inventory_database_from_env(),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-invoice")]
+    if workspace_enabled(config, "sdkwork-invoice") {
+        run_module(
+            "sdkwork-invoice",
+            "invoice",
+            sdkwork_invoice_database_host::bootstrap_invoice_database_from_env(),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-local-router")]
+    if workspace_enabled(config, "sdkwork-local-router") {
+        run_module(
+            "sdkwork-local-router",
+            "localrouter",
+            sdkwork_local_router_database_host::bootstrap_local_router_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-manager")]
+    if workspace_enabled(config, "sdkwork-manager") {
+        run_module(
+            "sdkwork-manager",
+            "manager",
+            sdkwork_manager_database_host::bootstrap_manager_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-news")]
+    if workspace_enabled(config, "sdkwork-news") {
+        run_module(
+            "sdkwork-news",
+            "news",
+            sdkwork_news_database_host::bootstrap_news_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-portal")]
+    if workspace_enabled(config, "sdkwork-portal") {
+        run_module(
+            "sdkwork-portal",
+            "portal",
+            sdkwork_portal_database_host::bootstrap_portal_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-shop")]
+    if workspace_enabled(config, "sdkwork-shop") {
+        run_module(
+            "sdkwork-shop",
+            "shop",
+            sdkwork_shop_database_host::bootstrap_shop_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-skills")]
+    if workspace_enabled(config, "sdkwork-skills") {
+        run_module(
+            "sdkwork-skills",
+            "skills",
+            sdkwork_skills_database_host::bootstrap_skills_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-shop")]
+    if workspace_enabled(config, "sdkwork-merchandise") {
+        run_module(
+            "sdkwork-merchandise",
+            "merchandise",
+            sdkwork_merchandise_database_host::bootstrap_merchandise_database(pool.clone()),
         )
         .await?;
     }

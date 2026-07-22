@@ -27,9 +27,7 @@ pub async fn bootstrap_embedded_dependency_routers(
         {
             crate::runtime::ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID)
                 .await?;
-            let iam_router = sdkwork_api_iam_assembly::assemble_business_router()
-                .await
-                .router;
+            let iam_router = sdkwork_api_iam_assembly::assemble_api_router().await.router;
             if dependency_surface_enabled(config, APPBASE_APP_API_SERVICE_ID) {
                 routers.insert(APPBASE_APP_API_SERVICE_ID.to_owned(), iam_router.clone());
             }
@@ -238,17 +236,13 @@ pub async fn bootstrap_embedded_dependency_routers(
     }
 
     #[cfg(feature = "foundation-clawrouter")]
-    {
-        use sdkwork_api_cloud_gateway_config::SDKWORK_CLAW_GATEWAY_SERVICE_ID;
-        if dependency_surface_enabled(config, SDKWORK_CLAW_GATEWAY_SERVICE_ID) {
-            let assembly = sdkwork_api_clawrouter_assembly::assemble_api_router()
-                .await
-                .map_err(|error| GatewayRuntimeError::EmbeddedRouterBuild {
-                    service_id: SDKWORK_CLAW_GATEWAY_SERVICE_ID.to_owned(),
-                    message: format!("{error:#}"),
-                })?;
-            routers.insert(SDKWORK_CLAW_GATEWAY_SERVICE_ID.to_owned(), assembly.router);
-        }
+    if workspace_surface_enabled(config, "sdkwork-clawrouter") {
+        let assembly = sdkwork_api_clawrouter_assembly::assemble_api_router()
+            .await
+            .map_err(|error| {
+                workspace_build_error(config, "sdkwork-clawrouter", format!("{error:#}"))
+            })?;
+        insert_workspace_router(config, &mut routers, "sdkwork-clawrouter", assembly.router);
     }
 
     #[cfg(feature = "foundation-mcp")]
@@ -276,27 +270,11 @@ pub async fn bootstrap_embedded_dependency_routers(
     }
 
     #[cfg(feature = "foundation-im")]
-    {
-        use sdkwork_api_cloud_gateway_config::{
-            SDKWORK_IM_BACKEND_HTTP_SERVICE_ID, SDKWORK_IM_IM_HTTP_SERVICE_ID,
-        };
-        if dependency_surface_enabled(config, SDKWORK_IM_IM_HTTP_SERVICE_ID)
-            || dependency_surface_enabled(config, SDKWORK_IM_BACKEND_HTTP_SERVICE_ID)
-        {
-            let assembly = sdkwork_api_im_assembly::assemble_api_router()
-                .await
-                .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-                    service_id: SDKWORK_IM_IM_HTTP_SERVICE_ID.to_owned(),
-                    message,
-                })?;
-            let im_router = assembly.router;
-            if dependency_surface_enabled(config, SDKWORK_IM_IM_HTTP_SERVICE_ID) {
-                routers.insert(SDKWORK_IM_IM_HTTP_SERVICE_ID.to_owned(), im_router.clone());
-            }
-            if dependency_surface_enabled(config, SDKWORK_IM_BACKEND_HTTP_SERVICE_ID) {
-                routers.insert(SDKWORK_IM_BACKEND_HTTP_SERVICE_ID.to_owned(), im_router);
-            }
-        }
+    if workspace_surface_enabled(config, "sdkwork-im") {
+        let assembly = sdkwork_api_im_assembly::assemble_api_router()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-im", assembly.router);
     }
 
     #[cfg(feature = "foundation-rtc")]
@@ -433,14 +411,120 @@ pub async fn bootstrap_embedded_dependency_routers(
         }
     }
 
-    #[cfg(feature = "foundation-kernel")]
-    if workspace_surface_enabled(config, "sdkwork-kernel") {
+    #[cfg(feature = "foundation-agents")]
+    if workspace_surface_enabled(config, "sdkwork-agents") {
         let assembly = sdkwork_api_agents_assembly::assemble_api_router()
             .await
             .map_err(|error| {
-                workspace_build_error(config, "sdkwork-kernel", format!("{error:#}"))
+                workspace_build_error(config, "sdkwork-agents", format!("{error:#}"))
             })?;
-        insert_workspace_router(config, &mut routers, "sdkwork-kernel", assembly.router);
+        insert_workspace_router(config, &mut routers, "sdkwork-agents", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-account")]
+    if workspace_surface_enabled(config, "sdkwork-account") {
+        let assembly = sdkwork_api_account_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-account", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-account", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-catalog")]
+    if workspace_surface_enabled(config, "sdkwork-catalog") {
+        let assembly = sdkwork_api_catalog_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-catalog", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-catalog", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-customerservice")]
+    if workspace_surface_enabled(config, "sdkwork-customerservice") {
+        let assembly = sdkwork_api_customerservice_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-customerservice", error))?;
+        insert_workspace_router(
+            config,
+            &mut routers,
+            "sdkwork-customerservice",
+            assembly.router,
+        );
+    }
+
+    #[cfg(feature = "foundation-gameengine")]
+    if workspace_surface_enabled(config, "sdkwork-gameengine") {
+        let assembly = sdkwork_api_gameengine_assembly::assemble_api_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-gameengine", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-gameengine", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-inventory")]
+    if workspace_surface_enabled(config, "sdkwork-inventory") {
+        let assembly = sdkwork_api_inventory_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-inventory", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-inventory", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-invoice")]
+    if workspace_surface_enabled(config, "sdkwork-invoice") {
+        let assembly = sdkwork_api_invoice_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-invoice", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-invoice", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-local-router")]
+    if workspace_surface_enabled(config, "sdkwork-local-router") {
+        let assembly = sdkwork_api_local_router_assembly::assemble_api_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-local-router", error))?;
+        insert_workspace_router(
+            config,
+            &mut routers,
+            "sdkwork-local-router",
+            assembly.router,
+        );
+    }
+
+    #[cfg(feature = "foundation-manager")]
+    if workspace_surface_enabled(config, "sdkwork-manager") {
+        let assembly = sdkwork_api_manager_assembly::assemble_business_routes_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-manager", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-manager", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-news")]
+    if workspace_surface_enabled(config, "sdkwork-news") {
+        let assembly = sdkwork_api_news_assembly::assemble_api_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-news", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-news", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-portal")]
+    if workspace_surface_enabled(config, "sdkwork-portal") {
+        let assembly = sdkwork_api_portal_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-portal", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-portal", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-shop")]
+    if workspace_surface_enabled(config, "sdkwork-shop") {
+        let assembly = sdkwork_api_shop_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-shop", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-shop", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-skills")]
+    if workspace_surface_enabled(config, "sdkwork-skills") {
+        let assembly = sdkwork_api_skills_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-skills", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-skills", assembly.router);
     }
 
     #[cfg(feature = "foundation-deployments")]
@@ -501,11 +585,12 @@ pub async fn bootstrap_embedded_dependency_routers(
 
     #[cfg(feature = "foundation-knowledgebase")]
     if workspace_surface_enabled(config, "sdkwork-knowledgebase") {
-        let assembly = sdkwork_api_knowledgebase_assembly::assemble_api_router_from_environment()
-            .await
-            .map_err(|error| {
-                workspace_build_error(config, "sdkwork-knowledgebase", format!("{error:#}"))
-            })?;
+        let assembly =
+            sdkwork_api_knowledgebase_assembly::assemble_business_routes_from_environment()
+                .await
+                .map_err(|error| {
+                    workspace_build_error(config, "sdkwork-knowledgebase", format!("{error:#}"))
+                })?;
         insert_workspace_router(
             config,
             &mut routers,
@@ -530,27 +615,26 @@ pub async fn bootstrap_embedded_dependency_routers(
         insert_workspace_router(config, &mut routers, "sdkwork-mahjong", assembly.router);
     }
 
+    #[cfg(feature = "foundation-doudizhu")]
+    if workspace_surface_enabled(config, "sdkwork-doudizhu") {
+        let assembly = sdkwork_api_doudizhu_assembly::assemble_api_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-doudizhu", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-doudizhu", assembly.router);
+    }
+
+    #[cfg(feature = "foundation-xiangqi")]
+    if workspace_surface_enabled(config, "sdkwork-xiangqi") {
+        let assembly = sdkwork_api_xiangqi_assembly::assemble_api_router()
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-xiangqi", error))?;
+        insert_workspace_router(config, &mut routers, "sdkwork-xiangqi", assembly.router);
+    }
+
     Ok(routers)
 }
 
-#[cfg(any(
-    feature = "foundation-drive",
-    feature = "foundation-membership",
-    feature = "foundation-order",
-    feature = "foundation-promotion",
-    feature = "foundation-payment",
-    feature = "foundation-kernel",
-    feature = "foundation-deployments",
-    feature = "foundation-dezhou",
-    feature = "foundation-documents",
-    feature = "foundation-modelkit",
-    feature = "foundation-prompts",
-    feature = "foundation-web-server",
-    feature = "foundation-browser",
-    feature = "foundation-knowledgebase",
-    feature = "foundation-llm",
-    feature = "foundation-mahjong"
-))]
+#[allow(dead_code)]
 fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> bool {
     config
         .dependency_surfaces
@@ -558,25 +642,7 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
         .any(|surface| surface.workspace == workspace)
 }
 
-#[cfg(any(
-    test,
-    feature = "foundation-drive",
-    feature = "foundation-membership",
-    feature = "foundation-order",
-    feature = "foundation-promotion",
-    feature = "foundation-payment",
-    feature = "foundation-kernel",
-    feature = "foundation-deployments",
-    feature = "foundation-dezhou",
-    feature = "foundation-documents",
-    feature = "foundation-modelkit",
-    feature = "foundation-prompts",
-    feature = "foundation-web-server",
-    feature = "foundation-browser",
-    feature = "foundation-knowledgebase",
-    feature = "foundation-llm",
-    feature = "foundation-mahjong"
-))]
+#[allow(dead_code)]
 fn insert_workspace_router(
     config: &GatewayRuntimeConfig,
     routers: &mut HashMap<String, Router>,
@@ -592,24 +658,7 @@ fn insert_workspace_router(
     }
 }
 
-#[cfg(any(
-    feature = "foundation-drive",
-    feature = "foundation-membership",
-    feature = "foundation-order",
-    feature = "foundation-promotion",
-    feature = "foundation-payment",
-    feature = "foundation-kernel",
-    feature = "foundation-deployments",
-    feature = "foundation-dezhou",
-    feature = "foundation-documents",
-    feature = "foundation-modelkit",
-    feature = "foundation-prompts",
-    feature = "foundation-web-server",
-    feature = "foundation-browser",
-    feature = "foundation-knowledgebase",
-    feature = "foundation-llm",
-    feature = "foundation-mahjong"
-))]
+#[allow(dead_code)]
 fn workspace_build_error(
     config: &GatewayRuntimeConfig,
     workspace: &str,
@@ -657,7 +706,19 @@ mod tests {
             "sdkwork-order",
             "sdkwork-promotion",
             "sdkwork-payment",
-            "sdkwork-kernel",
+            "sdkwork-agents",
+            "sdkwork-account",
+            "sdkwork-catalog",
+            "sdkwork-customerservice",
+            "sdkwork-gameengine",
+            "sdkwork-inventory",
+            "sdkwork-invoice",
+            "sdkwork-local-router",
+            "sdkwork-manager",
+            "sdkwork-news",
+            "sdkwork-portal",
+            "sdkwork-shop",
+            "sdkwork-skills",
             "sdkwork-deployments",
             "sdkwork-dezhou",
             "sdkwork-documents",
@@ -668,6 +729,8 @@ mod tests {
             "sdkwork-knowledgebase",
             "sdkwork-llm",
             "sdkwork-mahjong",
+            "sdkwork-doudizhu",
+            "sdkwork-xiangqi",
         ];
         let expected_service_ids = config
             .dependency_surfaces

@@ -18,7 +18,10 @@ const runtimeSource = read(
   path.join(root, 'crates/sdkwork-api-cloud-gateway/src/runtime.rs'),
 );
 
-const dependencies = uniqueDependencies(component.dependencies);
+const dependencies = uniqueDependencies([
+  ...component.dependencies,
+  ...(component.databaseDependencies ?? []),
+]);
 let previousBootstrapPosition = bootstrapSource.indexOf(
   'let pool = process_database_pool().await?;',
 );
@@ -29,27 +32,36 @@ assert.notEqual(
 );
 
 for (const dependency of dependencies) {
-  const repoName = dependency.workspace === 'sdkwork-kernel'
-    ? 'sdkwork-agents'
-    : dependency.workspace;
-  const repoRoot = path.join(workspaceRoot, repoName);
+  const repoRoot = path.join(workspaceRoot, dependency.workspace);
   const databaseRoot = path.join(repoRoot, 'database');
   const hostCrates = fs
     .readdirSync(path.join(repoRoot, 'crates'), { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && entry.name.endsWith('-database-host'))
     .map((entry) => entry.name);
 
+  const featureHosts = hostCrates.filter((hostCrate) =>
+    featureBody(gatewayCargo, dependency.cargoFeature).includes(
+      `"dep:${hostCrate}"`,
+    ),
+  );
   assert.equal(
-    hostCrates.length,
+    featureHosts.length,
     1,
-    `${dependency.workspace} must expose exactly one convention-named *-database-host crate`,
+    `${dependency.workspace} must compile exactly one convention-named *-database-host crate through ${dependency.cargoFeature}`,
   );
   assert.ok(
     fs.existsSync(databaseRoot),
     `${dependency.workspace} must own a database/ lifecycle asset directory`,
   );
 
-  const hostCrate = hostCrates[0];
+  const hostCrate = featureHosts[0];
+  if (dependency.bootstrapExport) {
+    assert.equal(
+      dependency.cargoDependency,
+      hostCrate,
+      `${dependency.workspace} database dependency must name its executable host crate`,
+    );
+  }
   assert.match(
     workspaceCargo,
     new RegExp(`^${escapeRegExp(hostCrate)}\\s*=\\s*\\{[^\\n]*path\\s*=`, 'mu'),

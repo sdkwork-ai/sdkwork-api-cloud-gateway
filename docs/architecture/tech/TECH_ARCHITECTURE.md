@@ -2,7 +2,7 @@
 
 Status: active
 Owner: SDKWork maintainers
-Updated: 2026-07-19
+Updated: 2026-07-22
 Specs: ARCHITECTURE_DECISION_SPEC.md, DOCUMENTATION_SPEC.md
 
 ## Document Map
@@ -41,7 +41,7 @@ profiles package the same embedded assembly graph with different deployment meta
 | Route registry | In-repo metadata | `sdkwork-api-cloud-gateway-registry` |
 | Observability | Prometheus + structured logs | `sdkwork-api-cloud-gateway-observability`; series prefix `sdkwork_api_cloud_gateway_*` |
 | Utilities | `sdkwork-utils-rust` | Boolean parsing, path normalization |
-| IAM embedding | `foundation-appbase` feature | Optional embedded IAM routers via `sdkwork-routes-iam-*` |
+| IAM embedding | `foundation-appbase` feature | Optional embedded IAM router via `sdkwork-api-iam-assembly` |
 | Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `sdkwork.workflow.json` |
 
 Intentionally **not** integrated at this stage:
@@ -63,7 +63,7 @@ domain tables or migrations itself.
 
 Gateway-owned HTTP surfaces (public):
 
-- `/healthz`, `/readyz`
+- `/healthz`, `/livez`, `/readyz`
 - `/openapi/index.json`, `/openapi.json`
 - `/metrics` (when enabled)
 - Safe diagnostics inventory (non-secret)
@@ -93,10 +93,14 @@ Cargo workspace integration is the gateway catalog authority: root `Cargo.toml`,
   from `specs/component.spec.json` and Cargo workspace evidence.
 - **SDK families**: consumers integrate through dependency application SDKs; the gateway does not
   hand-edit generated SDK output.
-- **Drive file upload**: delegated to embedded `sdkwork-drive-gateway-assembly`; no local file storage.
+- **Drive file upload**: delegated to embedded `sdkwork-api-drive-assembly`; no local file storage.
 
 Every dependency surface requires a Cargo feature, gateway assembly dependency, executable router
 export, and verified coverage. Legacy split modes and per-dependency base URLs are rejected.
+
+Catalog is embedded through `foundation-catalog` and `sdkwork-api-catalog-assembly`. The
+`sdkwork-catalog-app-api` authority is dispatched for `/app/v3/api/addresses`,
+`/app/v3/api/cart`, and `/app/v3/api/catalog`; route details remain owned by the Catalog assembly.
 
 ## 6. Security, Privacy, And Observability
 

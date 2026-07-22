@@ -1,6 +1,6 @@
 repository-kind: application
 
-﻿# SDKWork API Gateway
+# SDKWork API Gateway
 
 SDKWork API Gateway is a Rust/Axum gateway application. It can run as an independent service or be
 embedded into another Rust service through public router builders. The default development topology
@@ -55,9 +55,11 @@ evidence stays in `specs/component.spec.json` and dependency SDK assembly metada
 Every published foundation surface is embedded. The complete machine-readable list is
 `specs/component.spec.json`; each entry names its Cargo feature,
 assembly dependency, stable API prefix, and executable router export. Representative integrations
-include `foundation-drive` with `sdkwork-drive-gateway-assembly`, `foundation-im` with
-`sdkwork-im-gateway-assembly`, and `foundation-clawrouter` with
-`sdkwork-clawrouter-gateway-assembly`.
+include `foundation-drive` with `sdkwork-api-drive-assembly`, `foundation-im` with
+`sdkwork-api-im-assembly`, `foundation-clawrouter` with `sdkwork-api-clawrouter-assembly`, and
+`foundation-skills` with `sdkwork-api-skills-assembly`. Catalog is embedded through
+`foundation-catalog` and `sdkwork-api-catalog-assembly`; its app authority owns the three gateway
+prefixes `/app/v3/api/addresses`, `/app/v3/api/cart`, and `/app/v3/api/catalog`.
 
 When adding another foundation API, add its assembly crate once in root
 `[workspace.dependencies]`, activate it through a focused gateway feature, and record the matching
