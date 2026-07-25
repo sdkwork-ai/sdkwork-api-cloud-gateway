@@ -6,6 +6,7 @@ const embeddedDatabaseServices = [
   'PAYMENT',
   'IAM',
   'IM',
+  'KNOWLEDGEBASE',
   'AGENTS',
   'AGENTS_STORE',
   'AGENT_RUNTIME',
@@ -16,6 +17,9 @@ const embeddedDatabaseServices = [
   'PROMPTS',
   'WEB',
 ];
+
+const clawRouterDevelopmentSecret =
+  'sdkwork-clawrouter-local-dev-secret-20260507';
 
 export function resolveTemporaryDatabaseDriverEnv(env = process.env) {
   return {
@@ -74,6 +78,14 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     // The generated ClawRouter Rust SDK adds its own /v1 prefix.
     SDKWORK_CLAWROUTER_OPEN_API_BASE_URL:
       configuredClawRouterBaseUrl ?? localGatewayOrigin(env.SDKWORK_API_CLOUD_GATEWAY_BIND),
+    SDKWORK_CLAW_API_KEY_PEPPER:
+      env.SDKWORK_CLAW_API_KEY_PEPPER ?? clawRouterDevelopmentSecret,
+    SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET:
+      env.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET ?? clawRouterDevelopmentSecret,
+    SDKWORK_CLAW_APP_SESSION_SECRET:
+      env.SDKWORK_CLAW_APP_SESSION_SECRET ?? clawRouterDevelopmentSecret,
+    SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET:
+      env.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET ?? clawRouterDevelopmentSecret,
     ...(environment ? { SDKWORK_IM_ENVIRONMENT: environment } : {}),
   };
 }

@@ -38,6 +38,8 @@ test('embedded database consumers share the PostgreSQL profile without fallback 
 
   assert.equal(resolved.SDKWORK_IM_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_IM_DATABASE_SCHEMA, 'sdkwork_ai_dev');
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_DATABASE_URL, databaseUrl);
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_DATABASE_SCHEMA, 'sdkwork_ai_dev');
   assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX, 'iot_');
   assert.equal(resolved.SDKWORK_RTC_STATE_DATABASE_URL, databaseUrl);
@@ -70,20 +72,33 @@ test('embedded PostgreSQL URL replaces legacy spaced search_path options', () =>
 });
 
 test('embedded dependencies use the local gateway origin by default', () => {
-  assert.deepEqual(resolveEmbeddedDependencyEnv({}), {
-    SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: 'http://127.0.0.1:3900',
-  });
+  const resolved = resolveEmbeddedDependencyEnv({});
+
+  assert.equal(resolved.SDKWORK_CLAWROUTER_OPEN_API_BASE_URL, 'http://127.0.0.1:3900');
+  assert.equal(
+    resolved.SDKWORK_CLAW_API_KEY_PEPPER,
+    'sdkwork-clawrouter-local-dev-secret-20260507',
+  );
+  assert.equal(
+    resolved.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET,
+    'sdkwork-clawrouter-local-dev-secret-20260507',
+  );
+  assert.equal(
+    resolved.SDKWORK_CLAW_APP_SESSION_SECRET,
+    'sdkwork-clawrouter-local-dev-secret-20260507',
+  );
+  assert.equal(
+    resolved.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET,
+    'sdkwork-clawrouter-local-dev-secret-20260507',
+  );
 });
 
 test('embedded IM receives the selected lifecycle environment', () => {
-  assert.deepEqual(
+  assert.equal(
     resolveEmbeddedDependencyEnv({
       SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: 'development',
-    }),
-    {
-      SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: 'http://127.0.0.1:3900',
-      SDKWORK_IM_ENVIRONMENT: 'development',
-    },
+    }).SDKWORK_IM_ENVIRONMENT,
+    'development',
   );
   assert.equal(
     resolveEmbeddedDependencyEnv({
@@ -95,30 +110,41 @@ test('embedded IM receives the selected lifecycle environment', () => {
 });
 
 test('embedded dependency env preserves explicit ClawRouter overrides', () => {
-  assert.deepEqual(
-    resolveEmbeddedDependencyEnv({
-      SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: ' https://clawrouter.example.com ',
-      CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
-    }),
-    {
-      SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: 'https://clawrouter.example.com',
-    },
+  const explicit = resolveEmbeddedDependencyEnv({
+    SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: ' https://clawrouter.example.com ',
+    CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
+    SDKWORK_CLAW_API_KEY_PEPPER: 'explicit-api-key-pepper',
+    SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET: 'explicit-trusted-subject-secret',
+    SDKWORK_CLAW_APP_SESSION_SECRET: 'explicit-app-session-secret',
+    SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET: 'explicit-payment-webhook-secret',
+  });
+
+  assert.equal(
+    explicit.SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
+    'https://clawrouter.example.com',
   );
-  assert.deepEqual(
+  assert.equal(explicit.SDKWORK_CLAW_API_KEY_PEPPER, 'explicit-api-key-pepper');
+  assert.equal(
+    explicit.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET,
+    'explicit-trusted-subject-secret',
+  );
+  assert.equal(explicit.SDKWORK_CLAW_APP_SESSION_SECRET, 'explicit-app-session-secret');
+  assert.equal(
+    explicit.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET,
+    'explicit-payment-webhook-secret',
+  );
+  assert.equal(
     resolveEmbeddedDependencyEnv({
       CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
-    }),
-    {
-      SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
-    },
+    }).SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
+    'https://legacy.example.com',
   );
 });
 
 test('embedded dependency env derives a reachable origin from a custom bind', () => {
-  assert.deepEqual(
-    resolveEmbeddedDependencyEnv({ SDKWORK_API_CLOUD_GATEWAY_BIND: '0.0.0.0:4900' }),
-    {
-      SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: 'http://127.0.0.1:4900',
-    },
+  assert.equal(
+    resolveEmbeddedDependencyEnv({ SDKWORK_API_CLOUD_GATEWAY_BIND: '0.0.0.0:4900' })
+      .SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
+    'http://127.0.0.1:4900',
   );
 });

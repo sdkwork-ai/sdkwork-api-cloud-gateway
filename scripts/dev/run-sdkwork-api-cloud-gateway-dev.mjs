@@ -22,6 +22,11 @@ import {
   assertRemoteCloudDevelopmentProfile,
   resolveGatewaySourceProfile,
 } from './sdkwork-api-cloud-gateway-source-config.mjs';
+import {
+  resolveEmbeddedKnowledgebaseRpcPlan,
+  startEmbeddedKnowledgebaseRpc,
+  stopEmbeddedKnowledgebaseRpc,
+} from './embedded-knowledgebase-rpc.mjs';
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const collapsedFeatures = [
@@ -35,6 +40,7 @@ const requiredBuildCriticalSources = [
   'etc/sdkwork-api-cloud-gateway.development.toml',
   'scripts/dev/sdkwork-api-cloud-gateway-dev-env.mjs',
   'scripts/dev/sdkwork-api-cloud-gateway-source-config.mjs',
+  'scripts/dev/embedded-knowledgebase-rpc.mjs',
 ];
 
 async function main() {
@@ -91,9 +97,24 @@ async function main() {
   );
 
   const childEnv = resolveChildEnv(profile);
+  const knowledgebaseRpcPlan = resolveEmbeddedKnowledgebaseRpcPlan({
+    databaseSchema: profile.config.database.schema,
+    databaseUrl: profile.databaseUrl,
+    env: childEnv,
+    gatewayRoot: appRoot,
+    pgOptions: childEnv.PGOPTIONS,
+  });
   const runtimeConfig = process.env.SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE
     ?? sourceProfile.runtimeConfig;
-  await runGateway(runtimeConfig, childEnv);
+  const knowledgebaseRpc = await startEmbeddedKnowledgebaseRpc(knowledgebaseRpcPlan);
+  try {
+    await runGateway(runtimeConfig, {
+      ...childEnv,
+      ...knowledgebaseRpcPlan?.clientEnv,
+    });
+  } finally {
+    await stopEmbeddedKnowledgebaseRpc(knowledgebaseRpc);
+  }
 }
 
 function resolveSelectedProfile() {

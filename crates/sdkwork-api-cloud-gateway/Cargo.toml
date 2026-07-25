@@ -127,6 +127,7 @@ tower.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+rustls.workspace = true
 sdkwork-api-cloud-gateway-config.workspace = true
 sdkwork-api-cloud-gateway-observability.workspace = true
 sdkwork-api-cloud-gateway-registry.workspace = true

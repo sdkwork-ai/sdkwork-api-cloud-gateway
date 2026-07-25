@@ -1,14 +1,35 @@
 use std::{collections::HashMap, env, net::SocketAddr};
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
 use sdkwork_api_cloud_gateway::load_gateway_config;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{fmt, EnvFilter};
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+const GATEWAY_RUNTIME_STACK_SIZE: usize = 16 * 1024 * 1024;
+
+fn main() -> anyhow::Result<()> {
+    install_process_crypto_provider()?;
+
+    std::thread::Builder::new()
+        .name("sdkwork-api-cloud-gateway-runtime".to_owned())
+        .stack_size(GATEWAY_RUNTIME_STACK_SIZE)
+        .spawn(run_gateway_process)
+        .context("failed to spawn the gateway runtime thread")?
+        .join()
+        .map_err(|_| anyhow!("gateway runtime thread panicked"))?
+}
+
+fn run_gateway_process() -> anyhow::Result<()> {
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .context("failed to build the gateway Tokio runtime")?
+        .block_on(run_gateway())
+}
+
+async fn run_gateway() -> anyhow::Result<()> {
     init_tracing();
     sdkwork_database_sqlx::enable_process_shared_database_pool();
 
@@ -29,6 +50,16 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     Ok(())
+}
+
+fn install_process_crypto_provider() -> anyhow::Result<()> {
+    if rustls::crypto::CryptoProvider::get_default().is_some() {
+        return Ok(());
+    }
+
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .map_err(|_| anyhow!("failed to install the process-level Rustls crypto provider"))
 }
 
 fn init_tracing() {
@@ -58,5 +89,16 @@ async fn shutdown_signal() {
     tokio::select! {
         _ = ctrl_c => {},
         _ = terminate => {},
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn installs_a_process_crypto_provider_before_router_construction() {
+        install_process_crypto_provider().expect("crypto provider should install");
+        assert!(rustls::crypto::CryptoProvider::get_default().is_some());
     }
 }
