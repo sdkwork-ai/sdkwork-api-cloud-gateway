@@ -6286,6 +6286,10 @@ dependencies = [
  "sdkwork-routes-documents-app-api",
  "sdkwork-routes-documents-backend-api",
  "sdkwork-routes-documents-open-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -6321,6 +6325,10 @@ dependencies = [
  "sdkwork-routes-drive-internal-api",
  "sdkwork-routes-drive-open-api",
  "sdkwork-routes-storage-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
  "sqlx",
  "tokio",
 ]
@@ -6577,6 +6585,10 @@ dependencies = [
  "sdkwork-membership-service-host",
  "sdkwork-routes-membership-app-api",
  "sdkwork-routes-membership-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -6639,7 +6651,9 @@ dependencies = [
  "sdkwork-routes-order-app-api",
  "sdkwork-routes-order-backend-api",
  "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -6684,6 +6698,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-database-ops-http",
+ "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-prompts-service-host",
  "sdkwork-prompts-web-context",
@@ -6692,7 +6707,9 @@ dependencies = [
  "sdkwork-routes-prompts-open-api",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
  "tracing",
 ]
