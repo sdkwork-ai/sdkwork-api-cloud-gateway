@@ -295,6 +295,38 @@ fn catalog_app_authority_publishes_every_owned_prefix() {
 }
 
 #[test]
+fn drive_app_authority_publishes_assets_and_drive_prefixes() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let config = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let drive = config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| surface.service_id == "sdkwork-drive-app-api")
+        .collect::<Vec<_>>();
+    let prefixes = drive
+        .iter()
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
+
+    assert_eq!(
+        prefixes,
+        HashSet::from(["/app/v3/api/assets", "/app/v3/api/drive"])
+    );
+    assert!(drive.iter().all(|surface| {
+        surface.workspace == "sdkwork-drive"
+            && surface.api_authority == "sdkwork-drive-app-api"
+            && surface.sdk_family == "sdkwork-drive-app-sdk"
+            && surface.cargo_feature.as_deref() == Some("foundation-drive")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-drive-assembly")
+            && surface.executable_export.as_deref()
+                == Some("sdkwork_api_drive_assembly::assemble_business_routes_from_env")
+    }));
+}
+
+#[test]
 fn source_runtime_configs_publish_the_manager_operations_suite() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()

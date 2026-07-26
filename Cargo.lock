@@ -5913,6 +5913,7 @@ dependencies = [
  "sdkwork-agent-server",
  "sdkwork-agents-database-host",
  "sdkwork-agents-kernel-bridge",
+ "sdkwork-agents-runtime-facade",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-intelligence-agents-service",
@@ -6457,6 +6458,7 @@ dependencies = [
  "sdkwork-api-iam-assembly",
  "sdkwork-database-config",
  "sdkwork-iam-database-host",
+ "sdkwork-iam-web-adapter",
  "sdkwork-intelligence-knowledgebase-service",
  "sdkwork-routes-knowledgebase-app-api",
  "sdkwork-routes-knowledgebase-backend-api",
@@ -6543,6 +6545,7 @@ dependencies = [
  "sdkwork-api-order-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-promotion-assembly",
+ "sdkwork-iam-web-adapter",
  "sdkwork-manager-service-host",
  "sdkwork-routes-manager-app-api",
  "sdkwork-routes-manager-backend-api",
@@ -6681,12 +6684,15 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-database-ops-http",
+ "sdkwork-iam-web-adapter",
  "sdkwork-prompts-service-host",
  "sdkwork-prompts-web-context",
  "sdkwork-routes-prompts-app-api",
  "sdkwork-routes-prompts-backend-api",
  "sdkwork-routes-prompts-open-api",
+ "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "tokio",
  "tracing",
 ]
@@ -9860,6 +9866,9 @@ name = "sdkwork-llm-plugin-native-sql"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sdkwork-database-config",
+ "sdkwork-database-id",
+ "sdkwork-database-sqlx",
  "sdkwork-llm-spi",
  "sdkwork-utils-rust",
  "serde_json",
@@ -12919,6 +12928,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-intelligence-prompts-ai-contract",
  "sdkwork-prompts-web-context",
+ "sdkwork-web-core",
  "serde_json",
 ]
 

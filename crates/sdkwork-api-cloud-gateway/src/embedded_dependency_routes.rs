@@ -25,9 +25,7 @@ pub async fn bootstrap_embedded_dependency_routers(
             || dependency_surface_enabled(config, APPBASE_BACKEND_API_SERVICE_ID)
             || dependency_surface_enabled(config, APPBASE_OPEN_API_SERVICE_ID)
         {
-            crate::runtime::ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID)
-                .await?;
-            let iam_router = sdkwork_api_iam_assembly::assemble_api_router().await.router;
+            let iam_router = bootstrap_embedded_iam_router(APPBASE_APP_API_SERVICE_ID).await?;
             if dependency_surface_enabled(config, APPBASE_APP_API_SERVICE_ID) {
                 routers.insert(APPBASE_APP_API_SERVICE_ID.to_owned(), iam_router.clone());
             }
@@ -632,6 +630,29 @@ pub async fn bootstrap_embedded_dependency_routers(
     }
 
     Ok(routers)
+}
+
+#[cfg(feature = "foundation-appbase")]
+pub(crate) async fn bootstrap_embedded_iam_router(
+    service_id: &str,
+) -> Result<Router, GatewayRuntimeError> {
+    crate::runtime::ensure_embedded_iam_router_prerequisites(service_id).await?;
+    let (assembly, host) = sdkwork_api_iam_assembly::bootstrap_iam_for_application()
+        .await
+        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
+            service_id: service_id.to_owned(),
+            message,
+        })?;
+    let resolver = sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(
+        host.pool().clone(),
+    ));
+    Ok(
+        sdkwork_iam_web_adapter::wrap_router_with_iam_owner_web_framework(
+            assembly.router,
+            resolver,
+            assembly.route_manifest,
+        ),
+    )
 }
 
 #[allow(dead_code)]

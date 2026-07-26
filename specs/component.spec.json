@@ -260,6 +260,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/drive",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-drive-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/memberships",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-membership-app-api",
@@ -1602,7 +1609,8 @@
       "apiAuthority": "sdkwork-drive-app-api",
       "sdkFamily": "sdkwork-drive-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/assets"
+        "/app/v3/api/assets",
+        "/app/v3/api/drive"
       ],
       "cargoFeature": "foundation-drive",
       "cargoDependency": "sdkwork-api-drive-assembly",
@@ -1796,7 +1804,10 @@
       "apiAuthority": "sdkwork-appstore-open-api",
       "sdkFamily": "sdkwork-appstore-sdk",
       "apiPrefixes": [
-        "/store/v3/api"
+        "/store/v3/api/releases",
+        "/store/v3/api/catalog",
+        "/store/v3/api/listings",
+        "/store/v3/api/automation"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -2406,6 +2417,9 @@
       "workspace": "sdkwork-prompts",
       "apiAuthority": "sdkwork-prompts-app-api",
       "sdkFamily": "sdkwork-prompts-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/prompts"
+      ],
       "coverage": "sdkwork-prompts-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
       "cargoDependency": "sdkwork-api-prompts-assembly",
@@ -2419,6 +2433,9 @@
       "workspace": "sdkwork-prompts",
       "apiAuthority": "sdkwork-prompts-backend-api",
       "sdkFamily": "sdkwork-prompts-backend-sdk",
+      "apiPrefixes": [
+        "/backend/v3/api/prompts"
+      ],
       "coverage": "sdkwork-prompts-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
       "cargoDependency": "sdkwork-api-prompts-assembly",
@@ -2432,6 +2449,9 @@
       "workspace": "sdkwork-prompts",
       "apiAuthority": "sdkwork-prompts-open-api",
       "sdkFamily": "sdkwork-prompts-sdk",
+      "apiPrefixes": [
+        "/prompts/v3/api"
+      ],
       "coverage": "sdkwork-prompts-open-api-embedded-assembly-routes",
       "cargoFeature": "foundation-prompts",
       "cargoDependency": "sdkwork-api-prompts-assembly",

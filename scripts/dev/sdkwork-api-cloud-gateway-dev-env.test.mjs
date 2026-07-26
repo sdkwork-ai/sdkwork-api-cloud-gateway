@@ -42,6 +42,9 @@ test('embedded database consumers share the PostgreSQL profile without fallback 
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_DATABASE_SCHEMA, 'sdkwork_ai_dev');
   assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX, 'iot_');
+  assert.equal(resolved.SDKWORK_LOCAL_ROUTER_DATABASE_URL, databaseUrl);
+  assert.equal(resolved.SDKWORK_LOCAL_ROUTER_DATABASE_SCHEMA, 'sdkwork_ai_dev');
+  assert.equal(resolved.SDKWORK_LR_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_RTC_STATE_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_RTC_OUTBOX_DATABASE_URL, databaseUrl);
   assert.equal(resolved.SDKWORK_RTC_STATE_REQUIRE_DURABLE, 'true');
@@ -93,20 +96,25 @@ test('embedded dependencies use the local gateway origin by default', () => {
   );
 });
 
-test('embedded IM receives the selected lifecycle environment', () => {
+test('embedded modules receive the selected lifecycle environment', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: 'development',
+  });
+  assert.equal(resolved.SDKWORK_IM_ENVIRONMENT, 'development');
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'development');
+});
+
+test('embedded module environment overrides remain independent', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_ENVIRONMENT: 'development',
+    SDKWORK_IM_ENVIRONMENT: 'test',
+    SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: 'staging',
+  });
   assert.equal(
-    resolveEmbeddedDependencyEnv({
-      SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: 'development',
-    }).SDKWORK_IM_ENVIRONMENT,
-    'development',
-  );
-  assert.equal(
-    resolveEmbeddedDependencyEnv({
-      SDKWORK_ENVIRONMENT: 'development',
-      SDKWORK_IM_ENVIRONMENT: 'test',
-    }).SDKWORK_IM_ENVIRONMENT,
+    resolved.SDKWORK_IM_ENVIRONMENT,
     'test',
   );
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'staging');
 });
 
 test('embedded dependency env preserves explicit ClawRouter overrides', () => {

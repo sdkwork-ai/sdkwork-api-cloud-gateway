@@ -228,8 +228,10 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
             || surface.service_id == APPBASE_BACKEND_API_SERVICE_ID
             || surface.service_id == APPBASE_OPEN_API_SERVICE_ID
     }) {
-        ensure_embedded_iam_router_prerequisites(APPBASE_APP_API_SERVICE_ID).await?;
-        let iam_router = sdkwork_api_iam_assembly::assemble_api_router().await.router;
+        let iam_router = crate::embedded_dependency_routes::bootstrap_embedded_iam_router(
+            APPBASE_APP_API_SERVICE_ID,
+        )
+        .await?;
         if config
             .dependency_surfaces
             .iter()

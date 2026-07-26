@@ -7,6 +7,7 @@ const embeddedDatabaseServices = [
   'IAM',
   'IM',
   'KNOWLEDGEBASE',
+  'LOCAL_ROUTER',
   'AGENTS',
   'AGENTS_STORE',
   'AGENT_RUNTIME',
@@ -55,6 +56,7 @@ export function resolveEmbeddedDatabaseEnv({ databaseUrl, schema, env = process.
   }
   resolved.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX =
     env.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX ?? 'iot_';
+  resolved.SDKWORK_LR_DATABASE_URL = databaseUrl;
   resolved.SDKWORK_IM_ID_NODE_ID = env.SDKWORK_IM_ID_NODE_ID ?? '0';
   resolved.SDKWORK_RTC_STATE_DATABASE_URL = databaseUrl;
   resolved.SDKWORK_RTC_OUTBOX_DATABASE_URL = databaseUrl;
@@ -69,9 +71,13 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     env.CLAWROUTER_OPEN_API_BASE_URL,
   );
   const environment = firstNonEmpty(
-    env.SDKWORK_IM_ENVIRONMENT,
     env.SDKWORK_ENVIRONMENT,
     env.SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT,
+  );
+  const imEnvironment = firstNonEmpty(env.SDKWORK_IM_ENVIRONMENT, environment);
+  const knowledgebaseEnvironment = firstNonEmpty(
+    env.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT,
+    environment,
   );
 
   return {
@@ -86,7 +92,10 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
       env.SDKWORK_CLAW_APP_SESSION_SECRET ?? clawRouterDevelopmentSecret,
     SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET:
       env.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET ?? clawRouterDevelopmentSecret,
-    ...(environment ? { SDKWORK_IM_ENVIRONMENT: environment } : {}),
+    ...(imEnvironment ? { SDKWORK_IM_ENVIRONMENT: imEnvironment } : {}),
+    ...(knowledgebaseEnvironment
+      ? { SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: knowledgebaseEnvironment }
+      : {}),
   };
 }
 
