@@ -7,7 +7,7 @@ use sdkwork_iam_embedded_application_bootstrap::{
 
 pub async fn ensure_embedded_iam_tenant_application_bootstrap() -> Result<(), String> {
     let app_root = resolve_embedded_iam_app_root();
-    sdkwork_iam_database_host::unified_postgres_env::apply_unified_claw_postgres_env(&app_root);
+    sdkwork_iam_database_host::unified_postgres_env::apply_workspace_postgres_env(&app_root);
     sdkwork_iam_database_host::bootstrap_iam_database_from_env()
         .await
         .map_err(|error| format!("failed to bootstrap IAM database lifecycle: {error}"))?;

@@ -1,5 +1,7 @@
 //! Route registry for the SDKWork API Gateway.
 
+use std::collections::BTreeMap;
+
 use sdkwork_api_cloud_gateway_config::{
     DependencyApiSurfaceConfig, APPBASE_APP_API_PREFIX, APPBASE_APP_API_SERVICE_ID,
     APPBASE_BACKEND_API_PREFIX, APPBASE_BACKEND_API_SERVICE_ID,
@@ -50,9 +52,42 @@ pub enum RouteExecutionTarget {
     Dependency,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, thiserror::Error)]
+pub enum RouteRegistryError {
+    #[error("route `{service_id}` must declare an absolute path template")]
+    InvalidPath { service_id: String },
+    #[error("exact route `{service_id}` cannot use catch-all template `{path_pattern}`")]
+    CatchAllNotAllowed {
+        service_id: String,
+        path_pattern: String,
+    },
+    #[error("route `{service_id}` must declare at least one concrete HTTP method")]
+    InvalidMethods { service_id: String },
+    #[error(
+        "route collision for {method} {normalized_path}: `{existing_service_id}` conflicts with `{service_id}`"
+    )]
+    RouteCollision {
+        method: String,
+        normalized_path: String,
+        existing_service_id: String,
+        service_id: String,
+    },
+}
+
 impl GatewayRouteRegistry {
     pub fn new(routes: Vec<RouteDescriptor>) -> Self {
+        let mut routes = routes;
+        deduplicate_routes(&mut routes);
+        sort_routes_by_specificity(&mut routes);
         Self { routes }
+    }
+
+    pub fn try_from_exact_routes(
+        mut routes: Vec<RouteDescriptor>,
+    ) -> Result<Self, RouteRegistryError> {
+        validate_exact_routes(&routes)?;
+        sort_routes_by_specificity(&mut routes);
+        Ok(Self { routes })
     }
 
     pub fn sdkwork_default() -> Self {
@@ -114,8 +149,81 @@ impl RouteDescriptor {
             return path == prefix || path.starts_with(format!("{prefix}/").as_str());
         }
 
-        self.path_pattern == path
+        match_template_path(self.path_pattern.as_str(), path)
     }
+}
+
+fn match_template_path(template: &str, path: &str) -> bool {
+    let template_segments = path_segments(template);
+    let path_segments = path_segments(path);
+    template_segments.len() == path_segments.len()
+        && template_segments
+            .iter()
+            .zip(path_segments)
+            .all(|(template_segment, path_segment)| {
+                is_path_parameter(template_segment) || *template_segment == path_segment
+            })
+}
+
+fn path_segments(path: &str) -> Vec<&str> {
+    path.split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect()
+}
+
+fn is_path_parameter(segment: &str) -> bool {
+    segment.len() > 2 && segment.starts_with('{') && segment.ends_with('}')
+}
+
+fn normalized_path_template(path: &str) -> String {
+    let segments = path_segments(path)
+        .into_iter()
+        .map(|segment| {
+            if is_path_parameter(segment) {
+                "{param}"
+            } else {
+                segment
+            }
+        })
+        .collect::<Vec<_>>();
+    format!("/{}", segments.join("/"))
+}
+
+fn validate_exact_routes(routes: &[RouteDescriptor]) -> Result<(), RouteRegistryError> {
+    let mut owners = BTreeMap::<(String, String), &str>::new();
+    for route in routes {
+        if !route.path_pattern.starts_with('/') {
+            return Err(RouteRegistryError::InvalidPath {
+                service_id: route.service_id.clone(),
+            });
+        }
+        if route.path_pattern.contains("{*") {
+            return Err(RouteRegistryError::CatchAllNotAllowed {
+                service_id: route.service_id.clone(),
+                path_pattern: route.path_pattern.clone(),
+            });
+        }
+        if route.methods.is_empty() || route.methods.iter().any(|method| method == "*") {
+            return Err(RouteRegistryError::InvalidMethods {
+                service_id: route.service_id.clone(),
+            });
+        }
+
+        let normalized_path = normalized_path_template(route.path_pattern.as_str());
+        for method in &route.methods {
+            let method = method.to_ascii_uppercase();
+            let identity = (method.clone(), normalized_path.clone());
+            if let Some(existing_service_id) = owners.insert(identity, route.service_id.as_str()) {
+                return Err(RouteRegistryError::RouteCollision {
+                    method,
+                    normalized_path,
+                    existing_service_id: existing_service_id.to_owned(),
+                    service_id: route.service_id.clone(),
+                });
+            }
+        }
+    }
+    Ok(())
 }
 
 fn appbase_route(path_pattern: &str) -> RouteDescriptor {

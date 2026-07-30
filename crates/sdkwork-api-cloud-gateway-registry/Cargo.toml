@@ -7,3 +7,4 @@ license.workspace = true
 [dependencies]
 serde.workspace = true
 sdkwork-api-cloud-gateway-config.workspace = true
+thiserror.workspace = true

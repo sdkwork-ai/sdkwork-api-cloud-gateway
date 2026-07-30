@@ -235,7 +235,9 @@ pub async fn bootstrap_embedded_dependency_routers(
 
     #[cfg(feature = "foundation-clawrouter")]
     if workspace_surface_enabled(config, "sdkwork-clawrouter") {
-        let assembly = sdkwork_api_clawrouter_assembly::assemble_api_router()
+        let assembly = sdkwork_api_clawrouter_assembly::assemble_api_router(
+            sdkwork_api_clawrouter_assembly::ApiAssemblyContext::cloud_gateway(),
+        )
             .await
             .map_err(|error| {
                 workspace_build_error(config, "sdkwork-clawrouter", format!("{error:#}"))
@@ -567,9 +569,11 @@ pub async fn bootstrap_embedded_dependency_routers(
 
     #[cfg(feature = "foundation-web-server")]
     if workspace_surface_enabled(config, "sdkwork-web-server") {
-        let assembly = sdkwork_api_web_server_assembly::assemble_api_router()
-            .await
-            .map_err(|error| workspace_build_error(config, "sdkwork-web-server", error))?;
+        let assembly = sdkwork_api_web_server_assembly::assemble_api_router(
+            sdkwork_api_web_server_assembly::ApiAssemblyContext::cloud_gateway(),
+        )
+        .await
+        .map_err(|error| workspace_build_error(config, "sdkwork-web-server", error.to_string()))?;
         insert_workspace_router(config, &mut routers, "sdkwork-web-server", assembly.router);
     }
 

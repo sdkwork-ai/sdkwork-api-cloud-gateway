@@ -596,49 +596,35 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/streams",
+      "prefix": "/app/v3/api/principal",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/ai/channel_groups",
+      "prefix": "/app/v3/api/ai",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/ai/dashboard",
+      "prefix": "/app/v3/api/chat",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/ai/gateway",
+      "prefix": "/app/v3/api/iam/api_keys",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/ai/generations",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/ai/routing",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/ai/usage",
+      "prefix": "/app/v3/api/iam/users/settings",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -673,28 +659,35 @@
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/ai/channel_groups",
+      "prefix": "/backend/v3/api/ai",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/ai/route_explain",
+      "prefix": "/backend/v3/api/marketing",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/integration",
+      "prefix": "/backend/v3/api/payments/runtime",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/sites",
+      "prefix": "/backend/v3/api/recharges",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/storage",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -763,45 +756,10 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "app",
-      "prefix": "/app/v3/api/sites",
+      "surface": "internal",
+      "prefix": "/internal/v3/api/web",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/certificates",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/nginx",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/servers",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/agent",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/audit_logs",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-backend-api",
+      "dependencyServiceId": "sdkwork-web-internal-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -917,6 +875,55 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_categories",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_comments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_enrollments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_lessons",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_live_sessions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_offerings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_reactions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/courses",
       "ownership": "dependency",
@@ -946,6 +953,90 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/course_audit_logs",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_categories",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_comments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_enrollments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_instructors",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_lesson_progress",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_live_sessions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_offerings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_progress",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_reactions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_reports",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_resources",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/iam",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-iam-backend-api",
@@ -964,20 +1055,6 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/control",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-im-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/audit",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-im-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/ops",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1019,7 +1096,7 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/compliance",
+      "prefix": "/app/v3/api/download_grants",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1034,13 +1111,6 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/wishlist",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appstore-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/downloadGrants",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1075,7 +1145,21 @@
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/market",
+      "prefix": "/backend/v3/api/market_channels",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/market_releases",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/analytics",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1111,6 +1195,13 @@
     {
       "surface": "open",
       "prefix": "/store/v3/api/automation",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/artifacts",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1201,14 +1292,49 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/deploy",
+      "prefix": "/app/v3/api/artifacts",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/certificates",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/sites",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/upload_sessions",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/deploy",
+      "prefix": "/backend/v3/api/audit_logs",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/nginx",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/servers",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1544,28 +1670,42 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/categories",
+      "prefix": "/app/v3/api/skill_categories",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-skills-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/user/skills",
+      "prefix": "/app/v3/api/skill_installations",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-skills-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/skill",
+      "prefix": "/backend/v3/api/skills",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-skills-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/category",
+      "prefix": "/backend/v3/api/skill_categories",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-skills-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/skill_capabilities",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-skills-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/skill_packages",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-skills-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1691,12 +1831,10 @@
       "apiAuthority": "sdkwork-clawrouter-app-api",
       "sdkFamily": "sdkwork-clawrouter-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/ai/channel_groups",
-        "/app/v3/api/ai/dashboard",
-        "/app/v3/api/ai/gateway",
-        "/app/v3/api/ai/generations",
-        "/app/v3/api/ai/routing",
-        "/app/v3/api/ai/usage",
+        "/app/v3/api/ai",
+        "/app/v3/api/chat",
+        "/app/v3/api/iam/api_keys",
+        "/app/v3/api/iam/users/settings",
         "/app/v3/api/memory",
         "/app/v3/api/notification",
         "/app/v3/api/runtime",
@@ -1716,10 +1854,11 @@
       "apiAuthority": "sdkwork-clawrouter-backend-api",
       "sdkFamily": "sdkwork-clawrouter-backend-sdk",
       "apiPrefixes": [
-        "/backend/v3/api/ai/channel_groups",
-        "/backend/v3/api/ai/route_explain",
-        "/backend/v3/api/integration",
-        "/backend/v3/api/sites",
+        "/backend/v3/api/ai",
+        "/backend/v3/api/marketing",
+        "/backend/v3/api/payments/runtime",
+        "/backend/v3/api/recharges",
+        "/backend/v3/api/storage",
         "/backend/v3/api/system"
       ],
       "coverage": "sdkwork-clawrouter-backend-api-embedded-assembly-routes",
@@ -1734,7 +1873,7 @@
       "serviceId": "sdkwork-clawrouter-open-api",
       "workspace": "sdkwork-clawrouter",
       "apiAuthority": "sdkwork-clawrouter-open-api",
-      "sdkFamily": "sdkwork-clawrouter-sdk",
+      "sdkFamily": "clawrouter-open-sdk",
       "apiPrefixes": [
         "/anthropic/v1",
         "/google/v1beta",
@@ -2465,6 +2604,12 @@
       "workspace": "sdkwork-deployments",
       "apiAuthority": "sdkwork-deploy-app-api",
       "sdkFamily": "sdkwork-deployments-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/artifacts",
+        "/app/v3/api/certificates",
+        "/app/v3/api/sites",
+        "/app/v3/api/upload_sessions"
+      ],
       "coverage": "sdkwork-deploy-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
       "cargoDependency": "sdkwork-api-deployments-assembly",
@@ -2478,6 +2623,11 @@
       "workspace": "sdkwork-deployments",
       "apiAuthority": "sdkwork-deploy-backend-api",
       "sdkFamily": "sdkwork-deployments-backend-sdk",
+      "apiPrefixes": [
+        "/backend/v3/api/audit_logs",
+        "/backend/v3/api/nginx",
+        "/backend/v3/api/servers"
+      ],
       "coverage": "sdkwork-deploy-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
       "cargoDependency": "sdkwork-api-deployments-assembly",
@@ -2487,34 +2637,14 @@
       "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router"
     },
     {
-      "serviceId": "sdkwork-web-app-api",
+      "serviceId": "sdkwork-web-internal-api",
       "workspace": "sdkwork-web-server",
-      "apiAuthority": "sdkwork-web.app",
-      "sdkFamily": "sdkwork-web-app-sdk",
+      "apiAuthority": "sdkwork-web-internal-api",
+      "sdkFamily": "sdkwork-web-internal-sdk",
       "apiPrefixes": [
-        "/app/v3/api/sites",
-        "/app/v3/api/certificates"
+        "/internal/v3/api/web"
       ],
-      "coverage": "sdkwork-web-app-api-embedded-assembly-routes",
-      "cargoFeature": "foundation-web-server",
-      "cargoDependency": "sdkwork-api-web-server-assembly",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_api_web_server_assembly::assemble_api_router"
-    },
-    {
-      "serviceId": "sdkwork-web-backend-api",
-      "workspace": "sdkwork-web-server",
-      "apiAuthority": "sdkwork-web.backend",
-      "sdkFamily": "sdkwork-web-backend-sdk",
-      "apiPrefixes": [
-        "/backend/v3/api/nginx",
-        "/backend/v3/api/servers",
-        "/backend/v3/api/agent",
-        "/backend/v3/api/audit_logs"
-      ],
-      "coverage": "sdkwork-web-backend-api-embedded-assembly-routes",
+      "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
       "cargoFeature": "foundation-web-server",
       "cargoDependency": "sdkwork-api-web-server-assembly",
       "runtimeModes": [
