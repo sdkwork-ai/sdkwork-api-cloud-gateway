@@ -6051,6 +6051,10 @@ dependencies = [
  "sdkwork-routes-paas-open-api",
  "sdkwork-routes-payment-open-api",
  "sdkwork-routes-video-open-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
  "tokio",
  "tower 0.5.3",
 ]
