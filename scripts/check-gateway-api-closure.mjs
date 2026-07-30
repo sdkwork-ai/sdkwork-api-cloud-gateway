@@ -71,16 +71,37 @@ function routesFromContract(contract) {
   return routes;
 }
 
-function routesFromRustManifest(filePath) {
-  const source = fs.readFileSync(filePath, "utf8");
-  const stringConstants = new Map();
+function addRustStringConstants(source, namespace, stringConstants) {
+  const prefix = namespace ? `${namespace}::` : "";
   const constantPattern = /(?:pub\s+)?const\s+([A-Z][A-Z0-9_]*)\s*:\s*&(?:'static\s+)?str\s*=\s*"([^"]+)"/gu;
   for (const match of source.matchAll(constantPattern)) {
-    stringConstants.set(match[1], match[2]);
+    stringConstants.set(`${prefix}${match[1]}`, match[2]);
+  }
+}
+
+export function routesFromRustManifest(filePath) {
+  const source = fs.readFileSync(filePath, "utf8");
+  const stringConstants = new Map();
+  addRustStringConstants(source, null, stringConstants);
+
+  const moduleImportPattern = /use\s+crate::([a-z_][a-z0-9_]*)\s*;/gu;
+  for (const match of source.matchAll(moduleImportPattern)) {
+    const moduleName = match[1];
+    const candidates = [
+      path.join(path.dirname(filePath), `${moduleName}.rs`),
+      path.join(path.dirname(filePath), moduleName, "mod.rs"),
+    ];
+    const modulePath = candidates.find((candidate) => fs.existsSync(candidate));
+    if (!modulePath) continue;
+    addRustStringConstants(
+      fs.readFileSync(modulePath, "utf8"),
+      moduleName,
+      stringConstants,
+    );
   }
 
   const routes = [];
-  const routePattern = /(?:HttpRoute::[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*_route)\s*\(\s*HttpMethod::(Get|Post|Put|Patch|Delete)\s*,\s*(?:"([^"]+)"|([A-Z][A-Z0-9_]*))/gu;
+  const routePattern = /(?:HttpRoute::[a-zA-Z_][a-zA-Z0-9_]*|[a-zA-Z_][a-zA-Z0-9_]*_route)\s*\(\s*HttpMethod::(Get|Post|Put|Patch|Delete)\s*,\s*(?:"([^"]+)"|((?:[a-z_][a-z0-9_]*::)*[A-Z][A-Z0-9_]*))/gu;
   for (const match of source.matchAll(routePattern)) {
     const routePath = match[2] ?? stringConstants.get(match[3]);
     if (!routePath?.startsWith("/")) continue;

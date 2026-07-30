@@ -596,7 +596,7 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/principal",
+      "prefix": "/app/v3/api/streams",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -667,13 +667,6 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/marketing",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/payments/runtime",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1054,7 +1047,28 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/automation",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-im-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/audit",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-im-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/control",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-im-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/ops",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1856,7 +1870,6 @@
       "apiPrefixes": [
         "/backend/v3/api/ai",
         "/backend/v3/api/marketing",
-        "/backend/v3/api/payments/runtime",
         "/backend/v3/api/recharges",
         "/backend/v3/api/storage",
         "/backend/v3/api/system"
@@ -1903,10 +1916,9 @@
         "/app/v3/api/listings",
         "/app/v3/api/publishers",
         "/app/v3/api/releases",
-        "/app/v3/api/compliance",
+        "/app/v3/api/download_grants",
         "/app/v3/api/library",
-        "/app/v3/api/wishlist",
-        "/app/v3/api/downloadGrants"
+        "/app/v3/api/wishlist"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -1926,7 +1938,9 @@
         "/backend/v3/api/appstore/catalog",
         "/backend/v3/api/listings",
         "/backend/v3/api/publishers",
-        "/backend/v3/api/market",
+        "/backend/v3/api/market_channels",
+        "/backend/v3/api/market_releases",
+        "/backend/v3/api/analytics",
         "/backend/v3/api/metrics"
       ],
       "cargoFeature": "foundation-appstore",
@@ -1946,7 +1960,8 @@
         "/store/v3/api/releases",
         "/store/v3/api/catalog",
         "/store/v3/api/listings",
-        "/store/v3/api/automation"
+        "/store/v3/api/automation",
+        "/store/v3/api/artifacts"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -2108,6 +2123,7 @@
       "apiAuthority": "sdkwork-im-backend-api",
       "sdkFamily": "sdkwork-im-backend-sdk",
       "apiPrefixes": [
+        "/backend/v3/api/automation",
         "/backend/v3/api/control",
         "/backend/v3/api/audit",
         "/backend/v3/api/ops"
@@ -3257,8 +3273,8 @@
       "apiPrefixes": [
         "/app/v3/api/skills",
         "/app/v3/api/skill_packages",
-        "/app/v3/api/categories",
-        "/app/v3/api/user/skills"
+        "/app/v3/api/skill_categories",
+        "/app/v3/api/skill_installations"
       ],
       "coverage": "sdkwork-skills-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-skills",
@@ -3274,8 +3290,10 @@
       "apiAuthority": "sdkwork-skills-backend-api",
       "sdkFamily": "sdkwork-skills-backend-sdk",
       "apiPrefixes": [
-        "/backend/v3/api/skill",
-        "/backend/v3/api/category"
+        "/backend/v3/api/skills",
+        "/backend/v3/api/skill_categories",
+        "/backend/v3/api/skill_capabilities",
+        "/backend/v3/api/skill_packages"
       ],
       "coverage": "sdkwork-skills-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-skills",
