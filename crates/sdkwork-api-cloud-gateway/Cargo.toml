@@ -9,12 +9,10 @@ default = ["foundation-appbase"]
 foundation-appbase = [
     "dep:sdkwork-api-iam-assembly",
     "dep:sdkwork-iam-web-adapter",
-    "dep:sdkwork-iam-database-host",
-    "dep:sdkwork-iam-embedded-application-bootstrap",
 ]
 foundation-drive = ["dep:sdkwork-api-drive-assembly", "dep:sdkwork-drive-database-host"]
-foundation-membership = ["dep:sdkwork-api-membership-assembly", "dep:sdkwork-membership-database-host"]
-foundation-order = ["dep:sdkwork-api-order-assembly", "dep:sdkwork-order-database-host"]
+foundation-membership = ["dep:sdkwork-api-membership-assembly"]
+foundation-order = ["dep:sdkwork-api-order-assembly"]
 foundation-promotion = ["dep:sdkwork-api-promotion-assembly", "dep:sdkwork-promotion-database-host"]
 foundation-payment = ["dep:sdkwork-api-payment-assembly", "dep:sdkwork-payment-database-host"]
 manager-operations-suite = [
@@ -48,7 +46,7 @@ foundation-customerservice = ["dep:sdkwork-api-customerservice-assembly", "dep:s
 foundation-gameengine = ["dep:sdkwork-api-gameengine-assembly", "dep:sdkwork-gameengine-database-host"]
 foundation-inventory = ["dep:sdkwork-api-inventory-assembly", "dep:sdkwork-inventory-database-host"]
 foundation-invoice = ["dep:sdkwork-api-invoice-assembly", "dep:sdkwork-invoice-database-host"]
-foundation-skills = ["dep:sdkwork-api-skills-assembly", "dep:sdkwork-skills-database-host"]
+foundation-skills = ["dep:sdkwork-api-skills-assembly"]
 foundation-local-router = ["dep:sdkwork-api-local-router-assembly", "dep:sdkwork-local-router-database-host"]
 foundation-manager = ["dep:sdkwork-api-manager-assembly", "dep:sdkwork-manager-database-host"]
 foundation-news = ["dep:sdkwork-api-news-assembly", "dep:sdkwork-news-database-host"]
@@ -60,9 +58,9 @@ foundation-shop = [
 ]
 foundation-deployments = ["dep:sdkwork-api-deployments-assembly", "dep:sdkwork-deploy-database-host"]
 foundation-dezhou = ["dep:sdkwork-api-dezhou-assembly", "dep:sdkwork-dezhou-database-host"]
-foundation-documents = ["dep:sdkwork-api-documents-assembly", "dep:sdkwork-documents-database-host"]
+foundation-documents = ["dep:sdkwork-api-documents-assembly"]
 foundation-modelkit = ["dep:sdkwork-api-modelkit-assembly", "dep:sdkwork-modelkit-database-host"]
-foundation-prompts = ["dep:sdkwork-api-prompts-assembly", "dep:sdkwork-prompts-database-host"]
+foundation-prompts = ["dep:sdkwork-api-prompts-assembly"]
 foundation-web-server = ["dep:sdkwork-api-web-server-assembly", "dep:sdkwork-webserver-database-host"]
 foundation-browser = ["dep:sdkwork-api-browser-assembly", "dep:sdkwork-browser-database-host"]
 foundation-knowledgebase = ["dep:sdkwork-api-knowledgebase-assembly", "dep:sdkwork-knowledgebase-database-host"]
@@ -134,11 +132,10 @@ sdkwork-api-cloud-gateway-registry.workspace = true
 sdkwork-web-contract.workspace = true
 sdkwork-web-core.workspace = true
 sdkwork-web-axum.workspace = true
+sdkwork-web-bootstrap.workspace = true
 sdkwork-utils-rust.workspace = true
 sdkwork-database-sqlx.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
-sdkwork-iam-database-host = { workspace = true, optional = true }
-sdkwork-iam-embedded-application-bootstrap = { workspace = true, optional = true }
 sdkwork-api-iam-assembly = { workspace = true, optional = true }
 sdkwork-api-course-assembly = { workspace = true, optional = true }
 sdkwork-api-drive-assembly = { workspace = true, optional = true }
@@ -185,8 +182,6 @@ sdkwork-api-mahjong-assembly = { workspace = true, optional = true }
 sdkwork-api-doudizhu-assembly = { workspace = true, optional = true }
 sdkwork-api-xiangqi-assembly = { workspace = true, optional = true }
 sdkwork-drive-database-host = { workspace = true, optional = true }
-sdkwork-membership-database-host = { workspace = true, optional = true }
-sdkwork-order-database-host = { workspace = true, optional = true }
 sdkwork-promotion-database-host = { workspace = true, optional = true }
 sdkwork-payment-database-host = { workspace = true, optional = true }
 sdkwork-course-database-host = { workspace = true, optional = true }
@@ -210,7 +205,6 @@ sdkwork-customerservice-database-host = { workspace = true, optional = true }
 sdkwork-gameengine-database-host = { workspace = true, optional = true }
 sdkwork-inventory-database-host = { workspace = true, optional = true }
 sdkwork-invoice-database-host = { workspace = true, optional = true }
-sdkwork-skills-database-host = { workspace = true, optional = true }
 sdkwork-local-router-database-host = { workspace = true, optional = true }
 sdkwork-manager-database-host = { workspace = true, optional = true }
 sdkwork-news-database-host = { workspace = true, optional = true }
@@ -219,9 +213,7 @@ sdkwork-shop-database-host = { workspace = true, optional = true }
 sdkwork-merchandise-database-host = { workspace = true, optional = true }
 sdkwork-deploy-database-host = { workspace = true, optional = true }
 sdkwork-dezhou-database-host = { workspace = true, optional = true }
-sdkwork-documents-database-host = { workspace = true, optional = true }
 sdkwork-modelkit-database-host = { workspace = true, optional = true }
-sdkwork-prompts-database-host = { workspace = true, optional = true }
 sdkwork-webserver-database-host = { workspace = true, optional = true }
 sdkwork-browser-database-host = { workspace = true, optional = true }
 sdkwork-knowledgebase-database-host = { workspace = true, optional = true }

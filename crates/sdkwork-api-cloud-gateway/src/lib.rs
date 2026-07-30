@@ -5,8 +5,6 @@ mod embedded_database_bootstrap;
 mod embedded_dependency_routes;
 mod error;
 mod health;
-#[cfg(feature = "foundation-appbase")]
-mod iam_application_bootstrap;
 mod metrics;
 mod openapi;
 mod policy;

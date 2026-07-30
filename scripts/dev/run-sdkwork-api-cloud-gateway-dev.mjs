@@ -78,8 +78,8 @@ async function main() {
       SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: selected.environment,
       SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: sourceProfile.profileId,
       SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: 'false',
-      SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE:
-        process.env.SDKWORK_AGENT_RUNTIME_DATABASE_ENGINE ?? 'postgres',
+      SDKWORK_DATABASE_ENGINE:
+        process.env.SDKWORK_DATABASE_ENGINE ?? 'postgresql',
       SDKWORK_WEB_SNOWFLAKE_NODE_ID: process.env.SDKWORK_WEB_SNOWFLAKE_NODE_ID ?? '0',
     },
   });
@@ -174,8 +174,6 @@ function resolveChildEnv(profile) {
       env: profile.env,
       schema: profile.config.database.schema,
     }),
-    SDKWORK_CLAW_DATABASE_URL: embeddedDatabaseUrl,
-    SDKWORK_DATABASE_URL: embeddedDatabaseUrl,
     PGOPTIONS: `-csearch_path=${profile.config.database.schema}`,
   };
   return childEnv;

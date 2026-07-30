@@ -36,19 +36,32 @@ test('embedded database consumers share the PostgreSQL profile without fallback 
     env: {},
   });
 
-  assert.equal(resolved.SDKWORK_IM_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_IM_DATABASE_SCHEMA, 'sdkwork_ai_dev');
-  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_DATABASE_SCHEMA, 'sdkwork_ai_dev');
-  assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX, 'iot_');
-  assert.equal(resolved.SDKWORK_LOCAL_ROUTER_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_LOCAL_ROUTER_DATABASE_SCHEMA, 'sdkwork_ai_dev');
-  assert.equal(resolved.SDKWORK_LR_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_RTC_STATE_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_RTC_OUTBOX_DATABASE_URL, databaseUrl);
-  assert.equal(resolved.SDKWORK_RTC_STATE_REQUIRE_DURABLE, 'true');
-  assert.equal(resolved.SDKWORK_RTC_REQUIRE_OUTBOX, 'true');
+  assert.deepEqual(resolved, {
+    SDKWORK_DATABASE_URL: databaseUrl,
+    SDKWORK_DATABASE_SCHEMA: 'sdkwork_ai_dev',
+    SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX: 'iot_',
+    SDKWORK_IM_ID_NODE_ID: '0',
+    SDKWORK_RTC_STATE_REQUIRE_DURABLE: 'true',
+    SDKWORK_RTC_REQUIRE_OUTBOX: 'true',
+  });
+});
+
+test('embedded database env preserves business storage overrides without module database aliases', () => {
+  const resolved = resolveEmbeddedDatabaseEnv({
+    databaseUrl: 'postgres://localhost/sdkwork_ai_dev',
+    schema: 'sdkwork_ai_dev',
+    env: {
+      SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX: 'device_',
+      SDKWORK_IM_ID_NODE_ID: '7',
+    },
+  });
+
+  assert.equal(resolved.SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX, 'device_');
+  assert.equal(resolved.SDKWORK_IM_ID_NODE_ID, '7');
+  assert.deepEqual(
+    Object.keys(resolved).filter((key) => /^SDKWORK_.+_DATABASE_/u.test(key)),
+    [],
+  );
 });
 
 test('embedded PostgreSQL URL uses cross-driver search_path options syntax', () => {

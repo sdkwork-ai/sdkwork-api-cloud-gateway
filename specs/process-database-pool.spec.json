@@ -13,9 +13,9 @@
       "poolOwner": "crates/sdkwork-api-cloud-gateway/src/listener_main.rs",
       "driver": "sqlx::PgPool",
       "poolCount": 1,
-      "databaseUrlEnv": "SDKWORK_CLAW_DATABASE_URL or SDKWORK_CLAW_DATABASE_*",
-      "schemaEnv": "SDKWORK_CLAW_DATABASE_SCHEMA",
-      "maxConnectionsEnv": "SDKWORK_CLAW_DATABASE_MAX_CONNECTIONS",
+      "databaseUrlEnv": "SDKWORK_DATABASE_URL",
+      "schemaEnv": "SDKWORK_DATABASE_SCHEMA",
+      "maxConnectionsEnv": "SDKWORK_DATABASE_MAX_CONNECTIONS",
       "temporaryDriverPoolCountEnv": "SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT",
       "bootstrap": {
         "orchestrator": "crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs",

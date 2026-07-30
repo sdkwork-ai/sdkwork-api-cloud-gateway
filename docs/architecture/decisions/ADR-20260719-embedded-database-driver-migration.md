@@ -1,6 +1,6 @@
 # ADR-20260719: Embedded Database Driver Migration
 
-- Status: temporary exceptions
+- Status: temporary exception
 - Canonical standard: `../../../sdkwork-specs/DATABASE_SPEC_PROCESS_SHARED_POOL.md`
 - Owners: sdkwork-drive and sdkwork-im maintainers
 - Removal milestone: before the next API Cloud Gateway production release

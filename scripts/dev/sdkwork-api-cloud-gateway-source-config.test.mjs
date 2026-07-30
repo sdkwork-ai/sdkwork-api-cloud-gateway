@@ -18,7 +18,7 @@ test('standalone development resolves the tracked PostgreSQL gateway profile', (
   });
 
   assert.equal(profile.profileId, 'standalone.development');
-  assert.equal(profile.env.SDKWORK_CLAW_DATABASE_ENGINE, 'postgresql');
+  assert.equal(profile.env.SDKWORK_DATABASE_ENGINE, 'postgresql');
   assert.equal(profile.runtimeConfig, 'etc/sdkwork-api-cloud-gateway.development.toml');
   assert.ok(profile.runtimeConfigPath.endsWith('sdkwork-api-cloud-gateway.development.toml'));
   assert.ok(!profile.runtimeConfig.includes('.example'));

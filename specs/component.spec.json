@@ -270,7 +270,7 @@
       "prefix": "/app/v3/api/memberships",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-membership-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
+      "routeGeneration": "owner-http-route-manifest"
     },
     {
       "surface": "app",
@@ -340,7 +340,7 @@
       "prefix": "/backend/v3/api/memberships",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-membership-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
+      "routeGeneration": "owner-http-route-manifest"
     },
     {
       "surface": "backend",
@@ -1771,7 +1771,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_from_env"
+      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-notary-app-api",
@@ -2371,7 +2371,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_from_env"
+      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-order-app-api",

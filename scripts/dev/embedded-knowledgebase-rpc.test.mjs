@@ -30,7 +30,7 @@ test('standalone development resolves a complete managed Knowledgebase RPC pair'
   assert.equal(plan.hostEnv.SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED, 'true');
   assert.equal(plan.hostEnv.PGOPTIONS, '-csearch_path=sdkwork_ai_dev');
   assert.equal(
-    plan.hostEnv.SDKWORK_KNOWLEDGEBASE_DATABASE_SCHEMA,
+    plan.hostEnv.SDKWORK_DATABASE_SCHEMA,
     'sdkwork_ai_dev',
   );
   assert.equal(plan.hostEnv.SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC, 'false');

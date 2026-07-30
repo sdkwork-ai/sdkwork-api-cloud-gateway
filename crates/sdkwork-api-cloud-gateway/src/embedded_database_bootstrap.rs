@@ -57,27 +57,17 @@ const DATABASE_WORKSPACES: &[&str] = &[
 
 pub async fn bootstrap_embedded_databases(
     config: &GatewayRuntimeConfig,
-) -> Result<(), GatewayRuntimeError> {
+) -> Result<Option<DatabasePool>, GatewayRuntimeError> {
     if !config
         .dependency_surfaces
         .iter()
         .any(|surface| DATABASE_WORKSPACES.contains(&surface.workspace.as_str()))
     {
-        return Ok(());
+        return Ok(None);
     }
 
     #[allow(unused_variables)]
     let pool = process_database_pool().await?;
-
-    #[cfg(feature = "foundation-appbase")]
-    if workspace_enabled(config, "sdkwork-iam") {
-        run_module(
-            "sdkwork-iam",
-            "iam",
-            sdkwork_iam_database_host::bootstrap_iam_database(pool.clone()),
-        )
-        .await?;
-    }
 
     #[cfg(feature = "foundation-drive")]
     if workspace_enabled(config, "sdkwork-drive") {
@@ -85,16 +75,6 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-drive",
             "drive",
             sdkwork_drive_database_host::bootstrap_drive_database(pool.clone()),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-membership")]
-    if workspace_enabled(config, "sdkwork-membership") {
-        run_module(
-            "sdkwork-membership",
-            "membership",
-            sdkwork_membership_database_host::bootstrap_membership_database_with_pool(&pool),
         )
         .await?;
     }
@@ -259,16 +239,6 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-order")]
-    if workspace_enabled(config, "sdkwork-order") {
-        run_module(
-            "sdkwork-order",
-            "order",
-            sdkwork_order_database_host::bootstrap_order_database_from_env(),
-        )
-        .await?;
-    }
-
     #[cfg(feature = "foundation-promotion")]
     if workspace_enabled(config, "sdkwork-promotion") {
         run_module(
@@ -285,26 +255,6 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-payment",
             "payment",
             sdkwork_payment_database_host::bootstrap_payment_database_with_pool(&pool),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-documents")]
-    if workspace_enabled(config, "sdkwork-documents") {
-        run_module(
-            "sdkwork-documents",
-            "documents",
-            sdkwork_documents_database_host::bootstrap_documents_database(pool.clone()),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-prompts")]
-    if workspace_enabled(config, "sdkwork-prompts") {
-        run_module(
-            "sdkwork-prompts",
-            "prompts",
-            sdkwork_prompts_database_host::bootstrap_prompts_database(pool.clone()),
         )
         .await?;
     }
@@ -509,16 +459,6 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-skills")]
-    if workspace_enabled(config, "sdkwork-skills") {
-        run_module(
-            "sdkwork-skills",
-            "skills",
-            sdkwork_skills_database_host::bootstrap_skills_database(pool.clone()),
-        )
-        .await?;
-    }
-
     #[cfg(feature = "foundation-shop")]
     if workspace_enabled(config, "sdkwork-merchandise") {
         run_module(
@@ -529,7 +469,7 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    Ok(())
+    Ok(Some(pool))
 }
 
 async fn process_database_pool() -> Result<DatabasePool, GatewayRuntimeError> {
@@ -543,9 +483,7 @@ async fn process_database_pool() -> Result<DatabasePool, GatewayRuntimeError> {
             message: error.to_string(),
         })?
         .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
-            message: format!(
-                "missing SDKWORK_{PROCESS_DATABASE_SERVICE_CODE}_DATABASE_* configuration"
-            ),
+            message: "missing SDKWORK_DATABASE_* configuration".to_string(),
         })
 }
 

@@ -14,4 +14,8 @@ pub enum GatewayRuntimeError {
     MissingEmbeddedRouter { service_id: String },
     #[error("failed to build embedded router for `{service_id}`: {message}")]
     EmbeddedRouterBuild { service_id: String, message: String },
+    #[error("failed to compose embedded API assemblies: {message}")]
+    ApiAssemblyComposition { message: String },
+    #[error("failed to build exact gateway route registry: {message}")]
+    RouteRegistry { message: String },
 }

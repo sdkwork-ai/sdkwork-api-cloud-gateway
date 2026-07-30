@@ -1,24 +1,3 @@
-const embeddedDatabaseServices = [
-  'AIOT_DEVICE',
-  'DRIVE',
-  'ORDER',
-  'PROMOTION',
-  'PAYMENT',
-  'IAM',
-  'IM',
-  'KNOWLEDGEBASE',
-  'LOCAL_ROUTER',
-  'AGENTS',
-  'AGENTS_STORE',
-  'AGENT_RUNTIME',
-  'DEPLOY',
-  'DEZHOU',
-  'DOCUMENTS',
-  'MODELKIT',
-  'PROMPTS',
-  'WEB',
-];
-
 const clawRouterDevelopmentSecret =
   'sdkwork-clawrouter-local-dev-secret-20260507';
 
@@ -49,20 +28,15 @@ export function resolveEmbeddedDatabaseEnv({ databaseUrl, schema, env = process.
     throw new Error('embedded database schema is required');
   }
 
-  const resolved = {};
-  for (const service of embeddedDatabaseServices) {
-    resolved[`SDKWORK_${service}_DATABASE_URL`] = databaseUrl;
-    resolved[`SDKWORK_${service}_DATABASE_SCHEMA`] = schema;
-  }
-  resolved.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX =
-    env.SDKWORK_AIOT_DEVICE_DATABASE_TABLE_PREFIX ?? 'iot_';
-  resolved.SDKWORK_LR_DATABASE_URL = databaseUrl;
-  resolved.SDKWORK_IM_ID_NODE_ID = env.SDKWORK_IM_ID_NODE_ID ?? '0';
-  resolved.SDKWORK_RTC_STATE_DATABASE_URL = databaseUrl;
-  resolved.SDKWORK_RTC_OUTBOX_DATABASE_URL = databaseUrl;
-  resolved.SDKWORK_RTC_STATE_REQUIRE_DURABLE = 'true';
-  resolved.SDKWORK_RTC_REQUIRE_OUTBOX = 'true';
-  return resolved;
+  return {
+    SDKWORK_DATABASE_URL: databaseUrl,
+    SDKWORK_DATABASE_SCHEMA: schema,
+    SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX:
+      env.SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX ?? 'iot_',
+    SDKWORK_IM_ID_NODE_ID: env.SDKWORK_IM_ID_NODE_ID ?? '0',
+    SDKWORK_RTC_STATE_REQUIRE_DURABLE: 'true',
+    SDKWORK_RTC_REQUIRE_OUTBOX: 'true',
+  };
 }
 
 export function resolveEmbeddedDependencyEnv(env = process.env) {

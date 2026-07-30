@@ -227,13 +227,14 @@ sudo chmod 640 /etc/sdkwork-api-cloud-gateway/gateway.toml
 
 ### 4.4 准备 PostgreSQL
 
-建议为生产创建独立角色、数据库和 schema。下面的 SQL 仅演示命名；密码必须由密码管理系统生成：
+生产环境使用 SDKWork workspace 统一的数据库、schema 和角色。下面的 SQL 仅演示首次供应；
+密码必须由密码管理系统生成，同一 workspace 中的各应用和内嵌模块不得另建私有数据库或 schema：
 
 ```sql
-CREATE ROLE sdkwork_gateway LOGIN PASSWORD '<CHANGE_ME_STRONG_PASSWORD>';
-CREATE DATABASE sdkwork_gateway OWNER sdkwork_gateway;
-\connect sdkwork_gateway
-CREATE SCHEMA sdkwork_gateway AUTHORIZATION sdkwork_gateway;
+CREATE ROLE sdkwork_ai_prod LOGIN PASSWORD '<CHANGE_ME_STRONG_PASSWORD>';
+CREATE DATABASE sdkwork_ai_prod OWNER sdkwork_ai_prod;
+\connect sdkwork_ai_prod
+CREATE SCHEMA sdkwork_ai_prod AUTHORIZATION sdkwork_ai_prod;
 ```
 
 创建 `/etc/sdkwork-api-cloud-gateway/gateway.env`：
@@ -247,49 +248,38 @@ SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=<standalone_or_cloud>
 SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID=<standalone_or_cloud>.production
 SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=server
 SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork-api-cloud-gateway/gateway.toml
-SDKWORK_CLAW_DATABASE_ENGINE=postgresql
-SDKWORK_CLAW_DATABASE_URL=postgresql://sdkwork_gateway:<URL_ENCODED_PASSWORD>@db.example.internal:5432/sdkwork_gateway?sslmode=require&options=-csearch_path%3Dsdkwork_gateway
-SDKWORK_DATABASE_URL=postgresql://sdkwork_gateway:<URL_ENCODED_PASSWORD>@db.example.internal:5432/sdkwork_gateway?sslmode=require&options=-csearch_path%3Dsdkwork_gateway
-PGOPTIONS=-csearch_path=sdkwork_gateway
+SDKWORK_DATABASE_ENGINE=postgresql
+SDKWORK_DATABASE_HOST=db.example.internal
+SDKWORK_DATABASE_PORT=5432
+SDKWORK_DATABASE_NAME=sdkwork_ai_prod
+SDKWORK_DATABASE_SCHEMA=sdkwork_ai_prod
+SDKWORK_DATABASE_USERNAME=sdkwork_ai_prod
+SDKWORK_DATABASE_PASSWORD_FILE=/etc/sdkwork-api-cloud-gateway/database.secret
+SDKWORK_DATABASE_SSL_MODE=require
+SDKWORK_DATABASE_MAX_CONNECTIONS=20
+PGOPTIONS=-csearch_path=sdkwork_ai_prod
 SDKWORK_CLAWROUTER_OPEN_API_BASE_URL=http://127.0.0.1:3900
 ```
 
-注意：密码中的 `@`、`:`、`/`、`?`、`#` 等字符必须进行 URL 编码。生产环境应启用 PostgreSQL
-TLS；具体 `sslmode` 和证书参数以数据库供应商要求为准。
+将数据库密码写入 `/etc/sdkwork-api-cloud-gateway/database.secret`，文件只包含密码本身，并限制为
+服务账号可读。生产环境必须启用 PostgreSQL TLS；具体证书参数以数据库供应商要求为准。
 
-完整基础套件中的少数组件还读取专用的 `SDKWORK_<SERVICE>_DATABASE_URL`。发布前应以当前
-`scripts/dev/sdkwork-api-cloud-gateway-dev-env.mjs` 中的 `embeddedDatabaseServices` 为权威清单，
-把这些变量指向同一数据库 URL，或按组织的数据隔离策略分别配置。至少包括：
+所有内嵌模块复用上述 `SDKWORK_DATABASE_*` 连接身份和进程共享连接池，不再设置任何
+`SDKWORK_<SERVICE>_DATABASE_*` 变量。RTC 和 AIoT 的业务存储开关不是数据库连接身份，可按需配置：
 
 ```dotenv
-SDKWORK_AIOT_DEVICE_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_DRIVE_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_ORDER_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_PROMOTION_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_PAYMENT_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_IAM_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_IM_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_AGENTS_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_AGENTS_STORE_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_AGENT_RUNTIME_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_DEPLOY_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_DEZHOU_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_DOCUMENTS_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_MODELKIT_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_PROMPTS_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_WEB_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_RTC_STATE_DATABASE_URL=<SAME_DATABASE_URL>
-SDKWORK_RTC_OUTBOX_DATABASE_URL=<SAME_DATABASE_URL>
+SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX=iot_
 SDKWORK_RTC_STATE_REQUIRE_DURABLE=true
 SDKWORK_RTC_REQUIRE_OUTBOX=true
 ```
 
-为相应服务同时设置 `SDKWORK_<SERVICE>_DATABASE_SCHEMA=sdkwork_gateway`。不要在生产中照搬开发
-环境的 `SDKWORK_DATABASE_TEMPORARY_*` 例外开关。
+不要在生产中照搬开发环境的 `SDKWORK_DATABASE_TEMPORARY_*` 例外开关。
 
 保护环境文件：
 
 ```bash
+sudo chown root:sdkwork-gateway /etc/sdkwork-api-cloud-gateway/database.secret
+sudo chmod 640 /etc/sdkwork-api-cloud-gateway/database.secret
 sudo chown root:sdkwork-gateway /etc/sdkwork-api-cloud-gateway/gateway.env
 sudo chmod 640 /etc/sdkwork-api-cloud-gateway/gateway.env
 ```
@@ -440,15 +430,21 @@ Windows 服务不读取 `.env`。建议通过组织的秘密管理工具为专�
 [Environment]::SetEnvironmentVariable('SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID', '<standalone_or_cloud>.production', 'Machine')
 [Environment]::SetEnvironmentVariable('SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET', 'server', 'Machine')
 [Environment]::SetEnvironmentVariable('SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE', 'C:\ProgramData\SDKWork\ApiCloudGateway\config\gateway.toml', 'Machine')
-[Environment]::SetEnvironmentVariable('SDKWORK_CLAW_DATABASE_ENGINE', 'postgresql', 'Machine')
-[Environment]::SetEnvironmentVariable('SDKWORK_CLAW_DATABASE_URL', 'postgresql://sdkwork_gateway:<URL_ENCODED_PASSWORD>@db.example.internal:5432/sdkwork_gateway?sslmode=require&options=-csearch_path%3Dsdkwork_gateway', 'Machine')
-[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_URL', 'postgresql://sdkwork_gateway:<URL_ENCODED_PASSWORD>@db.example.internal:5432/sdkwork_gateway?sslmode=require&options=-csearch_path%3Dsdkwork_gateway', 'Machine')
-[Environment]::SetEnvironmentVariable('PGOPTIONS', '-csearch_path=sdkwork_gateway', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_ENGINE', 'postgresql', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_HOST', 'db.example.internal', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_PORT', '5432', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_NAME', 'sdkwork_ai_prod', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_SCHEMA', 'sdkwork_ai_prod', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_USERNAME', 'sdkwork_ai_prod', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_PASSWORD_FILE', 'C:\ProgramData\SDKWork\ApiCloudGateway\config\database.secret', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_SSL_MODE', 'require', 'Machine')
+[Environment]::SetEnvironmentVariable('SDKWORK_DATABASE_MAX_CONNECTIONS', '20', 'Machine')
+[Environment]::SetEnvironmentVariable('PGOPTIONS', '-csearch_path=sdkwork_ai_prod', 'Machine')
 [Environment]::SetEnvironmentVariable('RUST_LOG', 'sdkwork_api_cloud_gateway=info,tower_http=info', 'Machine')
 ```
 
-同时设置 Ubuntu 第 4.4 节列出的专用数据库 URL 和 schema 变量。修改机器环境变量后必须重启
-服务进程才能生效。
+秘密管理工具必须将密码写入 `database.secret`，并将文件 ACL 限制为服务账号和管理员可读。
+所有内嵌模块共享这组数据库变量；修改机器环境变量后必须重启服务进程才能生效。
 
 ### 6.3 先进行前台冒烟测试
 
@@ -533,7 +529,7 @@ Invoke-RestMethod http://127.0.0.1:3900/readyz -Headers @{ Host = 'api.example.c
 [ ] 安装包 SHA-256 校验通过
 [ ] 服务使用受限账号运行，而不是 root/Administrator
 [ ] 配置和秘密不在 Git、release 目录或日志中
-[ ] PostgreSQL 使用生产账号、独立 schema 和 TLS
+[ ] PostgreSQL 使用 workspace 统一的 sdkwork_ai_prod 数据库/schema/账号和 TLS
 [ ] /healthz 返回成功
 [ ] /readyz 返回成功并显示预期依赖路由
 [ ] /metrics 只通过受控网络访问
@@ -582,10 +578,10 @@ curl --fail -H 'Host: api.example.com' http://127.0.0.1:3900/readyz
 原因是缺少同级 `sdkwork-*` 仓库或目录层级不正确。根据根 `Cargo.toml` 的
 `[workspace.dependencies]` 补齐仓库，并确认所有仓库处于兼容提交。
 
-### 启动时报 missing SDKWORK_CLAW_DATABASE configuration
+### 启动时报 missing SDKWORK_DATABASE configuration
 
-进程没有读到 `SDKWORK_CLAW_DATABASE_URL` 或拆分的 `SDKWORK_CLAW_DATABASE_*` 字段。检查 systemd
-`EnvironmentFile`、Windows 服务账号环境和 URL 编码；不要把密码打印到工单或日志。
+进程没有读到 `SDKWORK_DATABASE_URL` 或拆分的 `SDKWORK_DATABASE_*` 字段。检查 systemd
+`EnvironmentFile`、Windows 服务账号环境和密码文件 ACL；不要把密码打印到工单或日志。
 
 ### `/healthz` 或 `/readyz` 返回 421
 

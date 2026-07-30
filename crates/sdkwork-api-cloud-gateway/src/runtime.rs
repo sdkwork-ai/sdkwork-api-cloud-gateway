@@ -19,17 +19,15 @@ use http_body_util::LengthLimitError;
 #[cfg(feature = "foundation-appbase")]
 use sdkwork_api_cloud_gateway_config::GatewayMode;
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
-#[cfg(feature = "foundation-appbase")]
-use sdkwork_api_cloud_gateway_config::{
-    APPBASE_APP_API_SERVICE_ID, APPBASE_BACKEND_API_SERVICE_ID, APPBASE_OPEN_API_SERVICE_ID,
-};
 use sdkwork_api_cloud_gateway_observability::{
     build_gateway_access_log_event, build_gateway_audit_log_event, describe_gateway_startup,
     GatewayAccessLogInput, GatewayAuditLogInput,
 };
 use sdkwork_api_cloud_gateway_registry::{
-    GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget,
+    GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget, RouteProtocol, RouteVisibility,
 };
+use sdkwork_web_bootstrap::{ApiAssemblyContribution, ComposedApiAssembly};
+use sdkwork_web_contract::{ApiSurface, HttpMethod};
 use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tower::ServiceExt;
@@ -59,6 +57,7 @@ pub struct GatewayRuntime {
     config: GatewayRuntimeConfig,
     registry: GatewayRouteRegistry,
     embedded_routers: HashMap<String, Router>,
+    composed_router: Option<Router>,
 }
 
 #[derive(Clone)]
@@ -66,6 +65,7 @@ pub(crate) struct GatewayState {
     pub(crate) config: GatewayRuntimeConfig,
     pub(crate) registry: GatewayRouteRegistry,
     pub(crate) embedded_routers: HashMap<String, Router>,
+    pub(crate) composed_router: Option<Router>,
     pub(crate) metrics: GatewayMetrics,
     pub(crate) traffic: traffic::GatewayTrafficState,
 }
@@ -88,12 +88,27 @@ impl GatewayRuntime {
         registry: GatewayRouteRegistry,
         embedded_routers: HashMap<String, Router>,
     ) -> Result<Self, GatewayRuntimeError> {
-        validate_preflight(&config, &embedded_routers)?;
+        validate_preflight(&config, &embedded_routers, false)?;
 
         Ok(Self {
             config,
             registry,
             embedded_routers,
+            composed_router: None,
+        })
+    }
+
+    fn with_registry_and_composed_router(
+        config: GatewayRuntimeConfig,
+        registry: GatewayRouteRegistry,
+        composed_router: Router,
+    ) -> Result<Self, GatewayRuntimeError> {
+        validate_preflight(&config, &HashMap::new(), true)?;
+        Ok(Self {
+            config,
+            registry,
+            embedded_routers: HashMap::new(),
+            composed_router: Some(composed_router),
         })
     }
 
@@ -112,6 +127,7 @@ impl GatewayRuntime {
             "starting sdkwork api gateway"
         );
 
+        let uses_composed_host = self.composed_router.is_some();
         let cors = cors_layer(&self.config);
         let metrics_enabled = self.config.observability.metrics_enabled;
         let metrics_path = metrics_route_path(self.config.observability.metrics_path.as_str());
@@ -124,18 +140,22 @@ impl GatewayRuntime {
             config: self.config,
             registry: self.registry,
             embedded_routers: self.embedded_routers,
+            composed_router: self.composed_router,
             metrics: GatewayMetrics::default(),
             traffic: traffic::GatewayTrafficState::default(),
         });
 
         let mut router = Router::new()
-            .route("/healthz", get(health::healthz))
-            .route("/livez", get(health::livez))
-            .route("/readyz", get(health::readyz))
             .route("/openapi/index.json", get(openapi::openapi_index))
-            .route("/openapi.json", get(openapi::openapi_document))
             .fallback(gateway_fallback);
-        if metrics_enabled {
+        if !uses_composed_host {
+            router = router
+                .route("/healthz", get(health::healthz))
+                .route("/livez", get(health::livez))
+                .route("/readyz", get(health::readyz))
+                .route("/openapi.json", get(openapi::openapi_document));
+        }
+        if metrics_enabled && !uses_composed_host {
             router = router.route(metrics_path.as_str(), get(metrics_endpoint));
         }
         if diagnostics_enabled {
@@ -172,6 +192,7 @@ impl fmt::Debug for GatewayRuntime {
                 "embedded_routers",
                 &self.embedded_routers.keys().collect::<Vec<_>>(),
             )
+            .field("composed_router", &self.composed_router.is_some())
             .finish()
     }
 }
@@ -179,18 +200,31 @@ impl fmt::Debug for GatewayRuntime {
 pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
-    let finalize_config = config.clone();
-    crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config).await?;
-    let embedded_routers =
-        crate::embedded_dependency_routes::bootstrap_embedded_dependency_routers(&config).await?;
-    let registry =
-        sdkwork_api_cloud_gateway_registry::GatewayRouteRegistry::from_dependency_surfaces(
-            finalize_config.dependency_surfaces.as_slice(),
-        );
-    let router =
-        GatewayRuntime::with_registry_and_embedded_routers(config, registry, embedded_routers)?
-            .assemble_router();
-    Ok(web_framework::finalize_gateway_router_async(&finalize_config, router).await)
+    let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
+        .await?
+        .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
+            message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
+                .to_owned(),
+        })?;
+    let contributions =
+        crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
+            &config, &pool,
+        )
+        .await?;
+    let registry = exact_registry_for_contributions(&config, &contributions)?;
+    let composed = ComposedApiAssembly::try_compose("SDKWork Platform API", contributions)
+        .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
+    let framework_manifest = composed.route_manifest.clone();
+    let resolver =
+        sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
+    let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
+        resolver,
+        framework_manifest,
+        vec!["/openapi/index.json".to_owned()],
+    );
+    let hosted = composed.into_hosted(framework);
+    GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
+        .map(GatewayRuntime::assemble_router)
 }
 
 pub fn build_sdkwork_api_cloud_gateway_router_with_registry(
@@ -222,51 +256,7 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
     mut config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
     config.mode = GatewayMode::Embedded;
-    let mut embedded_routers = Vec::new();
-    if config.dependency_surfaces.iter().any(|surface| {
-        surface.service_id == APPBASE_APP_API_SERVICE_ID
-            || surface.service_id == APPBASE_BACKEND_API_SERVICE_ID
-            || surface.service_id == APPBASE_OPEN_API_SERVICE_ID
-    }) {
-        let iam_router = crate::embedded_dependency_routes::bootstrap_embedded_iam_router(
-            APPBASE_APP_API_SERVICE_ID,
-        )
-        .await?;
-        if config
-            .dependency_surfaces
-            .iter()
-            .any(|surface| surface.service_id == APPBASE_APP_API_SERVICE_ID)
-        {
-            embedded_routers.push((APPBASE_APP_API_SERVICE_ID, iam_router.clone()));
-        }
-        if config
-            .dependency_surfaces
-            .iter()
-            .any(|surface| surface.service_id == APPBASE_BACKEND_API_SERVICE_ID)
-        {
-            embedded_routers.push((APPBASE_BACKEND_API_SERVICE_ID, iam_router.clone()));
-        }
-        if config
-            .dependency_surfaces
-            .iter()
-            .any(|surface| surface.service_id == APPBASE_OPEN_API_SERVICE_ID)
-        {
-            embedded_routers.push((APPBASE_OPEN_API_SERVICE_ID, iam_router));
-        }
-    }
-    build_sdkwork_api_cloud_gateway_router_with_embedded_routers(config, embedded_routers)
-}
-
-#[cfg(feature = "foundation-appbase")]
-pub(crate) async fn ensure_embedded_iam_router_prerequisites(
-    service_id: &str,
-) -> Result<(), GatewayRuntimeError> {
-    crate::iam_application_bootstrap::ensure_embedded_iam_tenant_application_bootstrap()
-        .await
-        .map_err(|message| GatewayRuntimeError::EmbeddedRouterBuild {
-            service_id: service_id.to_owned(),
-            message,
-        })
+    build_sdkwork_api_cloud_gateway_router(config).await
 }
 
 async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
@@ -548,6 +538,16 @@ async fn gateway_fallback(
             response
         }
         None => {
+            if let Some(router) = state.composed_router.clone() {
+                return match router.oneshot(request).await {
+                    Ok(response) => response,
+                    Err(error) => problem_response(
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "composed_api_host_error",
+                        format!("composed API host failed: {error}"),
+                    ),
+                };
+            }
             let response = mark_failure_class(
                 problem_response_with_request_headers(
                     StatusCode::NOT_FOUND,
@@ -702,6 +702,17 @@ async fn route_dependency_request(
         }
     };
 
+    if let Some(router) = state.composed_router.clone() {
+        return match router.oneshot(request).await {
+            Ok(response) => response,
+            Err(error) => problem_response(
+                StatusCode::BAD_GATEWAY,
+                "composed_dependency_error",
+                format!("composed dependency host failed: {error}"),
+            ),
+        };
+    }
+
     if let Some(router) = state
         .embedded_routers
         .get(route.service_id.as_str())
@@ -814,9 +825,10 @@ fn is_length_limit_error(error: &axum::Error) -> bool {
 fn validate_preflight(
     config: &GatewayRuntimeConfig,
     embedded_routers: &HashMap<String, Router>,
+    has_composed_router: bool,
 ) -> Result<(), GatewayRuntimeError> {
     for surface in config.required_dependency_surfaces() {
-        if !embedded_routers.contains_key(surface.service_id.as_str()) {
+        if !has_composed_router && !embedded_routers.contains_key(surface.service_id.as_str()) {
             return Err(GatewayRuntimeError::MissingEmbeddedRouter {
                 service_id: surface.service_id.clone(),
             });
@@ -828,6 +840,109 @@ fn validate_preflight(
 
 fn registry_for_config(config: &GatewayRuntimeConfig) -> GatewayRouteRegistry {
     GatewayRouteRegistry::from_dependency_surfaces(config.dependency_surfaces.as_slice())
+}
+
+fn exact_registry_for_contributions(
+    config: &GatewayRuntimeConfig,
+    contributions: &[ApiAssemblyContribution],
+) -> Result<GatewayRouteRegistry, GatewayRuntimeError> {
+    let mut descriptors = Vec::new();
+    for contribution in contributions {
+        for route in contribution.route_manifest.routes() {
+            let surface_name = api_surface_name(route.path).ok_or_else(|| {
+                GatewayRuntimeError::ApiAssemblyComposition {
+                    message: format!(
+                        "{} route {} has no canonical API surface",
+                        contribution.owner, route.path
+                    ),
+                }
+            })?;
+            let surface = config
+                .dependency_surfaces
+                .iter()
+                .filter(|surface| surface.workspace == contribution.owner)
+                .filter(|surface| normalized_surface_name(surface.surface.as_str()) == surface_name)
+                .filter(|surface| route_path_belongs_to_prefix(route.path, &surface.api_prefix))
+                .max_by_key(|surface| surface.api_prefix.len())
+                .ok_or_else(|| GatewayRuntimeError::ApiAssemblyComposition {
+                    message: format!(
+                        "{} route {} is not declared by a matching dependency API surface",
+                        contribution.owner, route.path
+                    ),
+                })?;
+            descriptors.push(RouteDescriptor {
+                service_id: surface.service_id.clone(),
+                path_pattern: route.path.to_owned(),
+                api_prefix: surface.api_prefix.clone(),
+                surface: surface.surface.clone(),
+                methods: vec![http_method_name(route.method).to_owned()],
+                protocol: RouteProtocol::Http,
+                visibility: route_visibility(surface_name),
+                execution_target: RouteExecutionTarget::Dependency,
+                sdk_target: Some(surface.sdk_family.clone()),
+                requires_executable_dependency: true,
+            });
+        }
+    }
+
+    for surface in config.required_dependency_surfaces() {
+        if !descriptors
+            .iter()
+            .any(|route| route.service_id == surface.service_id)
+        {
+            return Err(GatewayRuntimeError::MissingEmbeddedRouter {
+                service_id: surface.service_id.clone(),
+            });
+        }
+    }
+
+    GatewayRouteRegistry::try_from_exact_routes(descriptors).map_err(|error| {
+        GatewayRuntimeError::RouteRegistry {
+            message: error.to_string(),
+        }
+    })
+}
+
+fn api_surface_name(path: &str) -> Option<&'static str> {
+    match sdkwork_web_contract::infer_api_surface_from_path(path) {
+        ApiSurface::AppApi => Some("app"),
+        ApiSurface::BackendApi => Some("backend"),
+        ApiSurface::OpenApi => Some("open"),
+        ApiSurface::InternalApi => Some("internal"),
+        ApiSurface::GatewayApi => Some("gateway"),
+        ApiSurface::Unknown => None,
+    }
+}
+
+fn normalized_surface_name(surface: &str) -> &str {
+    surface
+        .trim()
+        .strip_suffix("-api")
+        .unwrap_or(surface.trim())
+}
+
+fn route_path_belongs_to_prefix(path: &str, prefix: &str) -> bool {
+    let prefix = prefix.trim_end_matches('/');
+    path == prefix || path.starts_with(format!("{prefix}/").as_str())
+}
+
+fn http_method_name(method: HttpMethod) -> &'static str {
+    match method {
+        HttpMethod::Delete => "DELETE",
+        HttpMethod::Get => "GET",
+        HttpMethod::Patch => "PATCH",
+        HttpMethod::Post => "POST",
+        HttpMethod::Put => "PUT",
+    }
+}
+
+fn route_visibility(surface: &str) -> RouteVisibility {
+    match surface {
+        "app" => RouteVisibility::App,
+        "backend" => RouteVisibility::Backend,
+        "open" => RouteVisibility::Open,
+        _ => RouteVisibility::Internal,
+    }
 }
 
 fn metrics_route_path(path: &str) -> String {
