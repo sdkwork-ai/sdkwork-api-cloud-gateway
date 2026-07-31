@@ -6,12 +6,41 @@ use sdkwork_web_bootstrap::ApiAssemblyContribution;
 
 use crate::GatewayRuntimeError;
 
+pub struct EmbeddedDependencyBootstrap {
+    pub contributions: Vec<ApiAssemblyContribution>,
+    pub runtime: EmbeddedDependencyRuntime,
+}
+
+#[derive(Default)]
+pub struct EmbeddedDependencyRuntime {
+    background_tasks: Vec<tokio::task::JoinHandle<()>>,
+}
+
+impl EmbeddedDependencyRuntime {
+    #[cfg(feature = "foundation-image")]
+    fn retain_background_task(&mut self, task: Option<tokio::task::JoinHandle<()>>) {
+        if let Some(task) = task {
+            self.background_tasks.push(task);
+        }
+    }
+}
+
+impl Drop for EmbeddedDependencyRuntime {
+    fn drop(&mut self) {
+        for task in &self.background_tasks {
+            task.abort();
+        }
+    }
+}
+
 pub async fn bootstrap_embedded_dependency_contributions(
     config: &GatewayRuntimeConfig,
     pool: &DatabasePool,
-) -> Result<Vec<ApiAssemblyContribution>, GatewayRuntimeError> {
+) -> Result<EmbeddedDependencyBootstrap, GatewayRuntimeError> {
     #[allow(unused_mut)]
     let mut contributions = Vec::new();
+    #[allow(unused_mut)]
+    let mut runtime = EmbeddedDependencyRuntime::default();
 
     #[cfg(feature = "foundation-appbase")]
     if workspace_surface_enabled(config, "sdkwork-iam") {
@@ -65,7 +94,36 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
-    Ok(contributions)
+    #[cfg(feature = "foundation-course")]
+    if workspace_surface_enabled(config, "sdkwork-course") {
+        let contribution = sdkwork_api_course_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-course", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-image")]
+    if workspace_surface_enabled(config, "sdkwork-image") {
+        let assembly = sdkwork_api_image_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-image", message))?;
+        contributions.push(assembly.contribution);
+        runtime.retain_background_task(assembly.background_processor);
+    }
+
+    #[cfg(feature = "foundation-community")]
+    if workspace_surface_enabled(config, "sdkwork-community") {
+        let contribution =
+            sdkwork_api_community_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-community", message))?;
+        contributions.push(contribution);
+    }
+
+    Ok(EmbeddedDependencyBootstrap {
+        contributions,
+        runtime,
+    })
 }
 
 fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> bool {
@@ -112,6 +170,9 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-skills"));
         assert!(workspace_surface_enabled(&config, "sdkwork-prompts"));
         assert!(workspace_surface_enabled(&config, "sdkwork-documents"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-course"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-image"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-community"));
         assert!(!workspace_surface_enabled(&config, "unknown-workspace"));
     }
 }

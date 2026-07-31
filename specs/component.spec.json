@@ -673,6 +673,27 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/memberships",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/payments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/promotions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/recharges",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-clawrouter-backend-api",
@@ -774,21 +795,21 @@
       "prefix": "/app/v3/api/community",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-community-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
+      "routeGeneration": "owner-http-route-manifest"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/community",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-community-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
+      "routeGeneration": "owner-http-route-manifest"
     },
     {
       "surface": "open",
       "prefix": "/community/v3/api",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-community-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
+      "routeGeneration": "owner-http-route-manifest"
     },
     {
       "surface": "app",
@@ -1314,6 +1335,13 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/certificates",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/domain_zones",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1870,6 +1898,9 @@
       "apiPrefixes": [
         "/backend/v3/api/ai",
         "/backend/v3/api/marketing",
+        "/backend/v3/api/memberships",
+        "/backend/v3/api/payments",
+        "/backend/v3/api/promotions",
         "/backend/v3/api/recharges",
         "/backend/v3/api/storage",
         "/backend/v3/api/system"
@@ -2254,7 +2285,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_from_env"
+      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-aiot-app-api",
@@ -2293,7 +2324,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-community-backend-api",
@@ -2306,7 +2337,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-community-open-api",
@@ -2319,7 +2350,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-agent-app-api",
@@ -2623,6 +2654,7 @@
       "apiPrefixes": [
         "/app/v3/api/artifacts",
         "/app/v3/api/certificates",
+        "/app/v3/api/domain_zones",
         "/app/v3/api/sites",
         "/app/v3/api/upload_sessions"
       ],

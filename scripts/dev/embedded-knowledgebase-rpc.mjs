@@ -1,5 +1,5 @@
 import { execFileSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createConnection } from 'node:net';
 import path from 'node:path';
 
@@ -29,6 +29,7 @@ export function resolveEmbeddedKnowledgebaseRpcPlan({
   env = process.env,
   gatewayRoot,
   pgOptions,
+  runtimeStateRoot,
 }) {
   if (externalClientKeys.some((key) => nonEmpty(env[key]))) {
     return undefined;
@@ -44,7 +45,7 @@ export function resolveEmbeddedKnowledgebaseRpcPlan({
   }
 
   const knowledgebaseRoot = path.resolve(gatewayRoot, '..', 'sdkwork-knowledgebase');
-  const runtimeRoot = path.join(gatewayRoot, '.runtime', 'codex', 'knowledgebase-rpc');
+  const runtimeRoot = resolveRuntimeRoot({ gatewayRoot, runtimeStateRoot });
   const tlsRoot = path.join(runtimeRoot, 'tls');
   const driveStorageRoot = path.join(runtimeRoot, 'drive-objects');
   const caCertificatePath = path.join(tlsRoot, 'ca.pem');
@@ -105,59 +106,73 @@ export async function startEmbeddedKnowledgebaseRpc(plan) {
     return undefined;
   }
 
-  prepareDevelopmentCertificates(plan.tls);
-  mkdirSync(plan.hostEnv.SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT, { recursive: true });
-  const manifestPath = path.join(plan.knowledgebaseRoot, 'Cargo.toml');
-  execFileSync(
-    'cargo',
-    [
-      'build',
-      '--manifest-path',
-      manifestPath,
-      '-p',
-      rpcPackage,
-      '--bin',
-      rpcBinary,
-    ],
-    { cwd: plan.knowledgebaseRoot, stdio: 'inherit' },
-  );
+  let child;
+  try {
+    resetPrivateRuntimeDirectory(plan.runtimeRoot);
+    prepareDevelopmentCertificates(plan.tls);
+    mkdirSync(plan.hostEnv.SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT, {
+      recursive: true,
+      mode: 0o700,
+    });
+    const manifestPath = path.join(plan.knowledgebaseRoot, 'Cargo.toml');
+    execFileSync(
+      'cargo',
+      [
+        'build',
+        '--manifest-path',
+        manifestPath,
+        '-p',
+        rpcPackage,
+        '--bin',
+        rpcBinary,
+      ],
+      { cwd: plan.knowledgebaseRoot, stdio: 'inherit' },
+    );
 
-  const executable = path.join(
-    plan.knowledgebaseRoot,
-    'target',
-    'debug',
-    process.platform === 'win32' ? `${rpcBinary}.exe` : rpcBinary,
-  );
-  if (!existsSync(executable)) {
-    throw new Error(`Knowledgebase RPC executable was not built: ${executable}`);
+    const executable = path.join(
+      plan.knowledgebaseRoot,
+      'target',
+      'debug',
+      process.platform === 'win32' ? `${rpcBinary}.exe` : rpcBinary,
+    );
+    if (!existsSync(executable)) {
+      throw new Error(`Knowledgebase RPC executable was not built: ${executable}`);
+    }
+
+    child = spawn(executable, [], {
+      cwd: plan.knowledgebaseRoot,
+      env: { ...process.env, ...plan.hostEnv },
+      shell: false,
+      stdio: ['ignore', 'inherit', 'inherit'],
+    });
+    await waitForTcpListener(child, rpcHost, rpcPort, 120_000);
+    process.stdout.write(
+      `[sdkwork-api-cloud-gateway] managed Knowledgebase RPC ready: ${rpcHost}:${rpcPort}\n`,
+    );
+    return child;
+  } catch (error) {
+    await stopEmbeddedKnowledgebaseRpc(child, plan);
+    throw error;
   }
-
-  const child = spawn(executable, [], {
-    cwd: plan.knowledgebaseRoot,
-    env: { ...process.env, ...plan.hostEnv },
-    shell: false,
-    stdio: ['ignore', 'inherit', 'inherit'],
-  });
-  await waitForTcpListener(child, rpcHost, rpcPort, 120_000);
-  process.stdout.write(
-    `[sdkwork-api-cloud-gateway] managed Knowledgebase RPC ready: ${rpcHost}:${rpcPort}\n`,
-  );
-  return child;
 }
 
-export async function stopEmbeddedKnowledgebaseRpc(child) {
-  if (!child || child.exitCode !== null) {
-    return;
+export async function stopEmbeddedKnowledgebaseRpc(child, plan) {
+  try {
+    await terminateChild(child);
+  } finally {
+    if (plan?.runtimeRoot) {
+      rmSync(plan.runtimeRoot, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 100,
+      });
+    }
   }
-  child.kill();
-  await Promise.race([
-    new Promise((resolve) => child.once('exit', resolve)),
-    new Promise((resolve) => setTimeout(resolve, 5_000)),
-  ]);
 }
 
 function prepareDevelopmentCertificates(tls) {
-  mkdirSync(tls.tlsRoot, { recursive: true });
+  mkdirSync(tls.tlsRoot, { recursive: true, mode: 0o700 });
   const serverRequestPath = path.join(tls.tlsRoot, 'server.csr');
   const serverExtensionsPath = path.join(tls.tlsRoot, 'server.ext');
   const clientRequestPath = path.join(tls.tlsRoot, 'client.csr');
@@ -225,6 +240,67 @@ function prepareDevelopmentCertificates(tls) {
     '-sha256',
     '-extfile', clientExtensionsPath,
   ]);
+  restrictPrivateFile(tls.caPrivateKeyPath);
+  restrictPrivateFile(tls.serverPrivateKeyPath);
+  restrictPrivateFile(tls.clientPrivateKeyPath);
+}
+
+function resolveRuntimeRoot({ gatewayRoot, runtimeStateRoot }) {
+  if (!path.isAbsolute(String(runtimeStateRoot ?? ''))) {
+    throw new Error('embedded Knowledgebase RPC requires an absolute runtime state root');
+  }
+  const sourceRoot = path.resolve(gatewayRoot);
+  const stateRoot = path.resolve(runtimeStateRoot);
+  const relative = path.relative(sourceRoot, stateRoot);
+  if (relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))) {
+    throw new Error('embedded Knowledgebase RPC runtime state must remain outside the source tree');
+  }
+  return path.join(stateRoot, 'knowledgebase-rpc');
+}
+
+function resetPrivateRuntimeDirectory(runtimeRoot) {
+  rmSync(runtimeRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+  mkdirSync(runtimeRoot, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32') {
+    chmodSync(runtimeRoot, 0o700);
+  }
+}
+
+function restrictPrivateFile(filePath) {
+  if (process.platform !== 'win32') {
+    chmodSync(filePath, 0o600);
+  }
+}
+
+async function terminateChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) {
+    return;
+  }
+  child.kill();
+  if (await waitForChildExit(child, 5_000)) {
+    return;
+  }
+  child.kill('SIGKILL');
+  if (!await waitForChildExit(child, 5_000)) {
+    throw new Error('Knowledgebase RPC did not exit after forced termination');
+  }
+}
+
+function waitForChildExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) {
+    return Promise.resolve(true);
+  }
+  return new Promise((resolve) => {
+    const onExit = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = setTimeout(() => {
+      child.off('exit', onExit);
+      resolve(false);
+    }, timeoutMs);
+    child.once('exit', onExit);
+  });
 }
 
 function runOpenSsl(args) {

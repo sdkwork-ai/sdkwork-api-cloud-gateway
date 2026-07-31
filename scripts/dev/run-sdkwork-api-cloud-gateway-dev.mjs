@@ -7,6 +7,7 @@ import process from 'node:process';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
+import { resolveRepositoryRuntimeStateDirectory } from '../../../sdkwork-app-topology/tools/topology/lib/index.mjs';
 import { executePostgresInitWithNode } from '../../../sdkwork-specs/tools/postgres/postgres-init-node.mjs';
 import {
   isPostgresDevProfile,
@@ -103,6 +104,10 @@ async function main() {
     env: childEnv,
     gatewayRoot: appRoot,
     pgOptions: childEnv.PGOPTIONS,
+    runtimeStateRoot: resolveRepositoryRuntimeStateDirectory({
+      owner: 'sdkwork-api-cloud-gateway',
+      repoRoot: appRoot,
+    }),
   });
   const runtimeConfig = process.env.SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE
     ?? sourceProfile.runtimeConfig;
@@ -113,7 +118,7 @@ async function main() {
       ...knowledgebaseRpcPlan?.clientEnv,
     });
   } finally {
-    await stopEmbeddedKnowledgebaseRpc(knowledgebaseRpc);
+    await stopEmbeddedKnowledgebaseRpc(knowledgebaseRpc, knowledgebaseRpcPlan);
   }
 }
 
@@ -204,10 +209,26 @@ function runGateway(runtimeConfig, childEnv) {
       },
     );
 
+    const forwardSignal = (signal) => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill(signal);
+      }
+    };
+    const onSigint = () => forwardSignal('SIGINT');
+    const onSigterm = () => forwardSignal('SIGTERM');
+    const removeSignalHandlers = () => {
+      process.off('SIGINT', onSigint);
+      process.off('SIGTERM', onSigterm);
+    };
+    process.once('SIGINT', onSigint);
+    process.once('SIGTERM', onSigterm);
+
     child.once('error', (error) => {
+      removeSignalHandlers();
       reject(new Error(`failed to start cargo: ${error.message}`, { cause: error }));
     });
     child.once('exit', (code, signal) => {
+      removeSignalHandlers();
       if (signal) {
         reject(new Error(`cargo exited from signal ${signal}`));
         return;

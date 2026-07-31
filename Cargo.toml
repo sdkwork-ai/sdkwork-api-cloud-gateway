@@ -63,10 +63,8 @@ sdkwork-promotion-database-host = { path = "../sdkwork-promotion/crates/sdkwork-
 sdkwork-payment-database-host = { path = "../sdkwork-payment/crates/sdkwork-payment-database-host" }
 sdkwork-course-database-host = { path = "../sdkwork-course/crates/sdkwork-course-database-host" }
 sdkwork-voice-database-host = { path = "../sdkwork-voice/crates/sdkwork-voice-database-host" }
-sdkwork-image-database-host = { path = "../sdkwork-image/crates/sdkwork-image-database-host" }
 sdkwork-cms-database-host = { path = "../sdkwork-cms/crates/sdkwork-cms-database-host" }
 sdkwork-forum-database-host = { path = "../sdkwork-forum/crates/sdkwork-forum-database-host" }
-sdkwork-community-database-host = { path = "../sdkwork-community/crates/sdkwork-community-database-host" }
 sdkwork-clawrouter-database-host = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-database-host" }
 sdkwork-mcp-database-host = { path = "../sdkwork-mcp/crates/sdkwork-mcp-database-host" }
 sdkwork-im-database-host = { path = "../sdkwork-im/crates/sdkwork-im-database-host" }

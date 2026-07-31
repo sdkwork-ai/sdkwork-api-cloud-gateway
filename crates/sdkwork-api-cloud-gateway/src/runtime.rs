@@ -13,7 +13,7 @@ use axum::{
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::get,
-    Router,
+    Extension, Router,
 };
 use http_body_util::LengthLimitError;
 #[cfg(feature = "foundation-appbase")]
@@ -200,31 +200,50 @@ impl fmt::Debug for GatewayRuntime {
 pub async fn build_sdkwork_api_cloud_gateway_router(
     config: GatewayRuntimeConfig,
 ) -> Result<Router, GatewayRuntimeError> {
-    let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
-        .await?
-        .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
-            message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
+    #[cfg(not(feature = "foundation-appbase"))]
+    {
+        let _ = config;
+        return Err(GatewayRuntimeError::ApiAssemblyComposition {
+            message: "foundation-appbase is required to host authenticated platform APIs"
                 .to_owned(),
-        })?;
-    let contributions =
-        crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
-            &config, &pool,
+        });
+    }
+
+    #[cfg(feature = "foundation-appbase")]
+    {
+        let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
+            .await?
+            .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
+                message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
+                    .to_owned(),
+            })?;
+        let dependency_bootstrap =
+            crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
+                &config, &pool,
+            )
+            .await?;
+        let registry =
+            exact_registry_for_contributions(&config, &dependency_bootstrap.contributions)?;
+        let composed = ComposedApiAssembly::try_compose(
+            "SDKWork Platform API",
+            dependency_bootstrap.contributions,
         )
-        .await?;
-    let registry = exact_registry_for_contributions(&config, &contributions)?;
-    let composed = ComposedApiAssembly::try_compose("SDKWork Platform API", contributions)
         .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
-    let framework_manifest = composed.route_manifest.clone();
-    let resolver =
-        sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
-    let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
-        resolver,
-        framework_manifest,
-        vec!["/openapi/index.json".to_owned()],
-    );
-    let hosted = composed.into_hosted(framework);
-    GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
-        .map(GatewayRuntime::assemble_router)
+        let framework_manifest = composed.route_manifest.clone();
+        let resolver =
+            sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
+        let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
+            resolver,
+            framework_manifest,
+            vec!["/openapi/index.json".to_owned()],
+        );
+        let hosted = composed.into_hosted(framework);
+        let router = hosted
+            .router
+            .layer(Extension(Arc::new(dependency_bootstrap.runtime)));
+        GatewayRuntime::with_registry_and_composed_router(config, registry, router)
+            .map(GatewayRuntime::assemble_router)
+    }
 }
 
 pub fn build_sdkwork_api_cloud_gateway_router_with_registry(

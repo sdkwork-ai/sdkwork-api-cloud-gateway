@@ -26,8 +26,8 @@ foundation-course = [
     "dep:sdkwork-api-course-assembly",
     "dep:sdkwork-course-database-host",
 ]
-foundation-image = ["dep:sdkwork-api-image-assembly", "dep:sdkwork-image-database-host"]
-foundation-community = ["dep:sdkwork-api-community-assembly", "dep:sdkwork-community-database-host"]
+foundation-image = ["dep:sdkwork-api-image-assembly"]
+foundation-community = ["dep:sdkwork-api-community-assembly"]
 foundation-cms = ["dep:sdkwork-api-cms-assembly", "dep:sdkwork-cms-database-host"]
 foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-database-host"]
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly", "dep:sdkwork-aiot-database-host"]
@@ -186,10 +186,8 @@ sdkwork-promotion-database-host = { workspace = true, optional = true }
 sdkwork-payment-database-host = { workspace = true, optional = true }
 sdkwork-course-database-host = { workspace = true, optional = true }
 sdkwork-voice-database-host = { workspace = true, optional = true }
-sdkwork-image-database-host = { workspace = true, optional = true }
 sdkwork-cms-database-host = { workspace = true, optional = true }
 sdkwork-forum-database-host = { workspace = true, optional = true }
-sdkwork-community-database-host = { workspace = true, optional = true }
 sdkwork-clawrouter-database-host = { workspace = true, optional = true }
 sdkwork-mcp-database-host = { workspace = true, optional = true }
 sdkwork-im-database-host = { workspace = true, optional = true }

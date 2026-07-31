@@ -264,8 +264,8 @@ SDKWORK_CLAWROUTER_OPEN_API_BASE_URL=http://127.0.0.1:3900
 将数据库密码写入 `/etc/sdkwork-api-cloud-gateway/database.secret`，文件只包含密码本身，并限制为
 服务账号可读。生产环境必须启用 PostgreSQL TLS；具体证书参数以数据库供应商要求为准。
 
-所有内嵌模块复用上述 `SDKWORK_DATABASE_*` 连接身份和进程共享连接池，不再设置任何
-`SDKWORK_<SERVICE>_DATABASE_*` 变量。RTC 和 AIoT 的业务存储开关不是数据库连接身份，可按需配置：
+所有内嵌模块复用上述 `SDKWORK_DATABASE_*` 连接身份和进程共享连接池。数据库配置键只能以
+`SDKWORK_DATABASE_` 开头，不得增加服务或模块前缀。RTC 和 AIoT 的业务存储开关不是数据库连接身份，可按需配置：
 
 ```dotenv
 SDKWORK_AIOT_DEVICE_STORAGE_TABLE_PREFIX=iot_

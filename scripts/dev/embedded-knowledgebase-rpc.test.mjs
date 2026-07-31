@@ -1,10 +1,24 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 
-import { resolveEmbeddedKnowledgebaseRpcPlan } from './embedded-knowledgebase-rpc.mjs';
+import {
+  resolveEmbeddedKnowledgebaseRpcPlan,
+  stopEmbeddedKnowledgebaseRpc,
+} from './embedded-knowledgebase-rpc.mjs';
 
 const gatewayRoot = path.resolve('.');
+let runtimeStateRoot;
+
+test.beforeEach(() => {
+  runtimeStateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sdkwork-gateway-rpc-test-'));
+});
+
+test.afterEach(() => {
+  fs.rmSync(runtimeStateRoot, { recursive: true, force: true });
+});
 
 test('standalone development resolves a complete managed Knowledgebase RPC pair', () => {
   const plan = resolveEmbeddedKnowledgebaseRpcPlan({
@@ -13,6 +27,7 @@ test('standalone development resolves a complete managed Knowledgebase RPC pair'
     env: {},
     gatewayRoot,
     pgOptions: '-csearch_path=sdkwork_ai_dev',
+    runtimeStateRoot,
   });
 
   assert.equal(
@@ -40,8 +55,41 @@ test('standalone development resolves a complete managed Knowledgebase RPC pair'
   );
   assert.ok(
     plan.clientEnv.SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH.startsWith(
-      path.join(gatewayRoot, '.runtime'),
+      path.join(runtimeStateRoot, 'knowledgebase-rpc'),
     ),
+  );
+  const relativeRuntimeRoot = path.relative(gatewayRoot, plan.runtimeRoot);
+  assert.ok(path.isAbsolute(relativeRuntimeRoot) || relativeRuntimeRoot.startsWith('..'));
+});
+
+test('managed Knowledgebase RPC cleanup removes its disposable runtime state', async () => {
+  const plan = resolveEmbeddedKnowledgebaseRpcPlan({
+    databaseSchema: 'sdkwork_ai_dev',
+    databaseUrl: 'postgres://localhost/sdkwork_ai_dev',
+    env: {},
+    gatewayRoot,
+    pgOptions: '-csearch_path=sdkwork_ai_dev',
+    runtimeStateRoot,
+  });
+  fs.mkdirSync(plan.runtimeRoot, { recursive: true });
+  fs.writeFileSync(path.join(plan.runtimeRoot, 'secret.pem'), 'temporary');
+
+  await stopEmbeddedKnowledgebaseRpc(undefined, plan);
+
+  assert.equal(fs.existsSync(plan.runtimeRoot), false);
+});
+
+test('managed Knowledgebase RPC rejects source-local runtime state', () => {
+  assert.throws(
+    () => resolveEmbeddedKnowledgebaseRpcPlan({
+      databaseSchema: 'sdkwork_ai_dev',
+      databaseUrl: 'postgres://localhost/sdkwork_ai_dev',
+      env: {},
+      gatewayRoot,
+      pgOptions: '-csearch_path=sdkwork_ai_dev',
+      runtimeStateRoot: path.join(gatewayRoot, '.runtime'),
+    }),
+    /outside the source tree/u,
   );
 });
 
@@ -56,6 +104,7 @@ test('an explicit Knowledgebase RPC client remains deployment-owned', () => {
       },
       gatewayRoot,
       pgOptions: '-csearch_path=sdkwork_ai_dev',
+      runtimeStateRoot,
     }),
     undefined,
   );

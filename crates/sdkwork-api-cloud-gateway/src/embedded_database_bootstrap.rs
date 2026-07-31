@@ -199,32 +199,12 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-image")]
-    if workspace_enabled(config, "sdkwork-image") {
-        run_module(
-            "sdkwork-image",
-            "image",
-            sdkwork_image_database_host::bootstrap_image_database(pool.clone()),
-        )
-        .await?;
-    }
-
     #[cfg(feature = "foundation-aiot")]
     if workspace_enabled(config, "sdkwork-aiot") {
         run_module(
             "sdkwork-aiot",
             "aiot",
             sdkwork_aiot_database_host::bootstrap_aiot_database(pool.clone()),
-        )
-        .await?;
-    }
-
-    #[cfg(feature = "foundation-community")]
-    if workspace_enabled(config, "sdkwork-community") {
-        run_module(
-            "sdkwork-community",
-            "community",
-            sdkwork_community_database_host::bootstrap_community_database(pool.clone()),
         )
         .await?;
     }
