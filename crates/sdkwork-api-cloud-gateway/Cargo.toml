@@ -27,7 +27,10 @@ foundation-course = [
     "dep:sdkwork-course-database-host",
 ]
 foundation-image = ["dep:sdkwork-api-image-assembly"]
-foundation-community = ["dep:sdkwork-api-community-assembly"]
+foundation-community = [
+    "foundation-appbase",
+    "dep:sdkwork-api-community-assembly",
+]
 foundation-cms = ["dep:sdkwork-api-cms-assembly", "dep:sdkwork-cms-database-host"]
 foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-database-host"]
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly", "dep:sdkwork-aiot-database-host"]

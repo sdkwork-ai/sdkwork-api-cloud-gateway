@@ -93,7 +93,7 @@ also bypass their assembly with direct route/service/repository/database depende
 Failing declared providers:
 
 `sdkwork-account`, `sdkwork-agents`, `sdkwork-aiot`, `sdkwork-appstore`, `sdkwork-browser`,
-`sdkwork-catalog`, `sdkwork-cms`, `sdkwork-community`, `sdkwork-course`,
+`sdkwork-catalog`, `sdkwork-cms`, `sdkwork-course`,
 `sdkwork-customerservice`, `sdkwork-deployments`, `sdkwork-forum`, `sdkwork-gameengine`,
 `sdkwork-image`, `sdkwork-inventory`, `sdkwork-invoice`, `sdkwork-llm`,
 `sdkwork-local-router`, `sdkwork-mail`, `sdkwork-manager`, `sdkwork-mcp`, `sdkwork-modelkit`,
@@ -213,7 +213,7 @@ the workspace gateway-alignment result. `API findings` is the operation-pattern 
 | sdkwork-catalog | 1 | no | fail | 0 |
 | sdkwork-clawrouter | 3 | no | pass | 34 |
 | sdkwork-cms | 3 | no | fail | 190 |
-| sdkwork-community | 3 | no | fail | 0 |
+| sdkwork-community | 3 | yes | pass | 0 |
 | sdkwork-course | 2 | no | fail | 212 |
 | sdkwork-customerservice | 2 | no | fail | 0 |
 | sdkwork-deployments | 2 | no | fail | 0 |

@@ -3383,6 +3383,8 @@
     "commands": [
       "cargo metadata --no-deps --format-version 1",
       "cargo check -p sdkwork-api-cloud-gateway --all-features",
+      "cargo check -p sdkwork-api-cloud-gateway --no-default-features --features foundation-community",
+      "pnpm test:foundation-community",
       "cargo test -p sdkwork-api-cloud-gateway-config",
       "cargo test -p sdkwork-api-cloud-gateway",
       "cargo fmt -- --check",

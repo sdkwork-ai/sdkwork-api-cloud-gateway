@@ -156,7 +156,7 @@ mod tests {
 
     use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 
-    use super::workspace_surface_enabled;
+    use super::{bootstrap_embedded_dependency_contributions, workspace_surface_enabled};
 
     #[test]
     fn contribution_selection_uses_declared_workspace_ownership() {
@@ -174,5 +174,46 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-image"));
         assert!(workspace_surface_enabled(&config, "sdkwork-community"));
         assert!(!workspace_surface_enabled(&config, "unknown-workspace"));
+    }
+
+    #[cfg(feature = "foundation-community")]
+    #[tokio::test]
+    #[ignore = "requires an explicit, initialized PostgreSQL integration profile"]
+    async fn community_contribution_uses_the_process_shared_pool() {
+        std::env::set_var("SDKWORK_DATABASE_AUTO_MIGRATE", "false");
+        std::env::set_var("SDKWORK_DATABASE_SEED_ON_BOOT", "false");
+
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut config = GatewayRuntimeConfig::from_application_root(root)
+            .expect("gateway application manifest parses");
+        config.dependency_surfaces.retain(|surface| {
+            matches!(
+                surface.workspace.as_str(),
+                "sdkwork-iam" | "sdkwork-community"
+            )
+        });
+
+        let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
+            .await
+            .expect("bootstrap process database pool")
+            .expect("embedded profile requires PostgreSQL");
+        let bootstrap = bootstrap_embedded_dependency_contributions(&config, &pool)
+            .await
+            .expect("assemble embedded IAM and Community contributions");
+        let community = bootstrap
+            .contributions
+            .iter()
+            .find(|contribution| contribution.owner == "sdkwork-community")
+            .expect("Community contribution is selected");
+
+        assert_eq!(community.route_manifest.routes().len(), 26);
+        community
+            .readiness_check
+            .check()
+            .await
+            .expect("Community contribution uses the healthy process pool");
+
+        drop(bootstrap);
+        pool.close().await;
     }
 }
