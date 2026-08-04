@@ -1,5 +1,5 @@
-const clawRouterDevelopmentSecret =
-  'sdkwork-clawrouter-local-dev-secret-20260507';
+const cloudRouterDevelopmentSecret =
+  'sdkwork-cloudrouter-local-dev-secret-20260507';
 
 export function resolveTemporaryDatabaseDriverEnv(env = process.env) {
   return {
@@ -40,9 +40,9 @@ export function resolveEmbeddedDatabaseEnv({ databaseUrl, schema, env = process.
 }
 
 export function resolveEmbeddedDependencyEnv(env = process.env) {
-  const configuredClawRouterBaseUrl = firstNonEmpty(
-    env.SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
-    env.CLAWROUTER_OPEN_API_BASE_URL,
+  const configuredCloudRouterBaseUrl = firstNonEmpty(
+    env.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
+    env.CLOUDROUTER_OPEN_API_BASE_URL,
   );
   const environment = firstNonEmpty(
     env.SDKWORK_ENVIRONMENT,
@@ -55,17 +55,17 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
   );
 
   return {
-    // The generated ClawRouter Rust SDK adds its own /v1 prefix.
-    SDKWORK_CLAWROUTER_OPEN_API_BASE_URL:
-      configuredClawRouterBaseUrl ?? localGatewayOrigin(env.SDKWORK_API_CLOUD_GATEWAY_BIND),
-    SDKWORK_CLAW_API_KEY_PEPPER:
-      env.SDKWORK_CLAW_API_KEY_PEPPER ?? clawRouterDevelopmentSecret,
-    SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET:
-      env.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET ?? clawRouterDevelopmentSecret,
-    SDKWORK_CLAW_APP_SESSION_SECRET:
-      env.SDKWORK_CLAW_APP_SESSION_SECRET ?? clawRouterDevelopmentSecret,
-    SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET:
-      env.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET ?? clawRouterDevelopmentSecret,
+    // The generated CloudRouter Rust SDK adds its own /v1 prefix.
+    SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL:
+      configuredCloudRouterBaseUrl ?? localGatewayOrigin(env.SDKWORK_API_CLOUD_GATEWAY_BIND),
+    SDKWORK_CLOUDROUTER_API_KEY_PEPPER:
+      env.SDKWORK_CLOUDROUTER_API_KEY_PEPPER ?? cloudRouterDevelopmentSecret,
+    SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET:
+      env.SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET ?? cloudRouterDevelopmentSecret,
+    SDKWORK_CLOUDROUTER_APP_SESSION_SECRET:
+      env.SDKWORK_CLOUDROUTER_APP_SESSION_SECRET ?? cloudRouterDevelopmentSecret,
+    SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:
+      env.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET ?? cloudRouterDevelopmentSecret,
     ...(imEnvironment ? { SDKWORK_IM_ENVIRONMENT: imEnvironment } : {}),
     ...(knowledgebaseEnvironment
       ? { SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: knowledgebaseEnvironment }

@@ -102,4 +102,4 @@ Expected: relevant standards and gateway files contain the new policy.
 
 - [ ] **Step 4: Summarize result**
 
-Report modified files, verification evidence, and any residual migration work for `sdkwork-clawrouter` and `sdkwork-im`.
+Report modified files, verification evidence, and any residual migration work for `sdkwork-cloudrouter` and `sdkwork-im`.

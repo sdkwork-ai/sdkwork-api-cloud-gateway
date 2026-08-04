@@ -37,7 +37,7 @@
         {"module": "sdkwork-notary", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-voice", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-rtc", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
-        {"module": "sdkwork-clawrouter", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-cloudrouter", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-appstore", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-course", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-cms", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},

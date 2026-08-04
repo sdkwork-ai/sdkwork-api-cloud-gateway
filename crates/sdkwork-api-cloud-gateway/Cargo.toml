@@ -36,7 +36,7 @@ foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-databas
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly", "dep:sdkwork-aiot-database-host"]
 foundation-appstore = ["dep:sdkwork-api-appstore-assembly", "dep:sdkwork-appstore-database-host"]
 foundation-forum = ["dep:sdkwork-api-forum-assembly", "dep:sdkwork-forum-database-host"]
-foundation-clawrouter = ["dep:sdkwork-api-clawrouter-assembly", "dep:sdkwork-clawrouter-database-host"]
+foundation-cloudrouter = ["dep:sdkwork-api-cloudrouter-assembly", "dep:sdkwork-cloudrouter-database-host"]
 foundation-mcp = ["dep:sdkwork-api-mcp-assembly", "dep:sdkwork-mcp-database-host"]
 foundation-im = ["dep:sdkwork-api-im-assembly", "dep:sdkwork-im-database-host"]
 foundation-rtc = ["dep:sdkwork-api-rtc-assembly", "dep:sdkwork-rtc-database-host"]
@@ -82,7 +82,7 @@ platform-foundation-suite = [
     "foundation-aiot",
     "foundation-appstore",
     "foundation-forum",
-    "foundation-clawrouter",
+    "foundation-cloudrouter",
     "foundation-mcp",
     "foundation-im",
     "foundation-rtc",
@@ -151,7 +151,7 @@ sdkwork-api-image-assembly = { workspace = true, optional = true }
 sdkwork-api-cms-assembly = { workspace = true, optional = true }
 sdkwork-api-forum-assembly = { workspace = true, optional = true }
 sdkwork-api-community-assembly = { workspace = true, optional = true }
-sdkwork-api-clawrouter-assembly = { workspace = true, optional = true }
+sdkwork-api-cloudrouter-assembly = { workspace = true, optional = true }
 sdkwork-api-mcp-assembly = { workspace = true, optional = true }
 sdkwork-api-im-assembly = { workspace = true, optional = true }
 sdkwork-api-rtc-assembly = { workspace = true, optional = true }
@@ -191,7 +191,7 @@ sdkwork-course-database-host = { workspace = true, optional = true }
 sdkwork-voice-database-host = { workspace = true, optional = true }
 sdkwork-cms-database-host = { workspace = true, optional = true }
 sdkwork-forum-database-host = { workspace = true, optional = true }
-sdkwork-clawrouter-database-host = { workspace = true, optional = true }
+sdkwork-cloudrouter-database-host = { workspace = true, optional = true }
 sdkwork-mcp-database-host = { workspace = true, optional = true }
 sdkwork-im-database-host = { workspace = true, optional = true }
 sdkwork-rtc-database-host = { workspace = true, optional = true }

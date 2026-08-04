@@ -367,7 +367,7 @@ fn source_runtime_configs_publish_the_manager_operations_suite() {
 }
 
 #[test]
-fn im_and_clawrouter_use_their_api_assemblies() {
+fn im_and_cloudrouter_use_their_api_assemblies() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -423,17 +423,17 @@ fn im_and_clawrouter_use_their_api_assemblies() {
                 == Some("sdkwork_api_im_assembly::assemble_api_router")
     }));
 
-    let clawrouter = config
+    let cloudrouter = config
         .dependency_surfaces
         .iter()
-        .filter(|surface| surface.workspace == "sdkwork-clawrouter")
+        .filter(|surface| surface.workspace == "sdkwork-cloudrouter")
         .collect::<Vec<_>>();
-    let clawrouter_prefixes = clawrouter
+    let cloudrouter_prefixes = cloudrouter
         .iter()
         .map(|surface| surface.api_prefix.as_str())
         .collect::<HashSet<_>>();
     assert_eq!(
-        clawrouter_prefixes,
+        cloudrouter_prefixes,
         HashSet::from([
             "/app/v3/api/ai",
             "/app/v3/api/chat",
@@ -462,21 +462,21 @@ fn im_and_clawrouter_use_their_api_assemblies() {
             "/v1",
         ])
     );
-    let clawrouter_service_ids = clawrouter
+    let cloudrouter_service_ids = cloudrouter
         .iter()
         .map(|surface| surface.service_id.as_str())
         .collect::<HashSet<_>>();
     assert_eq!(
-        clawrouter_service_ids,
+        cloudrouter_service_ids,
         HashSet::from([
-            "sdkwork-clawrouter-app-api",
-            "sdkwork-clawrouter-backend-api",
-            "sdkwork-clawrouter-open-api",
+            "sdkwork-cloudrouter-app-api",
+            "sdkwork-cloudrouter-backend-api",
+            "sdkwork-cloudrouter-open-api",
         ])
     );
-    assert!(clawrouter.iter().all(|surface| {
-        surface.cargo_feature.as_deref() == Some("foundation-clawrouter")
-            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-clawrouter-assembly")
+    assert!(cloudrouter.iter().all(|surface| {
+        surface.cargo_feature.as_deref() == Some("foundation-cloudrouter")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-cloudrouter-assembly")
     }));
 }
 

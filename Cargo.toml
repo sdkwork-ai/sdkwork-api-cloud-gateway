@@ -24,7 +24,7 @@ sdkwork-api-image-assembly = { path = "../sdkwork-image/crates/sdkwork-api-image
 sdkwork-api-cms-assembly = { path = "../sdkwork-cms/crates/sdkwork-api-cms-assembly" }
 sdkwork-api-forum-assembly = { path = "../sdkwork-forum/crates/sdkwork-api-forum-assembly" }
 sdkwork-api-community-assembly = { path = "../sdkwork-community/crates/sdkwork-api-community-assembly" }
-sdkwork-api-clawrouter-assembly = { path = "../sdkwork-clawrouter/crates/sdkwork-api-clawrouter-assembly" }
+sdkwork-api-cloudrouter-assembly = { path = "../sdkwork-cloudrouter/crates/sdkwork-api-cloudrouter-assembly" }
 sdkwork-api-mcp-assembly = { path = "../sdkwork-mcp/crates/sdkwork-api-mcp-assembly" }
 sdkwork-api-im-assembly = { path = "../sdkwork-im/crates/sdkwork-api-im-assembly" }
 sdkwork-api-rtc-assembly = { path = "../sdkwork-rtc/crates/sdkwork-api-rtc-assembly" }
@@ -65,7 +65,7 @@ sdkwork-course-database-host = { path = "../sdkwork-course/crates/sdkwork-course
 sdkwork-voice-database-host = { path = "../sdkwork-voice/crates/sdkwork-voice-database-host" }
 sdkwork-cms-database-host = { path = "../sdkwork-cms/crates/sdkwork-cms-database-host" }
 sdkwork-forum-database-host = { path = "../sdkwork-forum/crates/sdkwork-forum-database-host" }
-sdkwork-clawrouter-database-host = { path = "../sdkwork-clawrouter/crates/sdkwork-clawrouter-database-host" }
+sdkwork-cloudrouter-database-host = { path = "../sdkwork-cloudrouter/crates/sdkwork-cloudrouter-database-host" }
 sdkwork-mcp-database-host = { path = "../sdkwork-mcp/crates/sdkwork-mcp-database-host" }
 sdkwork-im-database-host = { path = "../sdkwork-im/crates/sdkwork-im-database-host" }
 sdkwork-rtc-database-host = { path = "../sdkwork-rtc/crates/sdkwork-rtc-database-host" }

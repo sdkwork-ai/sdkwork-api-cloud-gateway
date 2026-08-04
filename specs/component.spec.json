@@ -605,168 +605,168 @@
       "surface": "app",
       "prefix": "/app/v3/api/ai",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/chat",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/iam/api_keys",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/iam/users/settings",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/memory",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/notification",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/runtime",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "app",
       "prefix": "/app/v3/api/system/site",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-app-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/ai",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/marketing",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/memberships",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/payments",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/promotions",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/recharges",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/storage",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/system",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-backend-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/anthropic/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/google/v1beta",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/vidu/ent",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/suno/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/volcengine/api",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/kling/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/midjourney/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
       "surface": "open",
       "prefix": "/nano-banana/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -1098,7 +1098,7 @@
       "surface": "open",
       "prefix": "/v1",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-clawrouter-open-api",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -1868,10 +1868,10 @@
       "executableExport": "sdkwork_api_rtc_assembly::assemble_api_router"
     },
     {
-      "serviceId": "sdkwork-clawrouter-app-api",
-      "workspace": "sdkwork-clawrouter",
-      "apiAuthority": "sdkwork-clawrouter-app-api",
-      "sdkFamily": "sdkwork-clawrouter-app-sdk",
+      "serviceId": "sdkwork-cloudrouter-app-api",
+      "workspace": "sdkwork-cloudrouter",
+      "apiAuthority": "sdkwork-cloudrouter-app-api",
+      "sdkFamily": "sdkwork-cloudrouter-app-sdk",
       "apiPrefixes": [
         "/app/v3/api/ai",
         "/app/v3/api/chat",
@@ -1882,19 +1882,19 @@
         "/app/v3/api/runtime",
         "/app/v3/api/system/site"
       ],
-      "coverage": "sdkwork-clawrouter-app-api-embedded-assembly-routes",
+      "coverage": "sdkwork-cloudrouter-app-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "cargoFeature": "foundation-clawrouter",
-      "cargoDependency": "sdkwork-api-clawrouter-assembly",
-      "executableExport": "sdkwork_api_clawrouter_assembly::assemble_api_router"
+      "cargoFeature": "foundation-cloudrouter",
+      "cargoDependency": "sdkwork-api-cloudrouter-assembly",
+      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
     },
     {
-      "serviceId": "sdkwork-clawrouter-backend-api",
-      "workspace": "sdkwork-clawrouter",
-      "apiAuthority": "sdkwork-clawrouter-backend-api",
-      "sdkFamily": "sdkwork-clawrouter-backend-sdk",
+      "serviceId": "sdkwork-cloudrouter-backend-api",
+      "workspace": "sdkwork-cloudrouter",
+      "apiAuthority": "sdkwork-cloudrouter-backend-api",
+      "sdkFamily": "sdkwork-cloudrouter-backend-sdk",
       "apiPrefixes": [
         "/backend/v3/api/ai",
         "/backend/v3/api/marketing",
@@ -1905,19 +1905,19 @@
         "/backend/v3/api/storage",
         "/backend/v3/api/system"
       ],
-      "coverage": "sdkwork-clawrouter-backend-api-embedded-assembly-routes",
+      "coverage": "sdkwork-cloudrouter-backend-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "cargoFeature": "foundation-clawrouter",
-      "cargoDependency": "sdkwork-api-clawrouter-assembly",
-      "executableExport": "sdkwork_api_clawrouter_assembly::assemble_api_router"
+      "cargoFeature": "foundation-cloudrouter",
+      "cargoDependency": "sdkwork-api-cloudrouter-assembly",
+      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
     },
     {
-      "serviceId": "sdkwork-clawrouter-open-api",
-      "workspace": "sdkwork-clawrouter",
-      "apiAuthority": "sdkwork-clawrouter-open-api",
-      "sdkFamily": "clawrouter-open-sdk",
+      "serviceId": "sdkwork-cloudrouter-open-api",
+      "workspace": "sdkwork-cloudrouter",
+      "apiAuthority": "sdkwork-cloudrouter-open-api",
+      "sdkFamily": "cloudrouter-open-sdk",
       "apiPrefixes": [
         "/anthropic/v1",
         "/google/v1beta",
@@ -1929,13 +1929,13 @@
         "/nano-banana/v1",
         "/v1"
       ],
-      "coverage": "sdkwork-clawrouter-open-api-embedded-assembly-routes",
+      "coverage": "sdkwork-cloudrouter-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],
-      "cargoFeature": "foundation-clawrouter",
-      "cargoDependency": "sdkwork-api-clawrouter-assembly",
-      "executableExport": "sdkwork_api_clawrouter_assembly::assemble_api_router"
+      "cargoFeature": "foundation-cloudrouter",
+      "cargoDependency": "sdkwork-api-cloudrouter-assembly",
+      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-appstore-app-api",
@@ -3369,7 +3369,7 @@
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
       "broad app or backend prefixes are accepted only when dependencyRoutes restrict ownership to assembly-declared route patterns",
       "sdkwork-im-app-api owns the declared /app/v3/api IM routes, sdkwork-im-backend-api owns the control-plane routes, and sdkwork-im-open-api exclusively owns /im/v3/api",
-      "sdkwork-clawrouter app, backend, and open authorities expose only their declared non-overlapping prefixes through one embedded assembly",
+      "sdkwork-cloudrouter app, backend, and open authorities expose only their declared non-overlapping prefixes through one embedded assembly",
       "non-appbase dependency surfaces route by apiPrefix/{*path}",
       "workspace foundation dependency surfaces are added only when existing SDK assembly plus materialized OpenAPI paths or normalized route manifest evidence provides a stable route prefix; empty or generic-only SDK assemblies are not gateway startup dependencies",
       "one dependency SDK family may declare multiple apiPrefixes when its materialized path set spans multiple stable prefixes; all prefixes share the same serviceId and executable assembly",

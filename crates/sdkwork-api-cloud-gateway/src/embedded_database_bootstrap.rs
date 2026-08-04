@@ -5,7 +5,7 @@ use sdkwork_database_sqlx::{create_pool_from_env, process_shared_database_pool, 
 
 use crate::GatewayRuntimeError;
 
-const PROCESS_DATABASE_SERVICE_CODE: &str = "CLAW";
+const PROCESS_DATABASE_SERVICE_CODE: &str = "CLOUD";
 
 const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-iam",
@@ -14,7 +14,7 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-notary",
     "sdkwork-voice",
     "sdkwork-rtc",
-    "sdkwork-clawrouter",
+    "sdkwork-cloudrouter",
     "sdkwork-appstore",
     "sdkwork-course",
     "sdkwork-cms",
@@ -109,12 +109,12 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
-    #[cfg(feature = "foundation-clawrouter")]
-    if workspace_enabled(config, "sdkwork-clawrouter") {
+    #[cfg(feature = "foundation-cloudrouter")]
+    if workspace_enabled(config, "sdkwork-cloudrouter") {
         run_module(
-            "sdkwork-clawrouter",
-            "clawrouter",
-            sdkwork_clawrouter_database_host::bootstrap_claw_router_database(pool.clone()),
+            "sdkwork-cloudrouter",
+            "cloudrouter",
+            sdkwork_cloudrouter_database_host::bootstrap_cloud_router_database(pool.clone()),
         )
         .await?;
     }

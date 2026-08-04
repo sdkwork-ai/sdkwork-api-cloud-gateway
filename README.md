@@ -56,7 +56,7 @@ Every published foundation surface is embedded. The complete machine-readable li
 `specs/component.spec.json`; each entry names its Cargo feature,
 assembly dependency, stable API prefix, and executable router export. Representative integrations
 include `foundation-drive` with `sdkwork-api-drive-assembly`, `foundation-im` with
-`sdkwork-api-im-assembly`, `foundation-clawrouter` with `sdkwork-api-clawrouter-assembly`, and
+`sdkwork-api-im-assembly`, `foundation-cloudrouter` with `sdkwork-api-cloudrouter-assembly`, and
 `foundation-skills` with `sdkwork-api-skills-assembly`. Catalog is embedded through
 `foundation-catalog` and `sdkwork-api-catalog-assembly`; its app authority owns the three gateway
 prefixes `/app/v3/api/addresses`, `/app/v3/api/cart`, and `/app/v3/api/catalog`.

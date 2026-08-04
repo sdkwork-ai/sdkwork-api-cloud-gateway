@@ -90,22 +90,22 @@ test('embedded PostgreSQL URL replaces legacy spaced search_path options', () =>
 test('embedded dependencies use the local gateway origin by default', () => {
   const resolved = resolveEmbeddedDependencyEnv({});
 
-  assert.equal(resolved.SDKWORK_CLAWROUTER_OPEN_API_BASE_URL, 'http://127.0.0.1:3900');
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, 'http://127.0.0.1:3900');
   assert.equal(
-    resolved.SDKWORK_CLAW_API_KEY_PEPPER,
-    'sdkwork-clawrouter-local-dev-secret-20260507',
+    resolved.SDKWORK_CLOUDROUTER_API_KEY_PEPPER,
+    'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
   assert.equal(
-    resolved.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET,
-    'sdkwork-clawrouter-local-dev-secret-20260507',
+    resolved.SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET,
+    'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
   assert.equal(
-    resolved.SDKWORK_CLAW_APP_SESSION_SECRET,
-    'sdkwork-clawrouter-local-dev-secret-20260507',
+    resolved.SDKWORK_CLOUDROUTER_APP_SESSION_SECRET,
+    'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
   assert.equal(
-    resolved.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET,
-    'sdkwork-clawrouter-local-dev-secret-20260507',
+    resolved.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET,
+    'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
 });
 
@@ -130,34 +130,34 @@ test('embedded module environment overrides remain independent', () => {
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'staging');
 });
 
-test('embedded dependency env preserves explicit ClawRouter overrides', () => {
+test('embedded dependency env preserves explicit CloudRouter overrides', () => {
   const explicit = resolveEmbeddedDependencyEnv({
-    SDKWORK_CLAWROUTER_OPEN_API_BASE_URL: ' https://clawrouter.example.com ',
-    CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
-    SDKWORK_CLAW_API_KEY_PEPPER: 'explicit-api-key-pepper',
-    SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET: 'explicit-trusted-subject-secret',
-    SDKWORK_CLAW_APP_SESSION_SECRET: 'explicit-app-session-secret',
-    SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET: 'explicit-payment-webhook-secret',
+    SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ' https://cloudrouter.example.com ',
+    CLOUDROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
+    SDKWORK_CLOUDROUTER_API_KEY_PEPPER: 'explicit-api-key-pepper',
+    SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET: 'explicit-trusted-subject-secret',
+    SDKWORK_CLOUDROUTER_APP_SESSION_SECRET: 'explicit-app-session-secret',
+    SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET: 'explicit-payment-webhook-secret',
   });
 
   assert.equal(
-    explicit.SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
-    'https://clawrouter.example.com',
+    explicit.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
+    'https://cloudrouter.example.com',
   );
-  assert.equal(explicit.SDKWORK_CLAW_API_KEY_PEPPER, 'explicit-api-key-pepper');
+  assert.equal(explicit.SDKWORK_CLOUDROUTER_API_KEY_PEPPER, 'explicit-api-key-pepper');
   assert.equal(
-    explicit.SDKWORK_CLAW_TRUSTED_SUBJECT_SECRET,
+    explicit.SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET,
     'explicit-trusted-subject-secret',
   );
-  assert.equal(explicit.SDKWORK_CLAW_APP_SESSION_SECRET, 'explicit-app-session-secret');
+  assert.equal(explicit.SDKWORK_CLOUDROUTER_APP_SESSION_SECRET, 'explicit-app-session-secret');
   assert.equal(
-    explicit.SDKWORK_CLAW_PAYMENT_WEBHOOK_SECRET,
+    explicit.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET,
     'explicit-payment-webhook-secret',
   );
   assert.equal(
     resolveEmbeddedDependencyEnv({
-      CLAWROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
-    }).SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
+      CLOUDROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
+    }).SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
     'https://legacy.example.com',
   );
 });
@@ -165,7 +165,7 @@ test('embedded dependency env preserves explicit ClawRouter overrides', () => {
 test('embedded dependency env derives a reachable origin from a custom bind', () => {
   assert.equal(
     resolveEmbeddedDependencyEnv({ SDKWORK_API_CLOUD_GATEWAY_BIND: '0.0.0.0:4900' })
-      .SDKWORK_CLAWROUTER_OPEN_API_BASE_URL,
+      .SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
     'http://127.0.0.1:4900',
   );
 });

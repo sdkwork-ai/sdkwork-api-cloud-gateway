@@ -211,7 +211,7 @@ the workspace gateway-alignment result. `API findings` is the operation-pattern 
 | sdkwork-appstore | 3 | no | fail | 0 |
 | sdkwork-browser | 2 | no | fail | 10 |
 | sdkwork-catalog | 1 | no | fail | 0 |
-| sdkwork-clawrouter | 3 | no | pass | 34 |
+| sdkwork-cloudrouter | 3 | no | pass | 34 |
 | sdkwork-cms | 3 | no | fail | 190 |
 | sdkwork-community | 3 | yes | pass | 0 |
 | sdkwork-course | 2 | no | fail | 212 |

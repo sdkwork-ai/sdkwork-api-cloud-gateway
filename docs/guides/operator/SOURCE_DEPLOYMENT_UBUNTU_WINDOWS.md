@@ -258,7 +258,7 @@ SDKWORK_DATABASE_PASSWORD_FILE=/etc/sdkwork-api-cloud-gateway/database.secret
 SDKWORK_DATABASE_SSL_MODE=require
 SDKWORK_DATABASE_MAX_CONNECTIONS=20
 PGOPTIONS=-csearch_path=sdkwork_ai_prod
-SDKWORK_CLAWROUTER_OPEN_API_BASE_URL=http://127.0.0.1:3900
+SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL=http://127.0.0.1:3900
 ```
 
 将数据库密码写入 `/etc/sdkwork-api-cloud-gateway/database.secret`，文件只包含密码本身，并限制为

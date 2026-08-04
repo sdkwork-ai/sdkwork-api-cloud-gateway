@@ -140,8 +140,8 @@ on:
         description: sdkwork-audio commit/ref.
         required: false
         default: main
-      sdkwork_clawrouter_ref:
-        description: sdkwork-clawrouter commit/ref.
+      sdkwork_cloudrouter_ref:
+        description: sdkwork-cloudrouter commit/ref.
         required: false
         default: main
       sdkwork_cms_ref:
@@ -269,7 +269,7 @@ jobs:
           "SDKWORK_AIOT_REF": "${{ github.event.inputs.sdkwork_aiot_ref || vars.SDKWORK_AIOT_REF }}",
           "SDKWORK_APPSTORE_REF": "${{ github.event.inputs.sdkwork_appstore_ref || vars.SDKWORK_APPSTORE_REF }}",
           "SDKWORK_AUDIO_REF": "${{ github.event.inputs.sdkwork_audio_ref || vars.SDKWORK_AUDIO_REF }}",
-          "SDKWORK_CLAWROUTER_REF": "${{ github.event.inputs.sdkwork_clawrouter_ref || vars.SDKWORK_CLAWROUTER_REF }}",
+          "SDKWORK_CLOUDROUTER_REF": "${{ github.event.inputs.sdkwork_cloudrouter_ref || vars.SDKWORK_CLOUDROUTER_REF }}",
           "SDKWORK_CMS_REF": "${{ github.event.inputs.sdkwork_cms_ref || vars.SDKWORK_CMS_REF }}",
           "SDKWORK_COMMENTS_REF": "${{ github.event.inputs.sdkwork_comments_ref || vars.SDKWORK_COMMENTS_REF }}",
           "SDKWORK_COMMUNITY_REF": "${{ github.event.inputs.sdkwork_community_ref || vars.SDKWORK_COMMUNITY_REF }}",

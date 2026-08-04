@@ -91,9 +91,9 @@
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
-      "id": "sdkwork-clawrouter",
-      "repository": "Sdkwork-Cloud/sdkwork-clawrouter",
-      "refInput": "SDKWORK_CLAWROUTER_REF",
+      "id": "sdkwork-cloudrouter",
+      "repository": "Sdkwork-Cloud/sdkwork-cloudrouter",
+      "refInput": "SDKWORK_CLOUDROUTER_REF",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
