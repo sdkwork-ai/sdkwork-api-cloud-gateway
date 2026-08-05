@@ -33,7 +33,7 @@ const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-documents",
     "sdkwork-prompts",
     "sdkwork-deployments",
-    "sdkwork-web-server",
+    "sdkwork-webserver",
     "sdkwork-browser",
     "sdkwork-knowledgebase",
     "sdkwork-llm",
@@ -68,6 +68,15 @@ pub async fn bootstrap_embedded_databases(
 
     #[allow(unused_variables)]
     let pool = process_database_pool().await?;
+    #[cfg(feature = "foundation-appbase")]
+    if workspace_enabled(config, "sdkwork-iam") {
+        run_module(
+            "sdkwork-iam",
+            "iam",
+            sdkwork_iam_database_host::bootstrap_iam_database(pool.clone()),
+        )
+        .await?;
+    }
 
     #[cfg(feature = "foundation-drive")]
     if workspace_enabled(config, "sdkwork-drive") {
@@ -75,6 +84,16 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-drive",
             "drive",
             sdkwork_drive_database_host::bootstrap_drive_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-membership")]
+    if workspace_enabled(config, "sdkwork-membership") {
+        run_module(
+            "sdkwork-membership",
+            "membership",
+            sdkwork_membership_database_host::bootstrap_membership_database_host_with_pool(&pool),
         )
         .await?;
     }
@@ -199,6 +218,16 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
+    #[cfg(feature = "foundation-image")]
+    if workspace_enabled(config, "sdkwork-image") {
+        run_module(
+            "sdkwork-image",
+            "image",
+            sdkwork_image_database_host::bootstrap_image_database(pool.clone()),
+        )
+        .await?;
+    }
+
     #[cfg(feature = "foundation-aiot")]
     if workspace_enabled(config, "sdkwork-aiot") {
         run_module(
@@ -209,12 +238,32 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
+    #[cfg(feature = "foundation-community")]
+    if workspace_enabled(config, "sdkwork-community") {
+        run_module(
+            "sdkwork-community",
+            "community",
+            sdkwork_community_database_host::bootstrap_community_database(pool.clone()),
+        )
+        .await?;
+    }
+
     #[cfg(feature = "foundation-agents")]
     if workspace_enabled(config, "sdkwork-agents") {
         run_module(
             "sdkwork-agents",
             "agents",
             sdkwork_agents_database_host::bootstrap_agents_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-order")]
+    if workspace_enabled(config, "sdkwork-order") {
+        run_module(
+            "sdkwork-order",
+            "order",
+            sdkwork_order_database_host::bootstrap_order_database_from_env(),
         )
         .await?;
     }
@@ -239,6 +288,26 @@ pub async fn bootstrap_embedded_databases(
         .await?;
     }
 
+    #[cfg(feature = "foundation-documents")]
+    if workspace_enabled(config, "sdkwork-documents") {
+        run_module(
+            "sdkwork-documents",
+            "documents",
+            sdkwork_documents_database_host::bootstrap_documents_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-prompts")]
+    if workspace_enabled(config, "sdkwork-prompts") {
+        run_module(
+            "sdkwork-prompts",
+            "prompts",
+            sdkwork_prompts_database_host::bootstrap_prompts_database(pool.clone()),
+        )
+        .await?;
+    }
+
     #[cfg(feature = "foundation-deployments")]
     if workspace_enabled(config, "sdkwork-deployments") {
         run_module(
@@ -250,9 +319,9 @@ pub async fn bootstrap_embedded_databases(
     }
 
     #[cfg(feature = "foundation-web-server")]
-    if workspace_enabled(config, "sdkwork-web-server") {
+    if workspace_enabled(config, "sdkwork-webserver") {
         run_module(
-            "sdkwork-web-server",
+            "sdkwork-webserver",
             "web",
             sdkwork_webserver_database_host::bootstrap_web_database(pool.clone()),
         )
@@ -435,6 +504,16 @@ pub async fn bootstrap_embedded_databases(
             "sdkwork-shop",
             "shop",
             sdkwork_shop_database_host::bootstrap_shop_database(pool.clone()),
+        )
+        .await?;
+    }
+
+    #[cfg(feature = "foundation-skills")]
+    if workspace_enabled(config, "sdkwork-skills") {
+        run_module(
+            "sdkwork-skills",
+            "skills",
+            sdkwork_skills_database_host::bootstrap_skills_database(pool.clone()),
         )
         .await?;
     }

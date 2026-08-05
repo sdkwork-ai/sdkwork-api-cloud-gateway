@@ -666,28 +666,7 @@
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/marketing",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/memberships",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
       "prefix": "/backend/v3/api/payments",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/promotions",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1751,6 +1730,111 @@
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-skills-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/billing",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/apps",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/build_templates",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/signing_identities",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/usage_events",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/build_queue",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/certificates",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/entitlements",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/node_clusters",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/retention",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/runners",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/signing_identity_health",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/source_events",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/tls",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/usage",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
     }
   ],
   "dependencies": [
@@ -2686,7 +2770,7 @@
     },
     {
       "serviceId": "sdkwork-web-internal-api",
-      "workspace": "sdkwork-web-server",
+      "workspace": "sdkwork-webserver",
       "apiAuthority": "sdkwork-web-internal-api",
       "sdkFamily": "sdkwork-web-internal-sdk",
       "apiPrefixes": [
@@ -2694,11 +2778,11 @@
       ],
       "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
       "cargoFeature": "foundation-web-server",
-      "cargoDependency": "sdkwork-api-web-server-assembly",
+      "cargoDependency": "sdkwork-api-webserver-assembly",
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_web_server_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_webserver_assembly::assemble_api_router"
     },
     {
       "serviceId": "sdkwork-browser-app-api",

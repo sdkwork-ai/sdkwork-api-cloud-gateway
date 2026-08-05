@@ -1,6 +1,6 @@
 //! Route registry for the SDKWork API Gateway.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use sdkwork_api_cloud_gateway_config::{
     DependencyApiSurfaceConfig, APPBASE_APP_API_PREFIX, APPBASE_APP_API_SERVICE_ID,
@@ -12,6 +12,12 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct GatewayRouteRegistry {
     routes: Vec<RouteDescriptor>,
+    /// First-path-segment → route indexes, so `resolve` scans only the routes
+    /// sharing the request's first segment instead of the full registry.
+    /// Excluded from serialization and rebuilt on deserialization consumers
+    /// that construct through the typed builders.
+    #[serde(skip)]
+    first_segment_index: HashMap<String, Vec<usize>>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -79,7 +85,7 @@ impl GatewayRouteRegistry {
         let mut routes = routes;
         deduplicate_routes(&mut routes);
         sort_routes_by_specificity(&mut routes);
-        Self { routes }
+        with_index(routes)
     }
 
     pub fn try_from_exact_routes(
@@ -87,7 +93,7 @@ impl GatewayRouteRegistry {
     ) -> Result<Self, RouteRegistryError> {
         validate_exact_routes(&routes)?;
         sort_routes_by_specificity(&mut routes);
-        Ok(Self { routes })
+        Ok(with_index(routes))
     }
 
     pub fn sdkwork_default() -> Self {
@@ -125,10 +131,37 @@ impl GatewayRouteRegistry {
 
     pub fn resolve(&self, method: &str, path: &str) -> Option<&RouteDescriptor> {
         let method = method.to_ascii_uppercase();
-        self.routes
-            .iter()
-            .find(|route| route.matches_method(method.as_str()) && route.matches_path(path))
+        let first_segment = first_segment_of(path);
+        let candidates = self.first_segment_index.get(first_segment);
+        match candidates {
+            Some(indexes) => indexes
+                .iter()
+                .filter_map(|index| self.routes.get(*index))
+                .find(|route| route.matches_method(method.as_str()) && route.matches_path(path)),
+            None => self
+                .routes
+                .iter()
+                .find(|route| route.matches_method(method.as_str()) && route.matches_path(path)),
+        }
     }
+}
+
+fn with_index(routes: Vec<RouteDescriptor>) -> GatewayRouteRegistry {
+    let mut first_segment_index: HashMap<String, Vec<usize>> = HashMap::new();
+    for (index, route) in routes.iter().enumerate() {
+        first_segment_index
+            .entry(first_segment_of(route.path_pattern.as_str()).to_string())
+            .or_default()
+            .push(index);
+    }
+    GatewayRouteRegistry {
+        routes,
+        first_segment_index,
+    }
+}
+
+fn first_segment_of(path: &str) -> &str {
+    path.trim_start_matches('/').split('/').next().unwrap_or("")
 }
 
 impl Default for GatewayRouteRegistry {

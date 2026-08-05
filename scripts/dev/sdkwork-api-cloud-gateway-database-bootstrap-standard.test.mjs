@@ -119,12 +119,12 @@ for (const dependency of dependencies) {
 
 assert.match(
   runtimeSource,
-  /bootstrap_embedded_databases\(&config\)\.await\?/u,
+  /bootstrap_embedded_databases\(&config\)\s*\.await\?/u,
   'runtime must finish database initialization before dependency router assembly',
 );
 assert.ok(
-  runtimeSource.indexOf('bootstrap_embedded_databases(&config).await?')
-    < runtimeSource.indexOf('bootstrap_embedded_dependency_routers(&config).await?'),
+  runtimeSource.indexOf('bootstrap_embedded_databases')
+    < runtimeSource.indexOf('bootstrap_embedded_dependency_contributions'),
   'database initialization must run before dependency router assembly',
 );
 

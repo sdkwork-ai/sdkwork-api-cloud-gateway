@@ -120,6 +120,26 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
+    #[cfg(feature = "foundation-web-server")]
+    if workspace_surface_enabled(config, "sdkwork-webserver") {
+        let assembly = sdkwork_api_webserver_assembly::assemble_api_router(
+            sdkwork_api_webserver_assembly::ApiAssemblyContext::cloud_gateway(),
+        )
+        .await
+        .map_err(|message| {
+            workspace_build_error(config, "sdkwork-webserver", message.to_string())
+        })?;
+        contributions.push(ApiAssemblyContribution {
+            owner: "sdkwork-webserver",
+            router: assembly.router,
+            route_manifest: assembly.route_manifest,
+            openapi: assembly.openapi,
+            permission_catalog: assembly.permission_catalog,
+            domain_context_injectors: assembly.domain_context_injectors,
+            readiness_check: assembly.readiness_check,
+        });
+    }
+
     Ok(EmbeddedDependencyBootstrap {
         contributions,
         runtime,
@@ -156,7 +176,9 @@ mod tests {
 
     use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 
-    use super::{bootstrap_embedded_dependency_contributions, workspace_surface_enabled};
+    #[cfg(feature = "foundation-community")]
+    use super::bootstrap_embedded_dependency_contributions;
+    use super::workspace_surface_enabled;
 
     #[test]
     fn contribution_selection_uses_declared_workspace_ownership() {

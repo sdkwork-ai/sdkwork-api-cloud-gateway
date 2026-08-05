@@ -501,7 +501,9 @@ async function listFiles(root) {
 
 async function createArchive(context) {
   await mkdir(context.distRoot, { recursive: true });
-  run('tar', ['-czf', context.archivePath, '-C', context.distRoot, context.stageName], { cwd: appRoot });
+  // --force-local keeps GNU tar on Windows from treating the drive letter
+  // in absolute archive paths as a remote host (E: -> host "E").
+  run('tar', ['--force-local', '-czf', context.archivePath, '-C', context.distRoot, context.stageName], { cwd: appRoot });
 }
 
 async function validateArchive(context) {
@@ -513,7 +515,7 @@ async function validateArchive(context) {
     throw new Error(`Server archive is empty: ${context.archivePath}`);
   }
 
-  const listing = run('tar', ['-tzf', context.archivePath], { cwd: appRoot, capture: true });
+  const listing = run('tar', ['--force-local', '-tzf', context.archivePath], { cwd: appRoot, capture: true });
   const requiredEntries = [
     `${context.stageName}/bin/${context.binaryName}`,
     `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml`,

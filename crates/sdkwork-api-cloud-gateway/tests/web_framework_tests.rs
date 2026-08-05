@@ -31,10 +31,11 @@ async fn embedded_outer_router_assigns_request_identity() {
 }
 
 #[test]
-fn embedded_iam_preserves_router_manifest_framework_binding() {
+fn embedded_iam_uses_owner_api_surface_assembly() {
     let source = include_str!("../src/embedded_dependency_routes.rs");
 
-    assert!(source.contains("bootstrap_iam_for_application"));
-    assert!(source.contains("wrap_router_with_iam_owner_web_framework"));
-    assert!(!source.contains("assemble_api_router().await.router"));
+    assert!(source.contains("sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool"));
+    assert!(source.contains("workspace_surface_enabled(config, \"sdkwork-iam\")"));
+    assert!(!source.contains("bootstrap_iam_for_application"));
+    assert!(!source.contains("wrap_router_with_iam_owner_web_framework"));
 }

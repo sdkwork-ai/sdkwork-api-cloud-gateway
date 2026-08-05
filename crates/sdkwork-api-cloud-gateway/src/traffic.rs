@@ -1,17 +1,32 @@
 use std::{
     collections::HashMap,
+    net::IpAddr,
     sync::{Arc, Mutex},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use axum::http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode};
 use sdkwork_api_cloud_gateway_config::{
     ConcurrencyLimitConfig, GatewayTrafficConfig, RateLimitRuleConfig,
 };
+use sdkwork_utils_rust::trusted_proxy::TrustedProxyConfig;
 
 #[derive(Clone, Default)]
 pub(crate) struct GatewayTrafficState {
     inner: Arc<Mutex<TrafficState>>,
+}
+
+impl GatewayTrafficState {
+    pub(crate) fn with_trusted_proxies(trusted_proxy_cidrs: &[String]) -> Self {
+        let trusted_proxies =
+            TrustedProxyConfig::from_cidrs(trusted_proxy_cidrs.iter().map(String::as_str));
+        Self {
+            inner: Arc::new(Mutex::new(TrafficState {
+                trusted_proxies,
+                ..TrafficState::default()
+            })),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -19,12 +34,21 @@ struct TrafficState {
     global_in_flight: usize,
     concurrency_by_rule: HashMap<String, usize>,
     buckets: HashMap<String, TokenBucket>,
+    trusted_proxies: TrustedProxyConfig,
 }
 
 struct TokenBucket {
     tokens: f64,
     last_refill: Instant,
+    last_seen: Instant,
 }
+
+/// Buckets idle longer than this are swept when the bucket table is full.
+const BUCKET_IDLE_TTL: Duration = Duration::from_secs(600);
+/// Hard cap on rate-limit bucket identities. Beyond it, new identities share
+/// one conservative "saturated" bucket so memory stays bounded under spoofed
+/// identity floods (each bucket is ~100 bytes, worst case ~10 MB).
+const MAX_RATE_LIMIT_BUCKETS: usize = 100_000;
 
 pub(crate) struct TrafficPermit {
     state: GatewayTrafficState,
@@ -149,15 +173,29 @@ impl GatewayTrafficState {
         let limit = rule.capacity.or(rule.limit).or(rule.burst).unwrap_or(60);
         let capacity = rule.burst.unwrap_or(limit).max(limit);
         let refill_per_second = refill_per_second(rule, limit);
-        let bucket_key = format!("{}:{}", rule.id, rate_limit_identity(rule, headers));
         let mut state = self.inner.lock().expect("gateway traffic mutex poisoned");
+        let identity = rate_limit_identity(rule, headers, &state.trusted_proxies);
+        let bucket_key = if state.buckets.len() >= MAX_RATE_LIMIT_BUCKETS {
+            state
+                .buckets
+                .retain(|_, bucket| now.duration_since(bucket.last_seen) < BUCKET_IDLE_TTL);
+            if state.buckets.len() >= MAX_RATE_LIMIT_BUCKETS {
+                format!("{}:saturated", rule.id)
+            } else {
+                format!("{}:{}", rule.id, identity)
+            }
+        } else {
+            format!("{}:{}", rule.id, identity)
+        };
         let bucket = state
             .buckets
             .entry(bucket_key)
             .or_insert_with(|| TokenBucket {
                 tokens: capacity as f64,
                 last_refill: now,
+                last_seen: now,
             });
+        bucket.last_seen = now;
 
         if refill_per_second > 0 {
             let elapsed = now.duration_since(bucket.last_refill).as_secs_f64();
@@ -267,16 +305,13 @@ fn rule_matches(
     path_matches && service_matches
 }
 
-fn rate_limit_identity(rule: &RateLimitRuleConfig, headers: &HeaderMap) -> String {
+fn rate_limit_identity(
+    rule: &RateLimitRuleConfig,
+    headers: &HeaderMap,
+    trusted_proxies: &TrustedProxyConfig,
+) -> String {
     match rule.key.trim().to_ascii_lowercase().as_str() {
-        "client-ip" => headers
-            .get("x-forwarded-for")
-            .and_then(|value| value.to_str().ok())
-            .and_then(|value| value.split(',').next())
-            .map(str::trim)
-            .filter(|value| !value.is_empty())
-            .unwrap_or("unknown")
-            .to_string(),
+        "client-ip" => client_ip_for_rate_limit(headers, trusted_proxies),
         "host" => headers
             .get(header::HOST)
             .and_then(|value| value.to_str().ok())
@@ -284,6 +319,43 @@ fn rate_limit_identity(rule: &RateLimitRuleConfig, headers: &HeaderMap) -> Strin
             .to_string(),
         _ => "global".to_string(),
     }
+}
+
+/// Resolve the rate-limit client identity from `X-Forwarded-For`.
+///
+/// Forwarded headers are honoured only when trusted proxies are configured and
+/// the last hop of the chain is inside a trusted CIDR. Without trusted proxies
+/// the header is ignored entirely, so clients cannot spoof their identity by
+/// sending a synthetic `X-Forwarded-For`.
+fn client_ip_for_rate_limit(headers: &HeaderMap, trusted: &TrustedProxyConfig) -> String {
+    if trusted.is_empty() {
+        return "unknown".to_string();
+    }
+    let Some(raw) = headers
+        .get("x-forwarded-for")
+        .and_then(|value| value.to_str().ok())
+    else {
+        return "unknown".to_string();
+    };
+    let chain = raw
+        .split(',')
+        .map(str::trim)
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>();
+    let Some(last) = chain.last() else {
+        return "unknown".to_string();
+    };
+    let Ok(last_ip) = last.parse::<IpAddr>() else {
+        return "unknown".to_string();
+    };
+    if !trusted.is_trusted(&last_ip) {
+        return "unknown".to_string();
+    }
+    chain
+        .first()
+        .and_then(|entry| entry.parse::<IpAddr>().ok())
+        .map(|ip| ip.to_string())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 fn refill_per_second(rule: &RateLimitRuleConfig, limit: u64) -> u64 {

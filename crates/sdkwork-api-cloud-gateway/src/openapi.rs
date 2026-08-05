@@ -50,6 +50,18 @@ pub(crate) async fn openapi_document(
                     }
                 }
             },
+            "/livez": {
+                "get": {
+                    "operationId": "getGatewayLiveness",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
+                    "responses": {
+                        "200": { "description": "Gateway liveness" }
+                    }
+                }
+            },
             "/openapi/index.json": {
                 "get": {
                     "operationId": "listGatewayApiDependencies",

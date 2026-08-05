@@ -50,7 +50,7 @@ sdkwork-api-dezhou-assembly = { path = "../sdkwork-dezhou/crates/sdkwork-api-dez
 sdkwork-api-documents-assembly = { path = "../sdkwork-documents/crates/sdkwork-api-documents-assembly" }
 sdkwork-api-modelkit-assembly = { path = "../sdkwork-modelkit/crates/sdkwork-api-modelkit-assembly" }
 sdkwork-api-prompts-assembly = { path = "../sdkwork-prompts/crates/sdkwork-api-prompts-assembly" }
-sdkwork-api-web-server-assembly = { path = "../sdkwork-web-server/crates/sdkwork-api-web-server-assembly" }
+sdkwork-api-webserver-assembly = { path = "../sdkwork-webserver/crates/sdkwork-api-webserver-assembly" }
 sdkwork-api-browser-assembly = { path = "../sdkwork-browser/crates/sdkwork-api-browser-assembly" }
 sdkwork-api-knowledgebase-assembly = { path = "../sdkwork-knowledgebase/crates/sdkwork-api-knowledgebase-assembly" }
 sdkwork-api-llm-assembly = { path = "../sdkwork-llm/crates/sdkwork-api-llm-assembly" }
@@ -58,6 +58,9 @@ sdkwork-api-mahjong-assembly = { path = "../sdkwork-mahjong/crates/sdkwork-api-m
 sdkwork-api-doudizhu-assembly = { path = "../sdkwork-doudizhu/crates/sdkwork-api-doudizhu-assembly" }
 sdkwork-api-xiangqi-assembly = { path = "../sdkwork-xiangqi/crates/sdkwork-api-xiangqi-assembly" }
 sdkwork-drive-database-host = { path = "../sdkwork-drive/crates/sdkwork-drive-database-host" }
+sdkwork-membership-database-host = { path = "../sdkwork-membership/crates/sdkwork-membership-database-host" }
+sdkwork-image-database-host = { path = "../sdkwork-image/crates/sdkwork-image-database-host" }
+sdkwork-community-database-host = { path = "../sdkwork-community/crates/sdkwork-community-database-host" }
 sdkwork-order-database-host = { path = "../sdkwork-order/crates/sdkwork-order-database-host" }
 sdkwork-promotion-database-host = { path = "../sdkwork-promotion/crates/sdkwork-promotion-database-host" }
 sdkwork-payment-database-host = { path = "../sdkwork-payment/crates/sdkwork-payment-database-host" }
@@ -92,7 +95,7 @@ sdkwork-dezhou-database-host = { path = "../sdkwork-dezhou/crates/sdkwork-dezhou
 sdkwork-documents-database-host = { path = "../sdkwork-documents/crates/sdkwork-documents-database-host" }
 sdkwork-modelkit-database-host = { path = "../sdkwork-modelkit/crates/sdkwork-modelkit-database-host" }
 sdkwork-prompts-database-host = { path = "../sdkwork-prompts/crates/sdkwork-prompts-database-host" }
-sdkwork-webserver-database-host = { path = "../sdkwork-web-server/crates/sdkwork-webserver-database-host" }
+sdkwork-webserver-database-host = { path = "../sdkwork-webserver/crates/sdkwork-webserver-database-host" }
 sdkwork-browser-database-host = { path = "../sdkwork-browser/crates/sdkwork-browser-database-host" }
 sdkwork-knowledgebase-database-host = { path = "../sdkwork-knowledgebase/crates/sdkwork-knowledgebase-database-host" }
 sdkwork-llm-database-host = { path = "../sdkwork-llm/crates/sdkwork-llm-database-host" }
@@ -113,7 +116,7 @@ tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "net", "s
 tokio-tungstenite = "0.29"
 toml = "0.8"
 tower = { version = "0.5", features = ["util"] }
-tower-http = { version = "0.6", features = ["cors", "trace"] }
+tower-http = { version = "0.7", features = ["cors", "trace", "limit"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 async-trait = "0.1"
@@ -134,3 +137,11 @@ sdkwork-iam-database-host = { path = "../sdkwork-iam/crates/sdkwork-iam-database
 sdkwork-iam-embedded-application-bootstrap = { path = "../sdkwork-iam/crates/sdkwork-iam-embedded-application-bootstrap" }
 sdkwork-utils-rust = { path = "../sdkwork-utils/packages/sdkwork-utils-rust" }
 sdkwork-database-sqlx = { path = "../sdkwork-database/crates/sdkwork-database-sqlx" }
+
+# Embedded Codex dependency graph (via sdkwork-kernel -> sdkwork-agents)
+# requires the openai-oss-forks websocket forks: crates.io tungstenite has no
+# `deflate`/`proxy` features, and nested-workspace [patch.crates-io] tables do
+# not propagate across workspace roots, so this workspace declares them too.
+[patch.crates-io]
+tokio-tungstenite = { git = "https://github.com/openai-oss-forks/tokio-tungstenite", rev = "0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186" }
+tungstenite = { git = "https://github.com/openai-oss-forks/tungstenite-rs", rev = "4fffad30fe373adbdcffab9545e9e9bf4f2fc19f" }

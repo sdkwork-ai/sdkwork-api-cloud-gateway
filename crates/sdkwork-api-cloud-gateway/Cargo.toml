@@ -9,10 +9,15 @@ default = ["foundation-appbase"]
 foundation-appbase = [
     "dep:sdkwork-api-iam-assembly",
     "dep:sdkwork-iam-web-adapter",
+    "dep:sdkwork-iam-database-host",
 ]
 foundation-drive = ["dep:sdkwork-api-drive-assembly", "dep:sdkwork-drive-database-host"]
-foundation-membership = ["dep:sdkwork-api-membership-assembly"]
-foundation-order = ["dep:sdkwork-api-order-assembly"]
+foundation-membership = ["dep:sdkwork-api-membership-assembly",
+    "dep:sdkwork-membership-database-host",
+]
+foundation-order = ["dep:sdkwork-api-order-assembly",
+    "dep:sdkwork-order-database-host",
+]
 foundation-promotion = ["dep:sdkwork-api-promotion-assembly", "dep:sdkwork-promotion-database-host"]
 foundation-payment = ["dep:sdkwork-api-payment-assembly", "dep:sdkwork-payment-database-host"]
 manager-operations-suite = [
@@ -26,10 +31,13 @@ foundation-course = [
     "dep:sdkwork-api-course-assembly",
     "dep:sdkwork-course-database-host",
 ]
-foundation-image = ["dep:sdkwork-api-image-assembly"]
+foundation-image = ["dep:sdkwork-api-image-assembly",
+    "dep:sdkwork-image-database-host",
+]
 foundation-community = [
     "foundation-appbase",
     "dep:sdkwork-api-community-assembly",
+    "dep:sdkwork-community-database-host",
 ]
 foundation-cms = ["dep:sdkwork-api-cms-assembly", "dep:sdkwork-cms-database-host"]
 foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-database-host"]
@@ -49,7 +57,9 @@ foundation-customerservice = ["dep:sdkwork-api-customerservice-assembly", "dep:s
 foundation-gameengine = ["dep:sdkwork-api-gameengine-assembly", "dep:sdkwork-gameengine-database-host"]
 foundation-inventory = ["dep:sdkwork-api-inventory-assembly", "dep:sdkwork-inventory-database-host"]
 foundation-invoice = ["dep:sdkwork-api-invoice-assembly", "dep:sdkwork-invoice-database-host"]
-foundation-skills = ["dep:sdkwork-api-skills-assembly"]
+foundation-skills = ["dep:sdkwork-api-skills-assembly",
+    "dep:sdkwork-skills-database-host",
+]
 foundation-local-router = ["dep:sdkwork-api-local-router-assembly", "dep:sdkwork-local-router-database-host"]
 foundation-manager = ["dep:sdkwork-api-manager-assembly", "dep:sdkwork-manager-database-host"]
 foundation-news = ["dep:sdkwork-api-news-assembly", "dep:sdkwork-news-database-host"]
@@ -61,10 +71,14 @@ foundation-shop = [
 ]
 foundation-deployments = ["dep:sdkwork-api-deployments-assembly", "dep:sdkwork-deploy-database-host"]
 foundation-dezhou = ["dep:sdkwork-api-dezhou-assembly", "dep:sdkwork-dezhou-database-host"]
-foundation-documents = ["dep:sdkwork-api-documents-assembly"]
+foundation-documents = ["dep:sdkwork-api-documents-assembly",
+    "dep:sdkwork-documents-database-host",
+]
 foundation-modelkit = ["dep:sdkwork-api-modelkit-assembly", "dep:sdkwork-modelkit-database-host"]
-foundation-prompts = ["dep:sdkwork-api-prompts-assembly"]
-foundation-web-server = ["dep:sdkwork-api-web-server-assembly", "dep:sdkwork-webserver-database-host"]
+foundation-prompts = ["dep:sdkwork-api-prompts-assembly",
+    "dep:sdkwork-prompts-database-host",
+]
+foundation-web-server = ["dep:sdkwork-api-webserver-assembly", "dep:sdkwork-webserver-database-host"]
 foundation-browser = ["dep:sdkwork-api-browser-assembly", "dep:sdkwork-browser-database-host"]
 foundation-knowledgebase = ["dep:sdkwork-api-knowledgebase-assembly", "dep:sdkwork-knowledgebase-database-host"]
 foundation-llm = ["dep:sdkwork-api-llm-assembly", "dep:sdkwork-llm-database-host"]
@@ -139,6 +153,14 @@ sdkwork-web-bootstrap.workspace = true
 sdkwork-utils-rust.workspace = true
 sdkwork-database-sqlx.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
+sdkwork-iam-database-host = { workspace = true, optional = true }
+sdkwork-membership-database-host = { workspace = true, optional = true }
+sdkwork-image-database-host = { workspace = true, optional = true }
+sdkwork-community-database-host = { workspace = true, optional = true }
+sdkwork-order-database-host = { workspace = true, optional = true }
+sdkwork-documents-database-host = { workspace = true, optional = true }
+sdkwork-prompts-database-host = { workspace = true, optional = true }
+sdkwork-skills-database-host = { workspace = true, optional = true }
 sdkwork-api-iam-assembly = { workspace = true, optional = true }
 sdkwork-api-course-assembly = { workspace = true, optional = true }
 sdkwork-api-drive-assembly = { workspace = true, optional = true }
@@ -177,7 +199,7 @@ sdkwork-api-dezhou-assembly = { workspace = true, optional = true }
 sdkwork-api-documents-assembly = { workspace = true, optional = true }
 sdkwork-api-modelkit-assembly = { workspace = true, optional = true }
 sdkwork-api-prompts-assembly = { workspace = true, optional = true }
-sdkwork-api-web-server-assembly = { workspace = true, optional = true }
+sdkwork-api-webserver-assembly = { workspace = true, optional = true }
 sdkwork-api-browser-assembly = { workspace = true, optional = true }
 sdkwork-api-knowledgebase-assembly = { workspace = true, optional = true }
 sdkwork-api-llm-assembly = { workspace = true, optional = true }

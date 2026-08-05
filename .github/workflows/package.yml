@@ -224,7 +224,7 @@ on:
         description: sdkwork-voice commit/ref.
         required: false
         default: main
-      sdkwork_web_server_ref:
+      sdkwork_webserver_ref:
         description: sdkwork-web-server commit/ref.
         required: false
         default: main
@@ -290,6 +290,6 @@ jobs:
           "SDKWORK_PROMPTS_REF": "${{ github.event.inputs.sdkwork_prompts_ref || vars.SDKWORK_PROMPTS_REF }}",
           "SDKWORK_RTC_REF": "${{ github.event.inputs.sdkwork_rtc_ref || vars.SDKWORK_RTC_REF }}",
           "SDKWORK_VOICE_REF": "${{ github.event.inputs.sdkwork_voice_ref || vars.SDKWORK_VOICE_REF }}",
-          "SDKWORK_WEB_SERVER_REF": "${{ github.event.inputs.sdkwork_web_server_ref || vars.SDKWORK_WEB_SERVER_REF }}"
+          "SDKWORK_WEBSERVER_REF": "${{ github.event.inputs.sdkwork_webserver_ref || vars.SDKWORK_WEBSERVER_REF }}"
         }
     secrets: inherit

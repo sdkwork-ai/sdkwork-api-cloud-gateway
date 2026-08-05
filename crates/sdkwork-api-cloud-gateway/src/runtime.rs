@@ -32,6 +32,7 @@ use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tower::ServiceExt;
 use tracing::info;
+use tracing::Instrument;
 
 use crate::{
     diagnostics, health, metrics::GatewayMetrics, openapi, policy, security, traffic,
@@ -136,13 +137,15 @@ impl GatewayRuntime {
             self.config.diagnostics.path.as_str(),
             "/internal/gateway/diagnostics",
         );
+        let trusted_proxy_cidrs = self.config.security.trusted_proxy_cidrs.clone();
+        let max_body_bytes = self.config.request.max_body_bytes;
         let state = Arc::new(GatewayState {
             config: self.config,
             registry: self.registry,
             embedded_routers: self.embedded_routers,
             composed_router: self.composed_router,
             metrics: GatewayMetrics::default(),
-            traffic: traffic::GatewayTrafficState::default(),
+            traffic: traffic::GatewayTrafficState::with_trusted_proxies(&trusted_proxy_cidrs),
         });
 
         let mut router = Router::new()
@@ -173,6 +176,13 @@ impl GatewayRuntime {
             .layer(middleware::from_fn_with_state(
                 state.clone(),
                 security_middleware,
+            ))
+            // Streaming request body limit: rejects oversized requests from
+            // Content-Length and truncates the stream without buffering the
+            // whole body, so large uploads never allocate O(max_body_bytes)
+            // per in-flight request.
+            .layer(tower_http::limit::RequestBodyLimitLayer::new(
+                max_body_bytes,
             ))
             .with_state(state);
 
@@ -364,9 +374,54 @@ async fn security_middleware(
             event.rule,
         );
     }
+
+    let (request, waf_body_events) =
+        match security::inspect_json_body(&state.config.security, request).await {
+            Ok((request, events)) => (request, events),
+            Err(rejection) => {
+                for event in rejection.events() {
+                    state.metrics.record_security_event(
+                        state.config.service.name.as_str(),
+                        event.kind,
+                        event.action,
+                        event.rule,
+                    );
+                    emit_audit_log(
+                        state.as_ref(),
+                        GatewayAuditLogEmitInput {
+                            category: "security",
+                            action: event.action,
+                            reason: security_audit_reason(event),
+                            scope: Some(event.rule),
+                            status: rejection.status,
+                            method: method.as_str(),
+                            path: path.as_str(),
+                            headers: &headers,
+                        },
+                    );
+                }
+                let mut response = problem_response_with_request_headers(
+                    rejection.status,
+                    rejection.title,
+                    rejection.detail.as_str(),
+                    &headers,
+                );
+                rejection.apply_headers(response.headers_mut());
+                return apply_configured_secure_response_headers(state.as_ref(), response);
+            }
+        };
+    for event in &waf_body_events {
+        state.metrics.record_security_event(
+            state.config.service.name.as_str(),
+            event.kind,
+            event.action,
+            event.rule,
+        );
+    }
+
     let mut response = next.run(request).await;
     inspection.apply_headers(response.headers_mut());
-    for event in inspection.events() {
+    for event in inspection.events().iter().chain(waf_body_events.iter()) {
         emit_audit_log(
             state.as_ref(),
             GatewayAuditLogEmitInput {
@@ -391,6 +446,8 @@ async fn traffic_middleware(
 ) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+    let span = request_span(&state.config, &request);
+    let _span_guard = span.enter();
     let service_id = state
         .registry
         .resolve(method.as_str(), path.as_str())
@@ -433,9 +490,28 @@ async fn traffic_middleware(
         }
     };
 
-    let mut response = next.run(request).await;
+    let mut response = next.run(request).instrument(span.clone()).await;
     permit.apply_headers(response.headers_mut());
     response
+}
+
+/// Structured request span when `observability.tracingEnabled` is on. The
+/// span carries method, path, request id, and the W3C trace id so access and
+/// audit events stay correlated across the request lifecycle.
+fn request_span(config: &GatewayRuntimeConfig, request: &Request<Body>) -> tracing::Span {
+    if !config.observability.tracing_enabled {
+        return tracing::Span::none();
+    }
+    let request_id = request_id_for_headers(request.headers());
+    let trace_id = trace_id_for_headers(request.headers());
+    let span = tracing::info_span!(
+        "sdkwork_gateway_request",
+        method = %request.method(),
+        path = %request.uri().path(),
+        request_id = %request_id,
+        trace_id = ?trace_id,
+    );
+    span
 }
 
 async fn gateway_fallback(
@@ -567,6 +643,30 @@ async fn gateway_fallback(
                     ),
                 };
             }
+            if let Some(surface) = declared_surface_for_path(&state.config, path.as_str()) {
+                let response = mark_failure_class(
+                    problem_response_with_request_headers(
+                        StatusCode::SERVICE_UNAVAILABLE,
+                        "dependency_not_available",
+                        format!(
+                            "dependency surface `{}` is declared but not embedded in this gateway build",
+                            surface.service_id
+                        ),
+                        &headers,
+                    ),
+                    "dependency_not_available",
+                );
+                record_unmatched_metrics(state.as_ref(), method.as_str(), &response);
+                emit_access_log(
+                    state.as_ref(),
+                    None,
+                    method.as_str(),
+                    path.as_str(),
+                    &response,
+                    &headers,
+                );
+                return response;
+            }
             let response = mark_failure_class(
                 problem_response_with_request_headers(
                     StatusCode::NOT_FOUND,
@@ -587,6 +687,33 @@ async fn gateway_fallback(
             response
         }
     }
+}
+
+/// Find the declared dependency surface whose API prefix matches the request
+/// path, so requests to declared-but-not-embedded surfaces fail with an honest
+/// 503 instead of a generic 404.
+fn declared_surface_for_path<'a>(
+    config: &'a GatewayRuntimeConfig,
+    path: &str,
+) -> Option<&'a sdkwork_api_cloud_gateway_config::DependencyApiSurfaceConfig> {
+    config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| {
+            let prefix = surface.api_prefix.trim_end_matches('/');
+            path == prefix || path.starts_with(format!("{prefix}/").as_str())
+        })
+        .max_by_key(|surface| surface.api_prefix.len())
+}
+
+fn record_unmatched_metrics(state: &GatewayState, method: &str, response: &Response) {
+    state.metrics.record_http_request(
+        state.config.service.name.as_str(),
+        method,
+        "unmatched",
+        "none",
+        response.status(),
+    );
 }
 
 fn policy_rejection_response(
@@ -904,7 +1031,17 @@ fn exact_registry_for_contributions(
         }
     }
 
+    let wired_workspaces = contributions
+        .iter()
+        .map(|contribution| contribution.owner)
+        .collect::<std::collections::HashSet<_>>();
     for surface in config.required_dependency_surfaces() {
+        // Surfaces of workspaces that are not wired into this build remain
+        // declared-but-unavailable (503 at request time); only wired
+        // workspaces must prove executable route coverage here.
+        if !wired_workspaces.contains(surface.workspace.as_str()) {
+            continue;
+        }
         if !descriptors
             .iter()
             .any(|route| route.service_id == surface.service_id)
@@ -1177,7 +1314,43 @@ fn emit_access_log(
 }
 
 fn cors_layer(config: &GatewayRuntimeConfig) -> tower_http::cors::CorsLayer {
-    sdkwork_web_axum::cors_layer_from_policy(web_framework::gateway_cors_policy(config))
+    let mut layer =
+        sdkwork_web_axum::cors_layer_from_policy(web_framework::gateway_cors_policy(config));
+    // Same-origin requests (Origin == Host) are always allowed for dependency
+    // surfaces that declare `sameOriginAllowed`, regardless of the CORS
+    // allowlist. This keeps first-party browser flows working behind the
+    // gateway without widening cross-origin policy.
+    if config
+        .dependency_surfaces
+        .iter()
+        .any(|surface| surface.same_origin_allowed)
+    {
+        layer = layer.allow_origin(tower_http::cors::AllowOrigin::predicate(
+            |origin, request_parts| {
+                request_parts
+                    .headers
+                    .get(header::HOST)
+                    .and_then(|host| host.to_str().ok())
+                    .map(|host| {
+                        let origin = origin.to_str().unwrap_or_default();
+                        same_origin(origin, host)
+                    })
+                    .unwrap_or(false)
+            },
+        ));
+    }
+    layer
+}
+
+/// Compare an Origin authority with the request Host (case-insensitive,
+/// port-sensitive like the browser's same-origin policy).
+fn same_origin(origin: &str, host: &str) -> bool {
+    let origin_host = origin
+        .strip_prefix("https://")
+        .or_else(|| origin.strip_prefix("http://"))
+        .and_then(|authority| authority.split_once('/').map(|(host, _)| host))
+        .unwrap_or(origin);
+    origin_host.eq_ignore_ascii_case(host.trim())
 }
 
 fn problem_response(

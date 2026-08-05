@@ -1,9 +1,18 @@
 # SDKWork API Cloud Gateway Integration Audit
 
-Status: awaiting human confirmation  
-Date: 2026-07-31  
-Scope: `E:/sdkwork-space` sibling API applications and `sdkwork-api-cloud-gateway`  
-Decision: **not aligned; not release-ready**
+> **2026-08-05 revision**: the P0/P1 blocking findings below were remediated.
+> Current status: the gateway workspace loads and compiles for `default`,
+> `platform-foundation-suite`, and `--all-features`; `cargo test --workspace`
+> passes; the security/traffic/policy controls listed in GATE-P0-004..007 are
+> implemented (see `docs/architecture/tech/TECH_ARCHITECTURE.md` and
+> `docs/product/prd/PRD.md`). Remaining work is tracked in `docs/product/prd/PRD.md`
+> phases 5-6 (paginated dependency surfaces, distributed rate limiting, OTel export).
+
+Status: resolved (original audit below retained as historical record)
+Date: 2026-07-31
+Scope: `E:/sdkwork-space` sibling API applications and `sdkwork-api-cloud-gateway`
+Decision: **not aligned; not release-ready** (superseded by the 2026-08-05 revision)
+eady**
 
 ## 1. Executive Conclusion
 

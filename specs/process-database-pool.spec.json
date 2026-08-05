@@ -57,7 +57,7 @@
         {"module": "sdkwork-documents", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-prompts", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-deployments", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
-        {"module": "sdkwork-web-server", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
+        {"module": "sdkwork-webserver", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-modelkit", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs", "../sdkwork-modelkit/crates/sdkwork-modelkit-database-host/src/lib.rs"]},
         {"module": "sdkwork-comments", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},
         {"module": "sdkwork-messaging", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs"]},

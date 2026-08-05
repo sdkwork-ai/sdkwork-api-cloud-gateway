@@ -1,8 +1,4 @@
-use std::{
-    collections::BTreeMap,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{collections::BTreeMap, sync::Mutex, time::Duration};
 
 use axum::http::StatusCode;
 
@@ -10,9 +6,43 @@ const HTTP_REQUEST_DURATION_BUCKETS: [f64; 11] = [
     0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0,
 ];
 
-#[derive(Clone, Default)]
+/// Shard count for the metrics state. Each shard owns an independent mutex so
+/// the per-request record path never contends on a single global lock under
+/// high concurrency.
+const METRICS_SHARD_COUNT: usize = 16;
+
+/// Thread-affine shard selection: the same thread always lands on the same
+/// shard, keeping lock handover rare without cross-shard coordination.
+fn shard_index() -> usize {
+    thread_local! {
+        static SHARD: usize = {
+            let mut hash = 0xcbf2_9ce4_8422_2325_u64;
+            let id = format!("{:?}", std::thread::current().id());
+            for byte in id.as_bytes() {
+                hash ^= u64::from(*byte);
+                hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+            }
+            (hash as usize) % METRICS_SHARD_COUNT
+        };
+    }
+    SHARD.with(|shard| *shard)
+}
+
+#[derive(Clone)]
 pub(crate) struct GatewayMetrics {
-    inner: Arc<Mutex<GatewayMetricsState>>,
+    inner: std::sync::Arc<Box<[Mutex<GatewayMetricsState>]>>,
+}
+
+impl Default for GatewayMetrics {
+    fn default() -> Self {
+        let shards = (0..METRICS_SHARD_COUNT)
+            .map(|_| Mutex::new(GatewayMetricsState::default()))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        Self {
+            inner: std::sync::Arc::new(shards),
+        }
+    }
 }
 
 #[derive(Default)]
@@ -89,7 +119,9 @@ impl GatewayMetrics {
             service_id: service_id.to_string(),
             status: status.as_u16().to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         *state.http_requests.entry(labels).or_insert(0) += 1;
     }
 
@@ -109,7 +141,9 @@ impl GatewayMetrics {
             service_id: service_id.to_string(),
             status: status.as_u16().to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         let histogram = state.http_request_durations.entry(labels).or_default();
         histogram.record(duration.as_secs_f64());
     }
@@ -127,7 +161,9 @@ impl GatewayMetrics {
             action: action.to_string(),
             rule: rule.to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         *state.security_events.entry(labels).or_insert(0) += 1;
     }
 
@@ -144,7 +180,9 @@ impl GatewayMetrics {
             scope: scope.to_string(),
             status: status.as_u16().to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         *state.traffic_rejections.entry(labels).or_insert(0) += 1;
     }
 
@@ -161,7 +199,9 @@ impl GatewayMetrics {
             scope: scope.to_string(),
             status: status.as_u16().to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         *state.policy_rejections.entry(labels).or_insert(0) += 1;
     }
 
@@ -178,12 +218,19 @@ impl GatewayMetrics {
             scope: scope.to_string(),
             status: status.as_u16().to_string(),
         };
-        let mut state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut state = self.inner[shard_index()]
+            .lock()
+            .expect("gateway metrics shard poisoned");
         *state.policy_dry_runs.entry(labels).or_insert(0) += 1;
     }
 
     pub(crate) fn render(&self, service: &str) -> String {
-        let state = self.inner.lock().expect("gateway metrics mutex poisoned");
+        let mut combined = GatewayMetricsState::default();
+        for shard in self.inner.iter() {
+            let state = shard.lock().expect("gateway metrics shard poisoned");
+            merge_metrics_state(&mut combined, &state);
+        }
+        let state = combined;
         let mut output = String::new();
         output.push_str("# HELP sdkwork_api_cloud_gateway_build_info Gateway build metadata.\n");
         output.push_str("# TYPE sdkwork_api_cloud_gateway_build_info gauge\n");
@@ -310,6 +357,35 @@ impl GatewayMetrics {
             ));
         }
         output
+    }
+}
+
+fn merge_metrics_state(target: &mut GatewayMetricsState, source: &GatewayMetricsState) {
+    for (labels, count) in &source.http_requests {
+        *target.http_requests.entry(labels.clone()).or_insert(0) += count;
+    }
+    for (labels, value) in &source.http_request_durations {
+        let entry = target
+            .http_request_durations
+            .entry(labels.clone())
+            .or_default();
+        for (index, bucket_count) in value.buckets.iter().enumerate() {
+            entry.buckets[index] += bucket_count;
+        }
+        entry.sum_seconds += value.sum_seconds;
+        entry.count += value.count;
+    }
+    for (labels, count) in &source.security_events {
+        *target.security_events.entry(labels.clone()).or_insert(0) += count;
+    }
+    for (labels, count) in &source.traffic_rejections {
+        *target.traffic_rejections.entry(labels.clone()).or_insert(0) += count;
+    }
+    for (labels, count) in &source.policy_rejections {
+        *target.policy_rejections.entry(labels.clone()).or_insert(0) += count;
+    }
+    for (labels, count) in &source.policy_dry_runs {
+        *target.policy_dry_runs.entry(labels.clone()).or_insert(0) += count;
     }
 }
 

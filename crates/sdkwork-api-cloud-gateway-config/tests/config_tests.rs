@@ -444,10 +444,8 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/app/v3/api/runtime",
             "/app/v3/api/system/site",
             "/backend/v3/api/ai",
-            "/backend/v3/api/marketing",
-            "/backend/v3/api/memberships",
+            "/backend/v3/api/billing",
             "/backend/v3/api/payments",
-            "/backend/v3/api/promotions",
             "/backend/v3/api/recharges",
             "/backend/v3/api/storage",
             "/backend/v3/api/system",
@@ -529,7 +527,7 @@ fn membership_app_and_backend_use_one_embedded_api_assembly() {
             && surface.cargo_feature.as_deref() == Some("foundation-membership")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-membership-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_membership_assembly::assemble_api_router_from_env")
+                == Some("sdkwork_api_membership_assembly::assemble_api_router_with_pool")
     }));
 }
 
