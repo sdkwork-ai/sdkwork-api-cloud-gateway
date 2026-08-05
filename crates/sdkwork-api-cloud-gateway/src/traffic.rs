@@ -9,23 +9,81 @@ use axum::http::{header, HeaderMap, HeaderName, HeaderValue, StatusCode};
 use sdkwork_api_cloud_gateway_config::{
     ConcurrencyLimitConfig, GatewayTrafficConfig, RateLimitRuleConfig,
 };
+use sdkwork_utils_rust::rate_limit::{unix_millis, RedisTokenBucketClient};
 use sdkwork_utils_rust::trusted_proxy::TrustedProxyConfig;
 
 #[derive(Clone, Default)]
 pub(crate) struct GatewayTrafficState {
     inner: Arc<Mutex<TrafficState>>,
+    redis: Arc<tokio::sync::OnceCell<Option<Arc<RedisTokenBucketClient>>>>,
+    redis_config: Option<(String, String)>,
 }
 
 impl GatewayTrafficState {
-    pub(crate) fn with_trusted_proxies(trusted_proxy_cidrs: &[String]) -> Self {
+    /// Build the traffic state with an optional Redis backend.
+    ///
+    /// The Redis connection is established lazily on the first rate-limit
+    /// decision (the router assembly path is synchronous). Connection failures
+    /// are non-fatal: the gateway logs the issue and falls back to in-process
+    /// buckets so traffic control never bricks the data plane.
+    pub(crate) fn from_config(
+        trusted_proxy_cidrs: &[String],
+        redis_url: Option<String>,
+        redis_key_prefix: String,
+    ) -> Self {
         let trusted_proxies =
             TrustedProxyConfig::from_cidrs(trusted_proxy_cidrs.iter().map(String::as_str));
+        let redis_config = redis_url
+            .filter(|url| !url.trim().is_empty())
+            .map(|url| (url, redis_key_prefix));
         Self {
             inner: Arc::new(Mutex::new(TrafficState {
                 trusted_proxies,
                 ..TrafficState::default()
             })),
+            redis: Arc::new(tokio::sync::OnceCell::new()),
+            redis_config,
         }
+    }
+
+    async fn redis_client(&self) -> Option<Arc<RedisTokenBucketClient>> {
+        let config = self.redis_config.clone()?;
+        let resolved = self
+            .redis
+            .get_or_init(|| async {
+                match RedisTokenBucketClient::connect(&config.0, &config.1).await {
+                    Ok(client) => {
+                        tracing::info!(
+                            redis_url = %config.0,
+                            "gateway rate limiting backed by Redis"
+                        );
+                        Some(Arc::new(client))
+                    }
+                    Err(error) => {
+                        tracing::warn!(
+                            error,
+                            "Redis rate-limit backend unavailable; falling back to in-process buckets"
+                        );
+                        None
+                    }
+                }
+            })
+            .await
+            .clone();
+        if resolved.is_none() {
+            let mut state = self.inner.lock().expect("gateway traffic mutex poisoned");
+            state.redis_fallback_count = state.redis_fallback_count.saturating_add(1);
+        }
+        resolved
+    }
+
+    /// Number of rate-limit decisions that fell back to in-process buckets
+    /// because the Redis backend was unreachable.
+    pub(crate) fn redis_fallback_count(&self) -> u64 {
+        self.inner
+            .lock()
+            .expect("gateway traffic mutex poisoned")
+            .redis_fallback_count
     }
 }
 
@@ -35,6 +93,9 @@ struct TrafficState {
     concurrency_by_rule: HashMap<String, usize>,
     buckets: HashMap<String, TokenBucket>,
     trusted_proxies: TrustedProxyConfig,
+    /// Count of rate-limit decisions that fell back to in-process buckets
+    /// because the Redis backend was unreachable.
+    redis_fallback_count: u64,
 }
 
 struct TokenBucket {
@@ -75,7 +136,7 @@ struct RateLimitDecision {
 }
 
 impl GatewayTrafficState {
-    pub(crate) fn acquire(
+    pub(crate) async fn acquire(
         &self,
         config: &GatewayTrafficConfig,
         path: &str,
@@ -90,7 +151,7 @@ impl GatewayTrafficState {
                 .iter()
                 .filter(|rule| rate_limit_matches(rule, path, service_id))
             {
-                let decision = self.check_rate_limit(rule, headers);
+                let decision = self.check_rate_limit(rule, headers).await;
                 let rate_headers =
                     rate_limit_headers(&decision, config.compat_x_rate_limit_headers);
                 if decision.allowed {
@@ -164,7 +225,7 @@ impl GatewayTrafficState {
         Ok(permit)
     }
 
-    fn check_rate_limit(
+    async fn check_rate_limit(
         &self,
         rule: &RateLimitRuleConfig,
         headers: &HeaderMap,
@@ -173,8 +234,52 @@ impl GatewayTrafficState {
         let limit = rule.capacity.or(rule.limit).or(rule.burst).unwrap_or(60);
         let capacity = rule.burst.unwrap_or(limit).max(limit);
         let refill_per_second = refill_per_second(rule, limit);
+        let policy = format!(
+            "{}; limit={}; window={}; algorithm=\"{}\"",
+            rule.id,
+            limit,
+            rule.window_seconds.unwrap_or(1),
+            rule.algorithm
+        );
+
+        let identity = {
+            let state = self.inner.lock().expect("gateway traffic mutex poisoned");
+            rate_limit_identity(rule, headers, &state.trusted_proxies)
+        };
+
+        if let Some(redis) = self.redis_client().await {
+            let remote = redis
+                .try_acquire(
+                    rule.id.as_str(),
+                    identity.as_str(),
+                    capacity,
+                    refill_per_second,
+                    unix_millis(&std::time::SystemTime::now()),
+                )
+                .await;
+            match remote {
+                Ok(decision) => {
+                    return RateLimitDecision {
+                        allowed: decision.allowed,
+                        limit,
+                        remaining: decision.remaining,
+                        reset_seconds: decision.reset_seconds,
+                        policy,
+                    };
+                }
+                Err(error) => {
+                    let mut state = self.inner.lock().expect("gateway traffic mutex poisoned");
+                    state.redis_fallback_count = state.redis_fallback_count.saturating_add(1);
+                    tracing::debug!(
+                        error = ?error,
+                        rule = rule.id.as_str(),
+                        "Redis rate limit unavailable; using local bucket"
+                    );
+                }
+            }
+        }
+
         let mut state = self.inner.lock().expect("gateway traffic mutex poisoned");
-        let identity = rate_limit_identity(rule, headers, &state.trusted_proxies);
         let bucket_key = if state.buckets.len() >= MAX_RATE_LIMIT_BUCKETS {
             state
                 .buckets
@@ -216,13 +321,7 @@ impl GatewayTrafficState {
             limit,
             remaining,
             reset_seconds,
-            policy: format!(
-                "{}; limit={}; window={}; algorithm=\"{}\"",
-                rule.id,
-                limit,
-                rule.window_seconds.unwrap_or(1),
-                rule.algorithm
-            ),
+            policy,
         }
     }
 }
@@ -426,4 +525,61 @@ fn concurrency_rejection(scope: &str) -> TrafficRejection {
 
 fn header_value(value: impl ToString) -> HeaderValue {
     HeaderValue::from_str(value.to_string().as_str()).expect("gateway traffic header is valid")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::HeaderMap;
+
+    #[tokio::test]
+    async fn unconfigured_redis_backend_returns_no_client() {
+        let state = GatewayTrafficState::from_config(&[], None, "prefix".to_string());
+        assert!(state.redis_client().await.is_none());
+    }
+
+    #[tokio::test]
+    async fn unreachable_redis_backend_falls_back_to_local_buckets() {
+        // A deliberately unreachable Redis endpoint must not brick the data
+        // plane: the client resolves to None and local buckets take over.
+        let state = GatewayTrafficState::from_config(
+            &[],
+            Some("redis://127.0.0.1:1".to_string()),
+            "test".to_string(),
+        );
+        let client = state.redis_client().await;
+        assert!(client.is_none());
+
+        let mut headers = HeaderMap::new();
+        headers.insert(header::HOST, HeaderValue::from_static("example.test"));
+        let config = GatewayTrafficConfig {
+            rate_limit_enabled: true,
+            rate_limits: vec![RateLimitRuleConfig {
+                id: "unit-test".to_string(),
+                match_path_prefix: None,
+                match_service_id: None,
+                key: "host".to_string(),
+                algorithm: "token-bucket".to_string(),
+                capacity: Some(1),
+                refill_per_second: Some(1),
+                burst: None,
+                limit: None,
+                window_seconds: None,
+                reject_status: 429,
+            }],
+            ..GatewayTrafficConfig::default()
+        };
+        let permit = state
+            .acquire(&config, "/healthz", None, &headers)
+            .await
+            .unwrap_or_else(|rejection| {
+                panic!(
+                    "local bucket allows the first request: {}",
+                    rejection.detail
+                )
+            });
+        drop(permit);
+        let fallback_count = state.inner.lock().expect("lock").redis_fallback_count;
+        assert!(fallback_count >= 1, "redis fallback was recorded");
+    }
 }

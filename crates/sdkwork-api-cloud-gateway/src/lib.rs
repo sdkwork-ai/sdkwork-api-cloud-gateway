@@ -1,8 +1,10 @@
 //! Runtime router builders for the SDKWork API Gateway.
 
 mod diagnostics;
-mod embedded_database_bootstrap;
-mod embedded_dependency_routes;
+/// Embedded dependency database lifecycle shared by platform runtime consumers.
+pub mod embedded_database_bootstrap;
+/// Embedded dependency API contributions assembled from sibling workspaces.
+pub mod embedded_dependency_routes;
 mod error;
 mod health;
 mod metrics;

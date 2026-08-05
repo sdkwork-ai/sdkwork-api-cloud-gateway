@@ -85,6 +85,30 @@ pub(crate) async fn openapi_document(
                         "200": { "description": "Gateway OpenAPI document" }
                     }
                 }
+            },
+            "/metrics": {
+                "get": {
+                    "operationId": "getGatewayMetrics",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
+                    "responses": {
+                        "200": { "description": "Prometheus text exposition metrics" }
+                    }
+                }
+            },
+            "/internal/gateway/diagnostics": {
+                "get": {
+                    "operationId": "getGatewayDiagnostics",
+                    "x-sdkwork-request-context": "WebRequestContext",
+                    "x-sdkwork-api-surface": "gateway-api",
+                    "x-sdkwork-auth-mode": "anonymous",
+                    "security": [],
+                    "responses": {
+                        "200": { "description": "Gateway diagnostics snapshot when enabled" }
+                    }
+                }
             }
         },
         "x-sdkwork-gateway": {

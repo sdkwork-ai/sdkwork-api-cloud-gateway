@@ -50,7 +50,7 @@ fn per_dependency_base_urls_are_rejected() {
         apiPrefix = "/app/v3/api/drive"
         runtimeMode = "embedded"
         baseUrl = "http://127.0.0.1:4900"
-        executableExport = "sdkwork_api_drive_assembly::assemble_business_routes_from_env"
+        executableExport = "sdkwork_api_drive_assembly::assemble_api_router"
         cargoFeature = "foundation-drive"
         cargoDependency = "sdkwork-api-drive-assembly"
         coverage = "embedded-assembly-routes"
@@ -68,7 +68,7 @@ fn per_dependency_base_urls_are_rejected() {
         "apiPrefix": "/app/v3/api/drive",
         "runtimeMode": "embedded",
         "upstreamUrl": "http://127.0.0.1:4900",
-        "executableExport": "sdkwork_api_drive_assembly::assemble_business_routes_from_env",
+        "executableExport": "sdkwork_api_drive_assembly::assemble_api_router",
         "cargoFeature": "foundation-drive",
         "cargoDependency": "sdkwork-api-drive-assembly",
         "coverage": "embedded-assembly-routes"
@@ -322,7 +322,7 @@ fn drive_app_authority_publishes_assets_and_drive_prefixes() {
             && surface.cargo_feature.as_deref() == Some("foundation-drive")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-drive-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_drive_assembly::assemble_business_routes_from_env")
+                == Some("sdkwork_api_drive_assembly::assemble_api_router")
     }));
 }
 
@@ -554,4 +554,118 @@ fn repository_contracts_contain_no_retired_runtime_markers() {
         assert!(!source.contains("\"split\""));
         assert!(!source.contains("upstream-routes"));
     }
+}
+
+#[test]
+fn production_profile_ships_enforceable_operational_rules() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let config =
+        GatewayRuntimeConfig::from_path(root.join("etc/sdkwork-api-cloud-gateway.production.toml"))
+            .expect("production runtime profile parses and validates");
+
+    // WAF must block, not merely monitor, once traffic is enforced in production.
+    assert_eq!(config.security.waf.mode, "enforce");
+    assert!(config.security.waf.enabled);
+
+    // Traffic rules must be concrete: per-IP credential protection, a default
+    // budget, and an instance-wide Host ceiling.
+    assert!(!config.traffic.rate_limits.is_empty());
+    assert!(config
+        .traffic
+        .rate_limits
+        .iter()
+        .any(|rule| rule.id == "auth-credential-ip" && rule.key == "client-ip"));
+    assert!(config
+        .traffic
+        .rate_limits
+        .iter()
+        .any(|rule| rule.id == "global-ip-default"));
+    assert!(config
+        .traffic
+        .rate_limits
+        .iter()
+        .any(|rule| rule.id == "instance-host-total" && rule.key == "host"));
+    assert!(config.traffic.global_max_in_flight.unwrap_or(0) >= 1024);
+
+    // Concurrency ceilings are per-surface, not a blanket default.
+    assert!(config.traffic.concurrency_limits.len() >= 5);
+
+    // Body budgets are explicit per surface.
+    assert!(config.policy.rules.len() >= 5);
+    assert!(config
+        .policy
+        .rules
+        .iter()
+        .any(|rule| rule.id == "auth-body-limit" && rule.max_body_bytes == Some(1024 * 1024)));
+
+    // Credential and console origins are allowed; everything else is not.
+    assert!(config
+        .cors
+        .allowed_origins
+        .contains(&"https://api.sdkwork.com".to_string()));
+    assert!(!config.cors.allow_any_origin);
+}
+
+#[test]
+fn otel_export_config_parses_and_defaults_to_disabled() {
+    let config = GatewayRuntimeConfig::default();
+    assert!(!config.observability.otel.enabled);
+    assert_eq!(config.observability.otel.endpoint, "http://localhost:4317");
+
+    let toml = r#"
+[service]
+name = "sdkwork-api-cloud-gateway"
+
+[observability]
+tracingEnabled = true
+
+[observability.otel]
+enabled = true
+endpoint = "http://otel-collector.internal:4317"
+serviceName = "gateway-prod"
+"#;
+    let parsed = GatewayRuntimeConfig::from_toml_str(toml).expect("otel toml parses");
+    assert!(parsed.observability.otel.enabled);
+    assert_eq!(
+        parsed.observability.otel.endpoint,
+        "http://otel-collector.internal:4317"
+    );
+    assert_eq!(
+        parsed.observability.otel.service_name.as_deref(),
+        Some("gateway-prod")
+    );
+}
+
+#[test]
+fn redis_rate_limit_backend_requires_a_url() {
+    let toml = r#"
+[traffic]
+rateLimitEnabled = true
+rateLimitBackend = "redis"
+"#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
+
+    let toml = r#"
+[traffic]
+rateLimitEnabled = true
+rateLimitBackend = "redis"
+redisUrl = "redis://redis.internal:6379"
+"#;
+    let parsed = GatewayRuntimeConfig::from_toml_str(toml).expect("redis traffic config parses");
+    assert_eq!(parsed.traffic.rate_limit_backend, "redis");
+    assert_eq!(
+        parsed.traffic.redis_url.as_deref(),
+        Some("redis://redis.internal:6379")
+    );
+    assert_eq!(parsed.traffic.redis_key_prefix, "sdkwork:gateway:ratelimit");
+}
+
+#[test]
+fn memory_rate_limit_backend_is_the_default() {
+    let config = GatewayRuntimeConfig::default();
+    assert_eq!(config.traffic.rate_limit_backend, "memory");
+    assert!(config.traffic.redis_url.is_none());
 }

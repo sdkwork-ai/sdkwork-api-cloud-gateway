@@ -142,6 +142,10 @@ tower.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+opentelemetry.workspace = true
+opentelemetry_sdk.workspace = true
+opentelemetry-otlp.workspace = true
+tracing-opentelemetry.workspace = true
 rustls.workspace = true
 sdkwork-api-cloud-gateway-config.workspace = true
 sdkwork-api-cloud-gateway-observability.workspace = true
@@ -150,7 +154,7 @@ sdkwork-web-contract.workspace = true
 sdkwork-web-core.workspace = true
 sdkwork-web-axum.workspace = true
 sdkwork-web-bootstrap.workspace = true
-sdkwork-utils-rust.workspace = true
+sdkwork-utils-rust = { workspace = true, features = ["redis"] }
 sdkwork-database-sqlx.workspace = true
 sdkwork-iam-web-adapter = { workspace = true, optional = true }
 sdkwork-iam-database-host = { workspace = true, optional = true }

@@ -35,8 +35,9 @@ use tracing::info;
 use tracing::Instrument;
 
 use crate::{
-    diagnostics, health, metrics::GatewayMetrics, openapi, policy, security, traffic,
-    web_framework, GatewayRuntimeError,
+    diagnostics, health,
+    metrics::{escape_label_value, GatewayMetrics},
+    openapi, policy, security, traffic, web_framework, GatewayRuntimeError,
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -139,13 +140,18 @@ impl GatewayRuntime {
         );
         let trusted_proxy_cidrs = self.config.security.trusted_proxy_cidrs.clone();
         let max_body_bytes = self.config.request.max_body_bytes;
+        let traffic = traffic::GatewayTrafficState::from_config(
+            &trusted_proxy_cidrs,
+            self.config.traffic.redis_url.clone(),
+            self.config.traffic.redis_key_prefix.clone(),
+        );
         let state = Arc::new(GatewayState {
             config: self.config,
             registry: self.registry,
             embedded_routers: self.embedded_routers,
             composed_router: self.composed_router,
             metrics: GatewayMetrics::default(),
-            traffic: traffic::GatewayTrafficState::with_trusted_proxies(&trusted_proxy_cidrs),
+            traffic,
         });
 
         let mut router = Router::new()
@@ -289,15 +295,23 @@ pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_appbase(
 }
 
 async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
+    let mut body = state.metrics.render(state.config.service.name.as_str());
+    body.push_str(
+        "# HELP sdkwork_api_cloud_gateway_rate_limit_redis_fallbacks_total Rate-limit decisions that fell back to in-process buckets because the Redis backend was unreachable.\n",
+    );
+    body.push_str("# TYPE sdkwork_api_cloud_gateway_rate_limit_redis_fallbacks_total counter\n");
+    body.push_str(&format!(
+        "sdkwork_api_cloud_gateway_rate_limit_redis_fallbacks_total{{service=\"{}\"}} {}\n",
+        escape_label_value(state.config.service.name.as_str()),
+        state.traffic.redis_fallback_count()
+    ));
     Response::builder()
         .status(StatusCode::OK)
         .header(
             header::CONTENT_TYPE,
             "text/plain; version=0.0.4; charset=utf-8",
         )
-        .body(Body::from(
-            state.metrics.render(state.config.service.name.as_str()),
-        ))
+        .body(Body::from(body))
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
 
@@ -452,12 +466,16 @@ async fn traffic_middleware(
         .registry
         .resolve(method.as_str(), path.as_str())
         .map(|route| route.service_id.clone());
-    let permit = match state.traffic.acquire(
-        &state.config.traffic,
-        path.as_str(),
-        service_id.as_deref(),
-        request.headers(),
-    ) {
+    let permit = match state
+        .traffic
+        .acquire(
+            &state.config.traffic,
+            path.as_str(),
+            service_id.as_deref(),
+            request.headers(),
+        )
+        .await
+    {
         Ok(permit) => permit,
         Err(rejection) => {
             state.metrics.record_traffic_rejection(

@@ -418,7 +418,7 @@ fn format_bucket(value: f64) -> String {
     value.to_string()
 }
 
-fn escape_label_value(value: &str) -> String {
+pub(crate) fn escape_label_value(value: &str) -> String {
     value
         .replace('\\', "\\\\")
         .replace('"', "\\\"")

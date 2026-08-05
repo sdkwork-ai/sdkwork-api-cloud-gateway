@@ -216,6 +216,24 @@ pub struct GatewayObservabilityConfig {
     pub tracing_enabled: bool,
     #[serde(default = "default_redact_headers")]
     pub redact_headers: Vec<String>,
+    /// OpenTelemetry OTLP export for spans.
+    #[serde(default)]
+    pub otel: GatewayOtelConfig,
+}
+
+/// OpenTelemetry OTLP export configuration.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GatewayOtelConfig {
+    /// Export request spans to the OTLP endpoint when enabled.
+    #[serde(default)]
+    pub enabled: bool,
+    /// OTLP exporter endpoint (gRPC by default; OTLP/gRPC is assumed).
+    #[serde(default = "default_otel_endpoint")]
+    pub endpoint: String,
+    /// Override for the OpenTelemetry service name.
+    #[serde(default)]
+    pub service_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -267,6 +285,16 @@ pub struct GatewayTrafficConfig {
     pub rate_limits: Vec<RateLimitRuleConfig>,
     #[serde(default)]
     pub concurrency_limits: Vec<ConcurrencyLimitConfig>,
+    /// Rate-limit backend: `memory` (in-process token buckets) or `redis`
+    /// (atomic cluster-wide buckets via Lua).
+    #[serde(default = "default_rate_limit_backend")]
+    pub rate_limit_backend: String,
+    /// Redis connection URL used when `rateLimitBackend = "redis"`.
+    #[serde(default)]
+    pub redis_url: Option<String>,
+    /// Key namespace prefix for Redis rate-limit buckets.
+    #[serde(default = "default_redis_key_prefix")]
+    pub redis_key_prefix: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -773,6 +801,24 @@ impl GatewayRuntimeConfig {
             }
         }
 
+        match self.traffic.rate_limit_backend.as_str() {
+            "memory" => {}
+            "redis" => {
+                if self.traffic.redis_url.as_deref().is_none_or(str::is_empty) {
+                    return Err(GatewayConfigError::InvalidValue {
+                        key: "traffic.redisUrl".to_string(),
+                        reason: "required when traffic.rateLimitBackend = \"redis\"".to_string(),
+                    });
+                }
+            }
+            other => {
+                return Err(GatewayConfigError::InvalidValue {
+                    key: "traffic.rateLimitBackend".to_string(),
+                    reason: format!("must be \"memory\" or \"redis\", found {other:?}"),
+                });
+            }
+        }
+
         Ok(())
     }
 
@@ -910,6 +956,7 @@ impl Default for GatewayObservabilityConfig {
             metrics_path: default_metrics_path(),
             tracing_enabled: false,
             redact_headers: default_redact_headers(),
+            otel: GatewayOtelConfig::default(),
         }
     }
 }
@@ -949,6 +996,9 @@ impl Default for GatewayTrafficConfig {
             global_max_in_flight: None,
             rate_limits: Vec::new(),
             concurrency_limits: Vec::new(),
+            rate_limit_backend: default_rate_limit_backend(),
+            redis_url: None,
+            redis_key_prefix: default_redis_key_prefix(),
         }
     }
 }
@@ -1069,6 +1119,10 @@ fn default_max_request_body_bytes() -> usize {
     DEFAULT_MAX_REQUEST_BODY_BYTES
 }
 
+fn default_otel_endpoint() -> String {
+    "http://localhost:4317".to_string()
+}
+
 fn default_metrics_path() -> String {
     "/metrics".to_string()
 }
@@ -1104,6 +1158,14 @@ fn default_max_header_count() -> usize {
 
 fn default_waf_mode() -> String {
     "monitor".to_string()
+}
+
+fn default_rate_limit_backend() -> String {
+    "memory".to_string()
+}
+
+fn default_redis_key_prefix() -> String {
+    "sdkwork:gateway:ratelimit".to_string()
 }
 
 fn default_rate_limit_key() -> String {
@@ -1248,5 +1310,15 @@ fn invalid_value(key: &str, reason: impl Into<String>) -> GatewayConfigError {
     GatewayConfigError::InvalidValue {
         key: key.to_string(),
         reason: reason.into(),
+    }
+}
+
+impl Default for GatewayOtelConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            endpoint: default_otel_endpoint(),
+            service_name: None,
+        }
     }
 }

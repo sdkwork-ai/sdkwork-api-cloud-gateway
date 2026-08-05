@@ -1,11 +1,16 @@
 use std::{collections::HashMap, env, net::SocketAddr};
 
 use anyhow::{anyhow, Context};
+use opentelemetry::trace::TracerProvider as _;
+use opentelemetry_otlp::WithExportConfig;
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
 use sdkwork_api_cloud_gateway::load_gateway_config;
+use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use tokio::net::TcpListener;
 use tracing::info;
-use tracing_subscriber::{fmt, EnvFilter};
+use tracing_subscriber::{
+    filter::Filtered, fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
+};
 
 const GATEWAY_RUNTIME_STACK_SIZE: usize = 16 * 1024 * 1024;
 
@@ -30,11 +35,11 @@ fn run_gateway_process() -> anyhow::Result<()> {
 }
 
 async fn run_gateway() -> anyhow::Result<()> {
-    init_tracing();
     sdkwork_database_sqlx::enable_process_shared_database_pool();
 
     let env = env::vars().collect::<HashMap<_, _>>();
     let config = load_gateway_config(env::args().skip(1), &env, ".")?;
+    init_tracing(&config)?;
     let bind: SocketAddr = config
         .server
         .bind
@@ -62,10 +67,48 @@ fn install_process_crypto_provider() -> anyhow::Result<()> {
         .map_err(|_| anyhow!("failed to install the process-level Rustls crypto provider"))
 }
 
-fn init_tracing() {
+/// Install the tracing subscriber, optionally exporting request spans to the
+/// configured OpenTelemetry OTLP endpoint.
+fn init_tracing(config: &GatewayRuntimeConfig) -> anyhow::Result<()> {
     let filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new("sdkwork_api_cloud_gateway=info,tower_http=info"));
-    fmt().with_env_filter(filter).init();
+
+    if !config.observability.otel.enabled {
+        fmt().with_env_filter(filter).init();
+        return Ok(());
+    }
+
+    let service_name = config
+        .observability
+        .otel
+        .service_name
+        .clone()
+        .unwrap_or_else(|| config.service.name.clone());
+    let exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_endpoint(config.observability.otel.endpoint.clone())
+        .build()
+        .with_context(|| {
+            format!(
+                "failed to build OTLP span exporter for {}",
+                config.observability.otel.endpoint
+            )
+        })?;
+    let provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+        .with_batch_exporter(exporter)
+        .build();
+    let tracer = provider.tracer(service_name.clone());
+    let otel_layer = tracing_opentelemetry::layer().with_tracer(tracer);
+    tracing_subscriber::registry()
+        .with(Filtered::new(fmt::layer(), filter))
+        .with(otel_layer)
+        .init();
+    info!(
+        endpoint = %config.observability.otel.endpoint,
+        service_name = %service_name,
+        "OpenTelemetry span export enabled"
+    );
+    Ok(())
 }
 
 async fn shutdown_signal() {

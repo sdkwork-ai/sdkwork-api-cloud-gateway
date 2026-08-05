@@ -82,6 +82,36 @@
           }
         }
       }
+    },
+    "/metrics": {
+      "get": {
+        "operationId": "getGatewayMetrics",
+        "summary": "getGatewayMetrics",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Prometheus text exposition metrics"
+          }
+        }
+      }
+    },
+    "/internal/gateway/diagnostics": {
+      "get": {
+        "operationId": "getGatewayDiagnostics",
+        "summary": "getGatewayDiagnostics",
+        "x-sdkwork-request-context": "WebRequestContext",
+        "x-sdkwork-api-surface": "gateway-api",
+        "x-sdkwork-auth-mode": "anonymous",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Gateway diagnostics snapshot when enabled"
+          }
+        }
+      }
     }
   }
 }

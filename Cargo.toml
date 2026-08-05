@@ -118,7 +118,12 @@ toml = "0.8"
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.7", features = ["cors", "trace", "limit"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "registry"] }
+# OpenTelemetry OTLP span export (0.31 family, unified with the codex external chain)
+opentelemetry = { version = "0.31", features = ["trace"] }
+opentelemetry_sdk = { version = "0.31", features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "0.31", default-features = false, features = ["trace", "grpc-tonic"] }
+tracing-opentelemetry = "0.32"
 async-trait = "0.1"
 
 sdkwork-api-cloud-gateway-config = { path = "crates/sdkwork-api-cloud-gateway-config" }
