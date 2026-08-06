@@ -14525,6 +14525,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-commerce-partner-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-commerce-partner-service",
+ "sdkwork-contract-service",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-commerce-partner-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-contract-service",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-commerce-promotion-repository-sqlx"
 version = "0.1.0"
 dependencies = [
@@ -16966,6 +16994,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-log-core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "getrandom 0.2.17",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-log-store-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-log-core",
+ "serde",
+ "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-log-tower-adapter"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "bytes",
+ "http 1.5.0",
+ "http-body 1.1.0",
+ "http-body-util",
+ "sdkwork-log-core",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-lr-config"
 version = "0.1.0"
 dependencies = [
@@ -17289,7 +17356,10 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-membership-database-host",
+ "sdkwork-membership-repository-sqlx",
  "sqlx",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -17683,6 +17753,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-partner-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-partner-service-host"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-commerce-partner-repository-sqlx",
+ "sdkwork-commerce-partner-service",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+ "sdkwork-partner-database-host",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-payment-database-host"
 version = "0.1.0"
 dependencies = [
@@ -17851,6 +17945,8 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-promotion-database-host",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -18172,6 +18268,7 @@ dependencies = [
  "sdkwork-invoice-service-host",
  "sdkwork-membership-database-host",
  "sdkwork-models-catalog-repository-sqlx",
+ "sdkwork-partner-database-host",
  "sdkwork-payment-database-host",
  "sdkwork-payment-providers",
  "sdkwork-payment-service-host",
@@ -18207,15 +18304,22 @@ dependencies = [
  "sdkwork-cloudrouter-http",
  "sdkwork-cloudrouter-observability",
  "sdkwork-cloudrouter-router-service",
+ "sdkwork-commerce-partner-repository-sqlx",
+ "sdkwork-commerce-partner-service",
  "sdkwork-commerce-promotion-repository-sqlx",
  "sdkwork-commerce-promotion-service",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
+ "sdkwork-log-core",
+ "sdkwork-log-store-sqlx",
+ "sdkwork-log-tower-adapter",
  "sdkwork-models-catalog-repository-sqlx",
  "sdkwork-models-contract-service",
  "sdkwork-routes-iam-backend-api",
+ "sdkwork-routes-log-backend-api",
  "sdkwork-routes-models-catalog-backend-api",
+ "sdkwork-routes-partner-backend-api",
  "sdkwork-routes-promotion-backend-api",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -18848,6 +18952,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tracing",
+ "urlencoding",
  "uuid",
 ]
 
@@ -19472,6 +19577,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-log-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-log-core",
+ "sdkwork-utils-rust",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-routes-mahjong-app-api"
 version = "0.1.0"
 dependencies = [
@@ -19946,6 +20067,25 @@ version = "0.3.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-cloudrouter-http",
+]
+
+[[package]]
+name = "sdkwork-routes-partner-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-commerce-partner-service",
+ "sdkwork-contract-service",
+ "sdkwork-iam-context-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-partner-service-host",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
