@@ -14429,6 +14429,8 @@ dependencies = [
  "prometheus",
  "redis 1.5.0",
  "ring",
+ "sdkwork-account-repository-sqlx",
+ "sdkwork-account-service",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-contract",
  "sdkwork-cloudrouter-database-host",
@@ -14529,6 +14531,8 @@ name = "sdkwork-commerce-partner-repository-sqlx"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "sdkwork-account-repository-sqlx",
+ "sdkwork-account-service",
  "sdkwork-commerce-partner-service",
  "sdkwork-contract-service",
  "sdkwork-utils-rust",
@@ -16252,7 +16256,6 @@ dependencies = [
  "chrono-tz",
  "cloudrouter-open-sdk",
  "cron",
- "rusqlite",
  "sdkwork-agent-kernel",
  "sdkwork-agents-contract",
  "sdkwork-agents-runtime-facade",
