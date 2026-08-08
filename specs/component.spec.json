@@ -624,6 +624,20 @@
   },
   {
    "surface": "app",
+   "prefix": "/app/v3/api/iam/invite",
+   "ownership": "dependency",
+   "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+   "routeGeneration": "dependency-surface-prefix-route"
+  },
+  {
+   "surface": "app",
+   "prefix": "/app/v3/api/iam/invites",
+   "ownership": "dependency",
+   "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+   "routeGeneration": "dependency-surface-prefix-route"
+  },
+  {
+   "surface": "app",
    "prefix": "/app/v3/api/iam/users/settings",
    "ownership": "dependency",
    "dependencyServiceId": "sdkwork-cloudrouter-app-api",
@@ -753,6 +767,13 @@
    "prefix": "/internal/v3/api/web",
    "ownership": "dependency",
    "dependencyServiceId": "sdkwork-web-internal-api",
+   "routeGeneration": "dependency-surface-prefix-route"
+  },
+  {
+   "surface": "internal",
+   "prefix": "/internal/v3/api/drive",
+   "ownership": "dependency",
+   "dependencyServiceId": "sdkwork-drive-internal-api",
    "routeGeneration": "dependency-surface-prefix-route"
   },
   {
@@ -1074,7 +1095,7 @@
    "routeGeneration": "dependency-surface-prefix-route"
   },
   {
-   "surface": "open",
+   "surface": "gateway",
    "prefix": "/v1",
    "ownership": "dependency",
    "dependencyServiceId": "sdkwork-cloudrouter-open-api",
@@ -1265,6 +1286,13 @@
   {
    "surface": "app",
    "prefix": "/app/v3/api/documents",
+   "ownership": "dependency",
+   "dependencyServiceId": "sdkwork-documents-app-api",
+   "routeGeneration": "dependency-surface-prefix-route"
+  },
+  {
+   "surface": "app",
+   "prefix": "/app/v3/api/sdk_reference",
    "ownership": "dependency",
    "dependencyServiceId": "sdkwork-documents-app-api",
    "routeGeneration": "dependency-surface-prefix-route"
@@ -2625,6 +2653,22 @@
    "cargoFeature": "foundation-drive",
    "cargoDependency": "sdkwork-api-drive-assembly",
    "coverage": "sdkwork-drive-open-api-embedded-assembly-routes",
+   "runtimeModes": [
+    "embedded"
+   ],
+   "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
+  },
+  {
+   "serviceId": "sdkwork-drive-internal-api",
+   "workspace": "sdkwork-drive",
+   "apiAuthority": "sdkwork-drive-internal-api",
+   "sdkFamily": "sdkwork-drive-internal-sdk",
+   "apiPrefixes": [
+    "/internal/v3/api/drive"
+   ],
+   "coverage": "sdkwork-drive-internal-api-embedded-assembly-routes",
+   "cargoFeature": "foundation-drive",
+   "cargoDependency": "sdkwork-api-drive-assembly",
    "runtimeModes": [
     "embedded"
    ],

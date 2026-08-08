@@ -154,7 +154,7 @@ fn development_cors_can_be_overridden_for_lan_clients() {
         "true".to_owned(),
     );
     env.insert(
-        "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOWED_ORIGINS".to_owned(),
+        "SDKWORK_CORS_ALLOWED_ORIGINS".to_owned(),
         String::new(),
     );
 

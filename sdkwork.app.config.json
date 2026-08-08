@@ -98,6 +98,20 @@
           "runtimeTarget": "server",
           "targetPlatform": "linux",
           "enabled": true
+        },
+        {
+          "id": "linux-x64-standalone-container-oci",
+          "name": "SDKWork API Gateway Linux x64 Standalone Container",
+          "sourceType": "CONTAINER_IMAGE",
+          "packageFormat": "DOCKER_IMAGE",
+          "platform": "API",
+          "architecture": "x64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "runtimeTarget": "container",
+          "targetPlatform": "linux",
+          "enabled": true,
+          "url": "https://registry.sdkwork.com/sdkwork-api-cloud-gateway@sha256:d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08"
         }
       ]
     }
@@ -116,7 +130,8 @@
         "summary": "Initial SDKWork App Standard v3 gateway manifest.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
-          "linux-x64-cloud-server-tar-gz"
+          "linux-x64-cloud-server-tar-gz",
+          "linux-x64-standalone-container-oci"
         ]
       }
     ]

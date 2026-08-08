@@ -1332,28 +1332,31 @@ fn emit_access_log(
 }
 
 fn cors_layer(config: &GatewayRuntimeConfig) -> tower_http::cors::CorsLayer {
-    let mut layer =
-        sdkwork_web_axum::cors_layer_from_policy(web_framework::gateway_cors_policy(config));
+    let policy = web_framework::gateway_cors_policy(config);
+    let mut layer = sdkwork_web_axum::cors_layer_from_policy(policy.clone());
     // Same-origin requests (Origin == Host) are always allowed for dependency
-    // surfaces that declare `sameOriginAllowed`, regardless of the CORS
-    // allowlist. This keeps first-party browser flows working behind the
-    // gateway without widening cross-origin policy.
+    // surfaces that declare `sameOriginAllowed`, on top of the canonical CORS
+    // allowlist (development private-network semantics + the
+    // SDKWORK_CORS_ALLOWED_ORIGINS allowlist). The predicate therefore accepts
+    // the canonical policy origins first and only then widens to same-origin,
+    // so first-party browser flows keep working without weakening the
+    // configured cross-origin policy.
     if config
         .dependency_surfaces
         .iter()
         .any(|surface| surface.same_origin_allowed)
     {
+        let canonical_policy = policy;
         layer = layer.allow_origin(tower_http::cors::AllowOrigin::predicate(
-            |origin, request_parts| {
-                request_parts
-                    .headers
-                    .get(header::HOST)
-                    .and_then(|host| host.to_str().ok())
-                    .map(|host| {
-                        let origin = origin.to_str().unwrap_or_default();
-                        same_origin(origin, host)
-                    })
-                    .unwrap_or(false)
+            move |origin, request_parts| {
+                let origin = origin.to_str().unwrap_or_default();
+                canonical_policy.allows_origin_value(origin)
+                    || request_parts
+                        .headers
+                        .get(header::HOST)
+                        .and_then(|host| host.to_str().ok())
+                        .map(|host| same_origin(origin, host))
+                        .unwrap_or(false)
             },
         ));
     }

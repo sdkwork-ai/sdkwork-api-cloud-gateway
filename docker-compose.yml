@@ -1,0 +1,188 @@
+# sdkwork-api-cloud-gateway standalone container composition.
+#
+# runtimeTarget = "container", deploymentProfile = "standalone".
+# Build the image first with `pnpm build:container` (produces
+# sdkwork-api-cloud-gateway:local), then `docker compose up -d`.
+#
+# Port strategy: the container listens on 0.0.0.0:3900 (the application public
+# ingress, per APP_RUNTIME_TOPOLOGY_SPEC the single HTTP bind of the gateway
+# plane). The host side maps 3910 -> 3900 so the container never collides with
+# `pnpm dev` (3900 gateway, 3901 vite), the reserved 3902 client-only ingress,
+# or the sdkwork-cloudrouter container (3903). 391x is the reserved host port
+# band for this gateway's docker deployments (3911+ spare). PostgreSQL stays on
+# the compose network and exposes no host port, so the container composition is
+# conflict-free by construction.
+
+services:
+  postgres:
+    # pgvector image: the knowledgebase foundation module requires the
+    # `vector` extension, which the stock postgres image does not ship.
+    image: pgvector/pgvector:pg16
+    # Survive host/WSL restarts together with the gateway.
+    restart: unless-stopped
+    # Server-side connection ceiling: sized for the gateway foundation suite
+    # module migrations (tune PG_MAX_CONNECTIONS together with
+    # GATEWAY_DATABASE_MAX_CONNECTIONS).
+    command: ["postgres", "-c", "max_connections=${PG_MAX_CONNECTIONS:-200}"]
+    environment:
+      POSTGRES_DB: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}
+      POSTGRES_USER: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
+      POSTGRES_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Creates the same-named workspace schema on first initialization
+      # (the sdkwork-database lifecycle pins search_path to it).
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod} -d ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    # The cloudrouter foundation module requires Redis for its runtime
+    # (mirrors the sdkwork-cloudrouter composition). No host ports are
+    # exposed; the gateway reaches it on the compose network.
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  gateway:
+    image: sdkwork-api-cloud-gateway:local
+    ports:
+      - "${GATEWAY_HOST_PORT:-3910}:3900"
+    environment:
+      # Deployment identity (DEPLOYMENT_SPEC §5.2); the entrypoint pins these
+      # too, so the values here are belt-and-suspenders.
+      SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: standalone
+      SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container
+      # Runtime config comes from the packaged production template inside the
+      # image (SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE baked into the Dockerfile);
+      # environment variables take precedence over it (ENVIRONMENT_SPEC §11),
+      # so only the container-specific values are injected here.
+      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
+      # Host allowlist: the three docker test domains plus the host-mapped
+      # port for direct access. The nginx proxy forwards the real Host header,
+      # so every public domain must be listed here.
+      SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-testapidocker.sdkwork.com,testapidocker.birdcoder.com,testapidocker.dtupay.com,localhost:3910,127.0.0.1:3910}
+      # Browser CORS allow-list (API plane): the gateway runs in production
+      # posture, where cross-origin browser requests are rejected unless the
+      # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical
+      # shared key (SOURCE_CONFIG_SPEC) resolved by both the gateway and the
+      # IAM web adapter.
+      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://testapidocker.sdkwork.com,http://testapidocker.birdcoder.com,http://testapidocker.dtupay.com,http://localhost:3910,http://127.0.0.1:3910}
+      # External dependencies are injected at runtime, not baked into the image.
+      # Split database fields (with explicit schema) instead of a raw URL so
+      # the lifecycle schema identity is unambiguous.
+      SDKWORK_DATABASE_ENGINE: postgresql
+      SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:-postgres}
+      SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
+      SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_SSL_MODE: disable
+      # Connection pool sizing: the foundation suite bootstraps 46 database
+      # modules through the process-shared pool at startup; keep the server
+      # max_connections comfortably above the pool ceiling.
+      SDKWORK_DATABASE_MAX_CONNECTIONS: ${GATEWAY_DATABASE_MAX_CONNECTIONS:-50}
+      SDKWORK_DATABASE_MIN_CONNECTIONS: ${GATEWAY_DATABASE_MIN_CONNECTIONS:-5}
+      SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${GATEWAY_DATABASE_ACQUIRE_TIMEOUT:-30}
+      SDKWORK_DATABASE_IDLE_TIMEOUT: ${GATEWAY_DATABASE_IDLE_TIMEOUT:-600}
+      SDKWORK_DATABASE_MAX_LIFETIME: ${GATEWAY_DATABASE_MAX_LIFETIME:-1800}
+      # Temporary driver pool reservations: the IM module (and peers) reserve
+      # r2d2 capacity before process-pool bootstrap; without these, embedded
+      # router construction fails ("IM r2d2 capacity was not reserved").
+      SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${GATEWAY_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
+      SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${GATEWAY_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
+      # IM principal directory: the docker test deployment runs without an
+      # operator-managed principal catalog. The IM web environment gates the
+      # development-only fallback (defaults to production), so it is pinned to
+      # development together with the allow-all principal directory.
+      SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
+      SDKWORK_IM_ALLOW_ALL_PRINCIPALS: ${GATEWAY_IM_ALLOW_ALL_PRINCIPALS:-true}
+      # Cloud Router OpenAPI base URL: the image generation foundation module
+      # requires it to reach the cloud router's OpenAPI surface. Defaults to
+      # the sdkwork-cloudrouter container host mapping on this machine.
+      SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3903}
+      # Cloud Router API key pepper: required by the cloudrouter foundation
+      # module's OpenAI runtime routes; injected at runtime, never baked into
+      # the image. Override via .env for anything beyond local testing.
+      SDKWORK_CLOUDROUTER_API_KEY_PEPPER: ${GATEWAY_CLOUDROUTER_API_KEY_PEPPER:-cloudrouter-local-dev-pepper-change-me}
+      # Cloud Router upstream credential encryption key ring (camelCase JSON,
+      # keys >= 32 bytes) required for PostgreSQL upstream routing. Local test
+      # default; regenerate for any real deployment.
+      SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING: '${GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING:-{"activeKeyId":"local-dev-key-ring-001","activeKey":"dyfeQDB++uTwSSRGuRju9yHE8iX3wTH+ySmqpjimX6w=","fingerprintKey":"kg/5KOatnHH9XgtbCS16VkjUEQoohdS5miD2U5GhtBc=","decryptionKeys":[]}}'
+      # Cloud Router all-in-one runtime secrets (trusted subject, app session,
+      # payment webhook, internal signing). Local test defaults matching the
+      # sdkwork-cloudrouter compose; override via .env for anything real.
+      SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET: ${GATEWAY_CLOUDROUTER_TRUSTED_SUBJECT_SECRET:-cloudrouter-local-dev-trusted-subject-change-me}
+      SDKWORK_CLOUDROUTER_APP_SESSION_SECRET: ${GATEWAY_CLOUDROUTER_APP_SESSION_SECRET:-cloudrouter-local-dev-app-session-change-me}
+      SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET: ${GATEWAY_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:-cloudrouter-local-dev-payment-webhook-change-me}
+      SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET: ${GATEWAY_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:-cloudrouter-local-dev-signing-secret-change-me}
+      # Cloud Router database module declares autoMigrate=false; the docker
+      # test deployment lets the gateway run the explicit lifecycle migrate at
+      # startup (non-production SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT allows
+      # the embedded migrate path).
+      SDKWORK_DATABASE_AUTO_MIGRATE: ${GATEWAY_DATABASE_AUTO_MIGRATE:-true}
+      # Cloud Router runtime Redis (required by the cloudrouter foundation
+      # module; mirror of the sdkwork-cloudrouter composition).
+      SDKWORK_CLOUDROUTER_REDIS_ENABLED: "true"
+      SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:-redis}
+      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
+      SDKWORK_CLOUDROUTER_REDIS_DATABASE: "0"
+      SDKWORK_CLOUDROUTER_REDIS_KEY_PREFIX: cloudrouter
+      SDKWORK_CLOUDROUTER_REDIS_MAX_CONNECTIONS: ${GATEWAY_CLOUDROUTER_REDIS_MAX_CONNECTIONS:-50}
+      # Image generation Drive import object store: the default is a relative
+      # `.data` path which is not writable inside the container (install root
+      # is read-only for the sdkwork user); point it at the durable data
+      # volume (RUNTIME_DIRECTORY_SPEC §4.5).
+      IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/image-drive-objects
+      # Voice generation Drive sync object store: same relative-`.data` default
+      # problem as the image module; point it at the durable data volume.
+      VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/voice-drive-objects
+      # Web Server snowflake node id: single-instance docker deployment pins a
+      # unique node id (multi-instance deployments must vary it per instance).
+      SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID: ${GATEWAY_WEBSERVER_SNOWFLAKE_NODE_ID:-1}
+      # Payment credential master key: a file on the durable data volume
+      # (auto-created on first start; required by the payment foundation host).
+      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /var/lib/sdkwork/api-gateway/secrets/payment-credential-master.key
+      # Process log level (tracing reads RUST_LOG directly).
+      RUST_LOG: ${RUST_LOG:-info}
+    volumes:
+      # Durable data lives on a mounted volume (RUNTIME_DIRECTORY_SPEC §4.5).
+      - gateway-data:/var/lib/sdkwork/api-gateway
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # Gateway readiness probe: compose can restart/replace the gateway when it
+    # stops answering. The start_period covers the foundation suite module
+    # migrations that run on first start.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3900/readyz >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 240s
+    # Deployment guardrails: bound the gateway to predictable CPU and memory
+    # (tune via .env) so noisy neighbors cannot starve the host.
+    deploy:
+      resources:
+        limits:
+          cpus: ${GATEWAY_CPU_LIMIT:-2.0}
+          memory: ${GATEWAY_MEMORY_LIMIT:-2g}
+        reservations:
+          cpus: ${GATEWAY_CPU_RESERVATION:-0.5}
+          memory: ${GATEWAY_MEMORY_RESERVATION:-512m}
+
+volumes:
+  postgres-data:
+  redis-data:
+  gateway-data:

@@ -27,6 +27,7 @@ must be backed by the relevant Cargo, pnpm, workflow, or package verification co
 ## Operations
 
 - [Ubuntu 与 Windows 源码发布和生产部署](guides/operator/SOURCE_DEPLOYMENT_UBUNTU_WINDOWS.md)
+- [Docker Standalone 快速部署（WSL Ubuntu + Windows）](guides/operator/DOCKER_STANDALONE_QUICK_DEPLOY.md)
 
 ## Canon Documents
 

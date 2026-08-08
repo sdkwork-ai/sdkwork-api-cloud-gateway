@@ -1,0 +1,11 @@
+#!/bin/sh
+# sdkwork-api-cloud-gateway standalone container entrypoint.
+# Generated-equivalent of the server install package container entrypoint:
+# pins the container deployment identity, then execs the gateway binary so
+# signals (SIGTERM graceful shutdown) reach the gateway process directly.
+set -eu
+
+export SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone
+export SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
+
+exec /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway "$@"

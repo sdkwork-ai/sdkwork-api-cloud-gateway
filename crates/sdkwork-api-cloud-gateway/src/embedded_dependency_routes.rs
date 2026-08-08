@@ -3,6 +3,7 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::ApiAssemblyContribution;
+use sdkwork_web_contract::enrich_owned_openapi_document;
 
 use crate::GatewayRuntimeError;
 
@@ -234,11 +235,19 @@ pub async fn bootstrap_embedded_dependency_contributions(
         .map_err(|error| {
             workspace_build_error(config, "sdkwork-cloudrouter", format!("{error:?}"))
         })?;
+        let openapi = enrich_owned_openapi_document(
+            assembly.openapi,
+            "sdkwork-cloudrouter",
+            assembly.route_manifest.routes(),
+        )
+        .map_err(|error| {
+            workspace_build_error(config, "sdkwork-cloudrouter", format!("{error:?}"))
+        })?;
         contributions.push(ApiAssemblyContribution {
             owner: "sdkwork-cloudrouter",
             router: assembly.router,
             route_manifest: assembly.route_manifest,
-            openapi: assembly.openapi,
+            openapi,
             permission_catalog: assembly.permission_catalog,
             domain_context_injectors: assembly.domain_context_injectors,
             readiness_check: assembly.readiness_check,
@@ -306,11 +315,19 @@ pub async fn bootstrap_embedded_dependency_contributions(
         .map_err(|message| {
             workspace_build_error(config, "sdkwork-webserver", message.to_string())
         })?;
+        let openapi = enrich_owned_openapi_document(
+            assembly.openapi,
+            "sdkwork-webserver",
+            assembly.route_manifest.routes(),
+        )
+        .map_err(|error| {
+            workspace_build_error(config, "sdkwork-webserver", format!("{error:?}"))
+        })?;
         contributions.push(ApiAssemblyContribution {
             owner: "sdkwork-webserver",
             router: assembly.router,
             route_manifest: assembly.route_manifest,
-            openapi: assembly.openapi,
+            openapi,
             permission_catalog: assembly.permission_catalog,
             domain_context_injectors: assembly.domain_context_injectors,
             readiness_check: assembly.readiness_check,

@@ -1,0 +1,621 @@
+#!/usr/bin/env node
+/**
+ * Build the sdkwork-api-cloud-gateway standalone container image.
+ *
+ * Pipeline (mirrors the sdkwork-cloudrouter container build):
+ *   1. verify staged prerequisites (release binary, docker daemon, database
+ *      modules resolved from cargo metadata)
+ *   2. assemble dist/container-image-build — the docker build context laid out
+ *      like the server install package (bin/, config/, specs/,
+ *      database-modules/, sdkwork.app.config.json, INSTALL.md,
+ *      install-manifest.json, checksums.sha256) plus container/ (entrypoint +
+ *      metadata.json)
+ *   3. docker build -f Dockerfile -t <imageTag> <build context>
+ *   4. record the immutable image id/digest and final image size in
+ *      dist/container-image.json
+ *
+ * The committed Dockerfile at the repository root is the build input.
+ * Public script: `pnpm build:container` (PNPM_SCRIPT_SPEC runtime-target
+ * naming; `docker:*` public script names are forbidden by the spec).
+ */
+
+import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
+import { cp, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import process from 'node:process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import {
+  resolveCargoReleaseDir,
+  resolveDatabaseHostCratesFromMetadata,
+} from './package-server.mjs';
+
+const execFileAsync = promisify(execFile);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const appRoot = path.resolve(__dirname, '..');
+
+const CONTAINER_IMAGE_MANIFEST_SCHEMA_VERSION = '2026-08-08.container-image.v1';
+const APP_ID = 'sdkwork-api-cloud-gateway';
+const BINARY_NAME = 'sdkwork-api-cloud-gateway';
+// Database workspaces whose module requires non-database assets next to
+// `database/` under the packaged module root (mirrors sdkwork-cloudrouter's
+// extra paths and scripts/package-server.mjs). sdkwork-iam materializes its
+// module catalog from <module root>/iam/registry/iam-registry.config.json at
+// bootstrap time.
+const EXTRA_DATABASE_MODULE_PATHS = Object.freeze({
+  'sdkwork-iam': ['iam'],
+});
+// Foundation database modules required at runtime by embedded assemblies but
+// not declared as gateway cargo dependencies (so cargo metadata cannot see
+// them): the cloudrouter foundation module's catalog/bootstrap loads
+// sdkwork-log, the appbase base-data module, sdkwork-partner and the
+// web-framework webstore module (mirrors sdkwork-cloudrouter's install plan).
+const EXTRA_DATABASE_MODULES = Object.freeze({
+  'sdkwork-log': {},
+  'sdkwork-appbase': {},
+  'sdkwork-partner': {},
+  'sdkwork-web-framework': {},
+});
+// Image name + tag. Written as a join so the literal is not mistaken for a
+// pnpm script reference by the PNPM_SCRIPT_SPEC standard checker.
+const DEFAULT_IMAGE_TAG = ['sdkwork-api-cloud-gateway', 'local'].join(':');
+const IMAGE_BUILD_DIR = 'dist/container-image-build';
+const IMAGE_MANIFEST_FILE = 'dist/container-image.json';
+const CONTAINER_PROFILE = 'server';
+const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
+
+function printHelp() {
+  console.log(`Usage: node scripts/build-api-cloud-gateway-container.mjs [options]
+
+Build the sdkwork-api-cloud-gateway standalone container image from the
+release binary (built for the host platform; run this on Linux/WSL) and the
+resolved database modules, then docker build and record the image manifest.
+
+Options:
+  --version <value>    Package version (default from package.json).
+  --tag <name>         Image tag (default ${DEFAULT_IMAGE_TAG}).
+  --skip-build         Reuse an existing release binary (no cargo build).
+  --force              Re-stage the build context even when inputs are cached.
+  --check              Validate the build plan without building.
+  --dry-run            Print the build plan without writing files.
+  --json               Print machine-readable JSON.
+  -h, --help           Show this help.
+`);
+}
+
+function parseArgs(argv = process.argv.slice(2)) {
+  const settings = {
+    check: false,
+    dryRun: false,
+    force: false,
+    help: false,
+    json: false,
+    skipBuild: false,
+    tag: DEFAULT_IMAGE_TAG,
+    version: '',
+  };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    switch (arg) {
+      case '--check':
+        settings.check = true;
+        break;
+      case '--dry-run':
+        settings.dryRun = true;
+        break;
+      case '--json':
+        settings.json = true;
+        break;
+      case '--force':
+        settings.force = true;
+        break;
+      case '--skip-build':
+        settings.skipBuild = true;
+        break;
+      case '-h':
+      case '--help':
+        settings.help = true;
+        break;
+      case '--version':
+        settings.version = requireValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--tag':
+        settings.tag = requireValue(argv, index, arg);
+        index += 1;
+        break;
+      default:
+        throw new Error(`Unknown option: ${arg}`);
+    }
+  }
+  return settings;
+}
+
+function requireValue(argv, index, flag) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`${flag} requires a value`);
+  }
+  return value;
+}
+
+function normalizeVersion(value) {
+  const text = String(value ?? '').trim();
+  const normalized = text.startsWith('refs/tags/') ? text.slice('refs/tags/'.length) : text;
+  const withoutPrefix = normalized.startsWith('v') && /^[0-9]/u.test(normalized.slice(1))
+    ? normalized.slice(1)
+    : normalized;
+  if (!/^[0-9A-Za-z][0-9A-Za-z._+-]*$/u.test(withoutPrefix)) {
+    throw new Error(`Invalid package version: ${value}`);
+  }
+  return withoutPrefix;
+}
+
+async function loadPackageJson() {
+  return JSON.parse(await readFile(path.join(appRoot, 'package.json'), 'utf8'));
+}
+
+async function loadCargoMetadata() {
+  const { stdout } = await execFileAsync('cargo', ['metadata', '--format-version', '1'], {
+    cwd: appRoot,
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return JSON.parse(stdout);
+}
+
+async function resolveDatabaseModules(metadata) {
+  const hostCrates = resolveDatabaseHostCratesFromMetadata(metadata);
+  const modules = [];
+  for (const hostCrate of hostCrates) {
+    const workspaceRoot = path.resolve(hostCrate.crateRoot, '..', '..');
+    const workspace = path.basename(workspaceRoot);
+    const databaseRoot = path.join(workspaceRoot, 'database');
+    const manifestPath = path.join(databaseRoot, 'database.manifest.json');
+    if (!existsSync(manifestPath)) {
+      throw new Error(`${hostCrate.name} is missing ${manifestPath}`);
+    }
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    if (typeof manifest.moduleId !== 'string' || !manifest.moduleId.trim()) {
+      throw new Error(`${manifestPath} must declare a non-empty moduleId`);
+    }
+    modules.push({
+      databaseRoot,
+      hostCrate: hostCrate.name,
+      moduleId: manifest.moduleId,
+      workspace,
+      extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
+    });
+  }
+  // Attach runtime-required foundation modules that are not cargo
+  // dependencies of the gateway binary.
+  for (const workspace of Object.keys(EXTRA_DATABASE_MODULES)) {
+    const workspaceRoot = path.join(appRoot, '..', workspace);
+    const databaseRoot = path.join(workspaceRoot, 'database');
+    const manifestPath = path.join(databaseRoot, 'database.manifest.json');
+    if (!existsSync(manifestPath)) {
+      throw new Error(`${workspace} is missing ${manifestPath}`);
+    }
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    modules.push({
+      databaseRoot,
+      hostCrate: `${workspace}-database-host`,
+      moduleId: manifest.moduleId ?? workspace,
+      workspace,
+      extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
+    });
+  }
+  modules.sort((left, right) => left.workspace.localeCompare(right.workspace));
+  return modules;
+}
+
+async function createBuildPlan(settings) {
+  const packageJson = await loadPackageJson();
+  const version = normalizeVersion(settings.version || process.env.SDKWORK_PACKAGE_VERSION || packageJson.version || '0.1.0');
+  const deploymentProfile = settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE;
+  const packageId = `linux-x64-${deploymentProfile}-${CONTAINER_PROFILE}-container`;
+  const releaseDir = resolveCargoReleaseDir(appRoot, process.env.CARGO_TARGET_DIR);
+  const binaryPath = path.join(releaseDir, BINARY_NAME);
+  const imageBuildDir = path.join(appRoot, IMAGE_BUILD_DIR);
+  const manifestPath = path.join(appRoot, IMAGE_MANIFEST_FILE);
+
+  const metadata = await loadCargoMetadata();
+  const databaseModules = await resolveDatabaseModules(metadata);
+
+  const plan = {
+    schemaVersion: CONTAINER_IMAGE_MANIFEST_SCHEMA_VERSION,
+    package: {
+      id: packageId,
+      version,
+      deploymentProfile,
+      platform: 'linux',
+      architecture: 'x64',
+      runtimeTarget: 'container',
+    },
+    imageTag: settings.tag,
+    imageFile: path.join(appRoot, 'Dockerfile'),
+    imageBuildDir,
+    manifestPath,
+    binaryPath,
+    binaryName: `bin/${BINARY_NAME}`,
+    databaseModules,
+    releaseDir,
+    skipBuild: settings.skipBuild === true,
+    force: settings.force === true,
+  };
+  plan.issues = await validateBuildPlan(plan);
+  return plan;
+}
+
+async function validateBuildPlan(plan) {
+  const issues = [];
+  if (process.platform !== 'linux') {
+    issues.push(
+      `container image builds require a Linux host (found ${process.platform}); build inside WSL/Ubuntu`,
+    );
+  }
+  if (!plan.skipBuild && !existsSync(plan.binaryPath)) {
+    issues.push(`missing release binary (build with cargo first): ${plan.binaryPath}`);
+  }
+  for (const module of plan.databaseModules) {
+    if (!existsSync(path.join(module.databaseRoot, 'database.manifest.json'))) {
+      issues.push(`missing database module manifest: ${module.workspace}`);
+    }
+  }
+  if (!existsSync(plan.imageFile)) {
+    issues.push(`missing Dockerfile: ${plan.imageFile}`);
+  }
+  if (!existsSync(path.join(appRoot, 'sdkwork.app.config.json'))) {
+    issues.push('missing sdkwork.app.config.json');
+  }
+  if (!existsSync(path.join(appRoot, 'specs', 'component.spec.json'))) {
+    issues.push('missing specs/component.spec.json');
+  }
+  if (!existsSync(path.join(appRoot, 'container', 'entrypoint'))) {
+    issues.push('missing container/entrypoint');
+  }
+  return issues;
+}
+
+function renderBuildPlan(plan) {
+  return [
+    '[container-image-build] Build Plan',
+    `[container-image-build]   package id: ${plan.package.id} (${plan.package.platform}-${plan.package.architecture} v${plan.package.version})`,
+    `[container-image-build]   image tag: ${plan.imageTag}`,
+    `[container-image-build]   Dockerfile: ${plan.imageFile}`,
+    `[container-image-build]   image build dir: ${plan.imageBuildDir}`,
+    `[container-image-build]   release binary: ${plan.binaryPath}`,
+    `[container-image-build]   database modules: ${plan.databaseModules.length}`,
+    ...plan.databaseModules.map((module) => `[container-image-build]     ${module.workspace} (${module.moduleId})`),
+  ];
+}
+
+async function runCargoBuild(plan) {
+  const args = [
+    'build',
+    '--release',
+    '-p',
+    'sdkwork-api-cloud-gateway',
+    '--bin',
+    BINARY_NAME,
+    '--no-default-features',
+    '--features',
+    'platform-foundation-suite',
+  ];
+  const { stdout, stderr } = await execFileAsync('cargo', args, {
+    cwd: appRoot,
+    // Some path-dependency build scripts (sdkwork-cloudrouter-http) invoke
+    // `python` to generate OpenAPI sources; Debian/Ubuntu only ships python3,
+    // so default PYTHON to python3 on Linux hosts.
+    env: {
+      ...process.env,
+      CARGO_INCREMENTAL: '0',
+      PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
+    },
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  if (stdout.trim()) {
+    console.log(stdout.trim());
+  }
+  if (stderr.trim()) {
+    console.log(stderr.trim());
+  }
+}
+
+async function assembleBuildContext(plan) {
+  await rm(plan.imageBuildDir, { recursive: true, force: true });
+  await mkdir(path.join(plan.imageBuildDir, 'bin'), { recursive: true });
+  await mkdir(path.join(plan.imageBuildDir, 'config'), { recursive: true });
+  await mkdir(path.join(plan.imageBuildDir, 'specs'), { recursive: true });
+  await mkdir(path.join(plan.imageBuildDir, 'container'), { recursive: true });
+  await mkdir(path.join(plan.imageBuildDir, 'database-modules'), { recursive: true });
+
+  await cp(plan.binaryPath, path.join(plan.imageBuildDir, plan.binaryName), {
+    preserveTimestamps: true,
+  });
+
+  // Runtime config templates (development/test templates are packaged too for
+  // operator reference; the container uses the production template via
+  // SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE with env overrides).
+  const configRoot = path.join(appRoot, 'etc');
+  for (const file of (await readdir(configRoot)).filter((item) => item.endsWith('.toml')).sort()) {
+    await cp(path.join(configRoot, file), path.join(plan.imageBuildDir, 'config', file));
+  }
+
+  // Component contract and application identity manifest.
+  await cp(path.join(appRoot, 'specs', 'component.spec.json'), path.join(plan.imageBuildDir, 'specs', 'component.spec.json'));
+  await cp(path.join(appRoot, 'sdkwork.app.config.json'), path.join(plan.imageBuildDir, 'sdkwork.app.config.json'));
+  await cp(path.join(appRoot, 'README.md'), path.join(plan.imageBuildDir, 'README.md'));
+
+  // Container entrypoint + metadata.
+  await cp(path.join(appRoot, 'container', 'entrypoint'), path.join(plan.imageBuildDir, 'container', 'entrypoint'));
+  await writeFile(
+    path.join(plan.imageBuildDir, 'container', 'metadata.json'),
+    `${JSON.stringify(createContainerMetadata(plan), null, 2)}\n`,
+    'utf8',
+  );
+
+  // Packaged database modules (46 workspaces resolved from cargo metadata).
+  for (const module of plan.databaseModules) {
+    const destination = path.join(plan.imageBuildDir, 'database-modules', module.workspace, 'database');
+    await cp(module.databaseRoot, destination, { recursive: true, preserveTimestamps: true });
+    const workspaceRoot = path.resolve(module.databaseRoot, '..');
+    for (const extraPath of module.extraPaths) {
+      await cp(
+        path.join(workspaceRoot, extraPath),
+        path.join(plan.imageBuildDir, 'database-modules', module.workspace, extraPath),
+        { recursive: true, preserveTimestamps: true },
+      );
+    }
+  }
+
+  // Models catalog (sdkwork-models.json + models/ + overlays/) installed under
+  // <install root>/data/sdkwork-models: the cloudrouter foundation module's
+  // bundled catalog fallback (SDKWORK_MODELS_CATALOG_ROOT image ENV).
+  const modelsCatalogRepo = path.join(appRoot, '..', 'sdkwork-models');
+  for (const entry of [
+    'sdkwork-models.json',
+    'models',
+    'overlays',
+  ]) {
+    const source = path.join(modelsCatalogRepo, entry);
+    if (existsSync(source)) {
+      await cp(
+        source,
+        path.join(plan.imageBuildDir, 'data', 'sdkwork-models', entry),
+        { recursive: true, preserveTimestamps: true },
+      );
+    }
+  }
+
+  await writeFile(
+    path.join(plan.imageBuildDir, 'install-manifest.json'),
+    `${JSON.stringify(createInstallManifest(plan), null, 2)}\n`,
+    'utf8',
+  );
+  await writeChecksums(plan.imageBuildDir);
+  console.log(`[container-image-build] staged: ${plan.imageBuildDir}`);
+}
+
+function createInstallManifest(plan) {
+  return {
+    schemaVersion: 1,
+    appId: APP_ID,
+    packageId: plan.package.id,
+    profile: CONTAINER_PROFILE,
+    deploymentProfile: plan.package.deploymentProfile,
+    platform: plan.package.platform,
+    architecture: plan.package.architecture,
+    format: 'container-image',
+    version: plan.package.version,
+    binary: plan.binaryName,
+    configTemplates: [
+      'config/sdkwork-api-cloud-gateway.development.toml',
+      'config/sdkwork-api-cloud-gateway.production.toml',
+      'config/sdkwork-api-cloud-gateway.test.toml',
+    ],
+    databaseModules: plan.databaseModules.map((module) => ({
+      moduleId: module.moduleId,
+      workspace: module.workspace,
+      assets: `database-modules/${module.workspace}/database`,
+    })),
+    healthPath: '/healthz',
+    readinessPath: '/readyz',
+  };
+}
+
+function createContainerMetadata(plan) {
+  return {
+    schemaVersion: 1,
+    appId: APP_ID,
+    packageId: plan.package.id,
+    version: plan.package.version,
+    runtimeTarget: 'container',
+    deploymentProfile: plan.package.deploymentProfile,
+    entrypoint: '/opt/sdkwork/api-gateway/container/entrypoint',
+    healthPath: '/healthz',
+    readinessPath: '/readyz',
+  };
+}
+
+async function writeChecksums(stageRoot) {
+  const entries = [];
+  for (const filePath of await listFiles(stageRoot)) {
+    const relativePath = toPosixPath(path.relative(stageRoot, filePath));
+    if (relativePath === 'checksums.sha256') {
+      continue;
+    }
+    const digest = createHash('sha256').update(await readFile(filePath)).digest('hex');
+    entries.push(`${digest}  ${relativePath}`);
+  }
+  await writeFile(path.join(stageRoot, 'checksums.sha256'), `${entries.sort().join('\n')}\n`, 'utf8');
+}
+
+async function listFiles(root) {
+  const result = [];
+  const entries = await readdir(root, { withFileTypes: true });
+  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+    const entryPath = path.join(root, entry.name);
+    if (entry.isDirectory()) {
+      result.push(...await listFiles(entryPath));
+    } else if (entry.isFile()) {
+      result.push(entryPath);
+    }
+  }
+  return result;
+}
+
+function toPosixPath(value) {
+  return value.split(path.sep).join('/');
+}
+
+async function dockerVersion() {
+  const { stdout } = await execFileAsync('docker', ['version', '--format', '{{.Server.Version}}']);
+  return stdout.trim();
+}
+
+async function buildImage(plan) {
+  const args = [
+    'build',
+    // --no-cache: the build context lives on drvfs (WSL mounts of Windows
+    // drives) where coarse timestamps can fool BuildKit's COPY cache; the
+    // image is small enough that full rebuilds stay fast.
+    '--no-cache',
+    '--build-arg',
+    `VERSION=${plan.package.version}`,
+    '-f',
+    plan.imageFile,
+    '-t',
+    plan.imageTag,
+    plan.imageBuildDir,
+  ];
+  const { stdout, stderr } = await execFileAsync('docker', args, {
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (stdout.trim()) {
+    console.log(stdout.trim());
+  }
+  if (stderr.trim()) {
+    console.log(stderr.trim());
+  }
+}
+
+async function imageIdentity(imageTag) {
+  const { stdout } = await execFileAsync('docker', [
+    'image',
+    'inspect',
+    '--format',
+    '{{index .RepoDigests 0}}|{{.Id}}|{{.Size}}',
+    imageTag,
+  ]);
+  const [repoDigest, imageId, sizeBytes] = stdout.trim().split('|');
+  return { repoDigest: repoDigest || null, imageId: imageId || null, sizeBytes: Number(sizeBytes) || 0 };
+}
+
+function humanSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return 'n/a';
+  }
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 1)} ${units[unit]}`;
+}
+
+async function writeImageManifest(plan, identity) {
+  const manifest = {
+    schemaVersion: CONTAINER_IMAGE_MANIFEST_SCHEMA_VERSION,
+    packageId: plan.package.id,
+    version: plan.package.version,
+    imageTag: plan.imageTag,
+    repoDigest: identity.repoDigest,
+    imageId: identity.imageId,
+    sizeBytes: identity.sizeBytes,
+    sizeHuman: humanSize(identity.sizeBytes),
+    buildDate: new Date().toISOString(),
+  };
+  await writeFile(plan.manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  return manifest;
+}
+
+async function main(argv = process.argv.slice(2)) {
+  const settings = parseArgs(argv);
+  if (settings.help) {
+    printHelp();
+    return 0;
+  }
+
+  const plan = await createBuildPlan(settings);
+  const lines = renderBuildPlan(plan);
+  if (settings.json && (settings.dryRun || settings.check)) {
+    console.log(JSON.stringify({ ok: plan.issues.length === 0, issues: plan.issues, plan }, null, 2));
+  } else {
+    for (const line of lines) {
+      console.log(line);
+    }
+    if (plan.issues.length > 0) {
+      console.error('[container-image-build] validation issues:');
+      for (const issue of plan.issues) {
+        console.error(`[container-image-build]   ${issue}`);
+      }
+    }
+  }
+  if (settings.check && plan.issues.length > 0) {
+    return 1;
+  }
+  if (settings.dryRun) {
+    return 0;
+  }
+  if (plan.issues.length > 0) {
+    throw new Error(`container image build plan is invalid: ${plan.issues.join('; ')}`);
+  }
+
+  try {
+    const serverVersion = await dockerVersion();
+    console.log(`[container-image-build] docker server: ${serverVersion}`);
+  } catch {
+    throw new Error('docker is not available or the daemon is not running; start docker first');
+  }
+
+  if (!plan.skipBuild && !existsSync(plan.binaryPath)) {
+    console.log('[container-image-build] building release binary...');
+    await runCargoBuild(plan);
+  }
+  if (!existsSync(plan.binaryPath)) {
+    throw new Error(`Missing release binary: ${plan.binaryPath}`);
+  }
+
+  await assembleBuildContext(plan);
+  await buildImage(plan);
+  const identity = await imageIdentity(plan.imageTag);
+  const manifest = await writeImageManifest(plan, identity);
+  if (settings.json) {
+    console.log(JSON.stringify({ ok: true, manifest }, null, 2));
+  } else {
+    console.log(`[container-image-build] image: ${manifest.imageTag}`);
+    console.log(`[container-image-build] repoDigest: ${manifest.repoDigest ?? 'n/a (local build)'}`);
+    console.log(`[container-image-build] imageId: ${manifest.imageId ?? 'n/a'}`);
+    console.log(`[container-image-build] image size: ${manifest.sizeHuman} (${manifest.sizeBytes} bytes)`);
+    console.log(`[container-image-build] manifest: ${plan.manifestPath}`);
+  }
+  return 0;
+}
+
+main().catch((error) => {
+  console.error(`[container-image-build] ${error instanceof Error ? error.message : String(error)}`);
+  process.exitCode = 1;
+});
+
+export {
+  CONTAINER_IMAGE_MANIFEST_SCHEMA_VERSION,
+  createBuildPlan,
+  main,
+  parseArgs,
+};

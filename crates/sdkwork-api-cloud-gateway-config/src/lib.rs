@@ -685,7 +685,7 @@ impl GatewayRuntimeConfig {
                 allow_any_origin,
             )?;
         }
-        if let Some(allowed_origins) = env.get("SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOWED_ORIGINS") {
+        if let Some(allowed_origins) = env.get("SDKWORK_CORS_ALLOWED_ORIGINS") {
             self.cors.allowed_origins = parse_csv_env(allowed_origins);
         }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED") {

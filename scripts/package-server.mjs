@@ -14,6 +14,14 @@ const SERVER_PROFILE = 'server';
 const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
 const SUPPORTED_FORMAT = 'tar.gz';
 
+// Database workspaces whose module requires non-database assets next to
+// `database/` under the packaged module root (mirrors sdkwork-cloudrouter's
+// extra paths). sdkwork-iam materializes its module catalog from
+// <module root>/iam/registry/iam-registry.config.json at bootstrap time.
+const EXTRA_DATABASE_MODULE_PATHS = Object.freeze({
+  'sdkwork-iam': ['iam'],
+});
+
 const scriptPath = fileURLToPath(import.meta.url);
 const appRoot = path.resolve(path.dirname(scriptPath), '..');
 
@@ -370,6 +378,7 @@ async function resolveDatabaseAssetModules() {
       hostCrate: hostCrate.name,
       moduleId: manifest.moduleId,
       workspace,
+      extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
     });
   }
 
@@ -406,6 +415,14 @@ async function copyDatabaseModuleAssets(context) {
       'database',
     );
     await cp(module.databaseRoot, destination, { recursive: true });
+    const workspaceRoot = path.resolve(module.databaseRoot, '..');
+    for (const extraPath of module.extraPaths) {
+      await cp(
+        path.join(workspaceRoot, extraPath),
+        path.join(context.stageRoot, 'database-modules', module.workspace, extraPath),
+        { recursive: true },
+      );
+    }
   }
 }
 

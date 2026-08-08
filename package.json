@@ -10,6 +10,8 @@
   "scripts": {
     "stop": "node ../sdkwork-specs/tools/stop-sdkwork-workspace-processes.mjs --workspace .",
     "build": "cargo build --workspace",
+    "build:container": "node scripts/build-api-cloud-gateway-container.mjs",
+    "build:container:check": "node scripts/build-api-cloud-gateway-container.mjs --check --dry-run",
     "check": "pnpm run check:standards && pnpm run check:app-composition && pnpm gateway:api:validate && pnpm db:pool:validate && pnpm format:check && pnpm check:all-features && pnpm check:foundation-community && pnpm check:foundation-suite && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
     "check:standards": "node ../sdkwork-specs/tools/check-source-config-standard.mjs --root . && node ../sdkwork-specs/tools/check-app-manifest-standard.mjs --root . && node ../sdkwork-specs/tools/check-app-manifest-deployment-standard.mjs --root . && node ../sdkwork-specs/tools/check-agent-workflow-standard.mjs --root . && node ../sdkwork-specs/tools/check-pnpm-script-standard.mjs --root . && node ../sdkwork-specs/tools/check-repository-docs-standard.mjs --root .",
     "check:all-features": "cargo check -p sdkwork-api-cloud-gateway --all-features",
