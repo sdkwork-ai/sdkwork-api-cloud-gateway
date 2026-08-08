@@ -6664,6 +6664,8 @@ version = "0.3.0"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
+ "sdkwork-account-repository-sqlx",
+ "sdkwork-account-service-host",
  "sdkwork-cloudrouter-edge-runtime",
  "sdkwork-cloudrouter-http",
  "sdkwork-iam-database-host",
@@ -6688,6 +6690,7 @@ dependencies = [
  "serde_json",
  "tokio",
  "tower 0.5.3",
+ "tracing",
 ]
 
 [[package]]

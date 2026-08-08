@@ -437,13 +437,16 @@ function renderInstallGuide(context) {
   const binaryPath = context.platform === 'windows'
     ? '.\\bin\\sdkwork-api-cloud-gateway.exe'
     : './bin/sdkwork-api-cloud-gateway';
+  // Service registration name (PACKAGING_SPEC §5.5): sdkwork-<application-code>
+  // for both systemd units and Windows SCM services.
+  const serviceName = 'sdkwork-api-gateway';
   return `# SDKWork API Gateway Server Package
 
 Package: ${context.packageId}
 Version: ${context.version}
 Target: ${context.platform}/${context.architecture}
 
-## Start
+## Start (development / smoke test)
 
 \`\`\`sh
 ${binaryPath} --config config/sdkwork-api-cloud-gateway.production.toml
@@ -456,9 +459,26 @@ curl http://127.0.0.1:3900/healthz
 curl http://127.0.0.1:3900/readyz
 \`\`\`
 
-Production deployments must materialize the TOML template as protected operator configuration,
-inject the unified PostgreSQL profile and secrets separately, and compile every declared foundation
-assembly feature.
+## Production deployment (systemd service)
+
+Service deployments install the binary and runtime layout per
+RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
+(\`/usr/lib/systemd/system/${serviceName}.service\`, PACKAGING_SPEC §5.5):
+
+1. Materialize \`config/sdkwork-api-cloud-gateway.production.toml\` at the
+   canonical config path \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml\`
+   (\`root:sdkwork\`, 0640).
+2. Put installation-generated overrides in
+   \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env\` (0640) — never
+   embed them in the unit file.
+3. Inject the unified PostgreSQL profile through \`SDKWORK_DATABASE_*\` with
+   password material via \`password_file\` or
+   \`/etc/sdkwork/database/database.secret\`; never write credentials into env
+   files, unit files, or config templates (PACKAGING_SPEC §5.5).
+4. \`sudo systemctl enable --now ${serviceName}\`
+
+See docs/guides/operator/INSTALLATION_STANDARDS.md for the complete per-OS
+installation and configuration standards (Linux/macOS/Windows/container).
 `;
 }
 
@@ -484,6 +504,35 @@ function createInstallManifest(context) {
       workspace: module.workspace,
       assets: `database-modules/${module.workspace}/database`,
     })),
+    // Host directory mapping and service registration (PACKAGING_SPEC §5.5,
+    // RUNTIME_DIRECTORY_SPEC §4.1-§4.5). The package declares where each asset
+    // role lands so installers and automation can materialize the canonical
+    // layout without re-deriving it.
+    installConfiguration: {
+      serviceName: 'sdkwork-api-gateway',
+      systemdUnit: '/usr/lib/systemd/system/sdkwork-api-gateway.service',
+      directories: {
+        config: '/etc/sdkwork/api-gateway',
+        data: '/var/lib/sdkwork/api-gateway',
+        logs: '/var/log/sdkwork/api-gateway',
+        cache: '/var/cache/sdkwork/api-gateway',
+        run: '/run/sdkwork/api-gateway',
+        installRoot: '/opt/sdkwork/api-gateway',
+      },
+      configFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml',
+      envFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env',
+      secretsDir: '/etc/sdkwork/api-gateway',
+      container: {
+        configMount: '/etc/sdkwork/api-gateway',
+        secretsMount: '/run/secrets/sdkwork/api-gateway',
+        dataVolume: '/var/lib/sdkwork/api-gateway',
+      },
+      database: {
+        canonicalName: 'sdkwork_ai_prod',
+        workspaceConfig: '/etc/sdkwork/database/database.toml',
+        workspaceSecret: '/etc/sdkwork/database/database.secret',
+      },
+    },
     healthPath: '/healthz',
     readinessPath: '/readyz',
   };

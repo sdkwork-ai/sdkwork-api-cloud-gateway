@@ -9,7 +9,7 @@ bind = "0.0.0.0:3900"
 
 [cors]
 allowAnyOrigin = false
-allowedOrigins = ["https://api.sdkwork.com", "https://console.sdkwork.com"]
+allowedOrigins = ["https://api.sdkwork.com", "https://api.birdcoder.com", "https://api.dtupay.com", "https://console.sdkwork.com"]
 
 [request]
 maxBodyBytes = 33554432
@@ -39,7 +39,7 @@ includePolicyInventory = true
 includeRouteInventory = true
 
 [security]
-allowedHosts = ["api.sdkwork.com", "console.sdkwork.com"]
+allowedHosts = ["api.sdkwork.com", "api.birdcoder.com", "api.dtupay.com", "console.sdkwork.com"]
 trustedProxyCidrs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
 secureHeadersEnabled = true
 maxHeaderBytes = 65536

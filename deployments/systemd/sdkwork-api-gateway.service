@@ -1,0 +1,43 @@
+# SDKWork API Cloud Gateway — Ubuntu systemd service unit.
+#
+# Canonical location: /usr/lib/systemd/system/sdkwork-api-gateway.service
+# (PACKAGING_SPEC §5.5 Installer Target Layout Matrix — service registration
+#  is `sdkwork-<application-code>.service`, application code `api-gateway`).
+#
+# Layout per RUNTIME_DIRECTORY_SPEC §4.1 (Linux System Scope):
+#   config   /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
+#   env      /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env   (0640)
+#   secrets  /etc/sdkwork/api-gateway/*.secret                        (0600)
+#   data     /var/lib/sdkwork/api-gateway
+#   logs     /var/log/sdkwork/api-gateway
+#   cache    /var/cache/sdkwork/api-gateway
+#   run      /run/sdkwork/api-gateway
+#
+# PACKAGING_SPEC §5.5 rules honored here:
+#   - installation-generated values live in the EnvironmentFile below, not in
+#     this unit (unit files must not embed environment assignments);
+#   - database credentials are never written to env/unit/config templates;
+#     secrets come from /etc/sdkwork/database/database.secret (password_file)
+#     or SDKWORK_* secret env injected by the operator.
+# Install steps: see deployments/systemd/README.md and
+# docs/guides/operator/INSTALLATION_STANDARDS.md.
+
+[Unit]
+Description=SDKWork API Cloud Gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sdkwork
+Group=sdkwork
+EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
+Environment=SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
+ExecStart=/usr/local/bin/sdkwork-api-cloud-gateway
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

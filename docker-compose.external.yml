@@ -1,0 +1,36 @@
+# sdkwork-api-cloud-gateway external-dependency mode override.
+#
+# Use when PostgreSQL and/or Redis already exist outside this composition
+# (managed databases, existing installations). Start with:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
+#
+# and point the gateway at the existing services through .env:
+#   GATEWAY_POSTGRES_HOST=db.internal.example.com     (or host.docker.internal)
+#   GATEWAY_POSTGRES_PORT=5432
+#   GATEWAY_POSTGRES_DB=sdkwork_ai_prod
+#   GATEWAY_POSTGRES_USER=sdkwork_ai_prod
+#   GATEWAY_POSTGRES_PASSWORD=...
+#   GATEWAY_CLOUDROUTER_REDIS_HOST=redis.internal.example.com
+#   GATEWAY_CLOUDROUTER_REDIS_PORT=6379
+#   GATEWAY_CLOUDROUTER_REDIS_PASSWORD=...           (TLS: SDKWORK_CLOUDROUTER_REDIS_TLS)
+#
+# The built-in postgres/redis services are moved to a never-enabled profile so
+# they are NOT started by this composition; the gateway's internal dependency
+# wiring is reset. The external PostgreSQL must already contain the canonical
+# database `sdkwork_ai_prod` with the same-named schema (see
+# docker/postgres/external-schema.sql).
+
+services:
+  postgres:
+    profiles: ["external-disabled"]
+
+  redis:
+    profiles: ["external-disabled"]
+
+  gateway:
+    depends_on: !reset []
+    extra_hosts:
+      # Lets the gateway reach a database/redis running on the docker host
+      # (e.g. another WSL service or a Windows host service).
+      - "host.docker.internal:host-gateway"

@@ -153,10 +153,7 @@ fn development_cors_can_be_overridden_for_lan_clients() {
         "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN".to_owned(),
         "true".to_owned(),
     );
-    env.insert(
-        "SDKWORK_CORS_ALLOWED_ORIGINS".to_owned(),
-        String::new(),
-    );
+    env.insert("SDKWORK_CORS_ALLOWED_ORIGINS".to_owned(), String::new());
 
     let config = GatewayRuntimeConfig::from_toml_str(
         r#"

@@ -338,8 +338,9 @@ async function assembleBuildContext(plan) {
   });
 
   // Runtime config templates (development/test templates are packaged too for
-  // operator reference; the container uses the production template via
-  // SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE with env overrides).
+  // operator reference; the Dockerfile materializes the production template at
+  // the canonical §4.5 path /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml,
+  // which a mounted host config may override, with env overrides on top).
   const configRoot = path.join(appRoot, 'etc');
   for (const file of (await readdir(configRoot)).filter((item) => item.endsWith('.toml')).sort()) {
     await cp(path.join(configRoot, file), path.join(plan.imageBuildDir, 'config', file));
