@@ -85,7 +85,7 @@ cp docker/.env.example .env
 #   GATEWAY_POSTGRES_SSL_MODE=disable               # 需要 TLS 时改为 require
 #   GATEWAY_CLOUDROUTER_REDIS_HOST=redis.internal.example.com
 #   GATEWAY_CLOUDROUTER_REDIS_PORT=6379
-#   GATEWAY_CLOUDROUTER_REDIS_PASSWORD=...
+#   GATEWAY_CLOUDROUTER_REDIS_PASSWORD=           # 内网免密部署可留空
 #   GATEWAY_CLOUDROUTER_REDIS_TLS=false
 docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
 ```
@@ -103,6 +103,18 @@ docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
 - 宿主机上运行的外部服务用 `GATEWAY_POSTGRES_HOST=host.docker.internal` /
   `GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal` 可达（override 已注入
   host-gateway extra host）。
+- 首次连接全新外部库时，除 46 个 database-modules 外还需先迁移
+  sdkwork-models 数据库模块（网关对非 current 的 models schema 会拒绝
+  cloudrouter 模块启动）。用 cloudrouter 容器的云路由管理工具对目标库执行：
+
+  ```bash
+  # 把外部库容器/网络接入 cloudrouter 网络后，在 cloudrouter 容器内执行：
+  docker exec -e SDKWORK_DATABASE_URL="postgresql://<user>:<pass>@<host>:<port>/sdkwork_ai_prod?options=-c%20search_path%3Dsdkwork_ai_prod" \
+    sdkwork-cloudrouter-cloudrouter-1 \
+    /opt/sdkwork/router/bin/cloudrouterctl ensure
+  ```
+
+  然后重启网关：`docker compose -f docker-compose.yml -f docker-compose.external.yml restart gateway`。
 - 内置模式（默认 `docker compose up -d`）与外连模式互斥：外连时内置
   postgres/redis 不启动，网关直接连外部实例。
 
