@@ -5383,12 +5383,14 @@ dependencies = [
  "tokio",
  "tokio-native-tls",
  "tokio-rustls 0.26.4",
+ "tokio-util",
  "tower 0.5.3",
  "tower-http 0.6.11",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm-streams 0.4.2",
  "web-sys",
  "webpki-roots 1.0.9",
 ]
@@ -5434,7 +5436,7 @@ dependencies = [
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-streams",
+ "wasm-streams 0.5.0",
  "web-sys",
 ]
 
@@ -6379,8 +6381,11 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-account-service-host",
+ "sdkwork-database-sqlx",
  "sdkwork-routes-account-app-api",
  "sdkwork-routes-account-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "tokio",
 ]
 
@@ -6395,6 +6400,7 @@ dependencies = [
  "sdkwork-agents-kernel-bridge",
  "sdkwork-agents-runtime-facade",
  "sdkwork-api-drive-assembly",
+ "sdkwork-database-sqlx",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
@@ -6417,11 +6423,13 @@ name = "sdkwork-api-aiot-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-iot-platform-service",
  "sdkwork-routes-iot-app-api",
  "sdkwork-routes-iot-backend-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -6485,6 +6493,7 @@ dependencies = [
  "anyhow",
  "axum 0.8.9",
  "sdkwork-browser-platform-service",
+ "sdkwork-database-sqlx",
  "sdkwork-routes-browser-app-api",
  "sdkwork-routes-browser-backend-api",
  "sdkwork-routes-browser-support",
@@ -6499,6 +6508,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-catalog-service-host",
+ "sdkwork-database-sqlx",
  "sdkwork-routes-catalog-app-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
@@ -6699,9 +6709,11 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
+ "sdkwork-cms-database-host",
  "sdkwork-cms-http-handlers",
  "sdkwork-content-cms-repository-sqlx",
  "sdkwork-content-cms-service",
+ "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-routes-cms-app-api",
  "sdkwork-routes-cms-backend-api",
@@ -6860,6 +6872,7 @@ name = "sdkwork-api-gameengine-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-gameengine-service-host",
  "sdkwork-iam-web-adapter",
  "sdkwork-routes-gameengine-catalog-app-api",
@@ -6991,12 +7004,14 @@ name = "sdkwork-api-knowledgebase-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-intelligence-knowledgebase-service",
  "sdkwork-routes-knowledgebase-app-api",
  "sdkwork-routes-knowledgebase-backend-api",
  "sdkwork-routes-knowledgebase-internal-api",
  "sdkwork-routes-knowledgebase-open-api",
  "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "tokio",
 ]
 
@@ -7005,6 +7020,7 @@ name = "sdkwork-api-llm-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-intelligence-llm-repository-sqlx",
  "sdkwork-intelligence-llm-service",
  "sdkwork-routes-llm-app-api",
@@ -7012,6 +7028,7 @@ dependencies = [
  "sdkwork-routes-llm-open-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -7023,6 +7040,7 @@ dependencies = [
  "axum 0.8.9",
  "bytes",
  "parking_lot",
+ "sdkwork-database-sqlx",
  "sdkwork-lr-config",
  "sdkwork-lr-core",
  "sdkwork-lr-proxy",
@@ -7081,12 +7099,14 @@ dependencies = [
  "anyhow",
  "axum 0.8.9",
  "sdkwork-communication-mail-repository-sqlx",
+ "sdkwork-database-sqlx",
  "sdkwork-mail-adapter-smtp",
  "sdkwork-mail-service-host",
  "sdkwork-routes-mail-app-api",
  "sdkwork-routes-mail-backend-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -7101,6 +7121,7 @@ dependencies = [
  "sdkwork-api-order-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-promotion-assembly",
+ "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-manager-service-host",
  "sdkwork-routes-manager-app-api",
@@ -7115,6 +7136,7 @@ name = "sdkwork-api-mcp-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-intelligence-mcp-repository-sqlx",
  "sdkwork-intelligence-mcp-service",
  "sdkwork-mcp-database-host",
@@ -7146,6 +7168,7 @@ name = "sdkwork-api-modelkit-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-modelkit-database-host",
  "sdkwork-routes-modelkit-app-api",
  "sdkwork-routes-modelkit-http-auth",
@@ -7236,6 +7259,7 @@ name = "sdkwork-api-promotion-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-sqlx",
  "sdkwork-promotion-service-host",
  "sdkwork-routes-promotion-app-api",
  "sdkwork-routes-promotion-backend-api",
@@ -7267,12 +7291,14 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-communication-rtc-repository-sqlx",
  "sdkwork-communication-rtc-service",
+ "sdkwork-database-sqlx",
  "sdkwork-routes-rtc-app-api",
  "sdkwork-routes-rtc-backend-api",
  "sdkwork-rtc-plugin-bootstrap",
  "sdkwork-rtc-service-host",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -7332,9 +7358,11 @@ dependencies = [
  "sdkwork-api-deployments-assembly",
  "sdkwork-intelligence-webserver-repository-sqlx",
  "sdkwork-intelligence-webserver-service",
+ "sdkwork-mcp-database-host",
  "sdkwork-routes-webserver-app-api",
  "sdkwork-routes-webserver-backend-api",
  "sdkwork-routes-webserver-internal-api",
+ "sdkwork-skills-database-host",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -7343,6 +7371,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.19",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -7381,6 +7410,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "sdkwork-appstore-authorization",
  "serde",
  "serde_json",
  "uuid",
@@ -7414,6 +7444,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "sdkwork-appstore-authorization",
  "serde",
  "serde_json",
  "tracing",
@@ -7462,6 +7493,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "sdkwork-appstore-authorization",
  "serde",
  "serde_json",
  "uuid",
@@ -9874,6 +9906,7 @@ dependencies = [
  "chrono-tz",
  "cloudrouter-open-sdk",
  "cron",
+ "futures-util",
  "reqwest 0.12.28",
  "sdkwork-agent-kernel",
  "sdkwork-agents-contract",
@@ -10328,6 +10361,9 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+ "sdkwork-knowledgebase-contract",
+ "sdkwork-knowledgebase-observability",
+ "url",
 ]
 
 [[package]]
@@ -11904,6 +11940,7 @@ dependencies = [
  "sdkwork-api-agents-assembly",
  "sdkwork-api-community-assembly",
  "sdkwork-api-order-assembly",
+ "sdkwork-catalog-database-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
  "sdkwork-cloudrouter-http",
@@ -11915,9 +11952,11 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
+ "sdkwork-inventory-database-host",
  "sdkwork-invoice-database-host",
  "sdkwork-invoice-service-host",
  "sdkwork-membership-database-host",
+ "sdkwork-merchandise-database-host",
  "sdkwork-models-catalog-repository-sqlx",
  "sdkwork-partner-database-host",
  "sdkwork-payment-database-host",
@@ -11932,6 +11971,7 @@ dependencies = [
  "sdkwork-routes-models-catalog-app-api",
  "sdkwork-routes-payment-app-api",
  "sdkwork-routes-promotion-app-api",
+ "sdkwork-shop-database-host",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -12020,6 +12060,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-cms-http-handlers",
  "sdkwork-content-cms-service",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -12031,6 +12072,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-cms-http-handlers",
  "sdkwork-content-cms-service",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -12474,6 +12516,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-communication-forum-service",
  "sdkwork-forum-http-support",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -12485,6 +12528,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-communication-forum-service",
  "sdkwork-forum-http-support",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -12512,6 +12556,7 @@ dependencies = [
  "sdkwork-game-catalog-service",
  "sdkwork-routes-games-support",
  "sdkwork-web-axum",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -12525,6 +12570,7 @@ dependencies = [
  "sdkwork-routes-gameengine-catalog-app-api",
  "sdkwork-routes-games-support",
  "sdkwork-web-axum",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -13030,6 +13076,7 @@ dependencies = [
  "sdkwork-game-leaderboard-service",
  "sdkwork-routes-games-support",
  "sdkwork-web-axum",
+ "sdkwork-web-core",
  "serde",
 ]
 
@@ -13154,6 +13201,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-routes-local-router-support",
+ "sdkwork-web-core",
 ]
 
 [[package]]
@@ -13162,6 +13210,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-routes-local-router-support",
+ "sdkwork-web-core",
 ]
 
 [[package]]
@@ -13184,6 +13233,7 @@ dependencies = [
  "sdkwork-lr-store",
  "sdkwork-lr-transform",
  "sdkwork-routes-local-router-support",
+ "sdkwork-web-core",
  "serde_json",
  "tokio",
  "tracing",
@@ -13975,6 +14025,7 @@ dependencies = [
  "sdkwork-routes-games-support",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
+ "sdkwork-web-core",
  "serde",
 ]
 
@@ -13987,6 +14038,7 @@ dependencies = [
  "sdkwork-routes-games-support",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
+ "sdkwork-web-core",
  "serde",
 ]
 
@@ -14825,7 +14877,7 @@ name = "sdkwork-web-internal-sdk"
 version = "1.0.0"
 dependencies = [
  "http 1.5.0",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -16962,6 +17014,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc1b4cb0cc549fcf58d7dfc081778139b3d283a081644e833e84682ad71cea24"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wasm-streams"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15053d8d85c7eccdbefef60f06769760a563c7f0a9d6902a13d35c7800b0ad65"
+dependencies = [
+ "futures-util",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

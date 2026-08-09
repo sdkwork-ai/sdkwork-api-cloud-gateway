@@ -334,6 +334,168 @@ pub async fn bootstrap_embedded_dependency_contributions(
         });
     }
 
+    #[cfg(feature = "foundation-rtc")]
+    if workspace_surface_enabled(config, "sdkwork-rtc") {
+        let contribution = sdkwork_api_rtc_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-rtc", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-mail")]
+    if workspace_surface_enabled(config, "sdkwork-mail") {
+        let contribution = sdkwork_api_mail_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-mail", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-mcp")]
+    if workspace_surface_enabled(config, "sdkwork-mcp") {
+        let contribution = sdkwork_api_mcp_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-mcp", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-browser")]
+    if workspace_surface_enabled(config, "sdkwork-browser") {
+        let contribution =
+            sdkwork_api_browser_assembly::assemble_api_router_with_pool(pool.clone())
+                .map_err(|message| workspace_build_error(config, "sdkwork-browser", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-llm")]
+    if workspace_surface_enabled(config, "sdkwork-llm") {
+        let contribution = sdkwork_api_llm_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-llm", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-agents")]
+    if workspace_surface_enabled(config, "sdkwork-agents") {
+        let contribution = sdkwork_api_agents_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-agents", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-aiot")]
+    if workspace_surface_enabled(config, "sdkwork-aiot") {
+        let contribution = sdkwork_api_aiot_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-aiot", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-promotion")]
+    if workspace_surface_enabled(config, "sdkwork-promotion") {
+        let contribution =
+            sdkwork_api_promotion_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-promotion", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-knowledgebase")]
+    if workspace_surface_enabled(config, "sdkwork-knowledgebase") {
+        let contribution =
+            sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| {
+                    workspace_build_error(config, "sdkwork-knowledgebase", message)
+                })?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-customerservice")]
+    if workspace_surface_enabled(config, "sdkwork-customerservice") {
+        let contribution =
+            sdkwork_api_customerservice_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| {
+                    workspace_build_error(config, "sdkwork-customerservice", message)
+                })?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-manager")]
+    if workspace_surface_enabled(config, "sdkwork-manager") {
+        let contribution =
+            sdkwork_api_manager_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-manager", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-cms")]
+    if workspace_surface_enabled(config, "sdkwork-cms") {
+        let contribution = sdkwork_api_cms_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-cms", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-forum")]
+    if workspace_surface_enabled(config, "sdkwork-forum") {
+        let assembly = sdkwork_api_forum_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-forum", message))?;
+        contributions.push(assembly.contribution);
+    }
+
+    #[cfg(feature = "foundation-modelkit")]
+    if workspace_surface_enabled(config, "sdkwork-modelkit") {
+        let contribution =
+            sdkwork_api_modelkit_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-modelkit", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-account")]
+    if workspace_surface_enabled(config, "sdkwork-account") {
+        let contribution =
+            sdkwork_api_account_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-account", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-catalog")]
+    if workspace_surface_enabled(config, "sdkwork-catalog") {
+        let contribution =
+            sdkwork_api_catalog_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-catalog", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-gameengine")]
+    if workspace_surface_enabled(config, "sdkwork-gameengine") {
+        let contribution =
+            sdkwork_api_gameengine_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-gameengine", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-local-router")]
+    if workspace_surface_enabled(config, "sdkwork-local-router") {
+        // The bundle carries the owner runtime handle; its background tasks are
+        // detached process-lifetime workers, so the gateway mounts only the
+        // contribution and never binds the local-router listener.
+        let assembly =
+            sdkwork_api_local_router_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| {
+                    workspace_build_error(config, "sdkwork-local-router", message)
+                })?;
+        contributions.push(assembly.contribution);
+    }
+
     Ok(EmbeddedDependencyBootstrap {
         contributions,
         runtime,
@@ -406,6 +568,27 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-shop"));
         assert!(workspace_surface_enabled(&config, "sdkwork-voice"));
         assert!(workspace_surface_enabled(&config, "sdkwork-appstore"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-rtc"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-mail"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-mcp"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-browser"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-llm"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-agents"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-aiot"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-promotion"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-knowledgebase"));
+        assert!(workspace_surface_enabled(
+            &config,
+            "sdkwork-customerservice"
+        ));
+        assert!(workspace_surface_enabled(&config, "sdkwork-manager"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-cms"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-forum"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-modelkit"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-account"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-catalog"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-gameengine"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-local-router"));
         assert!(!workspace_surface_enabled(&config, "unknown-workspace"));
     }
 

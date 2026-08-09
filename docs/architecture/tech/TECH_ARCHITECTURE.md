@@ -42,6 +42,7 @@ profiles package the same embedded assembly graph with different deployment meta
 | Observability | Prometheus + structured logs | `sdkwork-api-cloud-gateway-observability`; series prefix `sdkwork_api_cloud_gateway_*` |
 | Utilities | `sdkwork-utils-rust` | Boolean parsing, path normalization |
 | IAM embedding | `foundation-appbase` feature | Optional embedded IAM router via `sdkwork-api-iam-assembly` |
+| Dependency embedding | 45 `foundation-*` features | Every declared application assembly is embedded through its `assemble_api_router_with_pool` contribution export; see `specs/component.spec.json` |
 | Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `sdkwork.workflow.json` |
 
 Intentionally **not** integrated at this stage:
