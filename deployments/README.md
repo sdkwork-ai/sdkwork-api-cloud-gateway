@@ -26,6 +26,7 @@ run side by side without conflicts. Container-internal bind stays `3900`
 | 3902 | Reserved client-only ingress | — | — |
 | 3903 | sdkwork-cloudrouter container | docker compose | shared |
 | 3904 | sdkwork-knowledgebase container | docker compose | shared |
+| 3905 | sdkwork-cloudrouter dev standalone server | `pnpm dev` (cloudrouter workspace) | development |
 | 3906 | Gateway HTTP (127.0.0.1) | WSL direct run (`etc/*.test.toml`) | test |
 | 3910 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT`) | development/standalone |
 | 3911 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3911`) | test |
