@@ -111,6 +111,8 @@ pub struct GatewayRuntimeConfig {
     #[serde(default)]
     pub realtime: GatewayRealtimeConfig,
     #[serde(default)]
+    pub database: GatewayDatabaseConfig,
+    #[serde(default)]
     pub mode: GatewayMode,
     #[serde(default = "default_dependency_surfaces")]
     pub dependency_surfaces: Vec<DependencyApiSurfaceConfig>,
@@ -156,6 +158,25 @@ pub struct GatewayServerConfig {
 pub struct GatewayRealtimeConfig {
     #[serde(default)]
     pub enabled: bool,
+}
+
+/// Embedded database lifecycle defaults applied before any module bootstrap.
+///
+/// `autoMigrate` defaults to `true` so a simple configuration initializes
+/// every embedded database module on first start (fresh install or version
+/// upgrade). Operators who manage schema lifecycle explicitly set it to
+/// `false`; `SDKWORK_DATABASE_AUTO_MIGRATE` still overrides this value.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GatewayDatabaseConfig {
+    #[serde(default = "default_true")]
+    pub auto_migrate: bool,
+}
+
+impl Default for GatewayDatabaseConfig {
+    fn default() -> Self {
+        Self { auto_migrate: true }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
@@ -392,6 +413,7 @@ struct RawGatewayRuntimeConfig {
     service: Option<GatewayServiceConfig>,
     server: Option<RawGatewayServerConfig>,
     realtime: Option<GatewayRealtimeConfig>,
+    database: Option<GatewayDatabaseConfig>,
     mode: Option<GatewayMode>,
     dependency_surfaces: Option<Vec<DependencyApiSurfaceConfig>>,
     request: Option<GatewayRequestConfig>,
@@ -499,6 +521,7 @@ impl Default for GatewayRuntimeConfig {
             service: GatewayServiceConfig::default(),
             server: GatewayServerConfig::default(),
             realtime: GatewayRealtimeConfig::default(),
+            database: GatewayDatabaseConfig::default(),
             mode: GatewayMode::default(),
             dependency_surfaces: default_dependency_surfaces(),
             request: GatewayRequestConfig::default(),
@@ -530,6 +553,9 @@ impl GatewayRuntimeConfig {
         }
         if let Some(realtime) = raw.realtime {
             config.realtime = realtime;
+        }
+        if let Some(database) = raw.database {
+            config.database = database;
         }
         if let Some(mode) = raw.mode {
             config.mode = mode;

@@ -1888,41 +1888,6 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/agent",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/applications",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/certificate_distribution",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/domains",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/root_domains",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
       "surface": "internal",
       "prefix": "/internal/v3/api/customer_services",
       "ownership": "dependency",
@@ -2901,12 +2866,7 @@
       "apiAuthority": "sdkwork-web-internal-api",
       "sdkFamily": "sdkwork-web-internal-sdk",
       "apiPrefixes": [
-        "/internal/v3/api/web",
-        "/backend/v3/api/agent",
-        "/backend/v3/api/applications",
-        "/backend/v3/api/certificate_distribution",
-        "/backend/v3/api/domains",
-        "/backend/v3/api/root_domains"
+        "/internal/v3/api/web"
       ],
       "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
       "cargoFeature": "foundation-web-server",

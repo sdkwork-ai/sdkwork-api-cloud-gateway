@@ -114,6 +114,16 @@ services:
       # development-only fallback (defaults to production), so it is pinned to
       # development together with the allow-all principal directory.
       SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
+      # RTC hydrate scope: the assembly loads runtime persistence for the
+      # deployment tenant; empty databases hydrate as empty (Ok).
+      SDKWORK_RTC_HYDRATE_TENANT_ID: ${GATEWAY_RTC_HYDRATE_TENANT_ID:-100001}
+      SDKWORK_RTC_HYDRATE_ORGANIZATION_ID: ${GATEWAY_RTC_HYDRATE_ORGANIZATION_ID:-0}
+      # Knowledgebase deployment scope (production-like runtime requires them).
+      SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
+      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-0}
+      # Docker test posture: explicit scopes are injected above; the
+      # development environment flag keeps the non-production seed fallbacks.
+      SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
       SDKWORK_IM_ALLOW_ALL_PRINCIPALS: ${GATEWAY_IM_ALLOW_ALL_PRINCIPALS:-true}
       # Cloud Router OpenAPI base URL: the image generation foundation module
       # requires it to reach the cloud router's OpenAPI surface. Defaults to

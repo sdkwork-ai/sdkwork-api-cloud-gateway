@@ -59,6 +59,11 @@ const EXTRA_DATABASE_MODULES = Object.freeze({
   'sdkwork-appbase': {},
   'sdkwork-partner': {},
   'sdkwork-web-framework': {},
+  // Models catalog tables (ai_model and friends) are owned by the
+  // sdkwork-models database module; packaging it lets install-time
+  // initialization (scripts/init-database.mjs) pre-create the catalog
+  // schema for development/test Cloud Router catalog bootstrap.
+  'sdkwork-models': {},
 });
 // Image name + tag. Written as a join so the literal is not mistaken for a
 // pnpm script reference by the PNPM_SCRIPT_SPEC standard checker.

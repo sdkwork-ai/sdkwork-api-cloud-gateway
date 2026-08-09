@@ -25,6 +25,7 @@
     "db:postgres:init": "node ../sdkwork-specs/tools/postgres/postgres-db-cli.mjs --mode init --config .env.postgres --app-root .",
     "db:postgres:plan": "node ../sdkwork-specs/tools/postgres/postgres-db-cli.mjs --mode plan --config .env.postgres --app-root . --dry-run",
     "db:pool:validate": "node ../sdkwork-specs/tools/check-process-shared-database-pool.mjs --root .",
+    "db:init": "node scripts/init-database.mjs",
     "format:check": "cargo fmt -- --check",
     "gateway:matrix": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --profile server --platform all --architecture all --format tar.gz",
     "gateway:matrix:standalone": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --deployment-profile standalone --profile server --platform all --architecture all --format tar.gz",

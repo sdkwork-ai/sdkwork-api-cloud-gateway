@@ -308,6 +308,7 @@ async fn build_embedded_router(
     let framework_manifest = composed.route_manifest.clone();
     let resolver =
         sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
+    #[cfg_attr(not(feature = "foundation-im-realtime"), allow(unused_mut))]
     let mut public_path_prefixes = vec!["/openapi/index.json".to_owned()];
     #[cfg(feature = "foundation-im-realtime")]
     {

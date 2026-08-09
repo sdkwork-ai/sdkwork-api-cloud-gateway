@@ -32,6 +32,13 @@ environment = "production"
 [server]
 bind = "0.0.0.0:3900"
 
+[database]
+# Initialize every embedded database module on first start
+# (fresh install or version upgrade). Set false to manage schema
+# lifecycle explicitly; SDKWORK_DATABASE_AUTO_MIGRATE still overrides.
+autoMigrate = true
+bind = "0.0.0.0:3900"
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["https://api.sdkwork.com", "https://api.birdcoder.com", "https://api.dtupay.com", "https://console.sdkwork.com"]

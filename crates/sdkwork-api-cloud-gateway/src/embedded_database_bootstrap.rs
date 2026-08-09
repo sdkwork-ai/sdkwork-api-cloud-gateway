@@ -66,6 +66,16 @@ pub async fn bootstrap_embedded_databases(
         return Ok(None);
     }
 
+    // Lifecycle defaults: `[database] autoMigrate = true` (the gateway
+    // default) makes a simple configuration initialize every embedded
+    // database module on first start — fresh install or version upgrade.
+    // The process environment still wins when it sets
+    // SDKWORK_DATABASE_AUTO_MIGRATE explicitly.
+    if config.database.auto_migrate && std::env::var_os("SDKWORK_DATABASE_AUTO_MIGRATE").is_none() {
+        // SAFETY: single-threaded startup before any worker thread spawns.
+        unsafe { std::env::set_var("SDKWORK_DATABASE_AUTO_MIGRATE", "true") };
+    }
+
     #[allow(unused_variables)]
     let pool = process_database_pool().await?;
     #[cfg(feature = "foundation-appbase")]
