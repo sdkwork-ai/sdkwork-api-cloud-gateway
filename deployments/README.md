@@ -32,9 +32,14 @@ run side by side without conflicts. Container-internal bind stays `3900`
 | 3912 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3912`) | production |
 | 3913–3915 | Reserved: container IM realtime link mappings | docker compose | opt-in |
 | 18079 | sdkwork-im standalone container | docker compose | shared |
-| 19000 | IM realtime TCP link (127.0.0.1) | WSL direct run, opt-in | any |
-| 19001 | IM realtime UDP link (127.0.0.1) | WSL direct run, opt-in | any |
-| 19002 | IM realtime QUIC link (127.0.0.1) | WSL direct run, opt-in | any |
+| 19000–19002 | IM realtime TCP/UDP/QUIC link binds (127.0.0.1) | WSL direct run, opt-in | development |
+| 19010–19012 | IM realtime TCP/UDP/QUIC link binds (127.0.0.1) | WSL direct run, opt-in | test |
+| 19020–19022 | IM realtime TCP/UDP/QUIC link binds (127.0.0.1) | WSL direct run, opt-in | production |
+
+The realtime link range is per environment so development, test, and production
+gateways can host embedded IM link transports side by side. QUIC requires
+`SDKWORK_IM_REALTIME_QUIC_TLS_CERT_PATH` (and key); without TLS the QUIC
+listener is skipped with a warning.
 
 Database per environment: development → `sdkwork_ai_dev`, test →
 `sdkwork_ai_test`, production → `sdkwork_ai_prod` (same-named schema), injected
