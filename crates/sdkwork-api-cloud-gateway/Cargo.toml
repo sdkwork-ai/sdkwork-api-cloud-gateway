@@ -47,6 +47,15 @@ foundation-forum = ["dep:sdkwork-api-forum-assembly", "dep:sdkwork-forum-databas
 foundation-cloudrouter = ["dep:sdkwork-api-cloudrouter-assembly", "dep:sdkwork-cloudrouter-database-host"]
 foundation-mcp = ["dep:sdkwork-api-mcp-assembly", "dep:sdkwork-mcp-database-host"]
 foundation-im = ["dep:sdkwork-api-im-assembly", "dep:sdkwork-im-database-host"]
+# Platform gateway realtime hosting: embeds the sdkwork-im session-gateway
+# realtime plane (WebSocket upgrade + declared TCP/UDP/QUIC client link
+# listeners) into this process per ADR-20260809-platform-gateway-realtime-hosting.
+# Opt-in by design; not part of platform-foundation-suite.
+foundation-im-realtime = [
+    "foundation-im",
+    "dep:session-gateway",
+    "dep:sdkwork-im-database-pool",
+]
 foundation-rtc = ["dep:sdkwork-api-rtc-assembly", "dep:sdkwork-rtc-database-host"]
 foundation-notary = ["dep:sdkwork-api-notary-assembly", "dep:sdkwork-notary-database-host"]
 foundation-mail = ["dep:sdkwork-api-mail-assembly", "dep:sdkwork-mail-database-host"]
@@ -180,6 +189,8 @@ sdkwork-api-community-assembly = { workspace = true, optional = true }
 sdkwork-api-cloudrouter-assembly = { workspace = true, optional = true }
 sdkwork-api-mcp-assembly = { workspace = true, optional = true }
 sdkwork-api-im-assembly = { workspace = true, optional = true }
+session-gateway = { workspace = true, optional = true }
+sdkwork-im-database-pool = { workspace = true, optional = true }
 sdkwork-api-rtc-assembly = { workspace = true, optional = true }
 sdkwork-api-notary-assembly = { workspace = true, optional = true }
 sdkwork-api-mail-assembly = { workspace = true, optional = true }
@@ -254,6 +265,7 @@ http-body-util.workspace = true
 sdkwork-web-core.workspace = true
 tokio.workspace = true
 serde_json.workspace = true
+tokio-tungstenite.workspace = true
 
 [[bin]]
 name = "sdkwork-api-cloud-gateway"

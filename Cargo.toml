@@ -27,6 +27,8 @@ sdkwork-api-community-assembly = { path = "../sdkwork-community/crates/sdkwork-a
 sdkwork-api-cloudrouter-assembly = { path = "../sdkwork-cloudrouter/crates/sdkwork-api-cloudrouter-assembly" }
 sdkwork-api-mcp-assembly = { path = "../sdkwork-mcp/crates/sdkwork-api-mcp-assembly" }
 sdkwork-api-im-assembly = { path = "../sdkwork-im/crates/sdkwork-api-im-assembly" }
+session-gateway = { path = "../sdkwork-im/services/session-gateway" }
+sdkwork-im-database-pool = { path = "../sdkwork-im/crates/sdkwork-im-database-pool" }
 sdkwork-api-rtc-assembly = { path = "../sdkwork-rtc/crates/sdkwork-api-rtc-assembly" }
 sdkwork-api-notary-assembly = { path = "../sdkwork-notary/crates/sdkwork-api-notary-assembly" }
 sdkwork-api-mail-assembly = { path = "../sdkwork-mail/crates/sdkwork-api-mail-assembly" }

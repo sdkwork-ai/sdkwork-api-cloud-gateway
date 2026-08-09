@@ -19,10 +19,12 @@ pub mod web_framework;
 pub use error::GatewayRuntimeError;
 #[cfg(feature = "foundation-appbase")]
 pub use runtime::build_sdkwork_api_cloud_gateway_router_with_embedded_appbase;
+#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+pub use runtime::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
 pub use runtime::{
     build_sdkwork_api_cloud_gateway_router,
     build_sdkwork_api_cloud_gateway_router_with_embedded_routers,
-    build_sdkwork_api_cloud_gateway_router_with_registry, GatewayRuntime,
+    build_sdkwork_api_cloud_gateway_router_with_registry, GatewayRuntime, GatewayShutdown,
 };
 pub use service_config_loader::{config_path_from_args, load_gateway_config};
 pub use web_framework::{

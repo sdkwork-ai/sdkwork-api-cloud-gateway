@@ -3,7 +3,10 @@ use std::{collections::HashMap, env, net::SocketAddr};
 use anyhow::{anyhow, Context};
 use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
+#[cfg(not(all(feature = "foundation-appbase", feature = "foundation-im-realtime")))]
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
+#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
 use sdkwork_api_cloud_gateway::load_gateway_config;
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use tokio::net::TcpListener;
@@ -45,7 +48,16 @@ async fn run_gateway() -> anyhow::Result<()> {
         .bind
         .parse()
         .with_context(|| format!("invalid bind address `{}`", config.server.bind))?;
+
+    // The realtime builder additionally returns shutdown handles so the
+    // embedded IM realtime plane (WebSocket upgrade + TCP/UDP/QUIC link
+    // listeners) drains its routes before the process exits.
+    #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+    let (app, shutdown) =
+        build_sdkwork_api_cloud_gateway_router_with_embedded_realtime(config).await?;
+    #[cfg(not(all(feature = "foundation-appbase", feature = "foundation-im-realtime")))]
     let app = build_sdkwork_api_cloud_gateway_router(config).await?;
+
     let listener = TcpListener::bind(bind).await?;
     let local_addr = listener.local_addr()?;
 
@@ -53,6 +65,9 @@ async fn run_gateway() -> anyhow::Result<()> {
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
+
+    #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+    shutdown.shutdown().await;
 
     Ok(())
 }

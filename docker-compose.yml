@@ -92,6 +92,10 @@ services:
       SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
       SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
       SDKWORK_DATABASE_SSL_MODE: ${GATEWAY_POSTGRES_SSL_MODE:-disable}
+      # Platform shared pool owns no table prefix: every embedded module uses
+      # its literal table names (the derived "cloud_" prefix from the CLOUD
+      # service code would not match module migrations).
+      SDKWORK_DATABASE_TABLE_PREFIX: ${GATEWAY_DATABASE_TABLE_PREFIX:-}
       # Connection pool sizing: the foundation suite bootstraps 46 database
       # modules through the process-shared pool at startup; keep the server
       # max_connections comfortably above the pool ceiling.

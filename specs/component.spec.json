@@ -150,6 +150,7 @@
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router",
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_registry",
       "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
+      "sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime",
       "sdkwork_api_cloud_gateway::web_framework::finalize_gateway_router",
       "sdkwork_api_cloud_gateway::web_framework::finalize_gateway_router_async",
       "sdkwork_api_cloud_gateway::web_framework::web_framework_enabled",
@@ -222,6 +223,7 @@
         "build_sdkwork_api_cloud_gateway_router_with_registry",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_routers",
         "build_sdkwork_api_cloud_gateway_router_with_embedded_appbase",
+        "build_sdkwork_api_cloud_gateway_router_with_embedded_realtime",
         "web_framework_enabled",
         "parse_web_framework_toggle",
         "finalize_gateway_router",
@@ -1067,6 +1069,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "open",
+      "prefix": "/im/v3/api/realtime/ws",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-im-realtime-plane",
+      "routeGeneration": "dependency-realtime-websocket-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/automation",
       "ownership": "dependency",
@@ -1522,6 +1531,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/wallet",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-promotion-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/token_bank",
       "ownership": "dependency",
@@ -1863,6 +1879,55 @@
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
+    },
+    {
+      "surface": "internal",
+      "prefix": "/internal/v3/api/knowledgebase",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-knowledgebase-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/agent",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-web-internal-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/applications",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-web-internal-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/certificate_distribution",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-web-internal-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/domains",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-web-internal-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/root_domains",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-web-internal-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "internal",
+      "prefix": "/internal/v3/api/customer_services",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-customerservice-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
     }
   ],
   "dependencies": [
@@ -2296,6 +2361,23 @@
       "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
     },
     {
+      "serviceId": "sdkwork-im-realtime-plane",
+      "workspace": "sdkwork-im",
+      "apiAuthority": "sdkwork-im-open-api",
+      "sdkFamily": "sdkwork-im-sdk",
+      "apiPrefixes": [
+        "/im/v3/api/realtime/ws"
+      ],
+      "coverage": "sdkwork-im-realtime-plane-embedded-bootstrap",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "runtimeSurface": true,
+      "cargoFeature": "foundation-im-realtime",
+      "cargoDependency": "session-gateway",
+      "executableExport": "session_gateway::bootstrap_gateway_embedded_realtime_plane"
+    },
+    {
       "serviceId": "sdkwork-rtc-app-api",
       "workspace": "sdkwork-rtc",
       "apiAuthority": "sdkwork-rtc-app-api",
@@ -2583,7 +2665,8 @@
       "apiAuthority": "sdkwork-promotion-app-api",
       "sdkFamily": "sdkwork-promotion-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/promotions"
+        "/app/v3/api/promotions",
+        "/app/v3/api/wallet"
       ],
       "cargoFeature": "foundation-promotion",
       "cargoDependency": "sdkwork-api-promotion-assembly",
@@ -2818,7 +2901,12 @@
       "apiAuthority": "sdkwork-web-internal-api",
       "sdkFamily": "sdkwork-web-internal-sdk",
       "apiPrefixes": [
-        "/internal/v3/api/web"
+        "/internal/v3/api/web",
+        "/backend/v3/api/agent",
+        "/backend/v3/api/applications",
+        "/backend/v3/api/certificate_distribution",
+        "/backend/v3/api/domains",
+        "/backend/v3/api/root_domains"
       ],
       "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
       "cargoFeature": "foundation-web-server",
@@ -2898,7 +2986,8 @@
       "apiAuthority": "sdkwork-knowledgebase-open-api",
       "sdkFamily": "sdkwork-knowledgebase-sdk",
       "apiPrefixes": [
-        "/knowledge/v3/api"
+        "/knowledge/v3/api",
+        "/internal/v3/api/knowledgebase"
       ],
       "coverage": "sdkwork-knowledgebase-open-api-embedded-assembly-routes",
       "cargoFeature": "foundation-knowledgebase",
@@ -3125,7 +3214,8 @@
       "apiAuthority": "sdkwork-customerservice-app-api",
       "sdkFamily": "sdkwork-customerservice-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/customer_services"
+        "/app/v3/api/customer_services",
+        "/internal/v3/api/customer_services"
       ],
       "coverage": "sdkwork-customerservice-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-customerservice",
@@ -3497,6 +3587,7 @@
       "specific dependency route patterns must resolve before broad fallback dependency prefixes when prefixes overlap",
       "broad app or backend prefixes are accepted only when dependencyRoutes restrict ownership to assembly-declared route patterns",
       "sdkwork-im-app-api owns the declared /app/v3/api IM routes, sdkwork-im-backend-api owns the control-plane routes, and sdkwork-im-open-api exclusively owns /im/v3/api",
+      "sdkwork-im-realtime-plane owns the /im/v3/api/realtime/ws WebSocket upgrade surface and hosts the session-gateway realtime plane per ADR-20260809-platform-gateway-realtime-hosting; link transport binds are server-side declarations, not HTTP ingress",
       "sdkwork-cloudrouter app, backend, and open authorities expose only their declared non-overlapping prefixes through one embedded assembly",
       "non-appbase dependency surfaces route by apiPrefix/{*path}",
       "workspace foundation dependency surfaces are added only when existing SDK assembly plus materialized OpenAPI paths or normalized route manifest evidence provides a stable route prefix; empty or generic-only SDK assemblies are not gateway startup dependencies",

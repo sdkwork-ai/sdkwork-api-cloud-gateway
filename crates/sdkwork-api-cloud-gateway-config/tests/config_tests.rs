@@ -287,7 +287,7 @@ fn catalog_app_authority_publishes_every_owned_prefix() {
             && surface.cargo_feature.as_deref() == Some("foundation-catalog")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-catalog-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_catalog_assembly::assemble_api_router_from_env")
+                == Some("sdkwork_api_catalog_assembly::assemble_api_router_with_pool")
     }));
 }
 
@@ -395,6 +395,7 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
         "/app/v3/api/portal/workspace",
         "/app/v3/api/streams",
         "/im/v3/api",
+        "/im/v3/api/realtime/ws",
         "/backend/v3/api/automation",
         "/backend/v3/api/control",
         "/backend/v3/api/audit",
@@ -411,13 +412,18 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "sdkwork-im-app-api",
             "sdkwork-im-backend-api",
             "sdkwork-im-open-api",
+            "sdkwork-im-realtime-plane",
         ])
     );
     assert!(im.iter().all(|surface| {
-        surface.cargo_feature.as_deref() == Some("foundation-im")
+        (surface.cargo_feature.as_deref() == Some("foundation-im")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-im-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_im_assembly::assemble_api_router")
+                == Some("sdkwork_api_im_assembly::assemble_api_router"))
+            || (surface.cargo_feature.as_deref() == Some("foundation-im-realtime")
+                && surface.cargo_dependency.as_deref() == Some("session-gateway")
+                && surface.executable_export.as_deref()
+                    == Some("session_gateway::bootstrap_gateway_embedded_realtime_plane"))
     }));
 
     let cloudrouter = config
@@ -435,6 +441,8 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/app/v3/api/ai",
             "/app/v3/api/chat",
             "/app/v3/api/iam/api_keys",
+            "/app/v3/api/iam/invite",
+            "/app/v3/api/iam/invites",
             "/app/v3/api/iam/users/settings",
             "/app/v3/api/memory",
             "/app/v3/api/notification",
@@ -665,4 +673,45 @@ fn memory_rate_limit_backend_is_the_default() {
     let config = GatewayRuntimeConfig::default();
     assert_eq!(config.traffic.rate_limit_backend, "memory");
     assert!(config.traffic.redis_url.is_none());
+}
+
+#[test]
+fn realtime_toggle_defaults_off_and_parses_from_toml_and_env() {
+    let mut env = HashMap::new();
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "development"
+
+        [realtime]
+        enabled = true
+        "#,
+    )
+    .expect("realtime-enabled config")
+    .with_env_overrides(&env)
+    .expect("env overrides");
+
+    assert!(config.realtime.enabled);
+
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED".to_owned(),
+        "false".to_owned(),
+    );
+    let config = config
+        .with_env_overrides(&env)
+        .expect("env disables realtime");
+    assert!(!config.realtime.enabled);
+
+    assert!(!GatewayRuntimeConfig::default().realtime.enabled);
+}
+
+#[test]
+fn realtime_env_override_rejects_invalid_boolean() {
+    let mut env = HashMap::new();
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED".to_owned(),
+        "sometimes".to_owned(),
+    );
+    let config = GatewayRuntimeConfig::default();
+    assert!(config.with_env_overrides(&env).is_err());
 }

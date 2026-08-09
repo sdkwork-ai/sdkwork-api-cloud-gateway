@@ -102,12 +102,12 @@ enabled = true
 dryRun = false
 rules = [
   # Credential payloads are small and hot: cap bodies tight.
-  { id = "auth-body-limit", matchPathPrefix = "/app/v3/api/auth", allowedMethods = ["POST", "PUT"], maxBodyBytes = 1048576 },
-  { id = "iam-body-limit", matchPathPrefix = "/backend/v3/api/iam", allowedMethods = ["POST", "PUT", "PATCH"], maxBodyBytes = 1048576 },
+  { id = "auth-body-limit", matchPathPrefix = "/app/v3/api/auth", maxBodyBytes = 1048576 },
+  { id = "iam-body-limit", matchPathPrefix = "/backend/v3/api/iam", maxBodyBytes = 1048576 },
   # Chat messages are bounded text; keep them lean.
-  { id = "chat-body-limit", matchPathPrefix = "/app/v3/api/im", allowedMethods = ["POST", "PUT"], maxBodyBytes = 2097152 },
+  { id = "chat-body-limit", matchPathPrefix = "/app/v3/api/im", maxBodyBytes = 2097152 },
   # Media uploads stream through Drive; allow large payloads there only.
-  { id = "media-upload-limit", matchPathPrefix = "/backend/v3/api/drive", allowedMethods = ["POST", "PUT"], maxBodyBytes = 67108864 },
+  { id = "media-upload-limit", matchPathPrefix = "/backend/v3/api/drive", maxBodyBytes = 67108864 },
   # Every other write surface stays under the global request cap.
-  { id = "default-write-limit", allowedMethods = ["POST", "PUT", "PATCH"], maxBodyBytes = 16777216 },
+  { id = "default-write-limit", maxBodyBytes = 16777216 },
 ]

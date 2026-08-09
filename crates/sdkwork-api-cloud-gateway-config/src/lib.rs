@@ -109,6 +109,8 @@ pub struct GatewayRuntimeConfig {
     #[serde(default)]
     pub server: GatewayServerConfig,
     #[serde(default)]
+    pub realtime: GatewayRealtimeConfig,
+    #[serde(default)]
     pub mode: GatewayMode,
     #[serde(default = "default_dependency_surfaces")]
     pub dependency_surfaces: Vec<DependencyApiSurfaceConfig>,
@@ -142,6 +144,18 @@ pub struct GatewayServiceConfig {
 pub struct GatewayServerConfig {
     #[serde(default = "default_bind")]
     pub bind: String,
+}
+
+/// Platform gateway realtime hosting toggle
+/// (`ADR-20260809-platform-gateway-realtime-hosting`): when enabled together
+/// with the `foundation-im-realtime` Cargo feature and an enabled `sdkwork-im`
+/// surface, the gateway embeds the IM session-gateway realtime plane and
+/// terminates its WebSocket upgrade plus declared TCP/UDP/QUIC link binds.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GatewayRealtimeConfig {
+    #[serde(default)]
+    pub enabled: bool,
 }
 
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
@@ -377,6 +391,7 @@ pub struct GatewayDiagnosticsConfig {
 struct RawGatewayRuntimeConfig {
     service: Option<GatewayServiceConfig>,
     server: Option<RawGatewayServerConfig>,
+    realtime: Option<GatewayRealtimeConfig>,
     mode: Option<GatewayMode>,
     dependency_surfaces: Option<Vec<DependencyApiSurfaceConfig>>,
     request: Option<GatewayRequestConfig>,
@@ -483,6 +498,7 @@ impl Default for GatewayRuntimeConfig {
         Self {
             service: GatewayServiceConfig::default(),
             server: GatewayServerConfig::default(),
+            realtime: GatewayRealtimeConfig::default(),
             mode: GatewayMode::default(),
             dependency_surfaces: default_dependency_surfaces(),
             request: GatewayRequestConfig::default(),
@@ -511,6 +527,9 @@ impl GatewayRuntimeConfig {
             if let Some(mode) = server.mode {
                 config.mode = mode;
             }
+        }
+        if let Some(realtime) = raw.realtime {
+            config.realtime = realtime;
         }
         if let Some(mode) = raw.mode {
             config.mode = mode;
@@ -633,6 +652,10 @@ impl GatewayRuntimeConfig {
         }
         if let Some(mode) = env.get("SDKWORK_API_CLOUD_GATEWAY_MODE") {
             self.mode = GatewayMode::parse(mode)?;
+        }
+        if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED") {
+            self.realtime.enabled =
+                parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED", enabled)?;
         }
         if let Some(max_body_bytes) = env.get("SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES") {
             self.request.max_body_bytes =

@@ -90,16 +90,22 @@ fn exact_registry_allows_same_template_for_different_methods() {
 }
 
 #[test]
-fn exact_registry_rejects_prefix_catch_all_entries() {
-    let error = GatewayRouteRegistry::try_from_exact_routes(vec![exact_route(
-        "orders",
-        "GET",
-        "/app/v3/api/orders/{*path}",
-    )])
-    .expect_err("catch-all cannot be exact route authority");
+fn exact_registry_accepts_prefix_catch_all_as_lowest_specificity() {
+    let registry = GatewayRouteRegistry::try_from_exact_routes(vec![
+        exact_route("orders", "GET", "/app/v3/api/orders/{*path}"),
+        exact_route("orders", "GET", "/app/v3/api/orders/{orderId}"),
+    ])
+    .expect("catch-all fallbacks are allowed below concrete patterns");
 
-    assert!(matches!(
-        error,
-        RouteRegistryError::CatchAllNotAllowed { .. }
-    ));
+    assert_eq!(registry.routes().len(), 2);
+    // Concrete patterns resolve before the catch-all fallback.
+    let resolved = registry
+        .resolve("GET", "/app/v3/api/orders/1001")
+        .expect("concrete pattern wins over catch-all");
+    assert_eq!(resolved.path_pattern, "/app/v3/api/orders/{orderId}");
+    // The catch-all still resolves paths outside concrete patterns.
+    let fallback = registry
+        .resolve("GET", "/app/v3/api/orders/1001/items")
+        .expect("catch-all covers remaining paths");
+    assert_eq!(fallback.path_pattern, "/app/v3/api/orders/{*path}");
 }

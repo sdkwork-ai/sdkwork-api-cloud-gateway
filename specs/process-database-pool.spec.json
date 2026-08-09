@@ -82,6 +82,18 @@
           "combinedConnectionBudget": 10,
           "adr": "docs/architecture/decisions/ADR-20260719-embedded-database-driver-migration.md",
           "evidence": ["../sdkwork-im/crates/sdkwork-im-database-pool/src/lib.rs"]
+        },
+        {
+          "driver": "sqlx::PgPool (IM realtime plane)",
+          "owner": "sdkwork-im maintainers",
+          "removalMilestone": "Fold the session-gateway realtime pool into the canonical process pool when the IM realtime plane adopts sdkwork-database pool ownership",
+          "combinedConnectionBudget": 32,
+          "adr": "docs/architecture/decisions/ADR-20260809-embedded-im-realtime-plane.md",
+          "evidence": [
+            "../sdkwork-im/services/session-gateway/src/runtime_bootstrap.rs",
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ],
+          "notes": "Enabled only with the foundation-im-realtime Cargo feature and SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED. Bounded by SDKWORK_IM_REALTIME_POSTGRES_POOL_MAX_SIZE (default 32). The plane also owns Redis clients for the cluster bus and route store (SDKWORK_IM_REALTIME_CLUSTER_BUS_URL / SDKWORK_IM_REALTIME_ROUTE_STORE_URL), which are not database pools."
         }
       ]
     }

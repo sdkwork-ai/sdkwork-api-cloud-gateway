@@ -390,6 +390,25 @@ export function validateGatewayApiClosure(root) {
       continue;
     }
 
+    // Runtime surface dependencies (for example the embedded IM realtime
+    // plane, ADR-20260809-platform-gateway-realtime-hosting) are not API
+    // assemblies: they carry no assembly-manifest.json and no route crates.
+    // They still require the apiSurfaces entry above plus a cargo feature, a
+    // cargo dependency, and an executable export; their runtime behavior is
+    // covered by gateway integration tests.
+    if (dependency.runtimeSurface === true) {
+      if (
+        !dependency.cargoFeature ||
+        !dependency.cargoDependency ||
+        !dependency.executableExport
+      ) {
+        errors.push(
+          `${dependency.serviceId}: runtime surface requires cargoFeature, cargoDependency, and executableExport`,
+        );
+      }
+      continue;
+    }
+
     const dependencyRoot = path.join(workspaceRoot, dependency.workspace);
     if (!fs.existsSync(dependencyRoot)) {
       errors.push(`${dependency.serviceId}: workspace does not exist: ${dependency.workspace}`);

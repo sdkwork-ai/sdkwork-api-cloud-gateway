@@ -132,12 +132,42 @@ observability section). Tracked config templates must not contain live secrets.
 flowchart LR
   Client --> Gateway["sdkwork-api-cloud-gateway"]
   Gateway -->|embedded| Embedded["Dependency Axum routers"]
+  Gateway -->|embedded optional| Realtime["IM session-gateway realtime plane"]
+  Realtime -->|ws upgrade| Ws["/im/v3/api/realtime/ws on the HTTP listener"]
+  Realtime -->|declared binds| Links["TCP/UDP/QUIC client link listeners"]
 ```
 
 | Profile | Use case | Packaging |
 | --- | --- | --- |
 | `cloud` | Multi-service production topology | CI matrix via `sdkwork.workflow.json` |
 | `standalone` | Single-node or edge deployment | `pnpm gateway:package:standalone` |
+
+### 7.1 Platform Gateway Realtime Hosting
+
+Per `ADR-20260809-platform-gateway-realtime-hosting`, the gateway `MAY` host a
+declared application realtime plane. The current embedded plane is the
+`sdkwork-im` session-gateway (WebSocket upgrade on the single HTTP listener
+plus declared TCP/UDP/QUIC client link binds). Enabling it requires all of:
+
+- Cargo feature `foundation-im-realtime` (opt-in; not part of
+  `platform-foundation-suite`),
+- `realtime.enabled = true` in the runtime TOML or
+  `SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED=true`,
+- `sdkwork-im` declared in the dependency surfaces (default via
+  `specs/component.spec.json`),
+- the IM realtime environment family: `SDKWORK_IM_REALTIME_NODE_ID`
+  (required when the cluster bus is enabled; the default node id errors),
+  `SDKWORK_IM_REALTIME_CLUSTER_BUS_URL` / `SDKWORK_IM_REALTIME_ROUTE_STORE_URL`
+  (Redis; cluster mode when set), `SDKWORK_IM_REALTIME_TCP_BIND_ADDR`,
+  `SDKWORK_IM_REALTIME_UDP_BIND_ADDR`, `SDKWORK_IM_REALTIME_QUIC_BIND_ADDR` +
+  `SDKWORK_IM_REALTIME_QUIC_TLS_CERT_PATH`/`SDKWORK_IM_REALTIME_QUIC_TLS_KEY_PATH`,
+  and `SDKWORK_DATABASE_URL` (production fail-closed; the plane also needs the
+  IM process pools, reserved via `SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT`).
+
+The plane drain timeout comes from `SDKWORK_IM_SESSION_GATEWAY_DRAIN_TIMEOUT_SECS`
+(default 45s). The gateway never installs the IM tracing subscriber; it keeps
+its own. `SDKWORK_IM_REALTIME_PERMISSIVE_SCOPE_ACCESS=true` is forbidden in
+production.
 
 Verification commands (repository root):
 

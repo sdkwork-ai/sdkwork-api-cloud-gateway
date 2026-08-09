@@ -43,6 +43,19 @@ curl http://127.0.0.1:3900/readyz
 sudo journalctl -u sdkwork-api-gateway -f
 ```
 
+## 端口与环境选择
+
+- 直接部署（本单元，development）：`127.0.0.1:3900`（默认
+  `config/sdkwork-api-cloud-gateway.development.toml`）。
+- 测试环境直接部署：把 `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE` 指向
+  `config/sdkwork-api-cloud-gateway.test.toml`（`127.0.0.1:3906`），数据库切到
+  `sdkwork_ai_test`。
+- 生产环境直接部署：使用 `config/sdkwork-api-cloud-gateway.production.toml`
+  （`0.0.0.0:3900`），仅在未启用 Docker 容器部署（3912）时使用。
+- Docker 容器部署占 391x 段（3910/3911/3912 → 容器内 3900），与本单元共存时
+  互不冲突；IM 实时平面 opt-in 监听占 1900x 段（TCP 19000 / UDP 19001 /
+  QUIC 19002）。完整矩阵见 `deployments/README.md`。
+
 ## 规范要点
 
 - 单元文件不内嵌环境赋值（`PACKAGING_SPEC.md` §5.5）：安装期生成的值一律放

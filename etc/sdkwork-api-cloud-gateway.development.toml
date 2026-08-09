@@ -7,6 +7,15 @@ environment = "development"
 [server]
 bind = "127.0.0.1:3900"
 
+# Platform gateway realtime hosting (ADR-20260809-platform-gateway-realtime-hosting):
+# embeds the IM session-gateway realtime plane (WebSocket upgrade on this HTTP
+# listener plus declared TCP/UDP/QUIC link binds) when the
+# `foundation-im-realtime` Cargo feature is enabled and `sdkwork-im` is a
+# declared surface. Transport binds and cluster wiring come from the
+# SDKWORK_IM_REALTIME_* environment family (see APP_RUNTIME_TOPOLOGY_NAMING.md).
+[realtime]
+enabled = false
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["http://127.0.0.1:5173", "http://localhost:5173"]

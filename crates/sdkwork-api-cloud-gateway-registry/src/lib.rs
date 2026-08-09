@@ -205,7 +205,13 @@ fn path_segments(path: &str) -> Vec<&str> {
 }
 
 fn is_path_parameter(segment: &str) -> bool {
-    segment.len() > 2 && segment.starts_with('{') && segment.ends_with('}')
+    // Catch-all segments (`{*path}`) are surface fallbacks, not named
+    // parameters; they must keep their own template identity so they do not
+    // collide with concrete `{param}` patterns during normalization.
+    segment.len() > 2
+        && !segment.starts_with("{*")
+        && segment.starts_with('{')
+        && segment.ends_with('}')
 }
 
 fn normalized_path_template(path: &str) -> String {
@@ -230,12 +236,9 @@ fn validate_exact_routes(routes: &[RouteDescriptor]) -> Result<(), RouteRegistry
                 service_id: route.service_id.clone(),
             });
         }
-        if route.path_pattern.contains("{*") {
-            return Err(RouteRegistryError::CatchAllNotAllowed {
-                service_id: route.service_id.clone(),
-                path_pattern: route.path_pattern.clone(),
-            });
-        }
+        // Catch-all templates (`/prefix/{*path}`) are allowed as surface
+        // fallbacks: `route_specificity` ranks them below concrete patterns
+        // (wildcard_rank = 0), so dispatch resolves specific routes first.
         if route.methods.is_empty() || route.methods.iter().any(|method| method == "*") {
             return Err(RouteRegistryError::InvalidMethods {
                 service_id: route.service_id.clone(),

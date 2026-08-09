@@ -34,6 +34,7 @@ use tower::ServiceExt;
 use tracing::info;
 use tracing::Instrument;
 
+use crate::embedded_dependency_routes::EmbeddedDependencyRuntime;
 use crate::{
     diagnostics, health,
     metrics::{escape_label_value, GatewayMetrics},
@@ -70,6 +71,53 @@ pub(crate) struct GatewayState {
     pub(crate) composed_router: Option<Router>,
     pub(crate) metrics: GatewayMetrics,
     pub(crate) traffic: traffic::GatewayTrafficState,
+}
+
+/// Process-lifetime handles a gateway main drains after the HTTP listener's
+/// graceful shutdown (for example the embedded IM realtime plane, per
+/// `ADR-20260809-platform-gateway-realtime-hosting`).
+#[derive(Default)]
+pub struct GatewayShutdown {
+    #[cfg(feature = "foundation-im-realtime")]
+    realtime_plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
+}
+
+impl GatewayShutdown {
+    #[cfg(feature = "foundation-im-realtime")]
+    fn retain_realtime_plane(
+        &mut self,
+        plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
+    ) {
+        self.realtime_plane = plane;
+    }
+
+    /// Drains embedded realtime planes: marks the node draining, fences and
+    /// releases client routes, shuts down link listeners and the cluster
+    /// subscriber. The timeout comes from
+    /// `SDKWORK_IM_SESSION_GATEWAY_DRAIN_TIMEOUT_SECS` (default 45s).
+    pub async fn shutdown(self) {
+        #[cfg(feature = "foundation-im-realtime")]
+        if let Some(plane) = self.realtime_plane {
+            let timeout = match session_gateway::resolve_session_gateway_drain_timeout() {
+                Ok(timeout) => timeout,
+                Err(error) => {
+                    tracing::warn!(
+                        target: "sdkwork.api.cloud_gateway",
+                        %error,
+                        "invalid realtime drain timeout; using default 45s"
+                    );
+                    Duration::from_secs(45)
+                }
+            };
+            if let Err(error) = plane.shutdown(timeout).await {
+                tracing::warn!(
+                    target: "sdkwork.api.cloud_gateway",
+                    %error,
+                    "embedded IM realtime plane drain failed"
+                );
+            }
+        }
+    }
 }
 
 impl GatewayRuntime {
@@ -227,39 +275,71 @@ pub async fn build_sdkwork_api_cloud_gateway_router(
 
     #[cfg(feature = "foundation-appbase")]
     {
-        let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
-            .await?
-            .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
-                message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
-                    .to_owned(),
-            })?;
-        let dependency_bootstrap =
-            crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
-                &config, &pool,
-            )
-            .await?;
-        let registry =
-            exact_registry_for_contributions(&config, &dependency_bootstrap.contributions)?;
-        let composed = ComposedApiAssembly::try_compose(
-            "SDKWork Platform API",
-            dependency_bootstrap.contributions,
-        )
-        .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
-        let framework_manifest = composed.route_manifest.clone();
-        let resolver =
-            sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
-        let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
-            resolver,
-            framework_manifest,
-            vec!["/openapi/index.json".to_owned()],
-        );
-        let hosted = composed.into_hosted(framework);
-        let router = hosted
-            .router
-            .layer(Extension(Arc::new(dependency_bootstrap.runtime)));
-        GatewayRuntime::with_registry_and_composed_router(config, registry, router)
-            .map(GatewayRuntime::assemble_router)
+        let (router, runtime) = build_embedded_router(config).await?;
+        Ok(router.layer(Extension(Arc::new(runtime))))
     }
+}
+
+/// Core embedded gateway assembly: database bootstrap, dependency
+/// contributions, exact route registry, composed Web Framework host, and the
+/// assembled gateway router. Returns the retained dependency runtime so the
+/// caller owns mounting the `Extension` that keeps it alive.
+#[cfg(feature = "foundation-appbase")]
+async fn build_embedded_router(
+    config: GatewayRuntimeConfig,
+) -> Result<(Router, EmbeddedDependencyRuntime), GatewayRuntimeError> {
+    let pool = crate::embedded_database_bootstrap::bootstrap_embedded_databases(&config)
+        .await?
+        .ok_or_else(|| GatewayRuntimeError::DatabasePoolBootstrap {
+            message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
+                .to_owned(),
+        })?;
+    let dependency_bootstrap =
+        crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
+            &config, &pool,
+        )
+        .await?;
+    let registry = exact_registry_for_contributions(&config, &dependency_bootstrap.contributions)?;
+    let composed = ComposedApiAssembly::try_compose(
+        "SDKWork Platform API",
+        dependency_bootstrap.contributions,
+    )
+    .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
+    let framework_manifest = composed.route_manifest.clone();
+    let resolver =
+        sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
+    let mut public_path_prefixes = vec!["/openapi/index.json".to_owned()];
+    #[cfg(feature = "foundation-im-realtime")]
+    {
+        // The embedded IM realtime plane serves its WebSocket upgrade outside
+        // the Web Framework interceptor pipeline; the path must be public so
+        // the 101 upgrade is not rejected (mirrors the IM standalone gateway's
+        // im_service_public_path_prefixes).
+        public_path_prefixes.push("/im/v3/api/realtime/ws".to_owned());
+    }
+    let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
+        resolver,
+        framework_manifest,
+        public_path_prefixes,
+    );
+    let hosted = composed.into_hosted(framework);
+    let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
+        .map(GatewayRuntime::assemble_router)?;
+    Ok((router, dependency_bootstrap.runtime))
+}
+
+/// Builds the embedded gateway router together with process-lifetime shutdown
+/// handles so a gateway main can drain embedded surfaces (for example the IM
+/// realtime plane) after the HTTP listener's graceful shutdown. Requires both
+/// `foundation-appbase` and `foundation-im-realtime`.
+#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_realtime(
+    config: GatewayRuntimeConfig,
+) -> Result<(Router, GatewayShutdown), GatewayRuntimeError> {
+    let (router, mut runtime) = build_embedded_router(config).await?;
+    let mut shutdown = GatewayShutdown::default();
+    shutdown.retain_realtime_plane(runtime.take_realtime_plane());
+    Ok((router.layer(Extension(Arc::new(runtime))), shutdown))
 }
 
 pub fn build_sdkwork_api_cloud_gateway_router_with_registry(

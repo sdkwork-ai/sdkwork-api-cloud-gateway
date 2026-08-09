@@ -3,6 +3,7 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::ApiAssemblyContribution;
+#[cfg(any(feature = "foundation-cloudrouter", feature = "foundation-web-server"))]
 use sdkwork_web_contract::enrich_owned_openapi_document;
 
 use crate::GatewayRuntimeError;
@@ -17,6 +18,8 @@ pub struct EmbeddedDependencyRuntime {
     background_tasks: Vec<tokio::task::JoinHandle<()>>,
     #[cfg(feature = "foundation-im")]
     im_runtime: Option<sdkwork_api_im_assembly::ApiAssemblyRuntime>,
+    #[cfg(feature = "foundation-im-realtime")]
+    realtime_plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
 }
 
 impl EmbeddedDependencyRuntime {
@@ -31,12 +34,33 @@ impl EmbeddedDependencyRuntime {
     fn retain_im_runtime(&mut self, runtime: sdkwork_api_im_assembly::ApiAssemblyRuntime) {
         self.im_runtime = Some(runtime);
     }
+
+    #[cfg(feature = "foundation-im-realtime")]
+    fn retain_realtime_plane(&mut self, plane: session_gateway::GatewayEmbeddedRealtimePlane) {
+        self.realtime_plane = Some(plane);
+    }
+
+    /// Extracts the embedded realtime plane so a gateway main can drain it
+    /// after the HTTP listener's graceful shutdown instead of aborting tasks.
+    #[cfg(feature = "foundation-im-realtime")]
+    pub fn take_realtime_plane(&mut self) -> Option<session_gateway::GatewayEmbeddedRealtimePlane> {
+        self.realtime_plane.take()
+    }
 }
 
 impl Drop for EmbeddedDependencyRuntime {
     fn drop(&mut self) {
         for task in &self.background_tasks {
             task.abort();
+        }
+        #[cfg(feature = "foundation-im-realtime")]
+        if let Some(plane) = &self.realtime_plane {
+            for handle in &plane.link_transport_handles {
+                handle.abort();
+            }
+            if let Some(handle) = &plane.maintenance_handle {
+                handle.abort();
+            }
         }
     }
 }
@@ -206,7 +230,7 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
-    #[cfg(feature = "foundation-im")]
+    #[cfg(all(feature = "foundation-im", not(feature = "foundation-im-realtime")))]
     if workspace_surface_enabled(config, "sdkwork-im") {
         // IM owns process-wide shared database pools (sqlx host + r2d2) installed
         // exactly once per process; the assembly reuses that singleton.
@@ -215,6 +239,27 @@ pub async fn bootstrap_embedded_dependency_contributions(
             .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
         contributions.push(contribution.contribution);
         runtime.retain_im_runtime(contribution.runtime);
+    }
+
+    #[cfg(all(feature = "foundation-im", feature = "foundation-im-realtime"))]
+    if workspace_surface_enabled(config, "sdkwork-im") {
+        // IM owns process-wide shared database pools (sqlx host + r2d2) installed
+        // exactly once per process; the assembly reuses that singleton. When
+        // realtime hosting is enabled (ADR-20260809-platform-gateway-realtime-hosting),
+        // the session-gateway plane is embedded first so the assembly wires the
+        // real plane (WebSocket upgrade + declared TCP/UDP/QUIC link binds)
+        // instead of the in-memory default plane.
+        let assembly = if config.realtime.enabled {
+            let (assembly, plane) = bootstrap_im_realtime_contribution(config).await?;
+            runtime.retain_realtime_plane(plane);
+            assembly
+        } else {
+            sdkwork_api_im_assembly::assemble_api_router()
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?
+        };
+        contributions.push(assembly.contribution);
+        runtime.retain_im_runtime(assembly.runtime);
     }
 
     #[cfg(feature = "foundation-deployments")]
@@ -507,6 +552,36 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
         .dependency_surfaces
         .iter()
         .any(|surface| surface.workspace == workspace)
+}
+
+/// Bootstraps the embedded IM realtime plane and the IM API assembly wired to
+/// that plane (`ADR-20260809-platform-gateway-realtime-hosting`).
+///
+/// Order matters: the plane resolves membership-gated scope access from the
+/// IM process-shared pools, so those pools must be installed first (idempotent;
+/// the assembly reuses the same singleton pools).
+#[cfg(feature = "foundation-im-realtime")]
+async fn bootstrap_im_realtime_contribution(
+    config: &GatewayRuntimeConfig,
+) -> Result<
+    (
+        sdkwork_api_im_assembly::ApiAssembly,
+        session_gateway::GatewayEmbeddedRealtimePlane,
+    ),
+    GatewayRuntimeError,
+> {
+    sdkwork_im_database_pool::bootstrap_im_process_database_pools_from_env()
+        .await
+        .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+    let plane = session_gateway::bootstrap_gateway_embedded_realtime_plane()
+        .await
+        .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+    let contribution = sdkwork_api_im_assembly::assemble_api_router_with_realtime_bootstrap(Some(
+        &plane.bootstrap,
+    ))
+    .await
+    .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+    Ok((contribution, plane))
 }
 
 fn workspace_build_error(
