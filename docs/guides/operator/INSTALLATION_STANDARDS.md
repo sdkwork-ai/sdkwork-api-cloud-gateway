@@ -146,8 +146,7 @@ ExecStart=/usr/local/bin/sdkwork-api-cloud-gateway
 
 | 模板 | 域名 | 说明 |
 | --- | --- | --- |
-| `docker/nginx/testapidocker-api-gateway.conf` | `testapidocker.*` 三测试域名 | HTTP 80，配合 Windows hosts 本地验证 |
-| `docker/nginx/testapi-api-gateway.conf` | `testapi.*` 三测试域名 | HTTP 80，配合 Windows hosts 本地验证 |
+| `docker/nginx/testdockerapi-api-gateway.conf` | `testdockerapi.*` 三测试域名 | HTTP 80，配合 Windows hosts 本地验证（docker 部署 test 环境） |
 | `docker/nginx/api-gateway-production.conf` | 三个生产域名 | HTTPS 443（TLS 终止于 nginx）+ 80→443 重定向 |
 
 **生产域名**：`api.sdkwork.com`、`api.birdcoder.com`、`api.dtupay.com`。

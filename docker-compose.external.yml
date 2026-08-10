@@ -1,25 +1,37 @@
 # sdkwork-api-cloud-gateway external-dependency mode override.
 #
-# Use when PostgreSQL and/or Redis already exist outside this composition
-# (managed databases, existing installations). Start with:
+# One override serves BOTH external-dependency postures (choose via .env):
+#
+#   ② Remote/remote managed services — PostgreSQL/Redis already exist outside
+#      this composition (cloud databases, existing installations):
+#        GATEWAY_POSTGRES_HOST=db.internal.example.com
+#        GATEWAY_CLOUDROUTER_REDIS_HOST=redis.internal.example.com
+#
+#   ③ Ubuntu host-native services — the server itself runs apt-installed
+#      postgresql/redis-server (no containers). Point the gateway at the docker
+#      host loopback through the host-gateway extra host below:
+#        GATEWAY_POSTGRES_HOST=host.docker.internal
+#        GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal
+#      Host-side prerequisites: PostgreSQL must listen on an interface the
+#      docker bridge can reach (listen_addresses + pg_hba), carry the `vector`
+#      extension (postgresql-14-pgvector etc.), and have the canonical database
+#      with the same-named schema (docker/postgres/external-schema.sql); Redis
+#      must bind beyond 127.0.0.1 (bind 0.0.0.0 or the bridge interface).
+#
+# Mode ① (built-in postgres/redis containers) stays the default: plain
+# `docker compose up -d` without this override.
+#
+# Start either external posture with:
 #
 #   docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
 #
-# and point the gateway at the existing services through .env:
-#   GATEWAY_POSTGRES_HOST=db.internal.example.com     (or host.docker.internal)
-#   GATEWAY_POSTGRES_PORT=5432
-#   GATEWAY_POSTGRES_DB=sdkwork_ai_prod
-#   GATEWAY_POSTGRES_USER=sdkwork_ai_prod
-#   GATEWAY_POSTGRES_PASSWORD=...
-#   GATEWAY_CLOUDROUTER_REDIS_HOST=redis.internal.example.com
-#   GATEWAY_CLOUDROUTER_REDIS_PORT=6379
-#   GATEWAY_CLOUDROUTER_REDIS_PASSWORD=...           (TLS: SDKWORK_CLOUDROUTER_REDIS_TLS)
-#
-# The built-in postgres/redis services are moved to a never-enabled profile so
-# they are NOT started by this composition; the gateway's internal dependency
-# wiring is reset. The external PostgreSQL must already contain the canonical
-# database `sdkwork_ai_prod` with the same-named schema (see
-# docker/postgres/external-schema.sql).
+# and configure the connection through .env (GATEWAY_POSTGRES_*,
+# GATEWAY_CLOUDROUTER_REDIS_*). The built-in postgres/redis services are moved
+# to a never-enabled profile so they are NOT started by this composition; the
+# gateway's internal dependency wiring is reset. The external PostgreSQL must
+# already contain the canonical database with the same-named schema (see
+# docker/postgres/external-schema.sql; run it per environment, e.g. once with
+# `-v db=sdkwork_ai_test` and once with `-v db=sdkwork_ai_prod`).
 
 services:
   postgres:
