@@ -46,7 +46,7 @@ const GATEWAY_SELF_ROUTES: &[(&str, &str, &str)] = &[
 
 fn auth_profile(auth: RouteAuth) -> &'static str {
     match auth {
-        RouteAuth::Public => "anonymous",
+        RouteAuth::Public | RouteAuth::DualTokenOrAnonymous => "anonymous",
         RouteAuth::BootstrapBody | RouteAuth::CredentialEntryBootstrap => {
             "credential-entry-bootstrap"
         }
