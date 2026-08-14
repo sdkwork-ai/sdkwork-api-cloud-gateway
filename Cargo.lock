@@ -10776,7 +10776,7 @@ name = "sdkwork-lr-plugin"
 version = "0.1.0"
 dependencies = [
  "sdkwork-lr-core",
- "sdkwork-models 0.1.0 (git+https://github.com/Sdkwork-Cloud/sdkwork-models.git)",
+ "sdkwork-models 0.1.0 (git+https://github.com/sdkwork-ai/sdkwork-models.git)",
  "serde",
  "serde_json",
 ]
@@ -11189,7 +11189,7 @@ dependencies = [
 [[package]]
 name = "sdkwork-models"
 version = "0.1.0"
-source = "git+https://github.com/Sdkwork-Cloud/sdkwork-models.git#0b30c52b2cbbc32e65f66b91b1ced30eac0f14d7"
+source = "git+https://github.com/sdkwork-ai/sdkwork-models.git#0b30c52b2cbbc32e65f66b91b1ced30eac0f14d7"
 dependencies = [
  "serde",
  "serde_json",
@@ -13306,7 +13306,7 @@ dependencies = [
  "sdkwork-lr-proxy",
  "sdkwork-lr-store",
  "sdkwork-lr-transform",
- "sdkwork-models 0.1.0 (git+https://github.com/Sdkwork-Cloud/sdkwork-models.git)",
+ "sdkwork-models 0.1.0 (git+https://github.com/sdkwork-ai/sdkwork-models.git)",
  "sdkwork-web-axum",
  "sdkwork-web-core",
  "serde",
