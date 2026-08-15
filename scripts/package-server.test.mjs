@@ -9,6 +9,7 @@ import {
   resolveServerStageName,
   resolveTarArchiveName,
 } from './package-server.mjs';
+import { resolveMissingDatabaseWorkspaces } from './build-api-cloud-gateway-container.mjs';
 
 const root = path.resolve('workspace', 'sdkwork-api-cloud-gateway');
 
@@ -126,4 +127,14 @@ test('database assets are discovered from convention-named gateway host dependen
       ),
     },
   ]);
+});
+
+test('container database extras exclude workspaces already discovered from Cargo', () => {
+  assert.deepEqual(
+    resolveMissingDatabaseWorkspaces(
+      [{ workspace: 'sdkwork-models' }, { workspace: 'sdkwork-cloudrouter' }],
+      ['sdkwork-log', 'sdkwork-models', 'sdkwork-partner'],
+    ),
+    ['sdkwork-log', 'sdkwork-partner'],
+  );
 });

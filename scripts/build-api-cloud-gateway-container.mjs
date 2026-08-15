@@ -197,7 +197,10 @@ async function resolveDatabaseModules(metadata) {
   }
   // Attach runtime-required foundation modules that are not cargo
   // dependencies of the gateway binary.
-  for (const workspace of Object.keys(EXTRA_DATABASE_MODULES)) {
+  for (const workspace of resolveMissingDatabaseWorkspaces(
+    modules,
+    Object.keys(EXTRA_DATABASE_MODULES),
+  )) {
     const workspaceRoot = path.join(appRoot, '..', workspace);
     const databaseRoot = path.join(workspaceRoot, 'database');
     const manifestPath = path.join(databaseRoot, 'database.manifest.json');
@@ -215,6 +218,11 @@ async function resolveDatabaseModules(metadata) {
   }
   modules.sort((left, right) => left.workspace.localeCompare(right.workspace));
   return modules;
+}
+
+export function resolveMissingDatabaseWorkspaces(modules, extraWorkspaces) {
+  const discovered = new Set(modules.map((module) => module.workspace));
+  return extraWorkspaces.filter((workspace) => !discovered.has(workspace));
 }
 
 async function createBuildPlan(settings) {
@@ -615,10 +623,12 @@ async function main(argv = process.argv.slice(2)) {
   return 0;
 }
 
-main().catch((error) => {
-  console.error(`[container-image-build] ${error instanceof Error ? error.message : String(error)}`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  main().catch((error) => {
+    console.error(`[container-image-build] ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  });
+}
 
 export {
   CONTAINER_IMAGE_MANIFEST_SCHEMA_VERSION,
