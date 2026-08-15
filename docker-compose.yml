@@ -187,9 +187,11 @@ services:
       # Web Server snowflake node id: single-instance docker deployment pins a
       # unique node id (multi-instance deployments must vary it per instance).
       SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID: ${GATEWAY_WEBSERVER_SNOWFLAKE_NODE_ID:-1}
-      # Payment credential master key: a file on the durable data volume
-      # (auto-created on first start; required by the payment foundation host).
-      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /var/lib/sdkwork/api-gateway/secrets/payment-credential-master.key
+      # Payment credential master key: the single-node composition provisions
+      # it once in the canonical secret mount. Multi-replica deployments must
+      # set provisioning false and mount the same operator/KMS-managed key.
+      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api-gateway/payment-credential-master.key
+      SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY: ${GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true}
       # Process log level (tracing reads RUST_LOG directly).
       RUST_LOG: ${RUST_LOG:-info}
     volumes:
@@ -205,6 +207,9 @@ services:
       #   - ./docker/secrets/payment-credential-master.key:/run/secrets/sdkwork/api-gateway/payment-credential-master.key:ro
       # Durable data lives on a mounted volume (RUNTIME_DIRECTORY_SPEC §4.5).
       - gateway-data:/var/lib/sdkwork/api-gateway
+      # Single-node secret persistence. Set key provisioning false and replace
+      # this volume with an operator-managed secret mount for replicas.
+      - gateway-secrets:/run/secrets/sdkwork/api-gateway
     depends_on:
       postgres:
         condition: service_healthy
@@ -235,3 +240,4 @@ volumes:
   postgres-data:
   redis-data:
   gateway-data:
+  gateway-secrets:

@@ -13,6 +13,47 @@ export SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT
 export SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID
 export SDKWORK_ENVIRONMENT="${SDKWORK_ENVIRONMENT:-${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT}}"
 
+provision_payment_credential_key() {
+  enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-false}
+  case "$enabled" in
+    true) ;;
+    false) return 0 ;;
+    *)
+      echo "SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY must be true or false" >&2
+      exit 2
+      ;;
+  esac
+
+  key_file=${SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE:-}
+  case "$key_file" in
+    /run/secrets/sdkwork/api-gateway/*) ;;
+    *)
+      echo "payment credential key provisioning requires a path under /run/secrets/sdkwork/api-gateway" >&2
+      exit 1
+      ;;
+  esac
+
+  key_directory=${key_file%/*}
+  mkdir -p "$key_directory"
+  if [ ! -e "$key_file" ]; then
+    # noclobber makes concurrent single-host starts race safely: only one
+    # process creates the durable key and no process overwrites an existing key.
+    if ! (umask 077; set -C; dd if=/dev/urandom bs=32 count=1 status=none > "$key_file") 2>/dev/null; then
+      [ -s "$key_file" ] || {
+        echo "failed to provision payment credential master key" >&2
+        exit 1
+      }
+    fi
+  fi
+
+  [ -s "$key_file" ] || {
+    echo "payment credential master key is empty" >&2
+    exit 1
+  }
+}
+
+provision_payment_credential_key
+
 if [ "${SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:-true}" = "true" ]; then
   /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
 fi

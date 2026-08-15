@@ -25,6 +25,11 @@ PostgreSQL 与 Redis 的依赖来源三选一，**同一套 compose 同时支持
 | ② 外连远端 | 已有远程/托管 PostgreSQL、Redis | `docker compose -f docker-compose.yml -f docker-compose.external.yml up -d` | `GATEWAY_POSTGRES_HOST=<远端IP>`、`GATEWAY_CLOUDROUTER_REDIS_HOST=<远端IP>` |
 | ③ Ubuntu 宿主原生 | 服务器 apt 已装 `postgresql`/`redis-server`（无容器） | 同上 external override | `GATEWAY_POSTGRES_HOST=host.docker.internal`、`GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal` |
 
+以上三种方式的单机 Compose 都默认在独立 `gateway-secrets` 卷中一次性生成 Payment
+凭据主密钥。多副本部署必须设置 `GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=false`，
+并把同一个运维或 KMS 管理的密钥挂载到
+`/run/secrets/sdkwork/api-gateway/payment-credential-master.key`。
+
 `docker-compose.external.yml` 将内置 postgres/redis 移入永不启用的
 `external-disabled` profile，并注入 `host-gateway` extra host，因此 ②③
 共用同一 override；两种姿态只差 `.env` 里的 host 值与宿主侧服务准备。

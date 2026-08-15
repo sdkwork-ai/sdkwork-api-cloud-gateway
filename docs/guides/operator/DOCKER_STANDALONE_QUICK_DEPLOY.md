@@ -64,6 +64,12 @@ docker compose --env-file .env up -d
 docker compose --env-file .env ps
 ```
 
+单机 Compose 默认设置 `GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=true`，首次启动时在
+`gateway-secrets` 卷的 `/run/secrets/sdkwork/api-gateway/` 下生成权限为 `0600` 的
+Payment 凭据主密钥，后续启动复用且不会覆盖。多副本部署必须将该值设为 `false`，并在
+同一路径挂载由运维或 KMS 管理的共享密钥；丢失或让副本使用不同密钥会导致已有支付凭据
+无法解密。
+
 检查就绪：
 
 ```bash

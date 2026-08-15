@@ -124,6 +124,23 @@ test('database lifecycle is explicit and includes Models before CloudRouter', ()
   );
 });
 
+test('single-node containers provision the Payment key in the canonical secret mount', () => {
+  const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
+  const entrypoint = readFileSync(path.join(appRoot, 'container', 'entrypoint'), 'utf8');
+
+  assert.match(
+    compose,
+    /SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: \/run\/secrets\/sdkwork\/api-gateway\//u,
+  );
+  assert.match(compose, /gateway-secrets:\/run\/secrets\/sdkwork\/api-gateway/u);
+  assert.match(compose, /GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true/u);
+  assert.match(entrypoint, /SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY/u);
+  assert.match(entrypoint, /\/run\/secrets\/sdkwork\/api-gateway\/\*/u);
+  assert.match(entrypoint, /umask 077/u);
+  assert.match(entrypoint, /dd if=\/dev\/urandom bs=32 count=1/u);
+  assert.match(entrypoint, /set -C/u);
+});
+
 test('server install manifest declares its self-referential checksum exclusions', () => {
   const packager = readFileSync(path.join(appRoot, 'scripts', 'package-server.mjs'), 'utf8');
   assert.match(
