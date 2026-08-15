@@ -51,8 +51,8 @@ sudo journalctl -u sdkwork-api-gateway -f
   `config/sdkwork-api-cloud-gateway.test.toml`（`127.0.0.1:3906`），数据库切到
   `sdkwork_ai_test`。
 - 生产环境直接部署：使用 `config/sdkwork-api-cloud-gateway.production.toml`
-  （`0.0.0.0:3900`），仅在未启用 Docker 容器部署（3912）时使用。
-- Docker 容器部署占 391x 段（3910/3911/3912 → 容器内 3900），与本单元共存时
+  （`0.0.0.0:3900`），仅在未启用 Docker 容器部署（3910-3913）时使用。
+- Docker 容器部署占 391x 段（3910/3911/3912/3913 → 容器内 3900），与本单元共存时
   互不冲突；IM 实时平面 opt-in 监听占 1900x 段（TCP 19000 / UDP 19001 /
   QUIC 19002）。完整矩阵见 `deployments/README.md`。
 

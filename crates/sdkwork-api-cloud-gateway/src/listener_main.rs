@@ -7,7 +7,9 @@ use opentelemetry_otlp::WithExportConfig;
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
 #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
-use sdkwork_api_cloud_gateway::load_gateway_config;
+use sdkwork_api_cloud_gateway::{
+    embedded_database_bootstrap::migrate_embedded_databases, load_gateway_config,
+};
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use tokio::net::TcpListener;
 use tracing::info;
@@ -16,33 +18,54 @@ use tracing_subscriber::{
 };
 
 const GATEWAY_RUNTIME_STACK_SIZE: usize = 16 * 1024 * 1024;
+const MIGRATE_DATABASES_ARG: &str = "--migrate-databases";
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProcessMode {
+    Serve,
+    MigrateDatabases,
+}
 
 fn main() -> anyhow::Result<()> {
     install_process_crypto_provider()?;
+    let process_mode = process_mode_from_args(env::args().skip(1));
+    if process_mode == ProcessMode::MigrateDatabases {
+        // SAFETY: this happens before the Tokio runtime or any worker thread is
+        // created. The explicit lifecycle command must apply pending modules
+        // even when the service runtime keeps auto-migration disabled.
+        unsafe { env::set_var("SDKWORK_DATABASE_AUTO_MIGRATE", "true") };
+    }
 
     std::thread::Builder::new()
         .name("sdkwork-api-cloud-gateway-runtime".to_owned())
         .stack_size(GATEWAY_RUNTIME_STACK_SIZE)
-        .spawn(run_gateway_process)
+        .spawn(move || run_gateway_process(process_mode))
         .context("failed to spawn the gateway runtime thread")?
         .join()
         .map_err(|_| anyhow!("gateway runtime thread panicked"))?
 }
 
-fn run_gateway_process() -> anyhow::Result<()> {
+fn run_gateway_process(process_mode: ProcessMode) -> anyhow::Result<()> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .context("failed to build the gateway Tokio runtime")?
-        .block_on(run_gateway())
+        .block_on(run_gateway(process_mode))
 }
 
-async fn run_gateway() -> anyhow::Result<()> {
+async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     sdkwork_database_sqlx::enable_process_shared_database_pool();
 
     let env = env::vars().collect::<HashMap<_, _>>();
     let config = load_gateway_config(env::args().skip(1), &env, ".")?;
     init_tracing(&config)?;
+    if process_mode == ProcessMode::MigrateDatabases {
+        migrate_embedded_databases(&config)
+            .await?
+            .ok_or_else(|| anyhow!("no embedded database modules are enabled"))?;
+        info!("sdkwork api gateway database migration completed");
+        return Ok(());
+    }
     let bind: SocketAddr = config
         .server
         .bind
@@ -70,6 +93,21 @@ async fn run_gateway() -> anyhow::Result<()> {
     shutdown.shutdown().await;
 
     Ok(())
+}
+
+fn process_mode_from_args<I, S>(args: I) -> ProcessMode
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    if args
+        .into_iter()
+        .any(|argument| argument.as_ref() == MIGRATE_DATABASES_ARG)
+    {
+        ProcessMode::MigrateDatabases
+    } else {
+        ProcessMode::Serve
+    }
 }
 
 fn install_process_crypto_provider() -> anyhow::Result<()> {
@@ -158,5 +196,17 @@ mod tests {
     fn installs_a_process_crypto_provider_before_router_construction() {
         install_process_crypto_provider().expect("crypto provider should install");
         assert!(rustls::crypto::CryptoProvider::get_default().is_some());
+    }
+
+    #[test]
+    fn recognizes_explicit_database_migration_mode() {
+        assert_eq!(
+            process_mode_from_args(["--config", "gateway.toml", MIGRATE_DATABASES_ARG]),
+            ProcessMode::MigrateDatabases
+        );
+        assert_eq!(
+            process_mode_from_args(["--config=gateway.toml"]),
+            ProcessMode::Serve
+        );
     }
 }

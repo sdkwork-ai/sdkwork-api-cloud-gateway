@@ -165,7 +165,7 @@ async function loadPackageJson() {
 }
 
 async function loadCargoMetadata() {
-  const { stdout } = await execFileAsync('cargo', ['metadata', '--format-version', '1'], {
+  const { stdout } = await execFileAsync('cargo', ['metadata', '--format-version', '1', '--no-deps', '--locked'], {
     cwd: appRoot,
     maxBuffer: 64 * 1024 * 1024,
   });
@@ -262,8 +262,8 @@ async function validateBuildPlan(plan) {
       `container image builds require a Linux host (found ${process.platform}); build inside WSL/Ubuntu`,
     );
   }
-  if (!plan.skipBuild && !existsSync(plan.binaryPath)) {
-    issues.push(`missing release binary (build with cargo first): ${plan.binaryPath}`);
+  if (plan.skipBuild && !existsSync(plan.binaryPath)) {
+    issues.push(`missing release binary for --skip-build: ${plan.binaryPath}`);
   }
   for (const module of plan.databaseModules) {
     if (!existsSync(path.join(module.databaseRoot, 'database.manifest.json'))) {
@@ -421,6 +421,7 @@ function createInstallManifest(plan) {
     configTemplates: [
       'config/sdkwork-api-cloud-gateway.development.toml',
       'config/sdkwork-api-cloud-gateway.production.toml',
+      'config/sdkwork-api-cloud-gateway.staging.toml',
       'config/sdkwork-api-cloud-gateway.test.toml',
     ],
     databaseModules: plan.databaseModules.map((module) => ({
@@ -590,7 +591,7 @@ async function main(argv = process.argv.slice(2)) {
     throw new Error('docker is not available or the daemon is not running; start docker first');
   }
 
-  if (!plan.skipBuild && !existsSync(plan.binaryPath)) {
+  if (!plan.skipBuild) {
     console.log('[container-image-build] building release binary...');
     await runCargoBuild(plan);
   }

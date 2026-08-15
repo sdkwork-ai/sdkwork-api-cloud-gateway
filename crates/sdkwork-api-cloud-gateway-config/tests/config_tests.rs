@@ -439,12 +439,10 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
         cloudrouter_prefixes,
         HashSet::from([
             "/app/v3/api/ai",
-            "/app/v3/api/chat",
             "/app/v3/api/iam/api_keys",
             "/app/v3/api/iam/invite",
             "/app/v3/api/iam/invites",
             "/app/v3/api/iam/users/settings",
-            "/app/v3/api/memory",
             "/app/v3/api/notification",
             "/app/v3/api/runtime",
             "/app/v3/api/system/site",
@@ -481,6 +479,27 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
         surface.cargo_feature.as_deref() == Some("foundation-cloudrouter")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-cloudrouter-assembly")
     }));
+}
+
+#[test]
+fn lifecycle_environment_env_override_is_canonical_and_validated() {
+    let mut env = HashMap::new();
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT".to_owned(),
+        "TEST".to_owned(),
+    );
+    let config = GatewayRuntimeConfig::default()
+        .with_env_overrides(&env)
+        .expect("canonical environment override");
+    assert_eq!(config.service.environment, "test");
+
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT".to_owned(),
+        "preview".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::default()
+        .with_env_overrides(&env)
+        .is_err());
 }
 
 #[test]

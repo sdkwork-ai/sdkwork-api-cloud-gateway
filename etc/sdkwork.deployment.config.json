@@ -6,11 +6,39 @@
   "environments": {
     "development": {
       "applicationOrigin": "http://127.0.0.1:3900",
-      "cloudApiBaseUrl": "https://api-dev.sdkwork.com"
+      "cloudApiBaseUrl": "https://api-dev.sdkwork.com",
+      "publicHosts": [
+        "api-dev.sdkwork.com",
+        "api-dev.birdcoder.com",
+        "api-dev.dtupay.com"
+      ]
+    },
+    "test": {
+      "applicationOrigin": "http://127.0.0.1:3906",
+      "cloudApiBaseUrl": "https://api-test.sdkwork.com",
+      "publicHosts": [
+        "api-test.sdkwork.com",
+        "api-test.birdcoder.com",
+        "api-test.dtupay.com"
+      ]
+    },
+    "staging": {
+      "applicationOrigin": "http://127.0.0.1:3907",
+      "cloudApiBaseUrl": "https://api-staging.sdkwork.com",
+      "publicHosts": [
+        "api-staging.sdkwork.com",
+        "api-staging.birdcoder.com",
+        "api-staging.dtupay.com"
+      ]
     },
     "production": {
       "applicationOrigin": "https://api.sdkwork.com",
-      "cloudApiBaseUrl": "https://api.sdkwork.com"
+      "cloudApiBaseUrl": "https://api.sdkwork.com",
+      "publicHosts": [
+        "api.sdkwork.com",
+        "api.birdcoder.com",
+        "api.dtupay.com"
+      ]
     }
   },
   "profiles": {
@@ -19,6 +47,18 @@
     },
     "cloud.development": {
       "config": "topology/cloud.development.env"
+    },
+    "standalone.test": {
+      "config": "topology/standalone.test.env"
+    },
+    "cloud.test": {
+      "config": "topology/cloud.test.env"
+    },
+    "standalone.staging": {
+      "config": "topology/standalone.staging.env"
+    },
+    "cloud.staging": {
+      "config": "topology/cloud.staging.env"
     },
     "standalone.production": {
       "config": "topology/standalone.production.env"

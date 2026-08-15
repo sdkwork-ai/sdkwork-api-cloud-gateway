@@ -1,0 +1,65 @@
+mode = "embedded"
+
+[service]
+name = "sdkwork-api-cloud-gateway"
+environment = "staging"
+
+[server]
+bind = "0.0.0.0:3907"
+
+[database]
+autoMigrate = false
+bind = "0.0.0.0:3907"
+
+[cors]
+allowAnyOrigin = false
+allowedOrigins = ["https://api-staging.sdkwork.com", "https://api-staging.birdcoder.com", "https://api-staging.dtupay.com"]
+
+[request]
+maxBodyBytes = 33554432
+
+[observability]
+accessLogEnabled = true
+auditLogEnabled = true
+metricsEnabled = true
+metricsPath = "/metrics"
+tracingEnabled = true
+redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
+
+[observability.otel]
+enabled = false
+endpoint = "http://localhost:4317"
+
+[diagnostics]
+enabled = false
+path = "/internal/gateway/diagnostics"
+includePolicyInventory = true
+includeRouteInventory = true
+
+[security]
+allowedHosts = ["api-staging.sdkwork.com", "api-staging.birdcoder.com", "api-staging.dtupay.com"]
+trustedProxyCidrs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+secureHeadersEnabled = true
+maxHeaderBytes = 65536
+maxHeaderCount = 128
+rejectCredentialHeadersOnAnonymousAuthRoutes = true
+csrfGuardEnabled = true
+
+[security.waf]
+enabled = true
+mode = "monitor"
+inspectQuery = true
+inspectHeaders = true
+inspectJsonBody = true
+
+[traffic]
+rateLimitEnabled = true
+compatXRateLimitHeaders = true
+globalMaxInFlight = 1024
+rateLimits = []
+concurrencyLimits = []
+
+[policy]
+enabled = true
+dryRun = true
+rules = []

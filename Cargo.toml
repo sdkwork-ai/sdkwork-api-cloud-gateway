@@ -71,6 +71,7 @@ sdkwork-voice-database-host = { path = "../sdkwork-voice/crates/sdkwork-voice-da
 sdkwork-cms-database-host = { path = "../sdkwork-cms/crates/sdkwork-cms-database-host" }
 sdkwork-forum-database-host = { path = "../sdkwork-forum/crates/sdkwork-forum-database-host" }
 sdkwork-cloudrouter-database-host = { path = "../sdkwork-cloudrouter/crates/sdkwork-cloudrouter-database-host" }
+sdkwork-models-database-host = { path = "../sdkwork-models/crates/sdkwork-models-database-host" }
 sdkwork-mcp-database-host = { path = "../sdkwork-mcp/crates/sdkwork-mcp-database-host" }
 sdkwork-im-database-host = { path = "../sdkwork-im/crates/sdkwork-im-database-host" }
 sdkwork-rtc-database-host = { path = "../sdkwork-rtc/crates/sdkwork-rtc-database-host" }

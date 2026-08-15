@@ -7,5 +7,14 @@ set -eu
 
 export SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone
 export SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
+: "${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT:=development}"
+: "${SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID:=standalone.${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT}}"
+export SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT
+export SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID
+export SDKWORK_ENVIRONMENT="${SDKWORK_ENVIRONMENT:-${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT}}"
+
+if [ "${SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:-true}" = "true" ]; then
+  /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+fi
 
 exec /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway "$@"

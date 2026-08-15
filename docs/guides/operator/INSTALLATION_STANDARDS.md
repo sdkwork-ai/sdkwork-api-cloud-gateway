@@ -129,8 +129,9 @@ Type=simple
 User=sdkwork
 Group=sdkwork
 EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
-Environment=SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
-ExecStart=/usr/local/bin/sdkwork-api-cloud-gateway
+WorkingDirectory=/opt/sdkwork/api-gateway
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 ```
 
 - 安装期生成的环境赋值放 `EnvironmentFile`（0640），**不得内嵌到单元文件**
@@ -141,19 +142,21 @@ ExecStart=/usr/local/bin/sdkwork-api-cloud-gateway
 ### 3.3 nginx（`NGINX_SPEC.md`）
 
 站点文件：`/etc/nginx/sites-enabled/sdkwork/<domain>.conf`；上游指向
-`http://127.0.0.1:3900`（容器部署为宿主映射端口，如 `3910`）。仓库提供两个
+`http://127.0.0.1:3900`（容器部署使用环境端口 `3910` 至 `3913`）。仓库提供四个
 站点模板：
 
 | 模板 | 域名 | 说明 |
 | --- | --- | --- |
-| `docker/nginx/testdockerapi-api-gateway.conf` | `testdockerapi.*` 三测试域名 | HTTP 80，配合 Windows hosts 本地验证（docker 部署 test 环境） |
-| `docker/nginx/api-gateway-production.conf` | 三个生产域名 | HTTPS 443（TLS 终止于 nginx）+ 80→443 重定向 |
+| `docker/nginx/api-dev.sdkwork.com.conf` | `api-dev.*` 三开发域名 | HTTP 80，代理到 3910 |
+| `docker/nginx/api-test.sdkwork.com.conf` | `api-test.*` 三测试域名 | HTTP 80，代理到 3911 |
+| `docker/nginx/api-staging.sdkwork.com.conf` | `api-staging.*` 三预发布域名 | HTTP 80，代理到 3912 |
+| `docker/nginx/api.sdkwork.com.conf` | 三个生产域名 | HTTPS 443（TLS 终止于 nginx）+ 80→443 重定向 |
 
 **生产域名**：`api.sdkwork.com`、`api.birdcoder.com`、`api.dtupay.com`。
 生产流量要求：
 
 1. 三个域名真实 DNS 指向本机；为每个名称签发 TLS 证书（或 SAN/泛域名证书），
-   替换 `api-gateway-production.conf` 中的证书路径
+   替换 `api.sdkwork.com.conf` 中的证书路径
    （`/etc/ssl/sdkwork/api-gateway/fullchain.pem`、`privkey.pem`）。
 2. 网关 Host 白名单与 CORS 必须包含三个生产域名——生产 TOML 模板
    （`etc/sdkwork-api-cloud-gateway.production.toml`）与容器挂载默认

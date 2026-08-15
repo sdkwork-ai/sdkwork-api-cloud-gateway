@@ -4,16 +4,16 @@
 test 环境，但 **PostgreSQL 与 Redis 使用 Ubuntu 宿主自身安装的服务**
 （外部依赖模式），不启动 compose 内置容器。部署后三个 test 域名可用：
 
-- `http://testdockerapi.sdkwork.com`
-- `http://testdockerapi.birdcoder.com`
-- `http://testdockerapi.dtupay.com`
+- `http://api-test.sdkwork.com`
+- `http://api-test.birdcoder.com`
+- `http://api-test.dtupay.com`
 
 ## 域名约定
 
 | 部署方式 | 域名前缀 | 说明 |
 | --- | --- | --- |
-| **docker 部署**（test） | `testdockerapi.*` | 本手册场景；docker 部署一律 testdocker 开头 |
-| 直跑进程（test） | `testapi.*` | WSL 直跑网关使用，与 docker 部署互不混用 |
+| **docker 部署**（test） | `api-test.*` | 本手册场景 |
+| 直跑进程（test） | `api-test.*` | WSL 直跑网关使用同一环境域名规则 |
 | docker 部署（production） | `api.*` | 见 `REMOTE_DEPLOY_UBUNTU_DOCKER.md` |
 
 ## 外部依赖模式与内置模式对比
@@ -23,7 +23,7 @@ test 环境，但 **PostgreSQL 与 Redis 使用 Ubuntu 宿主自身安装的服�
 | PostgreSQL | compose 内置 `pgvector/pgvector:pg18` 容器 | Ubuntu 宿主原生 PostgreSQL（需 pgvector 扩展） |
 | Redis | compose 内置 `redis:8-alpine` 容器 | Ubuntu 宿主原生 redis-server |
 | 启动命令 | `docker compose up -d` | `docker compose -f docker-compose.yml -f docker-compose.external.yml up -d` |
-| 宿主端口 | 3911（test）/ 3912（production） | 相同 |
+| 宿主端口 | 3911（test）/ 3913（production） | 相同 |
 
 ## 前置要求（WSL 宿主）
 
@@ -48,23 +48,9 @@ psql -h 127.0.0.1 -U postgres -d sdkwork_ai_test -v db=sdkwork_ai_test \
   -v app_user=sdkwork_ai_test -f docker/postgres/external-schema.sql
 ```
 
-### 2. models 目录初始化（全新库必做）
+### 2. 环境文件
 
-网关不会自动迁移 `sdkwork-models` 目录，全新外部库首次启动会拒绝
-（`sdkwork-models schema is not current`）。用部署脚本从已初始化库导入
-22 张 models 目录表（结构 + 数据）：
-
-```bash
-# 部署文件位置（宿主侧，不入库）
-/opt/sdkwork/deploy/api-gateway/external/prepare-models.sh \
-  sdkwork_ai_test gateway-prod-postgres-1 sdkwork_ai_prod
-#   参数：目标库名 源容器 源库名（源可为任意已初始化网关栈的内置库）
-#   目标连接：PGHOST/PGPORT/PGUSER/PGPASSWORD（默认 127.0.0.1:5432、同名用户）
-```
-
-### 3. 环境文件
-
-`/opt/sdkwork/deploy/api-gateway/external/env.test`（模板已落盘）：
+从受控模板生成 `/opt/sdkwork/deploy/api-gateway/external/env.test`：
 
 ```dotenv
 GATEWAY_HOST_PORT=3911
@@ -79,11 +65,11 @@ GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal
 GATEWAY_CLOUDROUTER_REDIS_PORT=6379
 GATEWAY_CLOUDROUTER_REDIS_DATABASE=0
 GATEWAY_CLOUDROUTER_REDIS_PASSWORD=
-GATEWAY_ALLOWED_HOSTS=testdockerapi.sdkwork.com,testdockerapi.birdcoder.com,testdockerapi.dtupay.com,localhost:3911,127.0.0.1:3911
-GATEWAY_CORS_ALLOWED_ORIGINS=http://testdockerapi.sdkwork.com,http://testdockerapi.birdcoder.com,http://testdockerapi.dtupay.com,http://localhost:3911,http://127.0.0.1:3911
+GATEWAY_ALLOWED_HOSTS=api-test.sdkwork.com,api-test.birdcoder.com,api-test.dtupay.com,localhost:3911,127.0.0.1:3911
+GATEWAY_CORS_ALLOWED_ORIGINS=http://api-test.sdkwork.com,http://api-test.birdcoder.com,http://api-test.dtupay.com,http://localhost:3911,http://127.0.0.1:3911
 ```
 
-### 4. 启动（外部模式）
+### 3. 启动（外部模式）
 
 ```bash
 cd /mnt/e/sdkwork-space/sdkwork-api-cloud-gateway
@@ -94,21 +80,25 @@ docker compose -p gateway-test \
 docker compose -p gateway-test ps
 ```
 
+入口脚本会先执行显式 `--migrate-databases`，因此全新外部库无需 dump/导入
+Models 表。运行时 `SDKWORK_DATABASE_AUTO_MIGRATE=false`，迁移仅由启动前的
+单进程生命周期步骤执行。
+
 ### 5. nginx 站点 + hosts
 
 ```bash
-sudo cp docker/nginx/testdockerapi-api-gateway.conf /etc/nginx/sites-enabled/sdkwork/
+sudo cp docker/nginx/api-test.sdkwork.com.conf /etc/nginx/sites-enabled/sdkwork/
 sudo nginx -t && sudo systemctl reload nginx
 # hosts（WSL 与 Windows 均追加）
-127.0.0.1 testdockerapi.sdkwork.com testdockerapi.birdcoder.com testdockerapi.dtupay.com
+127.0.0.1 api-test.sdkwork.com api-test.birdcoder.com api-test.dtupay.com
 ```
 
 ## 验证
 
 ```bash
-curl http://testdockerapi.sdkwork.com/healthz     # 200
-curl http://testdockerapi.birdcoder.com/readyz    # 200
-curl http://testdockerapi.dtupay.com/healthz      # 200
+curl http://api-test.sdkwork.com/healthz     # 200
+curl http://api-test.birdcoder.com/readyz    # 200
+curl http://api-test.dtupay.com/healthz      # 200
 # Host 白名单（421）
 curl -s -o /dev/null -w "%{http_code}\n" -H "Host: evil.example.com" http://127.0.0.1:3911/healthz
 # 直连宿主库确认归属
@@ -127,7 +117,6 @@ docker compose -p gateway-test -f docker-compose.yml -f docker-compose.external.
 docker compose -p gateway-test up -d
 ```
 
-> 已知事项：全新外部库首次启动时网关会在 `sdkwork-models` 校验处拒绝启动，
-> 属预期——完成第 2 步 models 导入后重启网关即恢复；`cloudrouterctl ensure`
-> 对含 `?options=` 的 URL 与宿主库存在兼容问题，一律使用
-> `prepare-models.sh`（或等效 dump/导入）完成 models 目录初始化。
+升级或首次部署前可先运行
+`pnpm check:container-deployment -- --env-file <env-file> --mode external --compose`
+验证外部依赖、环境身份、域名和 Compose 合并结果。

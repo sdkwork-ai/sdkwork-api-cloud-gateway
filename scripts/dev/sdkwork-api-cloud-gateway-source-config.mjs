@@ -39,6 +39,7 @@ export function resolveGatewaySourceProfile({ appRoot, deploymentProfile, enviro
     deploymentProfile,
     env,
     environment,
+    environmentConfig: index.environments?.[environment],
     indexPath,
     profileId,
     profilePath,
@@ -58,6 +59,21 @@ export function assertRemoteCloudDevelopmentProfile(profile) {
   }
   if (profile.runtimeConfig) {
     throw new Error('cloud.development must not select a local gateway runtime config');
+  }
+}
+
+export function assertCloudPublicProfile(profile) {
+  if (profile.deploymentProfile !== 'cloud') {
+    return;
+  }
+  const value = profile.env.SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL;
+  const url = new URL(value ?? '');
+  const publicHosts = profile.environmentConfig?.publicHosts;
+  if (url.protocol !== 'https:' || !Array.isArray(publicHosts) || publicHosts.length === 0) {
+    throw new Error(`${profile.profileId} requires an HTTPS URL and registered public hosts`);
+  }
+  if (!publicHosts.includes(url.hostname)) {
+    throw new Error(`${profile.profileId} public URL must use a registered public host`);
   }
 }
 

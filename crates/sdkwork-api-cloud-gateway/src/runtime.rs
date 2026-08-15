@@ -27,7 +27,7 @@ use sdkwork_api_cloud_gateway_registry::{
     GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget, RouteProtocol, RouteVisibility,
 };
 use sdkwork_web_bootstrap::{ApiAssemblyContribution, ComposedApiAssembly};
-use sdkwork_web_contract::{ApiSurface, HttpMethod};
+use sdkwork_web_contract::HttpMethod;
 use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tower::ServiceExt;
@@ -318,10 +318,17 @@ async fn build_embedded_router(
         // im_service_public_path_prefixes).
         public_path_prefixes.push("/im/v3/api/realtime/ws".to_owned());
     }
-    let framework = sdkwork_iam_web_adapter::build_web_framework_builder(
+    let open_api_prefixes = config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| normalized_surface_name(surface.surface.as_str()) == "open")
+        .map(|surface| surface.api_prefix.clone())
+        .collect();
+    let framework = sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes(
         resolver,
         framework_manifest,
         public_path_prefixes,
+        open_api_prefixes,
     );
     let hosted = composed.into_hosted(framework);
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
@@ -1094,19 +1101,10 @@ fn exact_registry_for_contributions(
     let mut descriptors = Vec::new();
     for contribution in contributions {
         for route in contribution.route_manifest.routes() {
-            let surface_name = api_surface_name(route.path).ok_or_else(|| {
-                GatewayRuntimeError::ApiAssemblyComposition {
-                    message: format!(
-                        "{} route {} has no canonical API surface",
-                        contribution.owner, route.path
-                    ),
-                }
-            })?;
             let surface = config
                 .dependency_surfaces
                 .iter()
                 .filter(|surface| surface.workspace == contribution.owner)
-                .filter(|surface| normalized_surface_name(surface.surface.as_str()) == surface_name)
                 .filter(|surface| route_path_belongs_to_prefix(route.path, &surface.api_prefix))
                 .max_by_key(|surface| surface.api_prefix.len())
                 .ok_or_else(|| GatewayRuntimeError::ApiAssemblyComposition {
@@ -1115,6 +1113,7 @@ fn exact_registry_for_contributions(
                         contribution.owner, route.path
                     ),
                 })?;
+            let surface_name = normalized_surface_name(surface.surface.as_str());
             descriptors.push(RouteDescriptor {
                 service_id: surface.service_id.clone(),
                 path_pattern: route.path.to_owned(),
@@ -1156,17 +1155,6 @@ fn exact_registry_for_contributions(
             message: error.to_string(),
         }
     })
-}
-
-fn api_surface_name(path: &str) -> Option<&'static str> {
-    match sdkwork_web_contract::infer_api_surface_from_path(path) {
-        ApiSurface::AppApi => Some("app"),
-        ApiSurface::BackendApi => Some("backend"),
-        ApiSurface::OpenApi => Some("open"),
-        ApiSurface::InternalApi => Some("internal"),
-        ApiSurface::GatewayApi => Some("gateway"),
-        ApiSurface::Unknown => None,
-    }
 }
 
 fn normalized_surface_name(surface: &str) -> &str {

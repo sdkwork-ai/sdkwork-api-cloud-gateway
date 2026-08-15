@@ -2,7 +2,7 @@
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { cp, copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { chmod, cp, copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -21,6 +21,13 @@ const SUPPORTED_FORMAT = 'tar.gz';
 const EXTRA_DATABASE_MODULE_PATHS = Object.freeze({
   'sdkwork-iam': ['iam'],
 });
+const EXTRA_DATABASE_MODULES = Object.freeze([
+  'sdkwork-log',
+  'sdkwork-appbase',
+  'sdkwork-partner',
+  'sdkwork-web-framework',
+  'sdkwork-models',
+]);
 
 const scriptPath = fileURLToPath(import.meta.url);
 const appRoot = path.resolve(path.dirname(scriptPath), '..');
@@ -303,17 +310,21 @@ async function packageServer(context) {
   await mkdir(path.join(context.stageRoot, 'config'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'specs'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'database-modules'), { recursive: true });
+  await mkdir(path.join(context.stageRoot, 'install'), { recursive: true });
+  await mkdir(path.join(context.stageRoot, 'data', 'sdkwork-models'), { recursive: true });
 
   await copyFile(context.binaryPath, path.join(context.stageRoot, 'bin', context.binaryName));
   await copyRuntimeConfigTemplates(context.stageRoot);
   await copyDatabaseModuleAssets(context);
+  await copyModelsCatalog(context.stageRoot);
+  await copyInstallerAssets(context.stageRoot);
   await copyIfExists('README.md', path.join(context.stageRoot, 'README.md'));
   await copyIfExists('sdkwork.app.config.json', path.join(context.stageRoot, 'sdkwork.app.config.json'));
   await copyIfExists(path.join('specs', 'component.spec.json'), path.join(context.stageRoot, 'specs', 'component.spec.json'));
   await writeFile(path.join(context.stageRoot, 'INSTALL.md'), renderInstallGuide(context), 'utf8');
   await writeFile(
     path.join(context.stageRoot, 'install-manifest.json'),
-    `${JSON.stringify(createInstallManifest(context), null, 2)}\n`,
+    `${JSON.stringify(await createInstallManifest(context), null, 2)}\n`,
     'utf8'
   );
   await writeChecksums(context.stageRoot);
@@ -355,7 +366,10 @@ async function copyRuntimeConfigTemplates(stageRoot) {
 async function resolveDatabaseAssetModules() {
   const metadata = JSON.parse(run(
     'cargo',
-    ['metadata', '--format-version', '1', '--locked'],
+    // Database host discovery only needs the gateway package's direct
+    // dependency declarations. Avoid traversing unrelated sibling workspaces
+    // whose optional feature graphs may be unavailable in a release checkout.
+    ['metadata', '--format-version', '1', '--no-deps', '--locked'],
     { cwd: appRoot, capture: true },
   ));
   const hostCrates = resolveDatabaseHostCratesFromMetadata(metadata);
@@ -377,6 +391,27 @@ async function resolveDatabaseAssetModules() {
       databaseRoot,
       hostCrate: hostCrate.name,
       moduleId: manifest.moduleId,
+      workspace,
+      extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
+    });
+  }
+
+  const discovered = new Set(modules.map((module) => module.workspace));
+  for (const workspace of EXTRA_DATABASE_MODULES) {
+    if (discovered.has(workspace)) {
+      continue;
+    }
+    const workspaceRoot = path.join(appRoot, '..', workspace);
+    const databaseRoot = path.join(workspaceRoot, 'database');
+    const manifestPath = path.join(databaseRoot, 'database.manifest.json');
+    if (!existsSync(manifestPath)) {
+      throw new Error(`${workspace} is missing ${manifestPath}`);
+    }
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    modules.push({
+      databaseRoot,
+      hostCrate: `${workspace}-database-host`,
+      moduleId: manifest.moduleId ?? workspace,
       workspace,
       extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
     });
@@ -424,6 +459,29 @@ async function copyDatabaseModuleAssets(context) {
       );
     }
   }
+}
+
+async function copyModelsCatalog(stageRoot) {
+  const modelsRoot = path.join(appRoot, '..', 'sdkwork-models');
+  for (const entry of ['sdkwork-models.json', 'models', 'overlays']) {
+    const source = path.join(modelsRoot, entry);
+    if (existsSync(source)) {
+      await cp(source, path.join(stageRoot, 'data', 'sdkwork-models', entry), {
+        recursive: true,
+      });
+    }
+  }
+}
+
+async function copyInstallerAssets(stageRoot) {
+  const installRoot = path.join(stageRoot, 'install');
+  const installer = path.join(installRoot, 'install-ubuntu.sh');
+  await copyFile(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), installer);
+  await copyFile(
+    path.join(appRoot, 'deployments', 'systemd', 'sdkwork-api-gateway.service'),
+    path.join(installRoot, 'sdkwork-api-gateway.service'),
+  );
+  await chmod(installer, 0o755);
 }
 
 async function copyIfExists(relativeSource, destination) {
@@ -482,7 +540,7 @@ installation and configuration standards (Linux/macOS/Windows/container).
 `;
 }
 
-function createInstallManifest(context) {
+async function createInstallManifest(context) {
   return {
     schemaVersion: 1,
     appId: APP_ID,
@@ -497,6 +555,7 @@ function createInstallManifest(context) {
     configTemplates: [
       'config/sdkwork-api-cloud-gateway.development.toml',
       'config/sdkwork-api-cloud-gateway.production.toml',
+      'config/sdkwork-api-cloud-gateway.staging.toml',
       'config/sdkwork-api-cloud-gateway.test.toml',
     ],
     databaseModules: context.databaseModules.map((module) => ({
@@ -535,7 +594,26 @@ function createInstallManifest(context) {
     },
     healthPath: '/healthz',
     readinessPath: '/readyz',
+    contentManifestExclusions: [
+      'install-manifest.json',
+      'checksums.sha256',
+    ],
+    files: await describeFiles(context.stageRoot),
   };
+}
+
+async function describeFiles(stageRoot) {
+  const files = [];
+  for (const filePath of await listFiles(stageRoot)) {
+    const relativePath = toPosixPath(path.relative(stageRoot, filePath));
+    const fileStats = await stat(filePath);
+    files.push({
+      path: relativePath,
+      size: fileStats.size,
+      sha256: createHash('sha256').update(await readFile(filePath)).digest('hex'),
+    });
+  }
+  return files;
 }
 
 async function writeChecksums(stageRoot) {
@@ -567,9 +645,8 @@ async function listFiles(root) {
 
 async function createArchive(context) {
   await mkdir(context.distRoot, { recursive: true });
-  // --force-local keeps GNU tar on Windows from treating the drive letter
-  // in absolute archive paths as a remote host (E: -> host "E").
-  run('tar', ['--force-local', '-czf', context.archivePath, '-C', context.distRoot, context.stageName], { cwd: appRoot });
+  const archiveName = resolveTarArchiveName(context.distRoot, context.archivePath);
+  run('tar', ['-czf', archiveName, context.stageName], { cwd: context.distRoot });
 }
 
 async function validateArchive(context) {
@@ -581,10 +658,17 @@ async function validateArchive(context) {
     throw new Error(`Server archive is empty: ${context.archivePath}`);
   }
 
-  const listing = run('tar', ['--force-local', '-tzf', context.archivePath], { cwd: appRoot, capture: true });
+  const archiveName = resolveTarArchiveName(context.distRoot, context.archivePath);
+  const listing = run('tar', ['-tzf', archiveName], {
+    cwd: context.distRoot,
+    capture: true,
+  });
   const requiredEntries = [
     `${context.stageName}/bin/${context.binaryName}`,
     `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml`,
+    `${context.stageName}/config/sdkwork-api-cloud-gateway.staging.toml`,
+    `${context.stageName}/install/install-ubuntu.sh`,
+    `${context.stageName}/install/sdkwork-api-gateway.service`,
     `${context.stageName}/install-manifest.json`,
     `${context.stageName}/checksums.sha256`,
     `${context.stageName}/README.md`,
@@ -599,6 +683,18 @@ async function validateArchive(context) {
     }
   }
   console.log(`[sdkwork-api-cloud-gateway] validated ${path.relative(appRoot, context.archivePath)}`);
+}
+
+export function resolveTarArchiveName(distRoot, archivePath) {
+  const relativePath = path.relative(distRoot, archivePath);
+  if (
+    relativePath.length === 0 ||
+    relativePath.startsWith('..') ||
+    path.isAbsolute(relativePath)
+  ) {
+    throw new Error(`Archive path must stay inside ${distRoot}: ${archivePath}`);
+  }
+  return relativePath;
 }
 
 function run(command, args, { cwd, capture = false, env } = {}) {

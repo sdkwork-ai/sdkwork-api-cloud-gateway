@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 5,
+  "kind": "sdkwork.app.topology",
+  "appId": "sdkwork-api-cloud-gateway",
+  "applicationCode": "api_gateway",
+  "archetype": "application-http-gateway",
+  "archetypeNotes": "Platform cloud gateway host; platform.api-gateway is the public HTTP ingress.",
+  "profileRoot": "etc/topology",
+  "profilePattern": "{deploymentProfile}.{environment}.env",
+  "vocabulary": {
+    "deploymentProfile": {
+      "allowed": [
+        "standalone",
+        "cloud"
+      ]
+    },
+    "environment": {
+      "allowed": [
+        "development",
+        "test",
+        "staging",
+        "production"
+      ]
+    }
+  },
+  "defaults": {
+    "developmentProfileId": "standalone.development",
+    "productionProfileId": "cloud.production",
+    "gatewayBind": "0.0.0.0:3900"
+  },
+  "profileFiles": {
+    "standalone.development": "etc/topology/standalone.development.env",
+    "standalone.test": "etc/topology/standalone.test.env",
+    "standalone.staging": "etc/topology/standalone.staging.env",
+    "standalone.production": "etc/topology/standalone.production.env",
+    "cloud.development": "etc/topology/cloud.development.env",
+    "cloud.test": "etc/topology/cloud.test.env",
+    "cloud.staging": "etc/topology/cloud.staging.env",
+    "cloud.production": "etc/topology/cloud.production.env"
+  },
+  "envKeys": {
+    "deploymentProfile": "SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE",
+    "environment": "SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT",
+    "profileId": "SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID",
+    "gatewayBind": "SDKWORK_API_CLOUD_GATEWAY_BIND",
+    "gatewayPublicHttpUrl": "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL"
+  },
+  "surfaces": {
+    "application.public-ingress": {
+      "connectivityPlane": "application",
+      "protocols": [
+        "http",
+        "websocket"
+      ],
+      "bindEnv": "SDKWORK_API_CLOUD_GATEWAY_BIND",
+      "httpUrlEnv": "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL",
+      "realtimeHosting": "platform-cloud-gateway"
+    },
+    "platform.api-gateway": {
+      "connectivityPlane": "platform",
+      "protocols": [
+        "http",
+        "websocket"
+      ],
+      "bindEnv": "SDKWORK_API_CLOUD_GATEWAY_BIND",
+      "httpUrlEnv": "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL"
+    }
+  },
+  "components": {
+    "platformGateway": {
+      "crate": "sdkwork-api-cloud-gateway",
+      "binary": "sdkwork-api-cloud-gateway"
+    }
+  },
+  "orchestration": {
+    "profiles": {
+      "standalone.development": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "standalone.test": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "standalone.staging": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "standalone.production": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "cloud.development": {
+        "processes": [],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "cloud.test": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "cloud.staging": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      },
+      "cloud.production": {
+        "processes": [
+          {
+            "id": "platform.api-gateway",
+            "role": "api-standalone-gateway"
+          }
+        ],
+        "healthSurfaces": [
+          "platform.api-gateway"
+        ]
+      }
+    }
+  },
+  "packaging": {
+    "targets": [
+      {
+        "id": "linux-x64-standalone-server-tar-gz",
+        "profile": "server",
+        "platform": "linux",
+        "architecture": "x64",
+        "deploymentProfile": "standalone",
+        "runtimeTarget": "server",
+        "formats": [
+          "tar.gz"
+        ]
+      },
+      {
+        "id": "linux-x64-cloud-server-tar-gz",
+        "profile": "server",
+        "platform": "linux",
+        "architecture": "x64",
+        "deploymentProfile": "cloud",
+        "runtimeTarget": "server",
+        "formats": [
+          "tar.gz"
+        ]
+      },
+      {
+        "id": "linux-x64-standalone-container-oci",
+        "profile": "container",
+        "platform": "linux",
+        "architecture": "x64",
+        "deploymentProfile": "standalone",
+        "runtimeTarget": "container",
+        "formats": [
+          "docker-image"
+        ]
+      }
+    ]
+  },
+  "cloudPublicHosts": {
+    "platform.api-gateway": {
+      "httpHost": "api.sdkwork.com",
+      "httpHosts": [
+        "api.sdkwork.com",
+        "api.birdcoder.com",
+        "api.dtupay.com"
+      ],
+      "environments": {
+        "development": {
+          "httpHosts": [
+            "api-dev.sdkwork.com",
+            "api-dev.birdcoder.com",
+            "api-dev.dtupay.com"
+          ]
+        },
+        "test": {
+          "httpHosts": [
+            "api-test.sdkwork.com",
+            "api-test.birdcoder.com",
+            "api-test.dtupay.com"
+          ]
+        },
+        "staging": {
+          "httpHosts": [
+            "api-staging.sdkwork.com",
+            "api-staging.birdcoder.com",
+            "api-staging.dtupay.com"
+          ]
+        }
+      }
+    }
+  }
+}

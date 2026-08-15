@@ -6188,6 +6188,7 @@ version = "0.1.0"
 dependencies = [
  "cloudrouter-open-sdk",
  "sdkwork-agent-kernel",
+ "sdkwork-agent-provider-rig",
  "sdkwork-agents-tool-contract",
  "serde_json",
  "tokio",
@@ -6427,6 +6428,7 @@ name = "sdkwork-api-aiot-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-aiot-database-host",
  "sdkwork-database-sqlx",
  "sdkwork-iot-platform-service",
  "sdkwork-routes-iot-app-api",
@@ -6615,6 +6617,7 @@ dependencies = [
  "sdkwork-membership-database-host",
  "sdkwork-merchandise-database-host",
  "sdkwork-modelkit-database-host",
+ "sdkwork-models-database-host",
  "sdkwork-news-database-host",
  "sdkwork-notary-database-host",
  "sdkwork-order-database-host",
@@ -6749,6 +6752,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-company-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-company-service",
+ "sdkwork-company-service-host",
+ "sdkwork-database-sqlx",
+ "sdkwork-routes-company-app-api",
+ "sdkwork-routes-company-backend-api",
+ "sdkwork-routes-company-open-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-api-course-assembly"
 version = "0.1.0"
 dependencies = [
@@ -6858,6 +6878,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-feeds-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-content-feeds-service",
+ "sdkwork-database-sqlx",
+ "sdkwork-feeds-database-host",
+ "sdkwork-feeds-service-host",
+ "sdkwork-feeds-source-community",
+ "sdkwork-feeds-source-news",
+ "sdkwork-routes-feeds-app-api",
+ "sdkwork-routes-feeds-backend-api",
+ "sdkwork-routes-feeds-open-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-api-forum-assembly"
 version = "0.1.0"
 dependencies = [
@@ -6868,7 +6908,6 @@ dependencies = [
  "sdkwork-forum-service-host",
  "sdkwork-routes-forum-app-api",
  "sdkwork-routes-forum-backend-api",
- "sdkwork-routes-forum-open-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "tokio",
@@ -6932,14 +6971,48 @@ dependencies = [
  "im-app-context",
  "im-domain-core",
  "im-platform-contracts",
+ "im-time",
  "notification-service",
  "ops-service",
  "portal-service",
  "sdkwork-agents-runtime-facade",
+ "sdkwork-api-account-assembly",
+ "sdkwork-api-agents-assembly",
+ "sdkwork-api-catalog-assembly",
+ "sdkwork-api-community-assembly",
+ "sdkwork-api-company-assembly",
+ "sdkwork-api-course-assembly",
+ "sdkwork-api-drive-assembly",
+ "sdkwork-api-feeds-assembly",
+ "sdkwork-api-inventory-assembly",
+ "sdkwork-api-invoice-assembly",
+ "sdkwork-api-knowledgebase-assembly",
+ "sdkwork-api-mail-assembly",
+ "sdkwork-api-membership-assembly",
+ "sdkwork-api-notary-assembly",
+ "sdkwork-api-order-assembly",
+ "sdkwork-api-payment-assembly",
+ "sdkwork-api-shop-assembly",
+ "sdkwork-catalog-database-host",
  "sdkwork-comms-conversation-service",
+ "sdkwork-community-database-host",
+ "sdkwork-community-service-host",
+ "sdkwork-company-database-host",
+ "sdkwork-content-feeds-service",
  "sdkwork-database-config",
+ "sdkwork-drive-workspace-service",
+ "sdkwork-feeds-database-host",
+ "sdkwork-feeds-service-host",
+ "sdkwork-feeds-source-community",
+ "sdkwork-feeds-source-news",
+ "sdkwork-iam-embedded-application-bootstrap",
+ "sdkwork-im-contract-agent",
  "sdkwork-im-database-pool",
  "sdkwork-im-service-readiness",
+ "sdkwork-knowledgebase-database-host",
+ "sdkwork-mail-database-host",
+ "sdkwork-merchandise-database-host",
+ "sdkwork-promotion-database-host",
  "sdkwork-routes-im-audit-backend-api",
  "sdkwork-routes-im-automation-app-api",
  "sdkwork-routes-im-calls-open-api",
@@ -6955,6 +7028,8 @@ dependencies = [
  "sdkwork-routes-im-social-open-api",
  "sdkwork-routes-im-space-open-api",
  "sdkwork-routes-im-stream-app-api",
+ "sdkwork-routes-membership-backend-api",
+ "sdkwork-routes-order-backend-api",
  "sdkwork-utils-rust",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
@@ -7175,12 +7250,31 @@ name = "sdkwork-api-modelkit-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-api-iam-assembly",
  "sdkwork-database-sqlx",
  "sdkwork-modelkit-database-host",
  "sdkwork-routes-modelkit-app-api",
  "sdkwork-routes-modelkit-http-auth",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-models-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-id",
+ "sdkwork-database-sqlx",
+ "sdkwork-models-catalog-repository-sqlx",
+ "sdkwork-models-contract-service",
+ "sdkwork-models-service-host",
+ "sdkwork-routes-models-catalog-app-api",
+ "sdkwork-routes-models-catalog-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "sqlx",
  "tokio",
 ]
 
@@ -7230,6 +7324,20 @@ dependencies = [
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-partner-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-partner-service-host",
+ "sdkwork-routes-partner-app-api",
+ "sdkwork-routes-partner-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "tokio",
 ]
 
@@ -7350,10 +7458,12 @@ dependencies = [
  "sdkwork-routes-voice-app-api",
  "sdkwork-routes-voice-backend-api",
  "sdkwork-routes-voice-http-auth",
+ "sdkwork-voice-database-host",
  "sdkwork-voice-embedded-bootstrap",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -7896,12 +8006,16 @@ dependencies = [
  "sdkwork-account-repository-sqlx",
  "sdkwork-account-service",
  "sdkwork-account-service-host",
+ "sdkwork-api-community-assembly",
  "sdkwork-api-iam-assembly",
  "sdkwork-api-inventory-assembly",
  "sdkwork-api-log-assembly",
  "sdkwork-api-membership-assembly",
  "sdkwork-api-order-assembly",
+ "sdkwork-api-partner-assembly",
  "sdkwork-api-payment-assembly",
+ "sdkwork-api-promotion-assembly",
+ "sdkwork-api-rtc-assembly",
  "sdkwork-base-data-service-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
@@ -8088,7 +8202,6 @@ dependencies = [
  "prometheus",
  "redis 1.5.0",
  "ring",
- "sdkwork-account-repository-sqlx",
  "sdkwork-account-service",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-contract",
@@ -8494,6 +8607,63 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-company-core-rust"
+version = "0.1.0"
+
+[[package]]
+name = "sdkwork-company-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-company-service"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest 0.12.28",
+ "sdkwork-company-core-rust",
+ "sdkwork-company-storage-sqlx-rust",
+ "sdkwork-id-core",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "sdkwork-company-service-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-company-database-host",
+ "sdkwork-company-service",
+ "sdkwork-company-storage-sqlx-rust",
+ "sdkwork-database-id",
+ "sdkwork-database-sqlx",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-company-storage-sqlx-rust"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-company-database-host",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+]
+
+[[package]]
 name = "sdkwork-content-cms-repository-sqlx"
 version = "0.1.0"
 dependencies = [
@@ -8584,6 +8754,38 @@ dependencies = [
  "async-trait",
  "sdkwork-documents-contract",
  "sdkwork-utils-rust",
+]
+
+[[package]]
+name = "sdkwork-content-feeds-core-rust"
+version = "0.1.0"
+
+[[package]]
+name = "sdkwork-content-feeds-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bigdecimal",
+ "chrono",
+ "sdkwork-content-feeds-core-rust",
+ "sdkwork-content-feeds-service",
+ "sdkwork-database-sqlx",
+ "serde",
+ "serde_json",
+ "sqlx",
+]
+
+[[package]]
+name = "sdkwork-content-feeds-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-content-feeds-core-rust",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -9272,6 +9474,48 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-edu-data-database-host",
+]
+
+[[package]]
+name = "sdkwork-feeds-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-feeds-service-host"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-content-feeds-repository-sqlx",
+ "sdkwork-content-feeds-service",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-feeds-source-community"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest 0.12.28",
+ "sdkwork-content-feeds-service",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-feeds-source-news"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest 0.12.28",
+ "sdkwork-content-feeds-service",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -11241,6 +11485,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-models-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-models-service-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-sqlx",
+ "sdkwork-models 0.1.0",
+ "sdkwork-models-catalog-repository-sqlx",
+ "sdkwork-models-catalog-service",
+ "sdkwork-models-database-host",
+]
+
+[[package]]
 name = "sdkwork-news-database-host"
 version = "0.1.0"
 dependencies = [
@@ -11980,9 +12247,16 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "sdkwork-agents-database-host",
+ "sdkwork-api-account-assembly",
  "sdkwork-api-agents-assembly",
  "sdkwork-api-community-assembly",
+ "sdkwork-api-invoice-assembly",
+ "sdkwork-api-membership-assembly",
+ "sdkwork-api-models-assembly",
  "sdkwork-api-order-assembly",
+ "sdkwork-api-partner-assembly",
+ "sdkwork-api-payment-assembly",
+ "sdkwork-api-promotion-assembly",
  "sdkwork-catalog-database-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
@@ -11997,7 +12271,6 @@ dependencies = [
  "sdkwork-iam-web-adapter",
  "sdkwork-inventory-database-host",
  "sdkwork-invoice-database-host",
- "sdkwork-invoice-service-host",
  "sdkwork-membership-database-host",
  "sdkwork-merchandise-database-host",
  "sdkwork-models-catalog-repository-sqlx",
@@ -12006,14 +12279,9 @@ dependencies = [
  "sdkwork-payment-providers",
  "sdkwork-payment-service-host",
  "sdkwork-promotion-database-host",
- "sdkwork-routes-account-app-api",
  "sdkwork-routes-iam-app-api",
  "sdkwork-routes-iam-backend-api",
- "sdkwork-routes-invoice-app-api",
- "sdkwork-routes-membership-app-api",
  "sdkwork-routes-models-catalog-app-api",
- "sdkwork-routes-payment-app-api",
- "sdkwork-routes-promotion-app-api",
  "sdkwork-shop-database-host",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
@@ -12031,6 +12299,7 @@ dependencies = [
  "anyhow",
  "axum 0.8.9",
  "getrandom 0.3.4",
+ "sdkwork-api-drive-assembly",
  "sdkwork-api-log-assembly",
  "sdkwork-cloudrouter-admin-analytics-repository-sqlx",
  "sdkwork-cloudrouter-admin-dashboard-repository-sqlx",
@@ -12040,10 +12309,6 @@ dependencies = [
  "sdkwork-cloudrouter-http",
  "sdkwork-cloudrouter-observability",
  "sdkwork-cloudrouter-router-service",
- "sdkwork-commerce-partner-repository-sqlx",
- "sdkwork-commerce-partner-service",
- "sdkwork-commerce-promotion-repository-sqlx",
- "sdkwork-commerce-promotion-service",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
@@ -12051,8 +12316,6 @@ dependencies = [
  "sdkwork-models-contract-service",
  "sdkwork-routes-iam-backend-api",
  "sdkwork-routes-models-catalog-backend-api",
- "sdkwork-routes-partner-backend-api",
- "sdkwork-routes-promotion-backend-api",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
@@ -12062,6 +12325,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -12187,6 +12451,65 @@ dependencies = [
  "sdkwork-community-service-host",
  "sdkwork-community-storage-sqlx-rust",
  "sdkwork-routes-community-common",
+ "sdkwork-web-core",
+ "serde",
+]
+
+[[package]]
+name = "sdkwork-routes-company-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-company-service",
+ "sdkwork-company-service-host",
+ "sdkwork-company-storage-sqlx-rust",
+ "sdkwork-iam-context-service",
+ "sdkwork-routes-company-common",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-company-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-company-service",
+ "sdkwork-company-service-host",
+ "sdkwork-company-storage-sqlx-rust",
+ "sdkwork-iam-context-service",
+ "sdkwork-routes-company-common",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-company-common"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-company-service",
+ "sdkwork-iam-context-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-company-open-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-company-service",
+ "sdkwork-company-service-host",
+ "sdkwork-company-storage-sqlx-rust",
+ "sdkwork-routes-company-common",
  "sdkwork-web-core",
  "serde",
 ]
@@ -12553,6 +12876,64 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-feeds-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-content-feeds-service",
+ "sdkwork-feeds-service-host",
+ "sdkwork-iam-context-service",
+ "sdkwork-routes-feeds-common",
+ "sdkwork-web-core",
+ "serde",
+]
+
+[[package]]
+name = "sdkwork-routes-feeds-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-content-feeds-core-rust",
+ "sdkwork-content-feeds-service",
+ "sdkwork-feeds-service-host",
+ "sdkwork-iam-context-service",
+ "sdkwork-routes-feeds-common",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-feeds-common"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-content-feeds-core-rust",
+ "sdkwork-content-feeds-service",
+ "sdkwork-iam-context-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-feeds-open-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-content-feeds-service",
+ "sdkwork-feeds-service-host",
+ "sdkwork-routes-feeds-common",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sdkwork-routes-forum-app-api"
 version = "0.1.0"
 dependencies = [
@@ -12571,21 +12952,6 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-communication-forum-service",
  "sdkwork-forum-http-support",
- "sdkwork-web-core",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "sdkwork-routes-forum-open-api"
-version = "0.1.0"
-dependencies = [
- "axum 0.8.9",
- "sdkwork-communication-forum-service",
- "sdkwork-forum-http-support",
- "sdkwork-iam-web-adapter",
- "sdkwork-web-axum",
- "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde",
  "serde_json",
@@ -13810,6 +14176,25 @@ version = "0.3.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-cloudrouter-http",
+]
+
+[[package]]
+name = "sdkwork-routes-partner-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-commerce-partner-service",
+ "sdkwork-contract-service",
+ "sdkwork-iam-context-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-partner-service-host",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]

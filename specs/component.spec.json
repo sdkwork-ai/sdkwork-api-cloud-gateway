@@ -22,7 +22,8 @@
       "package.json",
       "sdkwork.app.config.json",
       "sdkwork.workflow.json",
-      "specs/component.spec.json"
+      "specs/component.spec.json",
+      "specs/topology.spec.json"
     ]
   },
   "canonicalSpecs": [
@@ -178,6 +179,7 @@
     "configKeys": [
       "etc/sdkwork.deployment.config.json",
       "etc/sdkwork-api-cloud-gateway.*.toml",
+      "specs/topology.spec.json",
       ".env.postgres",
       "sdkwork.workflow.json"
     ]
@@ -612,13 +614,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/chat",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/iam/api_keys",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-app-api",
@@ -641,13 +636,6 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/iam/users/settings",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/memory",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -846,13 +834,6 @@
       "prefix": "/backend/v3/api/forum",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-forum-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/forum/v3/api",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-forum-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -1104,7 +1085,7 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "gateway",
+      "surface": "open",
       "prefix": "/v1",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-open-api",
@@ -2016,10 +1997,8 @@
       "sdkFamily": "sdkwork-cloudrouter-app-sdk",
       "apiPrefixes": [
         "/app/v3/api/ai",
-        "/app/v3/api/chat",
         "/app/v3/api/iam/api_keys",
         "/app/v3/api/iam/users/settings",
-        "/app/v3/api/memory",
         "/app/v3/api/notification",
         "/app/v3/api/runtime",
         "/app/v3/api/system/site"
@@ -2243,19 +2222,6 @@
       "cargoFeature": "foundation-forum",
       "cargoDependency": "sdkwork-api-forum-assembly",
       "coverage": "sdkwork-forum-backend-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router_with_pool"
-    },
-    {
-      "serviceId": "sdkwork-forum-open-api",
-      "workspace": "sdkwork-forum",
-      "apiAuthority": "sdkwork-forum-open-api",
-      "sdkFamily": "sdkwork-forum-sdk",
-      "cargoFeature": "foundation-forum",
-      "cargoDependency": "sdkwork-api-forum-assembly",
-      "coverage": "sdkwork-forum-open-api-embedded-assembly-routes",
       "runtimeModes": [
         "embedded"
       ],

@@ -4,6 +4,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
 import {
+  assertCloudPublicProfile,
   assertRemoteCloudDevelopmentProfile,
   resolveGatewaySourceProfile,
 } from './sdkwork-api-cloud-gateway-source-config.mjs';
@@ -39,13 +40,13 @@ test('cloud development selects only an explicit remote gateway', () => {
   );
 });
 
-test('source profile selection fails closed for undeclared combinations', () => {
-  assert.throws(
-    () => resolveGatewaySourceProfile({
-      appRoot,
-      deploymentProfile: 'cloud',
-      environment: 'test',
-    }),
-    /does not declare profile cloud\.test/u,
-  );
+test('source configuration declares the complete deployment profile matrix', () => {
+  for (const deploymentProfile of ['standalone', 'cloud']) {
+    for (const environment of ['development', 'test', 'staging', 'production']) {
+      const profile = resolveGatewaySourceProfile({ appRoot, deploymentProfile, environment });
+      assert.equal(profile.profileId, `${deploymentProfile}.${environment}`);
+      assert.ok(profile.environmentConfig.publicHosts.length === 3);
+      assert.doesNotThrow(() => assertCloudPublicProfile(profile));
+    }
+  }
 });

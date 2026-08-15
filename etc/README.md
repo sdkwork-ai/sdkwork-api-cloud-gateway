@@ -11,6 +11,10 @@ and database engine selection.
 | --- | --- |
 | `standalone.development` | Default `pnpm dev` profile; starts the local gateway with PostgreSQL. |
 | `cloud.development` | Validates the deployed development gateway URL and starts no local service. |
+| `standalone.test` | Test gateway using the isolated test runtime and database profile. |
+| `cloud.test` | Deployed cloud test gateway at the registered `api-test.*` hosts. |
+| `standalone.staging` | Staging gateway using production-like controls without production hosts. |
+| `cloud.staging` | Deployed cloud staging gateway at the registered `api-staging.*` hosts. |
 | `standalone.production` | Source template for a standalone server deployment. |
 | `cloud.production` | Source template for the hosted platform gateway deployment. |
 
@@ -18,6 +22,7 @@ The gateway runtime files are:
 
 - `sdkwork-api-cloud-gateway.development.toml`
 - `sdkwork-api-cloud-gateway.test.toml`
+- `sdkwork-api-cloud-gateway.staging.toml`
 - `sdkwork-api-cloud-gateway.production.toml`
 
 Dependency API inventory does not live in these TOML files. `specs/component.spec.json`, Cargo

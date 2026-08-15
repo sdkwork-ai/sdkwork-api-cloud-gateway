@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # sdkwork-api-cloud-gateway standalone container image.
 # runtimeTarget = "container", deploymentProfile = "standalone".
 # Build context: an unpacked server install package directory containing
@@ -106,6 +105,7 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_MCP_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-mcp \
     SDKWORK_MEMBERSHIP_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-membership \
     SDKWORK_MERCHANDISE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-merchandise \
+    SDKWORK_MODELS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-models \
     SDKWORK_MODELKIT_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-modelkit \
     SDKWORK_NEWS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-news \
     SDKWORK_NOTARY_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-notary \

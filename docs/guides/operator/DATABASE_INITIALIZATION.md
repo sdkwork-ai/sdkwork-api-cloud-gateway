@@ -1,8 +1,8 @@
 # 数据库初始化（安装后快速落地）
 
-sdkwork-api-cloud-gateway 内嵌 46 个 foundation 数据库模块。安装后只需两步：
-`db:init`（管理员级准备）→ 启动网关（自动初始化全部模块）。所有步骤幂等，
-不同版本升级时自动执行增量迁移。
+sdkwork-api-cloud-gateway 会装配 component contract 声明的 foundation 数据库模块，
+并额外迁移 CloudRouter 依赖的 Models 模块。安装流程为：`db:init`（管理员级准备）
+→ 显式 `--migrate-databases` → 启动网关。迁移步骤幂等，升级时应用增量迁移。
 
 ## 快速开始（3 步）
 
@@ -18,12 +18,12 @@ export SDKWORK_DATABASE_PASSWORD=...
 export SDKWORK_DATABASE_ADMIN_USERNAME=postgres
 export SDKWORK_DATABASE_ADMIN_PASSWORD=...
 
-# 2. 管理员级初始化（建库、建 schema、建扩展 vector/pg_trgm 等、
-#    sdkwork-models catalog 表、授权业务用户）
+# 2. 管理员级初始化（建库、建 schema、建扩展 vector/pg_trgm 等、授权业务用户）
 pnpm db:init          # = node scripts/init-database.mjs
 
-# 3. 启动网关 → 自动完成 46 个模块的 schema baseline、迁移与 drift 检查
-pnpm dev              # 或运行打包二进制
+# 3. 显式迁移全部模块，再启动网关
+./bin/sdkwork-api-cloud-gateway --migrate-databases
+./bin/sdkwork-api-cloud-gateway
 ```
 
 启动完成后 `/readyz` 返回 200，即数据层商用就绪。
@@ -32,20 +32,19 @@ pnpm dev              # 或运行打包二进制
 
 | 阶段 | 执行者 | 内容 | 幂等 |
 | --- | --- | --- | --- |
-| 管理员准备 | `pnpm db:init` | 建库/建 schema、扩展（vector/pg_trgm/zhparser/pg_bigm）、sdkwork-models catalog 表、schema 授权 | 是（IF NOT EXISTS / 状态检查） |
-| 模块初始化 | 网关启动 | 每个模块：ops 历史表、baseline（若锚点表不存在）、增量迁移、drift 检查 | 是（ops_* 状态记录） |
-| 升级 | 网关启动 | 新版本迁移文件自动应用（版本记录比对） | 是 |
+| 管理员准备 | `pnpm db:init` | 建库/建 schema、扩展（vector/pg_trgm/zhparser/pg_bigm）、schema 授权 | 是（IF NOT EXISTS / 状态检查） |
+| 模块迁移 | `--migrate-databases` | 每个模块：ops 历史表、baseline、增量迁移与 drift 检查，包括 Models/CloudRouter | 是（ops_* 状态记录） |
+| 服务启动 | 网关服务进程 | 连接并校验已迁移 schema，不在生产运行时改变 schema | 是 |
 
-- **简单配置即初始化**：网关 `[database] autoMigrate` 默认 `true`（三个 TOML 与
-  容器配置均已设置）——只配置连接即可自动建表，无需手工迁移。
-- **显式管理**：`SDKWORK_DATABASE_AUTO_MIGRATE=false` 或 `[database] autoMigrate = false`
-  关闭自动迁移（schema 生命周期由运维显式管理）。
+- **安装器编排**：容器 entrypoint 与 systemd `ExecStartPre` 自动调用显式迁移命令；
+  服务运行时使用 `SDKWORK_DATABASE_AUTO_MIGRATE=false`。
+- **开发直跑**：development/test TOML 可保留 `autoMigrate=true` 以便本地单进程开发；
+  staging/production 必须走显式迁移。
 - **扩展**：`vector`（knowledgebase）与 `pg_trgm` 等需要超级用户安装；`db:init`
   用管理员连接预建到业务 schema（模块查询的 search_path 可直接解析类型）。
   系统未安装的扩展（如 zhparser/pg_bigm）跳过并提示，不影响其它模块。
-- **sdkwork-models**：Cloud Router catalog 表（ai_model 等）由 `db:init` 预建，
-  保证开发/测试环境通过 catalog schema 检查；生产环境（Skip 模式）使用
-  `SDKWORK_MODELS_CATALOG_ROOT` 文件目录。
+- **sdkwork-models**：Models host 的 canonical baseline 与 migrations 由同一个显式
+  生命周期命令执行；不再依赖 dump、手工建表或从其他环境导入。
 
 ## 嵌入装配依赖环境变量
 
@@ -70,11 +69,11 @@ pnpm dev              # 或运行打包二进制
 
 | 部署方式 | db:init 前置 | 启动初始化 |
 | --- | --- | --- |
-| WSL/Ubuntu 直部署 | `pnpm db:init`（psql 客户端） | 打包二进制启动 |
+| WSL/Ubuntu 直部署 | 创建数据库、同名 schema 与扩展 | `--migrate-databases` 后启动 |
 | Linux/macOS 直部署 | 同上 | 同上 |
-| Windows 直部署 | 同上（psql 需在 PATH） | 打包二进制启动 |
-| Docker Compose | 无需（compose 内置 postgres 空库，启动自动初始化） | 容器启动 |
-| systemd | `pnpm db:init` 后安装服务 | 服务启动 |
+| Windows 直部署 | 同上（psql 需在 PATH） | `--migrate-databases` 后启动 |
+| Docker Compose | 内置模式自动准备；外部模式先建库/schema/扩展 | entrypoint 显式迁移后启动 |
+| systemd | 先配置连接与管理员准备 | `ExecStartPre` 显式迁移后启动 |
 
 打包产物（standalone tar.gz / 容器镜像）内嵌各模块的 database 契约与迁移文件；
 `db:init` 从安装包 `database-modules/` 解析 baseline（源码检出时回退到兄弟仓库）。
@@ -95,9 +94,8 @@ psql -d sdkwork_ai_prod -c "SELECT module_id, count(*) FROM
 
 - **启动报扩展缺失**：用超级用户执行 `CREATE EXTENSION IF NOT EXISTS <name> WITH SCHEMA <schema>`，
   或重跑 `pnpm db:init`。
-- **迁移 checksum 不匹配**：迁移文件在构建/安装后被修改（或并发进程同时迁移）。
-  用 `SDKWORK_DATABASE_AUTO_MIGRATE=false` 启动排查；确认文件版本一致后清除对应
-  模块的 `ops_schema_migration_history` 记录再启动。
+- **迁移 checksum 不匹配**：迁移文件在构建/安装后被修改，或部署了不一致的
+  artifact。停止发布并核对包内 `checksums.sha256` 与版本；迁移历史修复需要人工评审。
 - **连接数不足**：`remaining connection slots` 表示 PostgreSQL
   `max_connections` 上限；调大服务端配置，并保持每实例连接池
   （`SDKWORK_DATABASE_MAX_CONNECTIONS`）与总预算匹配。

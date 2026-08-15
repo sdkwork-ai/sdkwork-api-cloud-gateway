@@ -44,7 +44,11 @@ foundation-voice = ["dep:sdkwork-api-voice-assembly", "dep:sdkwork-voice-databas
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly", "dep:sdkwork-aiot-database-host"]
 foundation-appstore = ["dep:sdkwork-api-appstore-assembly", "dep:sdkwork-appstore-database-host"]
 foundation-forum = ["dep:sdkwork-api-forum-assembly", "dep:sdkwork-forum-database-host"]
-foundation-cloudrouter = ["dep:sdkwork-api-cloudrouter-assembly", "dep:sdkwork-cloudrouter-database-host"]
+foundation-cloudrouter = [
+    "dep:sdkwork-api-cloudrouter-assembly",
+    "dep:sdkwork-cloudrouter-database-host",
+    "dep:sdkwork-models-database-host",
+]
 foundation-mcp = ["dep:sdkwork-api-mcp-assembly", "dep:sdkwork-mcp-database-host"]
 foundation-im = ["dep:sdkwork-api-im-assembly", "dep:sdkwork-im-database-host"]
 # Platform gateway realtime hosting: embeds the sdkwork-im session-gateway
@@ -229,6 +233,7 @@ sdkwork-voice-database-host = { workspace = true, optional = true }
 sdkwork-cms-database-host = { workspace = true, optional = true }
 sdkwork-forum-database-host = { workspace = true, optional = true }
 sdkwork-cloudrouter-database-host = { workspace = true, optional = true }
+sdkwork-models-database-host = { workspace = true, optional = true }
 sdkwork-mcp-database-host = { workspace = true, optional = true }
 sdkwork-im-database-host = { workspace = true, optional = true }
 sdkwork-rtc-database-host = { workspace = true, optional = true }

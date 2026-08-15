@@ -32,8 +32,9 @@ Type=simple
 User=sdkwork
 Group=sdkwork
 EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
-Environment=SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
-ExecStart=/usr/local/bin/sdkwork-api-cloud-gateway
+WorkingDirectory=/opt/sdkwork/api-gateway
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=60

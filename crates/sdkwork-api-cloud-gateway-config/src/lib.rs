@@ -673,6 +673,9 @@ impl GatewayRuntimeConfig {
         mut self,
         env: &HashMap<String, String>,
     ) -> Result<Self, GatewayConfigError> {
+        if let Some(environment) = env.get("SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT") {
+            self.service.environment = normalize_environment(environment)?;
+        }
         if let Some(bind) = env.get("SDKWORK_API_CLOUD_GATEWAY_BIND") {
             self.server.bind = bind.clone();
         }
@@ -1332,6 +1335,20 @@ fn is_production_like_environment(environment: &str) -> bool {
         environment.trim().to_ascii_lowercase().as_str(),
         "prod" | "production" | "stage" | "staging" | "live"
     )
+}
+
+fn normalize_environment(value: &str) -> Result<String, GatewayConfigError> {
+    let normalized = value.trim().to_ascii_lowercase();
+    if matches!(
+        normalized.as_str(),
+        "development" | "test" | "staging" | "production"
+    ) {
+        return Ok(normalized);
+    }
+    Err(GatewayConfigError::InvalidValue {
+        key: "SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT".to_owned(),
+        reason: format!("unsupported lifecycle environment `{value}`"),
+    })
 }
 
 fn validate_exact_http_origin(key: &str, origin: &str) -> Result<(), GatewayConfigError> {

@@ -30,8 +30,9 @@ run side by side without conflicts. Container-internal bind stays `3900`
 | 3906 | Gateway HTTP (127.0.0.1) | WSL direct run (`etc/*.test.toml`) | test |
 | 3910 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT`) | development/standalone |
 | 3911 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3911`) | test |
-| 3912 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3912`) | production |
-| 3913–3915 | Reserved: container IM realtime link mappings | docker compose | opt-in |
+| 3912 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3912`) | staging |
+| 3913 | Gateway container → 3900 | `docker compose` (`GATEWAY_HOST_PORT=3913`) | production |
+| 3920–3922 | Reserved: container IM realtime link mappings | docker compose | opt-in |
 | 18079 | sdkwork-im standalone container | docker compose | shared |
 | 19000–19002 | IM realtime TCP/UDP/QUIC link binds (127.0.0.1) | WSL direct run, opt-in | development |
 | 19010–19012 | IM realtime TCP/UDP/QUIC link binds (127.0.0.1) | WSL direct run, opt-in | test |
@@ -43,7 +44,7 @@ gateways can host embedded IM link transports side by side. QUIC requires
 listener is skipped with a warning.
 
 Database per environment: development → `sdkwork_ai_dev`, test →
-`sdkwork_ai_test`, production → `sdkwork_ai_prod` (same-named schema), injected
-via `SDKWORK_DATABASE_*` env; `SDKWORK_DATABASE_AUTO_MIGRATE=true` creates the
-schema and tables on first start.
-
+`sdkwork_ai_test`, staging → `sdkwork_ai_staging`, production → `sdkwork_ai_prod`
+(same-named schema), injected via `SDKWORK_DATABASE_*`. Containers and systemd
+run the explicit `--migrate-databases` lifecycle command before service startup;
+runtime auto-migration remains disabled for production-like environments.

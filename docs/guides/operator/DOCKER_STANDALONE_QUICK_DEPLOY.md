@@ -1,11 +1,11 @@
 # Docker Standalone 快速部署（WSL Ubuntu + Windows）
 
 本指南描述 `sdkwork-api-cloud-gateway` standalone 容器镜像的构建与 WSL 快速部署，
-参考 `sdkwork-cloudrouter` 的容器组合模式。部署后通过三个测试域名访问网关：
+参考 `sdkwork-cloudrouter` 的容器组合模式。默认 development 部署通过三个域名访问网关：
 
-- `http://testdockerapi.sdkwork.com`
-- `http://testdockerapi.birdcoder.com`
-- `http://testdockerapi.dtupay.com`
+- `http://api-dev.sdkwork.com`
+- `http://api-dev.birdcoder.com`
+- `http://api-dev.dtupay.com`
 
 ## 端口规划
 
@@ -57,9 +57,11 @@ pnpm build:container:check    # 只校验构建计划（--check --dry-run）
 ## 3. 启动容器组合
 
 ```bash
-cp docker/.env.example .env   # 可选；默认值即可直接启动
-docker compose up -d
-docker compose ps             # 等待 gateway 健康（首次启动需迁移 46 个数据库模块）
+cp docker/env/development.env.example .env
+# 替换所有 <CHANGE_ME> 后先执行部署预检
+pnpm check:container-deployment -- --env-file .env --mode embedded --compose
+docker compose --env-file .env up -d
+docker compose --env-file .env ps
 ```
 
 检查就绪：
@@ -115,25 +117,17 @@ docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
 - 宿主机上运行的外部服务用 `GATEWAY_POSTGRES_HOST=host.docker.internal` /
   `GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal` 可达（override 已注入
   host-gateway extra host）。
-- 首次连接全新外部库时，除 46 个 database-modules 外还需先迁移
-  sdkwork-models 数据库模块（网关对非 current 的 models schema 会拒绝
-  cloudrouter 模块启动）。用 cloudrouter 容器的云路由管理工具对目标库执行：
-
-  ```bash
-  # 把外部库容器/网络接入 cloudrouter 网络后，在 cloudrouter 容器内执行：
-  docker exec -e SDKWORK_DATABASE_URL="postgresql://<user>:<pass>@<host>:<port>/sdkwork_ai_prod?options=-c%20search_path%3Dsdkwork_ai_prod" \
-    sdkwork-cloudrouter-cloudrouter-1 \
-    /opt/sdkwork/router/bin/cloudrouterctl ensure
-  ```
-
-  然后重启网关：`docker compose -f docker-compose.yml -f docker-compose.external.yml restart gateway`。
+- 全新外部库只需预先创建数据库、同名 schema 和 `vector` 扩展。容器入口会先
+  执行单进程 `--migrate-databases`，完整迁移 Models、CloudRouter 及其余嵌入模块，
+  再以运行时自动迁移关闭的方式启动服务。由独立发布任务负责迁移时设置
+  `GATEWAY_MIGRATE_ON_START=false`，并确保只有一个 elected migrator。
 - 内置模式（默认 `docker compose up -d`）与外连模式互斥：外连时内置
   postgres/redis 不启动，网关直接连外部实例。
 
 ## 4. 配置 nginx（WSL）
 
 ```bash
-sudo cp docker/nginx/testdockerapi-api-gateway.conf /etc/nginx/sites-enabled/
+sudo cp docker/nginx/api-dev.sdkwork.com.conf /etc/nginx/sites-enabled/sdkwork/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -143,18 +137,18 @@ sudo systemctl reload nginx
 在 Windows 的 `C:\Windows\System32\drivers\etc\hosts` 追加（WSL 中可直接编辑）：
 
 ```
-127.0.0.1 testdockerapi.sdkwork.com testdockerapi.birdcoder.com testdockerapi.dtupay.com
+127.0.0.1 api-dev.sdkwork.com api-dev.birdcoder.com api-dev.dtupay.com
 ```
 
 ## 6. 验证
 
 ```bash
-curl http://testdockerapi.sdkwork.com/healthz
-curl http://testdockerapi.birdcoder.com/readyz
-curl http://testdockerapi.dtupay.com/healthz
+curl http://api-dev.sdkwork.com/healthz
+curl http://api-dev.birdcoder.com/readyz
+curl http://api-dev.dtupay.com/healthz
 ```
 
-浏览器访问 `http://testdockerapi.sdkwork.com/`（网关 API 面，如 `/app/v3/api/iam/...`）。
+浏览器访问 `http://api-dev.sdkwork.com/`（网关 API 面，如 `/app/v3/api/iam/...`）。
 
 ## 配置说明
 
@@ -184,18 +178,18 @@ curl http://testdockerapi.dtupay.com/healthz
 ## 生产域名部署（api.sdkwork.com / api.birdcoder.com / api.dtupay.com）
 
 同一网关容器可承载三个生产域名（nginx 按 `server_name` 分流，全部代理到
-`127.0.0.1:3910`）：
+`127.0.0.1:3913`）：
 
 1. **DNS**：三个域名解析到本机公网 IP（与测试域名不同，生产走真实 DNS，
    不写 Windows hosts）。
 2. **证书**：为每个名称签发 TLS 证书（certbot 或云 CA），放入
    `/etc/ssl/sdkwork/api-gateway/`。
-3. **nginx 站点**：启用 `docker/nginx/api-gateway-production.conf`
+3. **nginx 站点**：启用 `docker/nginx/api.sdkwork.com.conf`
    （443 TLS + 80 重定向）：
 
    ```bash
    sudo mkdir -p /etc/nginx/sites-enabled/sdkwork /etc/ssl/sdkwork/api-gateway /var/www/certbot
-   sudo cp docker/nginx/api-gateway-production.conf /etc/nginx/sites-enabled/sdkwork/
+   sudo cp docker/nginx/api.sdkwork.com.conf /etc/nginx/sites-enabled/sdkwork/
    sudo nginx -t && sudo systemctl reload nginx
    ```
 
@@ -210,22 +204,25 @@ curl http://testdockerapi.dtupay.com/healthz
 5. **验证**：`curl https://api.sdkwork.com/healthz` 等；网关按 Host 白名单
    校验转发头（421 拒绝未列入域名）。
 
-## 双环境部署（test + prod 并存）
+## 多环境部署
 
 同一镜像可同时跑 test 与 prod 两套独立 compose 项目，宿主端口、数据库、
 Host 白名单、CORS 各自隔离（端口矩阵见 `deployments/README.md`）：
 
 | 环境 | 项目名 | 宿主端口 → 容器 3900 | 数据库（同名 schema） | 域名 |
 | --- | --- | --- | --- | --- |
-| test | `gateway-test` | 3911 | `sdkwork_ai_test` | `testdockerapi.sdkwork.com` / `testdockerapi.birdcoder.com` / `testdockerapi.dtupay.com` |
-| production | `gateway-prod` | 3912 | `sdkwork_ai_prod` | `api.sdkwork.com` / `api.birdcoder.com` / `api.dtupay.com` |
+| development | `gateway-dev` | 3910 | `sdkwork_ai_dev` | `api-dev.sdkwork.com` / `api-dev.birdcoder.com` / `api-dev.dtupay.com` |
+| test | `gateway-test` | 3911 | `sdkwork_ai_test` | `api-test.sdkwork.com` / `api-test.birdcoder.com` / `api-test.dtupay.com` |
+| staging | `gateway-staging` | 3912 | `sdkwork_ai_staging` | `api-staging.sdkwork.com` / `api-staging.birdcoder.com` / `api-staging.dtupay.com` |
+| production | `gateway-prod` | 3913 | `sdkwork_ai_prod` | `api.sdkwork.com` / `api.birdcoder.com` / `api.dtupay.com` |
 
 1. **环境文件**（宿主侧运行时配置，不入库；示例位于 `/opt/sdkwork/deploy/api-gateway/`）：
    - `test/.env`：`GATEWAY_HOST_PORT=3911`、`GATEWAY_POSTGRES_DB/USER/PASSWORD=sdkwork_ai_test`、
      `GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_test`（必须与库名一致，网关池校验要求
-     schema 等于 workspace database）、`GATEWAY_ALLOWED_HOSTS=testdockerapi.*` 三域名、
-     `GATEWAY_CORS_ALLOWED_ORIGINS=http://testdockerapi.*` 三域名。
-   - `prod/.env`：同上换成 3912 / `sdkwork_ai_prod` / `api.*` / `https://api.*`。
+     schema 等于 workspace database）、`GATEWAY_ALLOWED_HOSTS=api-test.*` 三域名、
+     `GATEWAY_CORS_ALLOWED_ORIGINS=http://api-test.*` 三域名。
+   - `prod/.env`：同上换成 3913 / `sdkwork_ai_prod` / `api.*` / `https://api.*`。
+   - 四套受控模板位于 `docker/env/<environment>.env.example`。
 
 2. **启动两套栈**（仓库根目录，`--env-file` 覆盖仓库根 `.env`）：
 
@@ -239,9 +236,9 @@ Host 白名单、CORS 各自隔离（端口矩阵见 `deployments/README.md`）�
    `start_period` 240s）。
 
 3. **nginx 虚拟主机**（`/etc/nginx/sites-enabled/sdkwork/`，NGINX_SPEC 路径）：
-   `testdockerapi-api-gateway.conf` 三个 testdockerapi.* → `127.0.0.1:3911`；
-   `api-gateway-http.conf` 三个 api.* → `127.0.0.1:3912`（HTTP；真实 DNS + CA
-   证书就绪后改用 `docker/nginx/api-gateway-production.conf` 的 TLS 结构）。
+   `api-test.sdkwork.com.conf` 三个 api-test.* → `127.0.0.1:3911`；
+   `api-staging.sdkwork.com.conf` 三个 api-staging.* → `127.0.0.1:3912`；
+   `api.sdkwork.com.conf` 三个 api.* → `127.0.0.1:3913`。
 
 4. **域名解析**：WSL 与 Windows 的 `hosts` 均追加六域名 → `127.0.0.1`
    （WSL2 localhost 转发，Windows 浏览器可直接访问）。
@@ -249,12 +246,12 @@ Host 白名单、CORS 各自隔离（端口矩阵见 `deployments/README.md`）�
 5. **验证**：
 
    ```bash
-   curl http://testdockerapi.sdkwork.com/healthz   # -> 200（test 栈）
+   curl http://api-test.sdkwork.com/healthz   # -> 200（test 栈）
    curl http://api.sdkwork.com/readyz        # -> 200（prod 栈）
    curl -H "Host: unknown.example.com" http://127.0.0.1:3911/healthz  # -> 421
    ```
 
-   环境隔离：testdockerapi.* 打 3912、api.* 打 3911 均 421（Host 白名单按环境注入）。
+   环境隔离：api-test.* 打 3913、api.* 打 3911 均 421（Host 白名单按环境注入）。
 
 ## 常用运维
 

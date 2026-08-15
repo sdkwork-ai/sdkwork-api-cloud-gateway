@@ -25,8 +25,8 @@ autoMigrate = true
 bind = "127.0.0.1:3906"
 
 [cors]
-allowAnyOrigin = true
-allowedOrigins = []
+allowAnyOrigin = false
+allowedOrigins = ["https://api-test.sdkwork.com", "https://api-test.birdcoder.com", "https://api-test.dtupay.com", "http://127.0.0.1:3906", "http://localhost:3906"]
 
 [request]
 maxBodyBytes = 33554432
@@ -46,7 +46,7 @@ includePolicyInventory = true
 includeRouteInventory = true
 
 [security]
-allowedHosts = []
+allowedHosts = ["api-test.sdkwork.com", "api-test.birdcoder.com", "api-test.dtupay.com", "127.0.0.1:3906", "localhost:3906"]
 trustedProxyCidrs = []
 secureHeadersEnabled = true
 maxHeaderBytes = 65536

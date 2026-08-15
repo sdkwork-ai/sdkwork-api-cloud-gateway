@@ -7,6 +7,7 @@ import {
   resolveDatabaseHostCratesFromMetadata,
   resolveDeploymentProfile,
   resolveServerStageName,
+  resolveTarArchiveName,
 } from './package-server.mjs';
 
 const root = path.resolve('workspace', 'sdkwork-api-cloud-gateway');
@@ -50,6 +51,17 @@ test('server stage names isolate standalone and cloud artifacts', () => {
   assert.equal(
     resolveServerStageName({ ...input, deploymentProfile: 'cloud' }),
     'sdkwork-api-cloud-gateway-0.1.0-linux-x64-cloud-server',
+  );
+});
+
+test('tar receives a local archive name instead of a Windows drive path', () => {
+  const distRoot = path.join(root, 'dist', 'server');
+  const archivePath = path.join(distRoot, 'gateway.tar.gz');
+
+  assert.equal(resolveTarArchiveName(distRoot, archivePath), 'gateway.tar.gz');
+  assert.throws(
+    () => resolveTarArchiveName(distRoot, path.join(root, 'outside.tar.gz')),
+    /Archive path must stay inside/,
   );
 });
 

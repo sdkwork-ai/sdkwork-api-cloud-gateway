@@ -7,6 +7,12 @@ use crate::GatewayRuntimeError;
 
 const PROCESS_DATABASE_SERVICE_CODE: &str = "CLOUD";
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum DatabaseLifecycleMode {
+    Runtime,
+    ExplicitMigration,
+}
+
 const DATABASE_WORKSPACES: &[&str] = &[
     "sdkwork-iam",
     "sdkwork-drive",
@@ -57,6 +63,24 @@ const DATABASE_WORKSPACES: &[&str] = &[
 
 pub async fn bootstrap_embedded_databases(
     config: &GatewayRuntimeConfig,
+) -> Result<Option<DatabasePool>, GatewayRuntimeError> {
+    initialize_embedded_databases(config, DatabaseLifecycleMode::Runtime).await
+}
+
+/// Applies every embedded authoritative database module before service startup.
+///
+/// This is the explicit installer/release lifecycle path. The caller must run
+/// it as a single elected process; the gateway binary exposes it through
+/// `--migrate-databases` for systemd and container entrypoints.
+pub async fn migrate_embedded_databases(
+    config: &GatewayRuntimeConfig,
+) -> Result<Option<DatabasePool>, GatewayRuntimeError> {
+    initialize_embedded_databases(config, DatabaseLifecycleMode::ExplicitMigration).await
+}
+
+async fn initialize_embedded_databases(
+    config: &GatewayRuntimeConfig,
+    _lifecycle_mode: DatabaseLifecycleMode,
 ) -> Result<Option<DatabasePool>, GatewayRuntimeError> {
     if !config
         .dependency_surfaces
@@ -140,12 +164,44 @@ pub async fn bootstrap_embedded_databases(
 
     #[cfg(feature = "foundation-cloudrouter")]
     if workspace_enabled(config, "sdkwork-cloudrouter") {
-        run_module(
-            "sdkwork-cloudrouter",
-            "cloudrouter",
-            sdkwork_cloudrouter_database_host::bootstrap_cloud_router_database(pool.clone()),
-        )
-        .await?;
+        match _lifecycle_mode {
+            DatabaseLifecycleMode::Runtime => {
+                run_module(
+                    "sdkwork-models",
+                    "models",
+                    sdkwork_models_database_host::bootstrap_models_database(pool.clone()),
+                )
+                .await?;
+                run_module(
+                    "sdkwork-cloudrouter",
+                    "cloudrouter",
+                    sdkwork_cloudrouter_database_host::bootstrap_cloud_router_database(
+                        pool.clone(),
+                    ),
+                )
+                .await?;
+            }
+            DatabaseLifecycleMode::ExplicitMigration => {
+                run_module(
+                    "sdkwork-models",
+                    "models",
+                    sdkwork_models_database_host::migrate_models_database(
+                        pool.clone(),
+                        "sdkwork-api-cloud-gateway-installer",
+                    ),
+                )
+                .await?;
+                run_module(
+                    "sdkwork-cloudrouter",
+                    "cloudrouter",
+                    sdkwork_cloudrouter_database_host::migrate_cloud_router_database(
+                        pool.clone(),
+                        "sdkwork-api-cloud-gateway-installer",
+                    ),
+                )
+                .await?;
+            }
+        }
     }
 
     #[cfg(feature = "foundation-appstore")]
@@ -593,7 +649,7 @@ mod tests {
 
     use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 
-    use super::{workspace_enabled, DATABASE_WORKSPACES};
+    use super::{workspace_enabled, DatabaseLifecycleMode, DATABASE_WORKSPACES};
 
     #[test]
     fn database_bootstrap_convention_covers_declared_dependency_workspaces_in_order() {
@@ -613,5 +669,13 @@ mod tests {
         for workspace in DATABASE_WORKSPACES {
             assert!(workspace_enabled(&config, workspace));
         }
+    }
+
+    #[test]
+    fn explicit_migration_is_distinct_from_runtime_bootstrap() {
+        assert_ne!(
+            DatabaseLifecycleMode::ExplicitMigration,
+            DatabaseLifecycleMode::Runtime
+        );
     }
 }

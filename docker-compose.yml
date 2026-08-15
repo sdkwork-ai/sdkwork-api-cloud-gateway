@@ -62,7 +62,7 @@ services:
       retries: 12
 
   gateway:
-    image: sdkwork-api-cloud-gateway:local
+    image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
     ports:
       - "${GATEWAY_HOST_PORT:-3910}:3900"
     environment:
@@ -70,25 +70,28 @@ services:
       # too, so the values here are belt-and-suspenders.
       SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: standalone
       SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container
+      SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
+      SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
+      SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.development}
       # Runtime config comes from the mounted host copy at
       # /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml (§4.5 config
       # mount; the image bakes the production template as the same file);
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
       # so only the container-specific values are injected here.
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
-      # Host allowlist: the docker test domains (testdockerapi.*) plus the
+      # Host allowlist: the selected environment's registered API domains plus the
       # host-mapped port for direct access. The nginx proxy forwards the real
       # Host header, so every public domain must be listed here. Production
       # traffic through api.sdkwork.com / api.birdcoder.com / api.dtupay.com
-      # switches this via GATEWAY_ALLOWED_HOSTS (see docker/.env.example and
-      # docker/nginx/api-gateway-production.conf).
-      SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-testdockerapi.sdkwork.com,testdockerapi.birdcoder.com,testdockerapi.dtupay.com,localhost:3910,127.0.0.1:3910}
+      # switches this via GATEWAY_ALLOWED_HOSTS (see docker/env and
+      # docker/nginx/api.sdkwork.com.conf).
+      SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-api-dev.sdkwork.com,api-dev.birdcoder.com,api-dev.dtupay.com,localhost:3910,127.0.0.1:3910}
       # Browser CORS allow-list (API plane): the gateway runs in production
       # posture, where cross-origin browser requests are rejected unless the
       # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical
       # shared key (SOURCE_CONFIG_SPEC) resolved by both the gateway and the
       # IAM web adapter.
-      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://testdockerapi.sdkwork.com,http://testdockerapi.birdcoder.com,http://testdockerapi.dtupay.com,http://localhost:3910,http://127.0.0.1:3910}
+      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://api-dev.sdkwork.com,http://api-dev.birdcoder.com,http://api-dev.dtupay.com,http://localhost:3910,http://127.0.0.1:3910}
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.
@@ -97,6 +100,7 @@ services:
       SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
       SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}
       SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: "false"
       SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
       SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
       SDKWORK_DATABASE_SSL_MODE: ${GATEWAY_POSTGRES_SSL_MODE:-disable}
@@ -136,7 +140,7 @@ services:
       # Cloud Router OpenAPI base URL: the image generation foundation module
       # requires it to reach the cloud router's OpenAPI surface. Defaults to
       # the sdkwork-cloudrouter container host mapping on this machine.
-      SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3903}
+      SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
       # Cloud Router API key pepper: required by the cloudrouter foundation
       # module's OpenAI runtime routes; injected at runtime, never baked into
       # the image. Override via .env for anything beyond local testing.
@@ -152,11 +156,12 @@ services:
       SDKWORK_CLOUDROUTER_APP_SESSION_SECRET: ${GATEWAY_CLOUDROUTER_APP_SESSION_SECRET:-cloudrouter-local-dev-app-session-change-me}
       SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET: ${GATEWAY_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:-cloudrouter-local-dev-payment-webhook-change-me}
       SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET: ${GATEWAY_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:-cloudrouter-local-dev-signing-secret-change-me}
-      # Cloud Router database module declares autoMigrate=false; the docker
-      # test deployment lets the gateway run the explicit lifecycle migrate at
-      # startup (non-production SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT allows
-      # the embedded migrate path).
-      SDKWORK_DATABASE_AUTO_MIGRATE: ${GATEWAY_DATABASE_AUTO_MIGRATE:-true}
+      # The entrypoint runs the single-process `--migrate-databases` lifecycle
+      # command before starting the service. Runtime auto-migration stays off,
+      # including production; set MIGRATE_ON_START=false when another elected
+      # release job owns migrations.
+      SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}
+      SDKWORK_DATABASE_AUTO_MIGRATE: ${GATEWAY_DATABASE_AUTO_MIGRATE:-false}
       # Cloud Router runtime Redis (required by the cloudrouter foundation
       # module; mirror of the sdkwork-cloudrouter composition). External
       # deployments set GATEWAY_CLOUDROUTER_REDIS_* to an existing Redis and
