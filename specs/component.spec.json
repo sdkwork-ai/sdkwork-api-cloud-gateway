@@ -192,6 +192,14 @@
     "catalogPolicy": "no-dedicated-gateway-catalog",
     "cargoWorkspaceRoot": "Cargo.toml",
     "runtimeFeatureAuthority": "crates/sdkwork-api-cloud-gateway/Cargo.toml",
+    "assemblyIntegrationPoint": {
+      "context": "process-shared DatabasePool plus host-neutral topology and provider ports",
+      "bootstrap": "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs#bootstrap_embedded_dependency_contributions",
+      "runtime": "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs#EmbeddedDependencyBootstrap",
+      "contribution": "sdkwork_web_bootstrap::ApiAssemblyContribution",
+      "databaseLifecycleOwner": "sdkwork-api-<application-code>-assembly",
+      "consumerPolicy": "foundation features depend on exactly one owner API assembly and never on dependency route, service, repository, provider-adapter, or database-host crates"
+    },
     "webFramework": {
       "workspace": "sdkwork-web-framework",
       "cargoDependencies": [
@@ -1701,6 +1709,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/catalog",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-shop-backend-api",
+      "routeGeneration": "nested-dependency-assembly-surface-route"
+    },
+    {
       "surface": "app",
       "prefix": "/app/v3/api/skills",
       "ownership": "dependency",
@@ -2888,7 +2903,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-knowledgebase-backend-api",
@@ -2904,7 +2919,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-knowledgebase-open-api",
@@ -2921,7 +2936,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-llm-app-api",
@@ -3431,7 +3446,8 @@
       "apiAuthority": "sdkwork-shop-backend-api",
       "sdkFamily": "sdkwork-shop-backend-sdk",
       "apiPrefixes": [
-        "/backend/v3/api/shops"
+        "/backend/v3/api/shops",
+        "/backend/v3/api/catalog"
       ],
       "coverage": "sdkwork-shop-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-shop",
@@ -3480,30 +3496,6 @@
       "executableExport": "sdkwork_api_skills_assembly::assemble_api_router_with_pool"
     }
   ],
-  "databaseDependencies": [
-    {
-      "workspace": "sdkwork-merchandise",
-      "moduleId": "merchandise",
-      "cargoFeature": "foundation-shop",
-      "cargoDependency": "sdkwork-merchandise-database-host",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "bootstrapExport": "sdkwork_merchandise_database_host::bootstrap_merchandise_database",
-      "coverage": "sdkwork-merchandise-process-shared-database-lifecycle"
-    },
-    {
-      "workspace": "sdkwork-skills",
-      "moduleId": "skills",
-      "cargoFeature": "foundation-skills",
-      "cargoDependency": "sdkwork-skills-database-host",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "bootstrapExport": "sdkwork_skills_database_host::bootstrap_skills_database",
-      "coverage": "sdkwork-skills-process-shared-database-lifecycle"
-    }
-  ],
   "routeRegistry": {
     "source": "dependencySurfaces",
     "rules": [
@@ -3520,6 +3512,8 @@
       "one dependency SDK family may declare multiple apiPrefixes when its materialized path set spans multiple stable prefixes; all prefixes share the same serviceId and executable assembly",
       "foundation dependency executable evidence is declared through Cargo workspace dependencies and runtime Cargo features",
       "dependency surfaces must declare cargoFeature, cargoDependency, and an executable assembly export",
+      "owner assemblies manage route, service, repository, database lifecycle, readiness, and retained runtime handles behind one public bootstrap",
+      "the platform cloud gateway provides the process-shared database pool and host-neutral context but never imports dependency-owned database-host crates",
       "do not maintain a separate gateway catalog when Cargo metadata and SDKWork specs already describe the integration",
       "embedded routers own matched dependency HTTP and WebSocket routes"
     ]
@@ -3536,6 +3530,7 @@
       "cargo test --workspace",
       "node ../sdkwork-specs/tools/check-source-config-standard.mjs --root .",
       "node ../sdkwork-specs/tools/check-app-manifest-standard.mjs --root .",
+      "node ../sdkwork-specs/tools/check-api-assembly-integration-closure.mjs --root .",
       "node ../sdkwork-specs/tools/check-pnpm-script-standard.mjs --root .",
       "pnpm check",
       "pnpm verify",

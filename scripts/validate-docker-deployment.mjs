@@ -10,6 +10,14 @@ import { fileURLToPath } from 'node:url';
 import { parseDotEnv } from '../../sdkwork-specs/tools/postgres/postgres-config.mjs';
 
 const BASE_DOMAINS = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
+const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
+const DEPENDENCY_MODES = ['embedded', 'external'];
+const DATABASE_IDENTITIES = {
+  development: 'sdkwork_ai_dev',
+  test: 'sdkwork_ai_test',
+  staging: 'sdkwork_ai_staging',
+  production: 'sdkwork_ai_prod',
+};
 const ENVIRONMENT_SUFFIX = {
   development: 'dev',
   test: 'test',
@@ -49,6 +57,42 @@ function requireResolved(env, key) {
   return value;
 }
 
+function validateDatabaseUrlInputs(env) {
+  const explicitUrl = String(env.GATEWAY_DATABASE_URL ?? '').trim();
+  if (explicitUrl) {
+    requireResolved(env, 'GATEWAY_DATABASE_URL');
+    let parsed;
+    try {
+      parsed = new URL(explicitUrl);
+    } catch {
+      throw new Error('GATEWAY_DATABASE_URL must be a valid URL');
+    }
+    if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
+      throw new Error('GATEWAY_DATABASE_URL must use postgresql:// or postgres://');
+    }
+    return;
+  }
+
+  if (env.GATEWAY_POSTGRES_PASSWORD_FILE) {
+    throw new Error(
+      'GATEWAY_DATABASE_URL is required when GATEWAY_POSTGRES_PASSWORD_FILE is used',
+    );
+  }
+  for (const key of [
+    'GATEWAY_POSTGRES_DB',
+    'GATEWAY_POSTGRES_SCHEMA',
+    'GATEWAY_POSTGRES_USER',
+    'GATEWAY_POSTGRES_PASSWORD',
+  ]) {
+    const value = requireResolved(env, key);
+    if (!/^[A-Za-z0-9._~-]+$/u.test(value)) {
+      throw new Error(
+        `${key} contains URL-reserved characters; set an encoded GATEWAY_DATABASE_URL`,
+      );
+    }
+  }
+}
+
 export function validateDeploymentEnvironment(env, mode) {
   if (!['embedded', 'external'].includes(mode)) {
     throw new Error(`unsupported dependency mode: ${mode}`);
@@ -61,13 +105,21 @@ export function validateDeploymentEnvironment(env, mode) {
   requireResolved(env, 'GATEWAY_IMAGE');
   const database = requireResolved(env, 'GATEWAY_POSTGRES_DB');
   const schema = requireResolved(env, 'GATEWAY_POSTGRES_SCHEMA');
-  requireResolved(env, 'GATEWAY_POSTGRES_USER');
-  if (database !== schema) {
-    throw new Error('GATEWAY_POSTGRES_SCHEMA must equal GATEWAY_POSTGRES_DB');
+  const username = requireResolved(env, 'GATEWAY_POSTGRES_USER');
+  const expectedDatabaseIdentity = DATABASE_IDENTITIES[environment];
+  if (!expectedDatabaseIdentity) {
+    throw new Error(`unsupported database environment: ${environment}`);
   }
-  if (!env.GATEWAY_POSTGRES_PASSWORD_FILE) {
-    requireResolved(env, 'GATEWAY_POSTGRES_PASSWORD');
+  for (const [key, value] of [
+    ['GATEWAY_POSTGRES_DB', database],
+    ['GATEWAY_POSTGRES_SCHEMA', schema],
+    ['GATEWAY_POSTGRES_USER', username],
+  ]) {
+    if (value !== expectedDatabaseIdentity) {
+      throw new Error(`${key} must be ${expectedDatabaseIdentity}`);
+    }
   }
+  validateDatabaseUrlInputs(env);
 
   const hosts = expectedHosts(environment);
   const allowedHosts = csv(env.GATEWAY_ALLOWED_HOSTS);
@@ -89,19 +141,22 @@ export function validateDeploymentEnvironment(env, mode) {
     requireResolved(env, 'GATEWAY_POSTGRES_HOST');
     requireResolved(env, 'GATEWAY_CLOUDROUTER_REDIS_HOST');
   }
+  if (env.GATEWAY_IM_PRINCIPAL_DIRECTORY !== 'postgres') {
+    throw new Error('GATEWAY_IM_PRINCIPAL_DIRECTORY must be postgres');
+  }
+  if (String(env.GATEWAY_IM_ALLOW_ALL_PRINCIPALS).toLowerCase() !== 'false') {
+    throw new Error('GATEWAY_IM_ALLOW_ALL_PRINCIPALS must be false');
+  }
   if (environment === 'production') {
     for (const key of PRODUCTION_SECRET_KEYS) {
       requireResolved(env, key);
-    }
-    if (String(env.GATEWAY_IM_ALLOW_ALL_PRINCIPALS).toLowerCase() !== 'false') {
-      throw new Error('production must set GATEWAY_IM_ALLOW_ALL_PRINCIPALS=false');
     }
   }
 
   return { environment, expectedProfileId, hosts, mode };
 }
 
-function runComposeConfig(appRoot, envFile, mode) {
+function runComposeConfig(appRoot, envFile, mode, environmentOverrides = {}) {
   const args = ['compose', '--env-file', envFile, '-f', 'docker-compose.yml'];
   if (mode === 'external') {
     args.push('-f', 'docker-compose.external.yml');
@@ -110,6 +165,7 @@ function runComposeConfig(appRoot, envFile, mode) {
   const result = spawnSync('docker', args, {
     cwd: appRoot,
     encoding: 'utf8',
+    env: { ...process.env, ...environmentOverrides },
     shell: false,
   });
   if (result.error) {
@@ -120,21 +176,60 @@ function runComposeConfig(appRoot, envFile, mode) {
   }
 }
 
+export function resolveExampleEnvironment(env, mode) {
+  const resolved = Object.fromEntries(
+    Object.entries(env).map(([key, value]) => [
+      key,
+      String(value).replace(/<[^>]+>/gu, `validation-only-${key.toLowerCase()}`),
+    ]),
+  );
+  if (mode === 'external') {
+    resolved.GATEWAY_POSTGRES_HOST = 'postgres.validation.internal';
+    resolved.GATEWAY_CLOUDROUTER_REDIS_HOST = 'redis.validation.internal';
+  }
+  return resolved;
+}
+
+export function validateDeploymentMatrix(appRoot, { compose = false } = {}) {
+  const summaries = [];
+  for (const environment of ENVIRONMENTS) {
+    const envFile = path.join(appRoot, 'docker', 'env', `${environment}.env.example`);
+    const source = parseDotEnv(readFileSync(envFile, 'utf8'));
+    for (const mode of DEPENDENCY_MODES) {
+      const resolved = resolveExampleEnvironment(source, mode);
+      summaries.push(validateDeploymentEnvironment(resolved, mode));
+      if (compose) {
+        runComposeConfig(appRoot, envFile, mode, resolved);
+      }
+    }
+  }
+  return summaries;
+}
+
 function main() {
   const { values } = parseArgs({
     args: process.argv.slice(2),
     options: {
       compose: { type: 'boolean', default: false },
       'env-file': { type: 'string' },
+      matrix: { type: 'boolean', default: false },
       mode: { type: 'string', default: 'embedded' },
     },
     strict: true,
   });
-  if (!values['env-file']) {
-    throw new Error('--env-file is required');
-  }
   const scriptPath = fileURLToPath(import.meta.url);
   const appRoot = path.resolve(path.dirname(scriptPath), '..');
+  if (values.matrix) {
+    if (values['env-file']) {
+      throw new Error('--matrix and --env-file are mutually exclusive');
+    }
+    const summaries = validateDeploymentMatrix(appRoot, { compose: values.compose });
+    process.stdout.write(`${JSON.stringify({ ok: true, count: summaries.length, summaries })}\n`);
+    return;
+  }
+  if (!values['env-file']) {
+    throw new Error('--env-file is required unless --matrix is selected');
+  }
   const envFile = path.resolve(values['env-file']);
   const env = parseDotEnv(readFileSync(envFile, 'utf8'));
   const summary = validateDeploymentEnvironment(env, values.mode);

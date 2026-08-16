@@ -28,13 +28,16 @@
 \set app_user :db
 \endif
 
--- pgvector: the knowledgebase foundation module requires the `vector`
--- extension, which the stock Ubuntu/remote PostgreSQL does not ship.
--- IF NOT EXISTS keeps the script idempotent; superuser is required.
-CREATE EXTENSION IF NOT EXISTS vector;
-
 -- Same-named schema (search_path target) and grants for the gateway role.
 SELECT format('CREATE SCHEMA IF NOT EXISTS %I', :'db') \gexec
+
+-- pgvector: the gateway pins search_path to the same-named schema without a
+-- public fallback, so the vector type must live in that schema. ALTER keeps
+-- upgrades from an older script (which installed the extension in public)
+-- convergent; pgvector is relocatable. Superuser is required.
+SELECT format('CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA %I', :'db') \gexec
+SELECT format('ALTER EXTENSION vector SET SCHEMA %I', :'db') \gexec
+
 SELECT format('GRANT ALL ON SCHEMA %I TO %I', :'db', :'app_user') \gexec
 -- The gateway user also needs schema-level privileges for future migrations:
 SELECT format('GRANT CREATE ON SCHEMA %I TO %I', :'db', :'app_user') \gexec

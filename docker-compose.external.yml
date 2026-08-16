@@ -14,8 +14,9 @@
 #        GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal
 #      Host-side prerequisites: PostgreSQL must listen on an interface the
 #      docker bridge can reach (listen_addresses + pg_hba), carry the `vector`
-#      extension (postgresql-14-pgvector etc.), and have the canonical database
-#      with the same-named schema (docker/postgres/external-schema.sql); Redis
+#      extension (postgresql-14-pgvector etc.), and have the canonical database,
+#      same-named role/schema, and schema-local vector extension provisioned by
+#      docker/postgres/external-schema.sql; Redis
 #      must bind beyond 127.0.0.1 (bind 0.0.0.0 or the bridge interface).
 #
 # Mode ① (built-in postgres/redis containers) stays the default: plain
@@ -29,9 +30,10 @@
 # GATEWAY_CLOUDROUTER_REDIS_*). The built-in postgres/redis services are moved
 # to a never-enabled profile so they are NOT started by this composition; the
 # gateway's internal dependency wiring is reset. The external PostgreSQL must
-# already contain the canonical database with the same-named schema (see
-# docker/postgres/external-schema.sql; run it per environment, e.g. once with
-# `-v db=sdkwork_ai_test` and once with `-v db=sdkwork_ai_prod`).
+# already contain the canonical database with its same-named role/schema and
+# schema-local vector extension (see docker/postgres/external-schema.sql; run
+# it per environment, e.g. with `-v db=sdkwork_ai_dev`,
+# `-v db=sdkwork_ai_test`, or `-v db=sdkwork_ai_prod`).
 
 services:
   postgres:
@@ -40,8 +42,15 @@ services:
   redis:
     profiles: ["external-disabled"]
 
-  gateway:
+  knowledgebase-rpc:
     depends_on: !reset []
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  gateway:
+    depends_on: !override
+      knowledgebase-rpc:
+        condition: service_healthy
     environment:
       SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:?GATEWAY_POSTGRES_HOST is required in external mode}
       SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
@@ -50,10 +59,17 @@ services:
       SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:?GATEWAY_POSTGRES_USER is required in external mode}
       SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-}
       SDKWORK_DATABASE_PASSWORD_FILE: ${GATEWAY_POSTGRES_PASSWORD_FILE:-}
+      # Managed/external databases use the image system trust store by
+      # default. Mount a private CA and set GATEWAY_POSTGRES_SSL_CERT_FILE when
+      # the external service is signed by an internal authority.
+      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ""
+      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
       SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}
       SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-}
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD_FILE: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD_FILE:-}
+      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/1}
+      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/2}
     extra_hosts:
       # Lets the gateway reach a database/redis running on the docker host
       # (e.g. another WSL service or a Windows host service).

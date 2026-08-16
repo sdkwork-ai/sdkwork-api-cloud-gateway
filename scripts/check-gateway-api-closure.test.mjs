@@ -16,6 +16,15 @@ test("embedded gateway dependency APIs form a complete collision-free route clos
   const result = validateGatewayApiClosure(root);
   assert.deepEqual(result.errors, []);
   assert.ok(result.routes.length > 0);
+  assert.ok(
+    result.routes.some(
+      (route) =>
+        route.serviceId === "sdkwork-shop-backend-api" &&
+        route.path === "/backend/v3/api/catalog/categories" &&
+        route.source.startsWith("sdkwork-merchandise/"),
+    ),
+    "nested merchandise assembly routes must remain attributed to their provider workspace",
+  );
 });
 
 test("Rust route manifests resolve constants from imported sibling modules", () => {

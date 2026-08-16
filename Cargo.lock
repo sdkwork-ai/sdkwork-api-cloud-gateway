@@ -5860,6 +5860,7 @@ dependencies = [
  "sdkwork-sandbox-provider-spi",
  "sdkwork-utils-rust",
  "serde_json",
+ "ureq",
 ]
 
 [[package]]
@@ -6498,6 +6499,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
+ "sdkwork-browser-database-host",
  "sdkwork-browser-platform-service",
  "sdkwork-database-sqlx",
  "sdkwork-routes-browser-app-api",
@@ -6533,9 +6535,6 @@ dependencies = [
  "opentelemetry-otlp 0.31.1",
  "opentelemetry_sdk 0.31.0",
  "rustls 0.23.43",
- "sdkwork-account-database-host",
- "sdkwork-agents-database-host",
- "sdkwork-aiot-database-host",
  "sdkwork-api-account-assembly",
  "sdkwork-api-agents-assembly",
  "sdkwork-api-aiot-assembly",
@@ -6584,58 +6583,14 @@ dependencies = [
  "sdkwork-api-voice-assembly",
  "sdkwork-api-webserver-assembly",
  "sdkwork-api-xiangqi-assembly",
- "sdkwork-appstore-database-host",
- "sdkwork-browser-database-host",
- "sdkwork-catalog-database-host",
- "sdkwork-cloudrouter-database-host",
- "sdkwork-cms-database-host",
- "sdkwork-community-database-host",
- "sdkwork-course-database-host",
- "sdkwork-customerservice-database-host",
  "sdkwork-database-sqlx",
- "sdkwork-deploy-database-host",
- "sdkwork-dezhou-database-host",
- "sdkwork-documents-database-host",
- "sdkwork-doudizhu-database-host",
- "sdkwork-drive-database-host",
- "sdkwork-forum-database-host",
- "sdkwork-gameengine-database-host",
- "sdkwork-iam-database-host",
  "sdkwork-iam-web-adapter",
- "sdkwork-im-database-host",
  "sdkwork-im-database-pool",
- "sdkwork-image-database-host",
- "sdkwork-inventory-database-host",
- "sdkwork-invoice-database-host",
- "sdkwork-knowledgebase-database-host",
- "sdkwork-llm-database-host",
- "sdkwork-local-router-database-host",
- "sdkwork-mahjong-database-host",
- "sdkwork-mail-database-host",
- "sdkwork-manager-database-host",
- "sdkwork-mcp-database-host",
- "sdkwork-membership-database-host",
- "sdkwork-merchandise-database-host",
- "sdkwork-modelkit-database-host",
- "sdkwork-models-database-host",
- "sdkwork-news-database-host",
- "sdkwork-notary-database-host",
- "sdkwork-order-database-host",
- "sdkwork-payment-database-host",
- "sdkwork-portal-database-host",
- "sdkwork-promotion-database-host",
- "sdkwork-prompts-database-host",
- "sdkwork-rtc-database-host",
- "sdkwork-shop-database-host",
- "sdkwork-skills-database-host",
  "sdkwork-utils-rust",
- "sdkwork-voice-database-host",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
- "sdkwork-webserver-database-host",
- "sdkwork-xiangqi-database-host",
  "serde",
  "serde_json",
  "session-gateway",
@@ -6686,6 +6641,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-account-repository-sqlx",
  "sdkwork-account-service-host",
+ "sdkwork-api-models-assembly",
  "sdkwork-cloudrouter-edge-runtime",
  "sdkwork-cloudrouter-http",
  "sdkwork-iam-database-host",
@@ -6724,11 +6680,9 @@ dependencies = [
  "sdkwork-content-cms-repository-sqlx",
  "sdkwork-content-cms-service",
  "sdkwork-database-sqlx",
- "sdkwork-iam-web-adapter",
  "sdkwork-routes-cms-app-api",
  "sdkwork-routes-cms-backend-api",
  "sdkwork-routes-cms-open-api",
- "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "sqlx",
@@ -6920,20 +6874,13 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-database-sqlx",
  "sdkwork-gameengine-service-host",
- "sdkwork-iam-web-adapter",
  "sdkwork-routes-gameengine-catalog-app-api",
  "sdkwork-routes-gameengine-catalog-backend-api",
- "sdkwork-routes-games-support",
  "sdkwork-routes-leaderboard-app-api",
  "sdkwork-routes-room-app-api",
  "sdkwork-routes-room-backend-api",
- "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
- "sdkwork-web-contract",
  "sdkwork-web-core",
- "serde",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
@@ -7086,8 +7033,10 @@ name = "sdkwork-api-knowledgebase-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-agent-kernel",
  "sdkwork-database-sqlx",
  "sdkwork-intelligence-knowledgebase-service",
+ "sdkwork-knowledgebase-provider-secret-adapter",
  "sdkwork-routes-knowledgebase-app-api",
  "sdkwork-routes-knowledgebase-backend-api",
  "sdkwork-routes-knowledgebase-internal-api",
@@ -7197,14 +7146,7 @@ name = "sdkwork-api-manager-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "sdkwork-api-drive-assembly",
- "sdkwork-api-iam-assembly",
- "sdkwork-api-membership-assembly",
- "sdkwork-api-order-assembly",
- "sdkwork-api-payment-assembly",
- "sdkwork-api-promotion-assembly",
  "sdkwork-database-sqlx",
- "sdkwork-iam-web-adapter",
  "sdkwork-manager-service-host",
  "sdkwork-routes-manager-app-api",
  "sdkwork-routes-manager-backend-api",
@@ -7246,18 +7188,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-merchandise-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-merchandise-service-host",
+ "sdkwork-routes-merchandise-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-api-modelkit-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "sdkwork-api-iam-assembly",
  "sdkwork-database-sqlx",
  "sdkwork-modelkit-database-host",
  "sdkwork-routes-modelkit-app-api",
- "sdkwork-routes-modelkit-http-auth",
  "sdkwork-web-bootstrap",
- "sdkwork-web-core",
- "tokio",
 ]
 
 [[package]]
@@ -7269,6 +7220,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-models-catalog-repository-sqlx",
  "sdkwork-models-contract-service",
+ "sdkwork-models-database-host",
  "sdkwork-models-service-host",
  "sdkwork-routes-models-catalog-app-api",
  "sdkwork-routes-models-catalog-backend-api",
@@ -7422,6 +7374,7 @@ name = "sdkwork-api-shop-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-api-merchandise-assembly",
  "sdkwork-database-sqlx",
  "sdkwork-routes-shop-app-api",
  "sdkwork-routes-shop-backend-api",
@@ -7473,13 +7426,13 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "sdkwork-api-deployments-assembly",
+ "sdkwork-api-mcp-assembly",
+ "sdkwork-api-skills-assembly",
  "sdkwork-intelligence-webserver-repository-sqlx",
  "sdkwork-intelligence-webserver-service",
- "sdkwork-mcp-database-host",
  "sdkwork-routes-webserver-app-api",
  "sdkwork-routes-webserver-backend-api",
  "sdkwork-routes-webserver-internal-api",
- "sdkwork-skills-database-host",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -7993,6 +7946,7 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "bytes",
+ "chrono",
  "futures-util",
  "getrandom 0.3.4",
  "hex",
@@ -8189,6 +8143,7 @@ dependencies = [
  "axum 0.8.9",
  "base64 0.22.1",
  "bytes",
+ "chrono",
  "dashmap",
  "futures-util",
  "getrandom 0.3.4",
@@ -9537,8 +9492,7 @@ dependencies = [
  "base64 0.22.1",
  "sdkwork-communication-forum-service",
  "sdkwork-forum-service-host",
- "sdkwork-iam-context-service",
- "sdkwork-iam-web-adapter",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
 ]
@@ -9640,6 +9594,7 @@ dependencies = [
 name = "sdkwork-gameengine-service-host"
 version = "0.1.0"
 dependencies = [
+ "sdkwork-database-sqlx",
  "sdkwork-game-catalog-repository-sqlx",
  "sdkwork-game-catalog-service",
  "sdkwork-game-leaderboard-repository-sqlx",
@@ -10935,6 +10890,7 @@ dependencies = [
  "getrandom 0.2.17",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
 ]
 
 [[package]]
@@ -11347,6 +11303,14 @@ dependencies = [
  "serde",
  "serde_json",
  "uuid",
+]
+
+[[package]]
+name = "sdkwork-merchandise-service-host"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-database-sqlx",
+ "sdkwork-merchandise-database-host",
 ]
 
 [[package]]
@@ -13945,6 +13909,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-merchandise-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-merchandise-service-host",
+ "sdkwork-merchandise-web-support",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde_json",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-routes-metrics-backend-api"
 version = "0.1.0"
 dependencies = [
@@ -15223,10 +15203,12 @@ dependencies = [
  "opentelemetry 0.27.1",
  "opentelemetry-otlp 0.27.0",
  "opentelemetry_sdk 0.27.1",
+ "redis 0.27.6",
  "sdkwork-database-sqlx",
  "sdkwork-web-axum",
  "sdkwork-web-contract",
  "sdkwork-web-core",
+ "sdkwork-web-store-redis",
  "sdkwork-web-store-sqlx",
  "serde",
  "serde_json",

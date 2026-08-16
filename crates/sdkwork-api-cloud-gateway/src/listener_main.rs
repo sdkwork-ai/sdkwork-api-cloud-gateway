@@ -19,16 +19,32 @@ use tracing_subscriber::{
 
 const GATEWAY_RUNTIME_STACK_SIZE: usize = 16 * 1024 * 1024;
 const MIGRATE_DATABASES_ARG: &str = "--migrate-databases";
+const HELP_ARGS: [&str; 2] = ["-h", "--help"];
+const VERSION_ARGS: [&str; 2] = ["-V", "--version"];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ProcessMode {
     Serve,
     MigrateDatabases,
+    Help,
+    Version,
 }
 
 fn main() -> anyhow::Result<()> {
-    install_process_crypto_provider()?;
     let process_mode = process_mode_from_args(env::args().skip(1));
+    match process_mode {
+        ProcessMode::Help => {
+            print_help();
+            return Ok(());
+        }
+        ProcessMode::Version => {
+            println!("sdkwork-api-cloud-gateway {}", env!("CARGO_PKG_VERSION"));
+            return Ok(());
+        }
+        ProcessMode::Serve | ProcessMode::MigrateDatabases => {}
+    }
+
+    install_process_crypto_provider()?;
     if process_mode == ProcessMode::MigrateDatabases {
         // SAFETY: this happens before the Tokio runtime or any worker thread is
         // created. The explicit lifecycle command must apply pending modules
@@ -100,14 +116,35 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<str>,
 {
-    if args
-        .into_iter()
-        .any(|argument| argument.as_ref() == MIGRATE_DATABASES_ARG)
-    {
-        ProcessMode::MigrateDatabases
-    } else {
-        ProcessMode::Serve
+    let mut mode = ProcessMode::Serve;
+    for argument in args {
+        let argument = argument.as_ref();
+        if HELP_ARGS.contains(&argument) {
+            return ProcessMode::Help;
+        }
+        if VERSION_ARGS.contains(&argument) {
+            return ProcessMode::Version;
+        }
+        if argument == MIGRATE_DATABASES_ARG {
+            mode = ProcessMode::MigrateDatabases;
+        }
     }
+    mode
+}
+
+fn print_help() {
+    println!(
+        "sdkwork-api-cloud-gateway {}\n\
+         \n\
+         Usage: sdkwork-api-cloud-gateway [OPTIONS]\n\
+         \n\
+         Options:\n\
+           --config <PATH>       Load the gateway runtime TOML file\n\
+           --migrate-databases   Run owner assembly database lifecycles and exit\n\
+           -h, --help            Print help without initializing the runtime\n\
+           -V, --version         Print version without initializing the runtime",
+        env!("CARGO_PKG_VERSION")
+    );
 }
 
 fn install_process_crypto_provider() -> anyhow::Result<()> {
@@ -207,6 +244,18 @@ mod tests {
         assert_eq!(
             process_mode_from_args(["--config=gateway.toml"]),
             ProcessMode::Serve
+        );
+    }
+
+    #[test]
+    fn recognizes_side_effect_free_process_information_modes() {
+        assert_eq!(process_mode_from_args(["--help"]), ProcessMode::Help);
+        assert_eq!(process_mode_from_args(["-h"]), ProcessMode::Help);
+        assert_eq!(process_mode_from_args(["--version"]), ProcessMode::Version);
+        assert_eq!(process_mode_from_args(["-V"]), ProcessMode::Version);
+        assert_eq!(
+            process_mode_from_args([MIGRATE_DATABASES_ARG, "--help"]),
+            ProcessMode::Help
         );
     }
 }

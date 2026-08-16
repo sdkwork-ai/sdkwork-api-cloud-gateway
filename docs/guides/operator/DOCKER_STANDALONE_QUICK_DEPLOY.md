@@ -52,7 +52,24 @@ pnpm build:container:check    # 只校验构建计划（--check --dry-run）
 - 构建上下文：`dist/container-image-build/`（含 bin/、config/、specs/、
   database-modules/、sdkwork.app.config.json、container/entrypoint、
   install-manifest.json、checksums.sha256）
-- 镜像清单：`dist/container-image.json`（版本、imageId、大小）
+- 镜像清单：`dist/container-image.json`（版本、imageId、远端 repoDigest、大小）。
+  本地构建的 `repoDigest: null` 只能用于开发；发布必须通过工作流 `--push`，并在
+  registry 回读 `repository@sha256` 成功后才生成 OCI artifact evidence。
+
+发布工作流还会生成 `dist/container-image.cdx.json`、
+`dist/container-image.intoto.jsonl`、`dist/container-image.sig`、公钥和
+`.sdkwork/evidence/<package-id>.json`。部署必须按 evidence 中的完整 digest 拉取：
+
+```bash
+docker pull registry.sdkwork.com/sdkwork-api-cloud-gateway@sha256:<64-hex-digest>
+docker image inspect --format '{{index .RepoDigests 0}}' \
+  registry.sdkwork.com/sdkwork-api-cloud-gateway@sha256:<64-hex-digest>
+```
+
+不得用 `:latest`、版本 tag、本地 image ID 或 `container-image.json` 自身的文件哈希
+替代 evidence 中的远端 OCI digest。CI 的 registry 用户名/令牌只通过
+`SDKWORK_CONTAINER_REGISTRY_USERNAME` 和 `SDKWORK_CONTAINER_REGISTRY_PASSWORD`
+secret 注入。
 
 ## 3. 启动容器组合
 
@@ -69,6 +86,11 @@ docker compose --env-file .env ps
 Payment 凭据主密钥，后续启动复用且不会覆盖。多副本部署必须将该值设为 `false`，并在
 同一路径挂载由运维或 KMS 管理的共享密钥；丢失或让副本使用不同密钥会导致已有支付凭据
 无法解密。
+
+内嵌 PostgreSQL 首次启动会在其持久卷生成自签名服务证书并启用 TLS；staging 与
+production 模板固定使用 `GATEWAY_POSTGRES_SSL_MODE=require`，避免生产态 IM 模块通过
+明文数据库连接启动。只包含公开证书的 trust bundle 通过 `postgres-tls` 卷只读挂载到
+网关，数据库私钥始终留在 `postgres-data`。外部 PostgreSQL 由运维提供证书和 TLS 策略。
 
 检查就绪：
 

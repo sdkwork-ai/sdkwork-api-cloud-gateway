@@ -233,35 +233,38 @@
       {
         "name": "Verify Rust gateway workspace",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\ncargo fmt -- --check\ncargo test --workspace"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm check:assembly-parity\ncargo fmt -- --check\ncargo test --workspace"
       }
     ],
     "package": [
       {
         "name": "Package server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm gateway:package"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  $imageTag = \"$($env:SDKWORK_CONTAINER_IMAGE_REPOSITORY):$($env:SDKWORK_PACKAGE_VERSION)-$($env:SDKWORK_DEPLOYMENT_PROFILE)\"\n  node scripts/build-api-cloud-gateway-container.mjs --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE --tag $imageTag --push\n  exit $LASTEXITCODE\n}\npnpm gateway:package",
+        "env": {
+          "SDKWORK_CONTAINER_IMAGE_REPOSITORY": "registry.sdkwork.com/sdkwork-api-cloud-gateway"
+        }
       }
     ],
     "sign": [
       {
-        "name": "Signing policy placeholder",
-        "shell": "node",
-        "run": "console.log(`Signing is not required for ${process.env.SDKWORK_PACKAGE_ID}.`);"
+        "name": "Create detached artifact signature",
+        "shell": "bash",
+        "run": "node scripts/release-evidence.mjs sign"
       }
     ],
     "sbom": [
       {
-        "name": "SBOM policy placeholder",
-        "shell": "node",
-        "run": "console.log(`SBOM generation is not required for ${process.env.SDKWORK_PACKAGE_ID}.`);"
+        "name": "Generate CycloneDX SBOM",
+        "shell": "bash",
+        "run": "node scripts/release-evidence.mjs sbom"
       }
     ],
     "validate": [
       {
         "name": "Validate server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\npnpm gateway:validate"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  node scripts/build-api-cloud-gateway-container.mjs --validate-manifest --require-repo-digest --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE\n} else {\n  pnpm gateway:validate\n}\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs evidence\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs verify"
       }
     ]
   },
@@ -278,8 +281,14 @@
       "deploymentProfile": "standalone",
       "runtimeTarget": "server",
       "outputGlobs": [
-        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz"
-      ]
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.sha256",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.sig",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.pub.pem",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.cdx.json",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.intoto.jsonl"
+      ],
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.0-linux-x64-standalone-server.tar.gz"
     },
     {
       "id": "linux-x64-cloud-server-tar-gz",
@@ -293,14 +302,42 @@
       "deploymentProfile": "cloud",
       "runtimeTarget": "server",
       "outputGlobs": [
-        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz"
-      ]
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.sha256",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.sig",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.pub.pem",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.cdx.json",
+        "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.intoto.jsonl"
+      ],
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.0-linux-x64-cloud-server.tar.gz"
+    },
+    {
+      "id": "container-x64-standalone-container-oci",
+      "profileBinding": "fixed",
+      "profile": "container",
+      "platform": "container",
+      "architecture": "x64",
+      "formats": [
+        "oci"
+      ],
+      "runner": "ubuntu-24.04",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "container",
+      "outputGlobs": [
+        "dist/container-image.json",
+        "dist/container-image.digest",
+        "dist/container-image.sig",
+        "dist/container-image.pub.pem",
+        "dist/container-image.cdx.json",
+        "dist/container-image.intoto.jsonl"
+      ],
+      "artifactPath": "dist/container-image.json"
     }
   ],
   "security": {
     "artifactAttestations": true,
-    "sbomRequired": false,
-    "signingRequired": false
+    "sbomRequired": true,
+    "signingRequired": true
   },
   "publish": {
     "workflowArtifact": true,

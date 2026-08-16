@@ -12,6 +12,7 @@
 FROM debian:bookworm-slim
 
 ARG GATEWAY_BINARY=sdkwork-api-cloud-gateway
+ARG KNOWLEDGEBASE_RPC_BINARY=sdkwork-intelligence-knowledgebase-rpc-bin
 ARG INSTALL_ROOT=/opt/sdkwork/api-gateway
 ARG CONFIG_FILE=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
 ARG VERSION=0.0.0
@@ -38,7 +39,7 @@ ARG VERSION=0.0.0
 # gateway has no operator backup/restore CLI, so those tools would only bloat
 # the image.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libssl3 ca-certificates curl \
+  && apt-get install -y --no-install-recommends libssl3 ca-certificates curl openssl \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system sdkwork \
   && useradd --system --gid sdkwork --home-dir ${INSTALL_ROOT} sdkwork \
@@ -54,7 +55,9 @@ RUN apt-get update \
 WORKDIR ${INSTALL_ROOT}
 COPY . ${INSTALL_ROOT}
 RUN chmod 0755 ${INSTALL_ROOT}/bin/${GATEWAY_BINARY} \
+    ${INSTALL_ROOT}/bin/${KNOWLEDGEBASE_RPC_BINARY} \
     ${INSTALL_ROOT}/container/entrypoint \
+    ${INSTALL_ROOT}/container/knowledgebase-rpc-entrypoint \
   && mkdir -p /etc/sdkwork/api-gateway \
   && cp ${INSTALL_ROOT}/config/sdkwork-api-cloud-gateway.production.toml \
     ${CONFIG_FILE} \

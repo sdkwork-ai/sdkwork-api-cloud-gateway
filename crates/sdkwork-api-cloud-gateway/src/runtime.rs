@@ -300,14 +300,21 @@ async fn build_embedded_router(
         )
         .await?;
     let registry = exact_registry_for_contributions(&config, &dependency_bootstrap.contributions)?;
-    let composed = ComposedApiAssembly::try_compose(
+    let mut composed = ComposedApiAssembly::try_compose(
         "SDKWork Platform API",
         dependency_bootstrap.contributions,
     )
     .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
     let framework_manifest = composed.route_manifest.clone();
+    let audiences = gateway_iam_allowed_audiences()?;
+    let audience_refs = audiences.iter().map(String::as_str).collect::<Vec<_>>();
     let resolver =
-        sdkwork_iam_web_adapter::IamWebRequestContextResolver::from_database_pool(Some(pool));
+        sdkwork_iam_web_adapter::iam_web_request_context_resolver_from_database_pool_for_audiences(
+            pool.clone(),
+            audience_refs.as_slice(),
+        )
+        .await
+        .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
     #[cfg_attr(not(feature = "foundation-im-realtime"), allow(unused_mut))]
     let mut public_path_prefixes = vec!["/openapi/index.json".to_owned()];
     #[cfg(feature = "foundation-im-realtime")]
@@ -324,16 +331,119 @@ async fn build_embedded_router(
         .filter(|surface| normalized_surface_name(surface.surface.as_str()) == "open")
         .map(|surface| surface.api_prefix.clone())
         .collect();
-    let framework = sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes(
+    let mut framework = sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes(
         resolver,
         framework_manifest,
         public_path_prefixes,
         open_api_prefixes,
     );
+    if is_production_like_environment(&config) {
+        let postgres_pool = pool.as_postgres().cloned().ok_or_else(|| {
+            GatewayRuntimeError::ApiAssemblyComposition {
+                message: "production-like Web Framework requires PostgreSQL IAM audit storage"
+                    .to_owned(),
+            }
+        })?;
+        let redis_url = required_gateway_web_redis_url()?;
+        let store_prefix = "sdkwork:api-cloud-gateway:web";
+        framework = framework
+            .rate_limit_store(
+                sdkwork_web_bootstrap::shared_rate_limit_store(
+                    &redis_url,
+                    format!("{store_prefix}:rate-limit"),
+                )
+                .map_err(web_framework_dependency_error)?,
+            )
+            .idempotency_store(
+                sdkwork_web_bootstrap::shared_idempotency_store(
+                    &redis_url,
+                    format!("{store_prefix}:idempotency"),
+                )
+                .map_err(web_framework_dependency_error)?,
+            )
+            .concurrent_admission_store(
+                sdkwork_web_bootstrap::shared_concurrent_admission_store(
+                    &redis_url,
+                    format!("{store_prefix}:concurrent-admission"),
+                )
+                .map_err(web_framework_dependency_error)?,
+            )
+            .audit_emitter(std::sync::Arc::new(
+                sdkwork_iam_web_adapter::IamAuditEmitter::new(
+                    postgres_pool.clone(),
+                    "sdkwork-api-cloud-gateway",
+                    config.service.environment.as_str(),
+                ),
+            ))
+            .security_event_emitter(std::sync::Arc::new(
+                sdkwork_iam_web_adapter::IamSecurityEventEmitter::new(
+                    postgres_pool,
+                    config.service.environment.as_str(),
+                ),
+            ));
+        composed.readiness_check =
+            std::sync::Arc::new(sdkwork_web_bootstrap::CompositeReadinessCheck::new(vec![
+                composed.readiness_check.clone(),
+                std::sync::Arc::new(
+                    sdkwork_web_bootstrap::RedisReadinessCheck::new(&redis_url)
+                        .map_err(web_framework_dependency_error)?,
+                ),
+            ]));
+    }
     let hosted = composed.into_hosted(framework);
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
         .map(GatewayRuntime::assemble_router)?;
     Ok((router, dependency_bootstrap.runtime))
+}
+
+fn is_production_like_environment(config: &GatewayRuntimeConfig) -> bool {
+    matches!(
+        config
+            .service
+            .environment
+            .trim()
+            .to_ascii_lowercase()
+            .as_str(),
+        "staging" | "production" | "prod"
+    )
+}
+
+fn gateway_iam_allowed_audiences() -> Result<Vec<String>, GatewayRuntimeError> {
+    let raw = std::env::var("SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES")
+        .unwrap_or_else(|_| "sdkwork-api-cloud-gateway".to_owned());
+    let mut audiences = raw
+        .split(',')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    audiences.sort();
+    audiences.dedup();
+    if audiences.is_empty() {
+        return Err(GatewayRuntimeError::ApiAssemblyComposition {
+            message: "SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES must contain at least one application id"
+                .to_owned(),
+        });
+    }
+    Ok(audiences)
+}
+
+fn required_gateway_web_redis_url() -> Result<String, GatewayRuntimeError> {
+    std::env::var("SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL")
+        .ok()
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| GatewayRuntimeError::ApiAssemblyComposition {
+            message:
+                "production-like Web Framework requires SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL"
+                    .to_owned(),
+        })
+}
+
+fn web_framework_dependency_error(error: impl std::fmt::Display) -> GatewayRuntimeError {
+    GatewayRuntimeError::ApiAssemblyComposition {
+        message: format!("failed to configure Web Framework dependency: {error}"),
+    }
 }
 
 /// Builds the embedded gateway router together with process-lifetime shutdown

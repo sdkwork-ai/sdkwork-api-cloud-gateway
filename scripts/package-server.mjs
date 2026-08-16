@@ -2,17 +2,31 @@
 
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { chmod, cp, copyFile, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { chmod, cp, copyFile, mkdir, mkdtemp, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { createReadStream, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const APP_ID = 'sdkwork-api-cloud-gateway';
 const BINARY_NAME = 'sdkwork-api-cloud-gateway';
+const KNOWLEDGEBASE_RPC_BINARY_NAME = 'sdkwork-intelligence-knowledgebase-rpc-bin';
 const SERVER_PROFILE = 'server';
 const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
 const SUPPORTED_FORMAT = 'tar.gz';
+export const RELEASE_CONFIG_TEMPLATES = Object.freeze([
+  'sdkwork-api-cloud-gateway.production.toml',
+]);
+export const DATABASE_ASSET_METADATA_ARGS = Object.freeze([
+  'metadata',
+  '--format-version',
+  '1',
+  '--locked',
+  '--no-default-features',
+  '--features',
+  'platform-foundation-suite',
+]);
 
 // Database workspaces whose module requires non-database assets next to
 // `database/` under the packaged module root (mirrors sdkwork-cloudrouter's
@@ -21,16 +35,9 @@ const SUPPORTED_FORMAT = 'tar.gz';
 const EXTRA_DATABASE_MODULE_PATHS = Object.freeze({
   'sdkwork-iam': ['iam'],
 });
-const EXTRA_DATABASE_MODULES = Object.freeze([
-  'sdkwork-log',
-  'sdkwork-appbase',
-  'sdkwork-partner',
-  'sdkwork-web-framework',
-  'sdkwork-models',
-]);
-
 const scriptPath = fileURLToPath(import.meta.url);
 const appRoot = path.resolve(path.dirname(scriptPath), '..');
+const KNOWLEDGEBASE_ROOT = path.resolve(appRoot, '..', 'sdkwork-knowledgebase');
 
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2));
@@ -175,19 +182,24 @@ async function createPackageContext(options) {
   });
   const stageRoot = path.join(distRoot, stageName);
   const archivePath = path.join(distRoot, `${stageName}.${SUPPORTED_FORMAT}`);
-  const binaryName = platform === 'windows' ? `${BINARY_NAME}.exe` : BINARY_NAME;
-  const releaseDir = resolveCargoReleaseDir(
-    appRoot,
-    process.env.CARGO_TARGET_DIR,
-    rustTarget,
+  const binaryName = resolveExecutableName(BINARY_NAME, platform);
+  const knowledgebaseRpcBinaryName = resolveExecutableName(
+    KNOWLEDGEBASE_RPC_BINARY_NAME,
+    platform,
   );
+  const cargoTargetDir = resolveCargoTargetDir(appRoot, process.env.CARGO_TARGET_DIR);
+  const releaseDir = resolveCargoReleaseDir(appRoot, cargoTargetDir, rustTarget);
   const binaryPath = path.join(releaseDir, binaryName);
+  const knowledgebaseRpcBinaryPath = path.join(releaseDir, knowledgebaseRpcBinaryName);
 
   return {
     architecture,
     archivePath,
     binaryName,
     binaryPath,
+    cargoTargetDir,
+    knowledgebaseRpcBinaryName,
+    knowledgebaseRpcBinaryPath,
     deploymentProfile,
     distRoot,
     format,
@@ -203,10 +215,18 @@ async function createPackageContext(options) {
   };
 }
 
-export function resolveCargoReleaseDir(root, cargoTargetDir, rustTarget = '') {
-  const targetRoot = String(cargoTargetDir ?? '').trim()
+export function resolveExecutableName(binaryName, platform) {
+  return platform === 'windows' ? `${binaryName}.exe` : binaryName;
+}
+
+export function resolveCargoTargetDir(root, cargoTargetDir) {
+  return String(cargoTargetDir ?? '').trim()
     ? path.resolve(root, String(cargoTargetDir).trim())
     : path.join(root, 'target');
+}
+
+export function resolveCargoReleaseDir(root, cargoTargetDir, rustTarget = '') {
+  const targetRoot = resolveCargoTargetDir(root, cargoTargetDir);
   return rustTarget
     ? path.join(targetRoot, rustTarget, 'release')
     : path.join(targetRoot, 'release');
@@ -302,10 +322,14 @@ async function packageServer(context) {
   if (!existsSync(context.binaryPath)) {
     throw new Error(`Missing release binary: ${context.binaryPath}`);
   }
+  if (!existsSync(context.knowledgebaseRpcBinaryPath)) {
+    throw new Error(`Missing Knowledgebase RPC release binary: ${context.knowledgebaseRpcBinaryPath}`);
+  }
 
   await assertPathInside(context.stageRoot, context.distRoot);
   await rm(context.stageRoot, { recursive: true, force: true });
   await rm(context.archivePath, { force: true });
+  await rm(`${context.archivePath}.sha256`, { force: true });
   await mkdir(path.join(context.stageRoot, 'bin'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'config'), { recursive: true });
   await mkdir(path.join(context.stageRoot, 'specs'), { recursive: true });
@@ -314,6 +338,10 @@ async function packageServer(context) {
   await mkdir(path.join(context.stageRoot, 'data', 'sdkwork-models'), { recursive: true });
 
   await copyFile(context.binaryPath, path.join(context.stageRoot, 'bin', context.binaryName));
+  await copyFile(
+    context.knowledgebaseRpcBinaryPath,
+    path.join(context.stageRoot, 'bin', context.knowledgebaseRpcBinaryName),
+  );
   await copyRuntimeConfigTemplates(context.stageRoot);
   await copyDatabaseModuleAssets(context);
   await copyModelsCatalog(context.stageRoot);
@@ -329,15 +357,32 @@ async function packageServer(context) {
   );
   await writeChecksums(context.stageRoot);
   await createArchive(context);
+  await writeArtifactChecksum(context.archivePath);
   await validateArchive(context);
 
   console.log(`[sdkwork-api-cloud-gateway] packaged ${path.relative(appRoot, context.archivePath)}`);
 }
 
 function runCargoBuild(context) {
-  const args = [
+  const buildEnvironment = {
+    ...process.env,
+    CARGO_TARGET_DIR: context.cargoTargetDir,
+    CARGO_INCREMENTAL: '0',
+    PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
+  };
+  for (const command of createCargoBuildCommands(context)) {
+    run('cargo', command.args, {
+      cwd: command.cwd,
+      env: buildEnvironment,
+    });
+  }
+}
+
+export function createCargoBuildCommands(context) {
+  const gatewayArgs = [
     'build',
     '--release',
+    '--locked',
     '-p',
     'sdkwork-api-cloud-gateway',
     '--bin',
@@ -346,19 +391,28 @@ function runCargoBuild(context) {
     '--features',
     'platform-foundation-suite',
   ];
+  const knowledgebaseArgs = [
+    'build',
+    '--release',
+    '--locked',
+    '-p',
+    KNOWLEDGEBASE_RPC_BINARY_NAME,
+    '--bin',
+    KNOWLEDGEBASE_RPC_BINARY_NAME,
+  ];
   if (context.rustTarget) {
-    args.push('--target', context.rustTarget);
+    gatewayArgs.push('--target', context.rustTarget);
+    knowledgebaseArgs.push('--target', context.rustTarget);
   }
-  run('cargo', args, {
-    cwd: appRoot,
-    env: { ...process.env, CARGO_INCREMENTAL: '0' },
-  });
+  return [
+    { args: gatewayArgs, cwd: appRoot },
+    { args: knowledgebaseArgs, cwd: KNOWLEDGEBASE_ROOT },
+  ];
 }
 
 async function copyRuntimeConfigTemplates(stageRoot) {
   const configRoot = path.join(appRoot, 'etc');
-  const files = await readdir(configRoot);
-  for (const file of files.filter((item) => item.endsWith('.toml')).sort()) {
+  for (const file of RELEASE_CONFIG_TEMPLATES) {
     await copyFile(path.join(configRoot, file), path.join(stageRoot, 'config', file));
   }
 }
@@ -366,18 +420,19 @@ async function copyRuntimeConfigTemplates(stageRoot) {
 async function resolveDatabaseAssetModules() {
   const metadata = JSON.parse(run(
     'cargo',
-    // Database host discovery only needs the gateway package's direct
-    // dependency declarations. Avoid traversing unrelated sibling workspaces
-    // whose optional feature graphs may be unavailable in a release checkout.
-    ['metadata', '--format-version', '1', '--no-deps', '--locked'],
+    DATABASE_ASSET_METADATA_ARGS,
     { cwd: appRoot, capture: true },
   ));
   const hostCrates = resolveDatabaseHostCratesFromMetadata(metadata);
   const modules = [];
+  const discoveredWorkspaces = new Set();
 
   for (const hostCrate of hostCrates) {
     const workspaceRoot = path.resolve(hostCrate.crateRoot, '..', '..');
     const workspace = path.basename(workspaceRoot);
+    if (discoveredWorkspaces.has(workspace)) {
+      continue;
+    }
     const databaseRoot = path.join(workspaceRoot, 'database');
     const manifestPath = path.join(databaseRoot, 'database.manifest.json');
     if (!existsSync(manifestPath)) {
@@ -394,27 +449,7 @@ async function resolveDatabaseAssetModules() {
       workspace,
       extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
     });
-  }
-
-  const discovered = new Set(modules.map((module) => module.workspace));
-  for (const workspace of EXTRA_DATABASE_MODULES) {
-    if (discovered.has(workspace)) {
-      continue;
-    }
-    const workspaceRoot = path.join(appRoot, '..', workspace);
-    const databaseRoot = path.join(workspaceRoot, 'database');
-    const manifestPath = path.join(databaseRoot, 'database.manifest.json');
-    if (!existsSync(manifestPath)) {
-      throw new Error(`${workspace} is missing ${manifestPath}`);
-    }
-    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-    modules.push({
-      databaseRoot,
-      hostCrate: `${workspace}-database-host`,
-      moduleId: manifest.moduleId ?? workspace,
-      workspace,
-      extraPaths: EXTRA_DATABASE_MODULE_PATHS[workspace] ?? [],
-    });
+    discoveredWorkspaces.add(workspace);
   }
 
   modules.sort((left, right) => left.workspace.localeCompare(right.workspace));
@@ -429,14 +464,52 @@ export function resolveDatabaseHostCratesFromMetadata(metadata) {
   if (!gateway) {
     throw new Error(`Cargo metadata is missing ${BINARY_NAME}`);
   }
+  const directHosts = gateway.dependencies.filter((dependency) =>
+    dependency.name.endsWith('-database-host') && typeof dependency.path === 'string'
+  );
+  if (directHosts.length > 0) {
+    throw new Error(
+      `${BINARY_NAME} must consume database lifecycle through owner API assemblies, not direct database-host dependencies: ${directHosts.map((dependency) => dependency.name).sort().join(', ')}`,
+    );
+  }
+  if (!metadata.resolve || !Array.isArray(metadata.resolve.nodes)) {
+    throw new Error('Cargo metadata must include the resolved production dependency graph');
+  }
 
-  const hosts = gateway.dependencies
-    .filter((dependency) =>
-      dependency.name.endsWith('-database-host') && typeof dependency.path === 'string'
+  const nodesById = new Map(metadata.resolve.nodes.map((node) => [node.id, node]));
+  const reachablePackageIds = new Set();
+  const pendingPackageIds = [gateway.id];
+  while (pendingPackageIds.length > 0) {
+    const packageId = pendingPackageIds.pop();
+    if (!packageId || reachablePackageIds.has(packageId)) {
+      continue;
+    }
+    reachablePackageIds.add(packageId);
+    const node = nodesById.get(packageId);
+    for (const dependency of node?.deps ?? []) {
+      const dependencyKinds = dependency.dep_kinds ?? [];
+      const isRuntimeDependency = dependencyKinds.length === 0
+        || dependencyKinds.some((entry) => entry.kind !== 'dev');
+      if (isRuntimeDependency) {
+        pendingPackageIds.push(dependency.pkg);
+      }
+    }
+  }
+
+  const hosts = metadata.packages
+    .filter((candidate) =>
+      reachablePackageIds.has(candidate.id)
+      && candidate.source === null
+      && candidate.name.endsWith('-database-host')
+      && typeof candidate.manifest_path === 'string'
     )
-    .map((dependency) => ({ name: dependency.name, crateRoot: dependency.path }));
+    .map((candidate) => ({
+      name: candidate.name,
+      crateRoot: path.dirname(candidate.manifest_path),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name));
   if (hosts.length === 0) {
-    throw new Error(`${BINARY_NAME} has no convention-named database host dependencies`);
+    throw new Error(`${BINARY_NAME} production assembly closure has no database-host dependencies`);
   }
   return hosts;
 }
@@ -476,12 +549,22 @@ async function copyModelsCatalog(stageRoot) {
 async function copyInstallerAssets(stageRoot) {
   const installRoot = path.join(stageRoot, 'install');
   const installer = path.join(installRoot, 'install-ubuntu.sh');
+  const knowledgebaseRpcEntrypoint = path.join(installRoot, 'knowledgebase-rpc-entrypoint');
   await copyFile(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), installer);
+  await copyFile(
+    path.join(appRoot, 'container', 'knowledgebase-rpc-entrypoint'),
+    knowledgebaseRpcEntrypoint,
+  );
   await copyFile(
     path.join(appRoot, 'deployments', 'systemd', 'sdkwork-api-gateway.service'),
     path.join(installRoot, 'sdkwork-api-gateway.service'),
   );
+  await copyFile(
+    path.join(appRoot, 'deployments', 'systemd', 'sdkwork-knowledgebase-rpc.service'),
+    path.join(installRoot, 'sdkwork-knowledgebase-rpc.service'),
+  );
   await chmod(installer, 0o755);
+  await chmod(knowledgebaseRpcEntrypoint, 0o755);
 }
 
 async function copyIfExists(relativeSource, destination) {
@@ -533,7 +616,9 @@ RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
    password material via \`password_file\` or
    \`/etc/sdkwork/database/database.secret\`; never write credentials into env
    files, unit files, or config templates (PACKAGING_SPEC §5.5).
-4. \`sudo systemctl enable --now ${serviceName}\`
+4. The package installs and enables the bundled
+   \`sdkwork-knowledgebase-rpc.service\` before the gateway service.
+5. \`sudo systemctl enable --now ${serviceName}\`
 
 See docs/guides/operator/INSTALLATION_STANDARDS.md for the complete per-OS
 installation and configuration standards (Linux/macOS/Windows/container).
@@ -552,12 +637,14 @@ async function createInstallManifest(context) {
     format: context.format,
     version: context.version,
     binary: `bin/${context.binaryName}`,
-    configTemplates: [
-      'config/sdkwork-api-cloud-gateway.development.toml',
-      'config/sdkwork-api-cloud-gateway.production.toml',
-      'config/sdkwork-api-cloud-gateway.staging.toml',
-      'config/sdkwork-api-cloud-gateway.test.toml',
+    sidecars: [
+      {
+        serviceName: 'sdkwork-knowledgebase-rpc',
+        binary: `bin/${context.knowledgebaseRpcBinaryName}`,
+        systemdUnit: '/usr/lib/systemd/system/sdkwork-knowledgebase-rpc.service',
+      },
     ],
+    configTemplates: RELEASE_CONFIG_TEMPLATES.map((file) => `config/${file}`),
     databaseModules: context.databaseModules.map((module) => ({
       moduleId: module.moduleId,
       workspace: module.workspace,
@@ -570,6 +657,7 @@ async function createInstallManifest(context) {
     installConfiguration: {
       serviceName: 'sdkwork-api-gateway',
       systemdUnit: '/usr/lib/systemd/system/sdkwork-api-gateway.service',
+      requiredServices: ['sdkwork-knowledgebase-rpc.service'],
       directories: {
         config: '/etc/sdkwork/api-gateway',
         data: '/var/lib/sdkwork/api-gateway',
@@ -638,6 +726,8 @@ async function listFiles(root) {
       result.push(...await listFiles(entryPath));
     } else if (entry.isFile()) {
       result.push(entryPath);
+    } else {
+      throw new Error(`Release package contains an unsupported filesystem entry: ${entryPath}`);
     }
   }
   return result;
@@ -657,18 +747,22 @@ async function validateArchive(context) {
   if (archiveStats.size <= 0) {
     throw new Error(`Server archive is empty: ${context.archivePath}`);
   }
+  await verifyArtifactChecksum(context.archivePath);
 
   const archiveName = resolveTarArchiveName(context.distRoot, context.archivePath);
   const listing = run('tar', ['-tzf', archiveName], {
     cwd: context.distRoot,
     capture: true,
   });
+  const archiveEntries = validateArchiveEntryPaths(listing, context.stageName);
   const requiredEntries = [
     `${context.stageName}/bin/${context.binaryName}`,
+    `${context.stageName}/bin/${context.knowledgebaseRpcBinaryName}`,
     `${context.stageName}/config/sdkwork-api-cloud-gateway.production.toml`,
-    `${context.stageName}/config/sdkwork-api-cloud-gateway.staging.toml`,
     `${context.stageName}/install/install-ubuntu.sh`,
     `${context.stageName}/install/sdkwork-api-gateway.service`,
+    `${context.stageName}/install/sdkwork-knowledgebase-rpc.service`,
+    `${context.stageName}/install/knowledgebase-rpc-entrypoint`,
     `${context.stageName}/install-manifest.json`,
     `${context.stageName}/checksums.sha256`,
     `${context.stageName}/README.md`,
@@ -678,11 +772,138 @@ async function validateArchive(context) {
   ];
 
   for (const entry of requiredEntries) {
-    if (!listing.includes(entry)) {
+    if (!archiveEntries.has(entry)) {
       throw new Error(`Server archive missing ${entry}`);
     }
   }
+  for (const environment of ['development', 'staging', 'test']) {
+    const forbiddenEntry = `${context.stageName}/config/sdkwork-api-cloud-gateway.${environment}.toml`;
+    if (archiveEntries.has(forbiddenEntry)) {
+      throw new Error(`Server archive contains non-production config ${forbiddenEntry}`);
+    }
+  }
+
+  const extractionRoot = await mkdtemp(path.join(tmpdir(), `${APP_ID}-validate-`));
+  try {
+    run('tar', ['-xzf', archiveName, '-C', extractionRoot], {
+      cwd: context.distRoot,
+    });
+    await verifyStageChecksums(path.join(extractionRoot, context.stageName));
+  } finally {
+    await rm(extractionRoot, { recursive: true, force: true });
+  }
   console.log(`[sdkwork-api-cloud-gateway] validated ${path.relative(appRoot, context.archivePath)}`);
+}
+
+async function sha256File(filePath) {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+    stream.on('error', reject);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+export async function writeArtifactChecksum(artifactPath) {
+  const digest = await sha256File(artifactPath);
+  await writeFile(
+    `${artifactPath}.sha256`,
+    `${digest}  ${path.basename(artifactPath)}\n`,
+    'utf8',
+  );
+  return digest;
+}
+
+export async function verifyArtifactChecksum(artifactPath) {
+  const checksumPath = `${artifactPath}.sha256`;
+  if (!existsSync(checksumPath)) {
+    throw new Error(`Missing artifact checksum: ${checksumPath}`);
+  }
+  const checksumText = await readFile(checksumPath, 'utf8');
+  const match = /^([a-f0-9]{64})  ([^\r\n]+)\r?\n?$/u.exec(checksumText);
+  if (!match || match[2] !== path.basename(artifactPath)) {
+    throw new Error(`Invalid artifact checksum record: ${checksumPath}`);
+  }
+  const actualDigest = await sha256File(artifactPath);
+  if (actualDigest !== match[1]) {
+    throw new Error(`Artifact checksum mismatch: ${artifactPath}`);
+  }
+  return actualDigest;
+}
+
+export function validateArchiveEntryPaths(listing, stageName) {
+  const entries = new Set();
+  for (const rawEntry of listing.split(/\r?\n/u)) {
+    const entry = rawEntry.endsWith('/') ? rawEntry.slice(0, -1) : rawEntry;
+    if (!entry) {
+      continue;
+    }
+    const segments = entry.split('/');
+    if (
+      entry.includes('\\')
+      || path.posix.isAbsolute(entry)
+      || segments[0] !== stageName
+      || segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+      throw new Error(`Server archive contains an unsafe entry: ${rawEntry}`);
+    }
+    entries.add(entry);
+  }
+  return entries;
+}
+
+export async function verifyStageChecksums(stageRoot) {
+  const checksumPath = path.join(stageRoot, 'checksums.sha256');
+  const checksumText = await readFile(checksumPath, 'utf8');
+  const expected = new Map();
+
+  for (const line of checksumText.split(/\r?\n/u)) {
+    if (!line) {
+      continue;
+    }
+    const match = /^([a-f0-9]{64})  ([^\r\n]+)$/u.exec(line);
+    if (!match) {
+      throw new Error(`Invalid checksums.sha256 entry: ${line}`);
+    }
+    const [, digest, relativePath] = match;
+    const segments = relativePath.split('/');
+    if (
+      relativePath === 'checksums.sha256'
+      || relativePath.includes('\\')
+      || path.posix.isAbsolute(relativePath)
+      || segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+      throw new Error(`Unsafe checksums.sha256 path: ${relativePath}`);
+    }
+    if (expected.has(relativePath)) {
+      throw new Error(`Duplicate checksums.sha256 path: ${relativePath}`);
+    }
+    expected.set(relativePath, digest);
+  }
+
+  const actualFiles = await listFiles(stageRoot);
+  const actualPaths = new Set();
+  for (const filePath of actualFiles) {
+    const relativePath = toPosixPath(path.relative(stageRoot, filePath));
+    if (relativePath === 'checksums.sha256') {
+      continue;
+    }
+    actualPaths.add(relativePath);
+    const expectedDigest = expected.get(relativePath);
+    if (!expectedDigest) {
+      throw new Error(`checksums.sha256 is missing ${relativePath}`);
+    }
+    const actualDigest = createHash('sha256').update(await readFile(filePath)).digest('hex');
+    if (actualDigest !== expectedDigest) {
+      throw new Error(`Checksum mismatch for ${relativePath}`);
+    }
+  }
+  for (const relativePath of expected.keys()) {
+    if (!actualPaths.has(relativePath)) {
+      throw new Error(`checksums.sha256 references missing file ${relativePath}`);
+    }
+  }
 }
 
 export function resolveTarArchiveName(distRoot, archivePath) {

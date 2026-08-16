@@ -1,0 +1,22 @@
+# SDKWork Knowledgebase RPC sidecar for the API Cloud Gateway package.
+
+[Unit]
+Description=SDKWork API Gateway Knowledgebase RPC
+After=network-online.target
+Wants=network-online.target
+Before=sdkwork-api-gateway.service
+
+[Service]
+Type=simple
+User=sdkwork
+Group=sdkwork
+EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-knowledgebase-rpc.env
+WorkingDirectory=/opt/sdkwork/api-gateway
+ExecStart=/opt/sdkwork/api-gateway/bin/knowledgebase-rpc-entrypoint
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

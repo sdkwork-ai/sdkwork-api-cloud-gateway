@@ -1,0 +1,113 @@
+#!/bin/sh
+set -eu
+
+secrets_root=${SDKWORK_KNOWLEDGEBASE_RPC_SECRETS_ROOT:-/run/secrets/sdkwork/api-gateway/knowledgebase-rpc}
+provision=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
+
+case "$secrets_root" in
+  /run/secrets/sdkwork/api-gateway/*|/etc/sdkwork/api-gateway/*) ;;
+  *)
+    echo "Knowledgebase RPC secrets must be under /run/secrets/sdkwork/api-gateway or /etc/sdkwork/api-gateway" >&2
+    exit 1
+    ;;
+esac
+
+required_files='ca.crt ca.key server.crt server.key client.crt client.key caller-context.key im-launch-ticket.key knowledgebase-secrets.key webserver-secrets.key'
+secrets_complete=true
+for file in $required_files; do
+  if [ ! -s "$secrets_root/$file" ]; then
+    secrets_complete=false
+    break
+  fi
+done
+
+if [ "$secrets_complete" != true ]; then
+  if [ "$provision" != true ]; then
+    echo "Knowledgebase RPC mTLS/signing secrets are incomplete and provisioning is disabled" >&2
+    exit 1
+  fi
+  if [ -e "$secrets_root" ]; then
+    echo "Knowledgebase RPC secrets directory exists but is incomplete" >&2
+    exit 1
+  fi
+
+  parent=${secrets_root%/*}
+  mkdir -p "$parent"
+  chmod 0700 "$parent"
+  secrets_tmp="${secrets_root}.tmp.$$"
+  rm -rf "$secrets_tmp"
+  mkdir -m 0700 "$secrets_tmp"
+  trap 'rm -rf "$secrets_tmp"' EXIT HUP INT TERM
+
+  openssl req -x509 -newkey rsa:2048 -sha256 -nodes \
+    -keyout "$secrets_tmp/ca.key" \
+    -out "$secrets_tmp/ca.crt" \
+    -days 3650 \
+    -subj '/CN=SDKWork API Gateway Knowledgebase RPC CA' >/dev/null 2>&1
+
+  openssl req -newkey rsa:2048 -sha256 -nodes \
+    -keyout "$secrets_tmp/server.key" \
+    -out "$secrets_tmp/server.csr" \
+    -subj '/CN=knowledgebase.local' >/dev/null 2>&1
+  {
+    echo 'basicConstraints=critical,CA:FALSE'
+    echo 'keyUsage=critical,digitalSignature,keyEncipherment'
+    echo 'extendedKeyUsage=serverAuth'
+    echo 'subjectAltName=DNS:knowledgebase.local,DNS:knowledgebase-rpc'
+  } > "$secrets_tmp/server.ext"
+  openssl x509 -req \
+    -in "$secrets_tmp/server.csr" \
+    -CA "$secrets_tmp/ca.crt" \
+    -CAkey "$secrets_tmp/ca.key" \
+    -CAcreateserial \
+    -out "$secrets_tmp/server.crt" \
+    -days 825 -sha256 \
+    -extfile "$secrets_tmp/server.ext" >/dev/null 2>&1
+
+  openssl req -newkey rsa:2048 -sha256 -nodes \
+    -keyout "$secrets_tmp/client.key" \
+    -out "$secrets_tmp/client.csr" \
+    -subj '/CN=sdkwork-im' >/dev/null 2>&1
+  {
+    echo 'basicConstraints=critical,CA:FALSE'
+    echo 'keyUsage=critical,digitalSignature,keyEncipherment'
+    echo 'extendedKeyUsage=clientAuth'
+    echo 'subjectAltName=URI:spiffe://sdkwork.internal/sdkwork/service/sdkwork-im'
+  } > "$secrets_tmp/client.ext"
+  openssl x509 -req \
+    -in "$secrets_tmp/client.csr" \
+    -CA "$secrets_tmp/ca.crt" \
+    -CAkey "$secrets_tmp/ca.key" \
+    -CAcreateserial \
+    -out "$secrets_tmp/client.crt" \
+    -days 825 -sha256 \
+    -extfile "$secrets_tmp/client.ext" >/dev/null 2>&1
+
+  openssl rand -base64 32 \
+    | tr '+/' '-_' \
+    | tr -d '=\n' > "$secrets_tmp/caller-context.key"
+  openssl rand -base64 48 \
+    | tr -d '\n' > "$secrets_tmp/im-launch-ticket.key"
+  openssl rand -base64 48 \
+    | tr -d '\n' > "$secrets_tmp/knowledgebase-secrets.key"
+  openssl rand -base64 48 \
+    | tr -d '\n' > "$secrets_tmp/webserver-secrets.key"
+  rm -f "$secrets_tmp"/*.csr "$secrets_tmp"/*.ext "$secrets_tmp"/*.srl
+  chmod 0600 "$secrets_tmp"/*.key
+  chmod 0644 "$secrets_tmp"/*.crt
+  mv "$secrets_tmp" "$secrets_root"
+  trap - EXIT HUP INT TERM
+fi
+
+for file in $required_files; do
+  [ -s "$secrets_root/$file" ] || {
+    echo "Knowledgebase RPC secret is missing or empty: $file" >&2
+    exit 1
+  }
+done
+
+if [ "${1:-}" = "--provision-only" ]; then
+  exit 0
+fi
+
+exec /opt/sdkwork/api-gateway/bin/sdkwork-intelligence-knowledgebase-rpc-bin

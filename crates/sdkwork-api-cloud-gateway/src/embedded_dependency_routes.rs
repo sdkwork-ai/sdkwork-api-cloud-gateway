@@ -360,23 +360,7 @@ pub async fn bootstrap_embedded_dependency_contributions(
         .map_err(|message| {
             workspace_build_error(config, "sdkwork-webserver", message.to_string())
         })?;
-        let openapi = enrich_owned_openapi_document(
-            assembly.openapi,
-            "sdkwork-webserver",
-            assembly.route_manifest.routes(),
-        )
-        .map_err(|error| {
-            workspace_build_error(config, "sdkwork-webserver", format!("{error:?}"))
-        })?;
-        contributions.push(ApiAssemblyContribution {
-            owner: "sdkwork-webserver",
-            router: assembly.router,
-            route_manifest: assembly.route_manifest,
-            openapi,
-            permission_catalog: assembly.permission_catalog,
-            domain_context_injectors: assembly.domain_context_injectors,
-            readiness_check: assembly.readiness_check,
-        });
+        contributions.push(assembly.into_contribution());
     }
 
     #[cfg(feature = "foundation-rtc")]
@@ -407,6 +391,7 @@ pub async fn bootstrap_embedded_dependency_contributions(
     if workspace_surface_enabled(config, "sdkwork-browser") {
         let contribution =
             sdkwork_api_browser_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
                 .map_err(|message| workspace_build_error(config, "sdkwork-browser", message))?;
         contributions.push(contribution);
     }
@@ -446,12 +431,15 @@ pub async fn bootstrap_embedded_dependency_contributions(
 
     #[cfg(feature = "foundation-knowledgebase")]
     if workspace_surface_enabled(config, "sdkwork-knowledgebase") {
+        let knowledgebase_environment = std::env::var("SDKWORK_KNOWLEDGEBASE_ENVIRONMENT")
+            .unwrap_or_else(|_| config.service.environment.clone());
         let contribution =
-            sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| {
-                    workspace_build_error(config, "sdkwork-knowledgebase", message)
-                })?;
+            sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment(
+                pool.clone(),
+                &knowledgebase_environment,
+            )
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-knowledgebase", message))?;
         contributions.push(contribution);
     }
 

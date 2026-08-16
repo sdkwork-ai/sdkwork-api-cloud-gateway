@@ -42,15 +42,35 @@ profiles package the same embedded assembly graph with different deployment meta
 | Observability | Prometheus + structured logs | `sdkwork-api-cloud-gateway-observability`; series prefix `sdkwork_api_cloud_gateway_*` |
 | Utilities | `sdkwork-utils-rust` | Boolean parsing, path normalization |
 | IAM embedding | `foundation-appbase` feature | Optional embedded IAM router via `sdkwork-api-iam-assembly` |
-| Dependency embedding | 45 `foundation-*` features | Every declared application assembly is embedded through its `assemble_api_router_with_pool` contribution export; see `specs/component.spec.json` |
+| Dependency embedding | 45 `foundation-*` features | Every declared application is embedded through the single owner assembly export declared by `specs/component.spec.json`; entrypoint names may differ by owner context |
 | Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `sdkwork.workflow.json` |
 
 Intentionally **not** integrated at this stage:
 
 - `sdkwork-discovery` — deferred until RPC service registration is required.
 
-The host uses `sdkwork-database` process-pool bootstrap for embedded assemblies while owning no
-domain tables or migrations itself.
+The host uses `sdkwork-database` only to create the process-shared pool. Each owner assembly manages
+its domain database lifecycle, service/repository/provider wiring, readiness, and retained runtime
+handles. The host owns no domain tables, migrations, or module database-host dependencies.
+
+### 2.1 Building-Block Integration Point
+
+Runtime startup and `--migrate-databases` share one integration path:
+
+```text
+foundation Cargo feature
+  -> component-declared sdkwork-api-<application-code>-assembly export
+     -> owner database and runtime bootstrap
+     -> ApiAssemblyContribution plus optional owner runtime handles
+  -> cross-assembly collision validation
+  -> one Web Framework pipeline and one HTTP listener
+```
+
+The gateway supplies the process-shared `DatabasePool`, selected lifecycle environment/profile,
+and explicitly declared host ports. It does not import owner route, service, repository, provider
+implementation, or database-host crates. `embedded_dependency_routes.rs` is the single integration
+point for both `standalone` and `cloud` packaging profiles; Cargo features and
+`specs/component.spec.json#dependencies` are its machine authorities.
 
 ## 3. System Boundaries And Modules
 
@@ -96,8 +116,10 @@ Cargo workspace integration is the gateway catalog authority: root `Cargo.toml`,
   hand-edit generated SDK output.
 - **Drive file upload**: delegated to embedded `sdkwork-api-drive-assembly`; no local file storage.
 
-Every dependency surface requires a Cargo feature, gateway assembly dependency, executable router
-export, and verified coverage. Legacy split modes and per-dependency base URLs are rejected.
+Every dependency surface requires a Cargo feature, exactly one direct owner assembly dependency,
+an executable owner bootstrap export, and verified coverage. Legacy split modes, direct owner
+implementation dependencies, gateway-local database lifecycle catalogs, and per-dependency base
+URLs are rejected by `check-api-assembly-integration-closure.mjs`.
 
 Catalog is embedded through `foundation-catalog` and `sdkwork-api-catalog-assembly`. The
 `sdkwork-catalog-app-api` authority is dispatched for `/app/v3/api/addresses`,

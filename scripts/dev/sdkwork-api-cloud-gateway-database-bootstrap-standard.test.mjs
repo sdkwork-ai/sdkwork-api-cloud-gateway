@@ -4,159 +4,102 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const workspaceRoot = path.dirname(root);
 const component = readJson(path.join(root, 'specs/component.spec.json'));
 const workspaceCargo = read(path.join(root, 'Cargo.toml'));
 const gatewayCargo = read(path.join(root, 'crates/sdkwork-api-cloud-gateway/Cargo.toml'));
-const bootstrapSource = read(
-  path.join(
-    root,
-    'crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs',
-  ),
+const databaseBootstrap = read(
+  path.join(root, 'crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs'),
+);
+const dependencyBootstrap = read(
+  path.join(root, 'crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs'),
 );
 const runtimeSource = read(
   path.join(root, 'crates/sdkwork-api-cloud-gateway/src/runtime.rs'),
 );
 
-const dependencies = uniqueDependencies([
-  ...component.dependencies,
-  ...(component.databaseDependencies ?? []),
-]);
-let previousBootstrapPosition = bootstrapSource.indexOf(
-  'let pool = process_database_pool().await?;',
+assert.doesNotMatch(
+  gatewayCargo,
+  /^sdkwork-[a-z0-9-]+-database-host\s*=/mu,
+  'platform cloud gateway must not depend directly on owner database-host crates',
 );
-assert.notEqual(
-  previousBootstrapPosition,
-  -1,
-  'database bootstrap must create the canonical process pool before module initialization',
+assert.doesNotMatch(
+  gatewayCargo,
+  /"dep:sdkwork-[a-z0-9-]+-database-host"/u,
+  'foundation features must reach module database lifecycle through owner assemblies',
+);
+assert.doesNotMatch(
+  workspaceCargo,
+  /^sdkwork-[a-z0-9-]+-database-host\s*=\s*\{[^\n]*sdkwork-/mu,
+  'gateway workspace must not catalog dependency-owned database-host crates',
+);
+assert.doesNotMatch(
+  databaseBootstrap,
+  /sdkwork_[a-z0-9_]+_database_host::/u,
+  'process pool bootstrap must not call dependency-owned database hosts',
+);
+assert.match(
+  databaseBootstrap,
+  /bootstrap_embedded_dependency_contributions\(/u,
+  'explicit migration must execute the same owner assembly entrypoints as runtime composition',
 );
 
-for (const dependency of dependencies) {
-  const repoRoot = path.join(workspaceRoot, dependency.workspace);
-  const databaseRoot = path.join(repoRoot, 'database');
-  const hostCrates = fs
-    .readdirSync(path.join(repoRoot, 'crates'), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name.endsWith('-database-host'))
-    .map((entry) => entry.name);
-
-  const featureHosts = hostCrates.filter((hostCrate) =>
-    featureBody(gatewayCargo, dependency.cargoFeature).includes(
-      `"dep:${hostCrate}"`,
-    ),
-  );
-  assert.equal(
-    featureHosts.length,
-    1,
-    `${dependency.workspace} must compile exactly one convention-named *-database-host crate through ${dependency.cargoFeature}`,
-  );
-  assert.ok(
-    fs.existsSync(databaseRoot),
-    `${dependency.workspace} must own a database/ lifecycle asset directory`,
-  );
-
-  const hostCrate = featureHosts[0];
-  if (dependency.bootstrapExport) {
-    assert.equal(
-      dependency.cargoDependency,
-      hostCrate,
-      `${dependency.workspace} database dependency must name its executable host crate`,
-    );
-  }
+const integrations = uniqueIntegrations(component.dependencies ?? []);
+for (const integration of integrations) {
+  const feature = featureBody(gatewayCargo, integration.cargoFeature);
   assert.match(
-    workspaceCargo,
-    new RegExp(`^${escapeRegExp(hostCrate)}\\s*=\\s*\\{[^\\n]*path\\s*=`, 'mu'),
-    `${hostCrate} must be a gateway workspace dependency`,
+    feature,
+    new RegExp(`"dep:${escapeRegExp(integration.cargoDependency)}"`, 'u'),
+    `${integration.cargoFeature} must compile owner assembly ${integration.cargoDependency}`,
   );
-  assert.match(
-    featureBody(gatewayCargo, dependency.cargoFeature),
-    new RegExp(`"dep:${escapeRegExp(hostCrate)}"`, 'u'),
-    `${dependency.cargoFeature} must compile ${hostCrate} with its gateway assembly`,
-  );
-  assert.match(
-    gatewayCargo,
-    new RegExp(
-      `^${escapeRegExp(hostCrate)}\\s*=\\s*\\{\\s*workspace\\s*=\\s*true,\\s*optional\\s*=\\s*true\\s*\\}`,
-      'mu',
-    ),
-    `${hostCrate} must be an optional crate dependency`,
+  const assemblyDependencies = [...feature.matchAll(/"dep:(sdkwork-api-[a-z0-9-]+-assembly)"/gu)]
+    .map((match) => match[1]);
+  assert.deepEqual(
+    assemblyDependencies,
+    [integration.cargoDependency],
+    `${integration.cargoFeature} must have exactly one owner API assembly entrypoint`,
   );
   assert.ok(
-    bootstrapSource.includes(hostCrate.replaceAll('-', '_')),
-    `${hostCrate} must have an executable startup bootstrap call`,
-  );
-
-  const bootstrapPosition = bootstrapSource.indexOf(
-    `"${dependency.workspace}"`,
-    previousBootstrapPosition + 1,
-  );
-  assert.notEqual(
-    bootstrapPosition,
-    -1,
-    `${dependency.workspace} must be initialized by the startup orchestrator`,
-  );
-  assert.ok(
-    bootstrapPosition > previousBootstrapPosition,
-    `${dependency.workspace} must preserve component.spec.json dependency order`,
-  );
-  previousBootstrapPosition = bootstrapPosition;
-
-  const manifestPath = path.join(databaseRoot, 'database.manifest.json');
-  assert.ok(
-    fs.existsSync(manifestPath),
-    `${dependency.workspace} must expose database/database.manifest.json`,
-  );
-  const databaseManifest = readJson(manifestPath);
-  assert.equal(
-    typeof databaseManifest.moduleId,
-    'string',
-    `${dependency.workspace} database manifest must declare moduleId`,
-  );
-  assert.ok(
-    bootstrapSource.includes(`"${databaseManifest.moduleId}"`),
-    `${dependency.workspace} bootstrap must identify module ${databaseManifest.moduleId}`,
+    dependencyBootstrap.includes(integration.executableExport.split('::')[0]),
+    `${integration.workspace} must be initialized through ${integration.executableExport}`,
   );
 }
 
-assert.match(
-  runtimeSource,
-  /bootstrap_embedded_databases\(&config\)\s*\.await\?/u,
-  'runtime must finish database initialization before dependency router assembly',
-);
 assert.ok(
   runtimeSource.indexOf('bootstrap_embedded_databases')
     < runtimeSource.indexOf('bootstrap_embedded_dependency_contributions'),
-  'database initialization must run before dependency router assembly',
+  'the process-shared pool must exist before owner assembly initialization',
 );
 
 console.log(
-  `sdkwork-api-cloud-gateway database bootstrap standard passed for ${dependencies.length} workspaces.`,
+  `sdkwork-api-cloud-gateway owner assembly lifecycle standard passed for ${integrations.length} foundation features.`,
 );
 
-function uniqueDependencies(entries) {
-  const seen = new Set();
-  const result = [];
-  for (const entry of entries) {
-    if (seen.has(entry.workspace)) {
+function uniqueIntegrations(surfaces) {
+  const byFeature = new Map();
+  for (const surface of surfaces) {
+    if (!surface.cargoFeature || !surface.cargoDependency || !surface.executableExport) continue;
+    if (!/^sdkwork-api-[a-z0-9-]+-assembly$/u.test(surface.cargoDependency)) continue;
+    const current = byFeature.get(surface.cargoFeature);
+    if (current) {
+      assert.equal(current.cargoDependency, surface.cargoDependency);
+      assert.equal(current.executableExport, surface.executableExport);
       continue;
     }
-    seen.add(entry.workspace);
-    result.push(entry);
+    byFeature.set(surface.cargoFeature, surface);
   }
-  return result;
+  return [...byFeature.values()];
 }
 
 function featureBody(cargo, feature) {
-  const match = cargo.match(
-    new RegExp(`^${escapeRegExp(feature)}\\s*=\\s*\\[(.*?)^\\]`, 'msu'),
-  );
-  if (match) {
-    return match[1];
-  }
   const inline = cargo.match(
     new RegExp(`^${escapeRegExp(feature)}\\s*=\\s*\\[([^\\n]*)\\]`, 'mu'),
   );
-  assert.ok(inline, `missing Cargo feature ${feature}`);
-  return inline[1];
+  if (inline) return inline[1];
+  const match = cargo.match(
+    new RegExp(`^${escapeRegExp(feature)}\\s*=\\s*\\[(.*?)^\\]`, 'msu'),
+  );
+  if (match) return match[1];
+  assert.fail(`missing Cargo feature ${feature}`);
 }
 
 function read(filePath) {

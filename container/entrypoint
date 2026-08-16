@@ -13,6 +13,56 @@ export SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT
 export SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID
 export SDKWORK_ENVIRONMENT="${SDKWORK_ENVIRONMENT:-${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT}}"
 
+provision_postgres_trust_bundle() {
+  ca_file=${SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE:-}
+  [ -n "$ca_file" ] || return 0
+  [ -s "$ca_file" ] || {
+    echo "configured PostgreSQL CA file is missing or empty" >&2
+    exit 1
+  }
+
+  trust_bundle=${SSL_CERT_FILE:-}
+  case "$trust_bundle" in
+    /run/sdkwork/api-gateway/*) ;;
+    *)
+      echo "generated PostgreSQL trust bundle must be under /run/sdkwork/api-gateway" >&2
+      exit 1
+      ;;
+  esac
+
+  system_trust_bundle=/etc/ssl/certs/ca-certificates.crt
+  [ -s "$system_trust_bundle" ] || {
+    echo "system CA trust bundle is unavailable" >&2
+    exit 1
+  }
+  trust_bundle_tmp="${trust_bundle}.tmp.$$"
+  trap 'rm -f "$trust_bundle_tmp"' EXIT HUP INT TERM
+  cat "$system_trust_bundle" "$ca_file" > "$trust_bundle_tmp"
+  chmod 0644 "$trust_bundle_tmp"
+  mv -f "$trust_bundle_tmp" "$trust_bundle"
+  trap - EXIT HUP INT TERM
+}
+
+load_webserver_secret() {
+  secret_file=${SDKWORK_WEBSERVER_SECRET_ENCRYPTION_KEY_FILE:-}
+  [ -n "$secret_file" ] || return 0
+  [ -f "$secret_file" ] && [ -s "$secret_file" ] || {
+    echo "configured WebServer secret encryption key file is missing or empty" >&2
+    exit 1
+  }
+  secret_size=$(wc -c < "$secret_file")
+  [ "$secret_size" -le 4096 ] || {
+    echo "configured WebServer secret encryption key file exceeds 4096 bytes" >&2
+    exit 1
+  }
+  SDKWORK_WEBSERVER_SECRET_ENCRYPTION_KEY=$(tr -d '\r\n' < "$secret_file")
+  [ -n "$SDKWORK_WEBSERVER_SECRET_ENCRYPTION_KEY" ] || {
+    echo "configured WebServer secret encryption key is blank" >&2
+    exit 1
+  }
+  export SDKWORK_WEBSERVER_SECRET_ENCRYPTION_KEY
+}
+
 provision_payment_credential_key() {
   enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-false}
   case "$enabled" in
@@ -52,7 +102,68 @@ provision_payment_credential_key() {
   }
 }
 
+provision_iam_signing_master_secret() {
+  enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-false}
+  case "$enabled" in
+    true) ;;
+    false) return 0 ;;
+    *)
+      echo "SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET must be true or false" >&2
+      exit 2
+      ;;
+  esac
+
+  secret_file=${SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE:-}
+  case "$secret_file" in
+    /run/secrets/sdkwork/api-gateway/*) ;;
+    *)
+      echo "IAM signing master secret provisioning requires a path under /run/secrets/sdkwork/api-gateway" >&2
+      exit 1
+      ;;
+  esac
+
+  secret_directory=${secret_file%/*}
+  mkdir -p "$secret_directory"
+  if [ ! -e "$secret_file" ]; then
+    if ! (umask 077; set -C; openssl rand -hex 32 > "$secret_file") 2>/dev/null; then
+      [ -s "$secret_file" ] || {
+        echo "failed to provision IAM signing master secret" >&2
+        exit 1
+      }
+    fi
+  fi
+  [ -s "$secret_file" ] || {
+    echo "IAM signing master secret file is empty" >&2
+    exit 1
+  }
+}
+
+load_iam_signing_master_secret() {
+  [ -z "${SDKWORK_IAM_SIGNING_MASTER_SECRET:-}" ] || return 0
+  secret_file=${SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE:-}
+  [ -n "$secret_file" ] || return 0
+  [ -f "$secret_file" ] && [ -s "$secret_file" ] || {
+    echo "configured IAM signing master secret file is missing or empty" >&2
+    exit 1
+  }
+  secret_size=$(wc -c < "$secret_file")
+  [ "$secret_size" -le 4096 ] || {
+    echo "configured IAM signing master secret file exceeds 4096 bytes" >&2
+    exit 1
+  }
+  SDKWORK_IAM_SIGNING_MASTER_SECRET=$(tr -d '\r\n' < "$secret_file")
+  [ -n "$SDKWORK_IAM_SIGNING_MASTER_SECRET" ] || {
+    echo "configured IAM signing master secret is blank" >&2
+    exit 1
+  }
+  export SDKWORK_IAM_SIGNING_MASTER_SECRET
+}
+
+provision_postgres_trust_bundle
+load_webserver_secret
 provision_payment_credential_key
+provision_iam_signing_master_secret
+load_iam_signing_master_secret
 
 if [ "${SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:-true}" = "true" ]; then
   /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases

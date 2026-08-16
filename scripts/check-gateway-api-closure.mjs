@@ -361,6 +361,99 @@ function discoverProviderRoutes(
   return [];
 }
 
+function discoverNestedAssemblyRoutes(
+  workspaceRoot,
+  dependencyRoot,
+  dependency,
+  configuredPrefixes,
+  surfaceNames,
+  errors,
+) {
+  const componentSpecPath = path.join(
+    dependencyRoot,
+    "crates",
+    dependency.cargoDependency,
+    "specs",
+    "component.spec.json",
+  );
+  if (!fs.existsSync(componentSpecPath)) return [];
+
+  const componentSpec = readJson(componentSpecPath);
+  const requiredPorts = componentSpec.contracts?.requiredPorts ?? [];
+  const nestedSurfaces = componentSpec.contracts?.dependencyApiSurfaces ?? [];
+  const routes = [];
+
+  for (const nestedSurface of nestedSurfaces) {
+    const nestedPrefixes = nestedSurface.apiPrefixes ?? [];
+    if (
+      !nestedPrefixes.some((nestedPrefix) =>
+        configuredPrefixes.some(({ prefix }) => prefix === nestedPrefix),
+      )
+    ) {
+      continue;
+    }
+
+    const executableExport = nestedSurface.embeddedExecutableExport;
+    const requiredPort = requiredPorts.find(
+      (candidate) => candidate.export === executableExport,
+    );
+    if (!requiredPort?.provider) {
+      errors.push(
+        `${dependency.serviceId}: nested surface ${nestedPrefixes.join(", ")} has no matching required assembly port`,
+      );
+      continue;
+    }
+
+    const nestedRoot = path.join(workspaceRoot, nestedSurface.workspace ?? "");
+    const assemblyManifestPath = path.join(
+      nestedRoot,
+      "crates",
+      requiredPort.provider,
+      "assembly-manifest.json",
+    );
+    if (!fs.existsSync(assemblyManifestPath)) {
+      errors.push(
+        `${dependency.serviceId}: nested assembly manifest does not exist for ${requiredPort.provider}`,
+      );
+      continue;
+    }
+
+    const assemblyManifest = readJson(assemblyManifestPath);
+    if (assemblyManifest.packageName !== requiredPort.provider) {
+      errors.push(
+        `${dependency.serviceId}: nested assembly package mismatch (${assemblyManifest.packageName ?? "missing"})`,
+      );
+      continue;
+    }
+    const routeCrates = (assemblyManifest.routeCrates ?? []).filter((routeCrate) =>
+      surfaceNames.has(routeCrate.surface),
+    );
+    if (routeCrates.length === 0) {
+      errors.push(
+        `${dependency.serviceId}: nested assembly ${requiredPort.provider} has no route crate for ${[...surfaceNames].sort().join(", ")}`,
+      );
+      continue;
+    }
+
+    const nestedDependency = {
+      ...dependency,
+      apiAuthority: nestedSurface.apiAuthority ?? dependency.apiAuthority,
+      cargoDependency: requiredPort.provider,
+    };
+    routes.push(
+      ...discoverProviderRoutes(
+        nestedRoot,
+        nestedDependency,
+        routeCrates,
+        surfaceNames,
+        errors,
+      ).map((route) => ({ ...route, dependencyRoot: nestedRoot })),
+    );
+  }
+
+  return routes;
+}
+
 function validateRoute(route, dependency, sourcePath, dependencyRoot, errors) {
   const method = String(route.method ?? "").toUpperCase();
   if (!HTTP_METHODS.has(method) || typeof route.path !== "string") {
@@ -447,21 +540,35 @@ export function validateGatewayApiClosure(root) {
       continue;
     }
 
-    const discoveredRoutes = discoverProviderRoutes(
-      dependencyRoot,
-      dependency,
-      routeCrates,
-      surfaceNames,
-      errors,
-    );
+    const discoveredRoutes = [
+      ...discoverProviderRoutes(
+        dependencyRoot,
+        dependency,
+        routeCrates,
+        surfaceNames,
+        errors,
+      ).map((route) => ({ ...route, dependencyRoot })),
+      ...discoverNestedAssemblyRoutes(
+        workspaceRoot,
+        dependencyRoot,
+        dependency,
+        configuredPrefixes,
+        surfaceNames,
+        errors,
+      ),
+    ];
     const usedPrefixes = new Set();
     const dependencyRoutes = new Map();
-    for (const { route: rawRoute, sourcePath } of discoveredRoutes) {
+    for (const {
+      route: rawRoute,
+      sourcePath,
+      dependencyRoot: providerRoot,
+    } of discoveredRoutes) {
       const route = validateRoute(
         rawRoute,
         dependency,
         sourcePath,
-        dependencyRoot,
+        providerRoot,
         errors,
       );
       if (!route) continue;
@@ -487,7 +594,7 @@ export function validateGatewayApiClosure(root) {
         method: route.method,
         path: route.path,
         operationId: route.operationId,
-        source: path.relative(dependencyRoot, sourcePath).replaceAll(path.sep, "/"),
+        source: path.relative(workspaceRoot, sourcePath).replaceAll(path.sep, "/"),
       };
       dependencyRoutes.set(`${route.method} ${route.path}`, compiledRoute);
     }

@@ -23,26 +23,24 @@ const embeddedAppbaseBuilderSource = runtimeSource.slice(
 );
 const gatewayCargo = read('crates/sdkwork-api-cloud-gateway/Cargo.toml');
 
-// 1) IAM schema must be bootstrapped through its convention database host
-//    before dependency router assembly.
-assert.match(
-  databaseBootstrapSource,
-  /sdkwork_iam_database_host::bootstrap_iam_database\(pool\.clone\(\)\)/u,
-  'API cloud gateway must bootstrap IAM schema through sdkwork-iam-database-host.',
-);
-// 2) IAM must be integrated through the canonical API assembly only.
+// 1) IAM schema lifecycle must stay behind its owner API assembly.
 assert.match(
   dependencyRoutesSource,
   /sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool\(pool\.clone\(\)\)/u,
-  'API cloud gateway must integrate IAM through the canonical API assembly.',
+  'API cloud gateway must initialize IAM through the canonical owner assembly.',
+);
+assert.doesNotMatch(
+  databaseBootstrapSource,
+  /sdkwork_iam_database_host|bootstrap_iam_database/u,
+  'API cloud gateway must not call the IAM database host outside its owner assembly.',
 );
 
 // 3) The embedded builder provisions the process-shared pool and composes the
 //    IAM web framework resolver before serving.
 assert.match(
   runtimeSource,
-  /IamWebRequestContextResolver::from_database_pool/u,
-  'Embedded IAM assembly build must resolve request context from the process pool.',
+  /iam_web_request_context_resolver_from_database_pool_for_audiences\(/u,
+  'Embedded IAM assembly build must resolve audience-bound request context from the process pool.',
 );
 assert.match(
   runtimeSource,
@@ -61,10 +59,10 @@ assert.match(
   /sdkwork-iam-web-adapter/u,
   'API cloud gateway must depend on sdkwork-iam-web-adapter.',
 );
-assert.match(
+assert.doesNotMatch(
   gatewayCargo,
   /sdkwork-iam-database-host/u,
-  'API cloud gateway must depend on sdkwork-iam-database-host.',
+  'API cloud gateway must not depend directly on sdkwork-iam-database-host.',
 );
 assert.doesNotMatch(
   gatewayCargo,

@@ -35,6 +35,7 @@ on:
         options:
           - all
           - server
+          - container
       platform:
         description: Platform filter.
         required: true
@@ -73,6 +74,7 @@ on:
         options:
           - all
           - server
+          - container
           - desktop
           - mobile
           - tablet
@@ -242,7 +244,7 @@ jobs:
     with:
       config_path: sdkwork.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
-      package_version: ${{ github.event.inputs.package_version || github.event.release.tag_name || github.ref_name }}
+      package_version: ${{ github.event.inputs.package_version || '' }}
       deployment_profile: ${{ github.event.inputs.deployment_profile || 'all' }}
       runtime_target: ${{ github.event.inputs.runtime_target || 'all' }}
       platform: ${{ github.event.inputs.platform || 'all' }}

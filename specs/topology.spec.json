@@ -184,9 +184,9 @@
         ]
       },
       {
-        "id": "linux-x64-standalone-container-oci",
+        "id": "container-x64-standalone-container-oci",
         "profile": "container",
-        "platform": "linux",
+        "platform": "container",
         "architecture": "x64",
         "deploymentProfile": "standalone",
         "runtimeTarget": "container",

@@ -29,6 +29,8 @@ PostgreSQL 与 Redis 的依赖来源三选一，**同一套 compose 同时支持
 凭据主密钥。多副本部署必须设置 `GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=false`，
 并把同一个运维或 KMS 管理的密钥挂载到
 `/run/secrets/sdkwork/api-gateway/payment-credential-master.key`。
+内嵌 PostgreSQL 会在持久卷中生成自签名服务证书并开启 TLS，staging/production
+模板使用 `sslmode=require`；外部 PostgreSQL 必须自行提供与所选 SSL mode 匹配的 TLS。
 
 `docker-compose.external.yml` 将内置 postgres/redis 移入永不启用的
 `external-disabled` profile，并注入 `host-gateway` extra host，因此 ②③

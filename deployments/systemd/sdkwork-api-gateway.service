@@ -26,6 +26,8 @@
 Description=SDKWork API Cloud Gateway
 After=network-online.target
 Wants=network-online.target
+Requires=sdkwork-knowledgebase-rpc.service
+After=sdkwork-knowledgebase-rpc.service
 
 [Service]
 Type=simple
