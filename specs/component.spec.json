@@ -279,13 +279,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/memberships",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-membership-app-api",
-      "routeGeneration": "owner-http-route-manifest"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/notary",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-notary-app-api",
@@ -496,27 +489,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/payments",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-payment-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/refunds",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-payment-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/promotions",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-promotion-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/automation",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-app-api",
@@ -657,6 +629,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/partner_join",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/runtime",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-app-api",
@@ -679,6 +658,13 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/payments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/pricing",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1520,13 +1506,6 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
-      "surface": "app",
-      "prefix": "/app/v3/api/wallet",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-promotion-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
       "surface": "backend",
       "prefix": "/backend/v3/api/token_bank",
       "ownership": "dependency",
@@ -1889,6 +1868,41 @@
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-customerservice-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/memberships",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-membership-app-api",
+      "routeGeneration": "owner-http-route-manifest"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/payments",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-payment-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/refunds",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-payment-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/promotions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-promotion-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/wallet",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-promotion-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
     }
   ],
   "dependencies": [
@@ -1939,19 +1953,6 @@
         "embedded"
       ],
       "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
-    },
-    {
-      "serviceId": "sdkwork-membership-app-api",
-      "workspace": "sdkwork-membership",
-      "apiAuthority": "sdkwork-membership-app-api",
-      "sdkFamily": "sdkwork-membership-app-sdk",
-      "cargoFeature": "foundation-membership",
-      "cargoDependency": "sdkwork-api-membership-assembly",
-      "coverage": "sdkwork-membership-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-notary-app-api",
@@ -2013,8 +2014,11 @@
       "apiPrefixes": [
         "/app/v3/api/ai",
         "/app/v3/api/iam/api_keys",
+        "/app/v3/api/iam/invite",
+        "/app/v3/api/iam/invites",
         "/app/v3/api/iam/users/settings",
         "/app/v3/api/notification",
+        "/app/v3/api/partner_join",
         "/app/v3/api/runtime",
         "/app/v3/api/system/site"
       ],
@@ -2033,10 +2037,9 @@
       "sdkFamily": "sdkwork-cloudrouter-backend-sdk",
       "apiPrefixes": [
         "/backend/v3/api/ai",
-        "/backend/v3/api/marketing",
-        "/backend/v3/api/memberships",
+        "/backend/v3/api/billing",
         "/backend/v3/api/payments",
-        "/backend/v3/api/promotions",
+        "/backend/v3/api/pricing",
         "/backend/v3/api/recharges",
         "/backend/v3/api/storage",
         "/backend/v3/api/system"
@@ -2606,23 +2609,6 @@
       "executableExport": "sdkwork_api_order_assembly::assemble_api_router_with_pool"
     },
     {
-      "serviceId": "sdkwork-promotion-app-api",
-      "workspace": "sdkwork-promotion",
-      "apiAuthority": "sdkwork-promotion-app-api",
-      "sdkFamily": "sdkwork-promotion-app-sdk",
-      "apiPrefixes": [
-        "/app/v3/api/promotions",
-        "/app/v3/api/wallet"
-      ],
-      "cargoFeature": "foundation-promotion",
-      "cargoDependency": "sdkwork-api-promotion-assembly",
-      "coverage": "sdkwork-promotion-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_with_pool"
-    },
-    {
       "serviceId": "sdkwork-promotion-backend-api",
       "workspace": "sdkwork-promotion",
       "apiAuthority": "sdkwork-promotion-backend-api",
@@ -2637,23 +2623,6 @@
         "embedded"
       ],
       "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_with_pool"
-    },
-    {
-      "serviceId": "sdkwork-payment-app-api",
-      "workspace": "sdkwork-payment",
-      "apiAuthority": "sdkwork-payment-app-api",
-      "sdkFamily": "sdkwork-payment-app-sdk",
-      "apiPrefixes": [
-        "/app/v3/api/payments",
-        "/app/v3/api/refunds"
-      ],
-      "cargoFeature": "foundation-payment",
-      "cargoDependency": "sdkwork-api-payment-assembly",
-      "coverage": "sdkwork-payment-app-api-embedded-assembly-routes",
-      "runtimeModes": [
-        "embedded"
-      ],
-      "executableExport": "sdkwork_api_payment_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-payment-backend-api",
@@ -2809,11 +2778,15 @@
       "apiAuthority": "sdkwork-deploy-app-api",
       "sdkFamily": "sdkwork-deployments-app-sdk",
       "apiPrefixes": [
+        "/app/v3/api/apps",
         "/app/v3/api/artifacts",
+        "/app/v3/api/build_templates",
         "/app/v3/api/certificates",
         "/app/v3/api/domain_zones",
+        "/app/v3/api/signing_identities",
         "/app/v3/api/sites",
-        "/app/v3/api/upload_sessions"
+        "/app/v3/api/upload_sessions",
+        "/app/v3/api/usage_events"
       ],
       "coverage": "sdkwork-deploy-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
@@ -2830,8 +2803,18 @@
       "sdkFamily": "sdkwork-deployments-backend-sdk",
       "apiPrefixes": [
         "/backend/v3/api/audit_logs",
+        "/backend/v3/api/build_queue",
+        "/backend/v3/api/certificates",
+        "/backend/v3/api/entitlements",
         "/backend/v3/api/nginx",
-        "/backend/v3/api/servers"
+        "/backend/v3/api/node_clusters",
+        "/backend/v3/api/retention",
+        "/backend/v3/api/runners",
+        "/backend/v3/api/servers",
+        "/backend/v3/api/signing_identity_health",
+        "/backend/v3/api/source_events",
+        "/backend/v3/api/tls",
+        "/backend/v3/api/usage"
       ],
       "coverage": "sdkwork-deploy-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
@@ -3494,6 +3477,53 @@
         "embedded"
       ],
       "executableExport": "sdkwork_api_skills_assembly::assemble_api_router_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-membership-app-api",
+      "workspace": "sdkwork-membership",
+      "apiAuthority": "sdkwork-membership-app-api",
+      "sdkFamily": "sdkwork-membership-app-sdk",
+      "cargoFeature": "foundation-membership",
+      "cargoDependency": "sdkwork-api-membership-assembly",
+      "coverage": "sdkwork-membership-app-api-embedded-assembly-routes",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-promotion-app-api",
+      "workspace": "sdkwork-promotion",
+      "apiAuthority": "sdkwork-promotion-app-api",
+      "sdkFamily": "sdkwork-promotion-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/promotions",
+        "/app/v3/api/wallet"
+      ],
+      "cargoFeature": "foundation-promotion",
+      "cargoDependency": "sdkwork-api-promotion-assembly",
+      "coverage": "sdkwork-promotion-app-api-embedded-assembly-routes",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-payment-app-api",
+      "workspace": "sdkwork-payment",
+      "apiAuthority": "sdkwork-payment-app-api",
+      "sdkFamily": "sdkwork-payment-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/payments",
+        "/app/v3/api/refunds"
+      ],
+      "cargoFeature": "foundation-payment",
+      "cargoDependency": "sdkwork-api-payment-assembly",
+      "coverage": "sdkwork-payment-app-api-embedded-assembly-routes",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_payment_assembly::assemble_api_router_with_pool"
     }
   ],
   "routeRegistry": {

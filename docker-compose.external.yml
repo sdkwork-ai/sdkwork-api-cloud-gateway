@@ -46,6 +46,16 @@ services:
     depends_on: !reset []
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      # TLS-required environments (staging/production) verify the external
+      # PostgreSQL server certificate against the injected CA bundle; dev/test
+      # stay plaintext (sslmode=disable) and keep the system bundle.
+      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
+    volumes:
+      # Combined trust bundle (system CAs + the deployment's private PostgreSQL
+      # CA, generated per host into docker/ca/postgres-ca-bundle.crt). Empty
+      # GATEWAY_POSTGRES_SSL_CERT_FILE leaves the bundle unused.
+      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
 
   gateway:
     depends_on: !override
@@ -60,9 +70,13 @@ services:
       SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-}
       SDKWORK_DATABASE_PASSWORD_FILE: ${GATEWAY_POSTGRES_PASSWORD_FILE:-}
       # Managed/external databases use the image system trust store by
-      # default. Mount a private CA and set GATEWAY_POSTGRES_SSL_CERT_FILE when
-      # the external service is signed by an internal authority.
-      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ""
+      # default. Mount a private CA (GATEWAY_POSTGRES_CA_FILE_MOUNT) and set
+      # GATEWAY_POSTGRES_CA_FILE + GATEWAY_POSTGRES_SSL_CERT_FILE when the
+      # external service is signed by an internal authority; the entrypoint
+      # merges the CA into the trust bundle at
+      # /run/sdkwork/api-gateway/postgres-ca-bundle.crt (RUNTIME_DIRECTORY_SPEC
+      # §11; the generated bundle path is enforced by the entrypoint).
+      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
       SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
       SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}
       SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
@@ -70,6 +84,11 @@ services:
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD_FILE: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD_FILE:-}
       SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/1}
       SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/2}
+    volumes:
+      # Combined trust bundle (system CAs + the deployment's private PostgreSQL
+      # CA, generated per host into docker/ca/postgres-ca-bundle.crt). Empty
+      # GATEWAY_POSTGRES_SSL_CERT_FILE leaves the bundle unused.
+      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
     extra_hosts:
       # Lets the gateway reach a database/redis running on the docker host
       # (e.g. another WSL service or a Windows host service).

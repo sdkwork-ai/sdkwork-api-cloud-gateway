@@ -10,6 +10,8 @@ etc/secrets/
 .env.*
 !.env.example
 !*.example
+docker/env/*.env
+!docker/env/*.env.example
 
 # Dependencies
 node_modules/
@@ -57,3 +59,7 @@ Thumbs.db
 *.log
 .DS_Store
 Thumbs.db
+
+# Per-host PostgreSQL CA material (public certs; regenerate per deployment host)
+docker/ca/
+!docker/ca/README.md
