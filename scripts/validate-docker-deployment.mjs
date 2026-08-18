@@ -10,6 +10,12 @@ import { fileURLToPath } from 'node:url';
 import { parseDotEnv } from '../../sdkwork-specs/tools/postgres/postgres-config.mjs';
 
 const BASE_DOMAINS = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
+const DESKTOP_CORS_ORIGINS = [
+  'app://dsh',
+  'app://birdcoder',
+  'app://sdkwork',
+  'app://dtupay',
+];
 const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
 const DEPENDENCY_MODES = ['embedded', 'external'];
 const DATABASE_IDENTITIES = {
@@ -58,24 +64,24 @@ function requireResolved(env, key) {
 }
 
 function validateDatabaseUrlInputs(env) {
-  const explicitUrl = String(env.GATEWAY_DATABASE_URL ?? '').trim();
+  const explicitUrl = String(env.SDKWORK_DATABASE_URL ?? '').trim();
   if (explicitUrl) {
-    requireResolved(env, 'GATEWAY_DATABASE_URL');
+    requireResolved(env, 'SDKWORK_DATABASE_URL');
     let parsed;
     try {
       parsed = new URL(explicitUrl);
     } catch {
-      throw new Error('GATEWAY_DATABASE_URL must be a valid URL');
+      throw new Error('SDKWORK_DATABASE_URL must be a valid URL');
     }
     if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
-      throw new Error('GATEWAY_DATABASE_URL must use postgresql:// or postgres://');
+      throw new Error('SDKWORK_DATABASE_URL must use postgresql:// or postgres://');
     }
     return;
   }
 
   if (env.GATEWAY_POSTGRES_PASSWORD_FILE) {
     throw new Error(
-      'GATEWAY_DATABASE_URL is required when GATEWAY_POSTGRES_PASSWORD_FILE is used',
+      'SDKWORK_DATABASE_URL is required when GATEWAY_POSTGRES_PASSWORD_FILE is used',
     );
   }
   for (const key of [
@@ -87,7 +93,7 @@ function validateDatabaseUrlInputs(env) {
     const value = requireResolved(env, key);
     if (!/^[A-Za-z0-9._~-]+$/u.test(value)) {
       throw new Error(
-        `${key} contains URL-reserved characters; set an encoded GATEWAY_DATABASE_URL`,
+        `${key} contains URL-reserved characters; set an encoded SDKWORK_DATABASE_URL`,
       );
     }
   }
@@ -128,12 +134,33 @@ export function validateDeploymentEnvironment(env, mode) {
       throw new Error(`GATEWAY_ALLOWED_HOSTS is missing ${host}`);
     }
   }
-  const corsHosts = csv(env.GATEWAY_CORS_ALLOWED_ORIGINS).map(
-    (origin) => new URL(origin).hostname,
-  );
+  const corsOrigins = csv(env.GATEWAY_CORS_ALLOWED_ORIGINS);
+  const corsHosts = corsOrigins.flatMap((origin) => {
+    let parsed;
+    try {
+      parsed = new URL(origin);
+    } catch {
+      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains an invalid origin: ${origin}`);
+    }
+    if (origin.includes('*')) {
+      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains a wildcard origin: ${origin}`);
+    }
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return [parsed.hostname];
+    }
+    if (parsed.protocol === 'app:' || parsed.protocol === 'tauri:') {
+      return [];
+    }
+    throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains an unsupported origin: ${origin}`);
+  });
   for (const host of hosts) {
     if (!corsHosts.includes(host)) {
       throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${host}`);
+    }
+  }
+  for (const origin of DESKTOP_CORS_ORIGINS) {
+    if (!corsOrigins.includes(origin)) {
+      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${origin}`);
     }
   }
 
@@ -186,6 +213,14 @@ export function resolveExampleEnvironment(env, mode) {
   if (mode === 'external') {
     resolved.GATEWAY_POSTGRES_HOST = 'postgres.validation.internal';
     resolved.GATEWAY_CLOUDROUTER_REDIS_HOST = 'redis.validation.internal';
+    const redisHost = resolved.GATEWAY_CLOUDROUTER_REDIS_HOST;
+    const redisPort = resolved.GATEWAY_CLOUDROUTER_REDIS_PORT || '6379';
+    if (!resolved.GATEWAY_RTC_STATE_REDIS_URL) {
+      resolved.GATEWAY_RTC_STATE_REDIS_URL = `redis://${redisHost}:${redisPort}/1`;
+    }
+    if (!resolved.GATEWAY_WEB_REDIS_URL) {
+      resolved.GATEWAY_WEB_REDIS_URL = `redis://${redisHost}:${redisPort}/2`;
+    }
   }
   return resolved;
 }

@@ -1,5 +1,7 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
-use sdkwork_database_sqlx::{create_pool_from_env, process_shared_database_pool, DatabasePool};
+use sdkwork_database_sqlx::{
+    create_process_shared_pool_from_env, process_shared_database_pool, DatabasePool,
+};
 
 use crate::GatewayRuntimeError;
 
@@ -52,7 +54,7 @@ async fn process_database_pool() -> Result<DatabasePool, GatewayRuntimeError> {
         return Ok(pool);
     }
 
-    create_pool_from_env(PROCESS_DATABASE_SERVICE_CODE)
+    create_process_shared_pool_from_env(PROCESS_DATABASE_SERVICE_CODE)
         .await
         .map_err(|error| GatewayRuntimeError::DatabasePoolBootstrap {
             message: error.to_string(),

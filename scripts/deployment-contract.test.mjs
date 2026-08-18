@@ -92,19 +92,19 @@ test('derived PostgreSQL URLs reject reserved credentials unless an encoded URL 
   env.GATEWAY_POSTGRES_PASSWORD = 'unsafe/password';
   assert.throws(
     () => validateDeploymentEnvironment(env, 'embedded'),
-    /set an encoded GATEWAY_DATABASE_URL/u,
+    /set an encoded SDKWORK_DATABASE_URL/u,
   );
 
-  env.GATEWAY_DATABASE_URL =
+  env.SDKWORK_DATABASE_URL =
     'postgresql://sdkwork_ai_dev:unsafe%2Fpassword@postgres:5432/sdkwork_ai_dev?sslmode=disable&options=-c%20search_path%3Dsdkwork_ai_dev';
   assert.doesNotThrow(() => validateDeploymentEnvironment(env, 'embedded'));
 
-  delete env.GATEWAY_DATABASE_URL;
+  delete env.SDKWORK_DATABASE_URL;
   env.GATEWAY_POSTGRES_PASSWORD = '';
   env.GATEWAY_POSTGRES_PASSWORD_FILE = '/run/secrets/sdkwork/database.password';
   assert.throws(
     () => validateDeploymentEnvironment(env, 'embedded'),
-    /GATEWAY_DATABASE_URL is required/u,
+    /SDKWORK_DATABASE_URL is required/u,
   );
 });
 
@@ -189,7 +189,7 @@ test('container composition wires the IM Knowledgebase client through strict RPC
   assert.match(compose, /SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT:/u);
   assert.match(compose, /SDKWORK_IM_ID_NODE_ID:/u);
   assert.match(compose, /SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE:/u);
-  assert.match(compose, /SDKWORK_DATABASE_URL: \$\{GATEWAY_DATABASE_URL:-postgresql:/u);
+  assert.match(compose, /SDKWORK_DATABASE_URL: \$\{SDKWORK_DATABASE_URL:-postgresql:/u);
   assert.match(compose, /SDKWORK_RTC_STATE_REDIS_URL:/u);
   assert.match(compose, /SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH:/u);
   assert.match(compose, /SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH:/u);
@@ -312,7 +312,7 @@ test('database lifecycle is explicit and delegated to owner assemblies', () => {
   );
 
   assert.match(compose, /SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:/u);
-  assert.match(compose, /GATEWAY_DATABASE_AUTO_MIGRATE:-false/u);
+  assert.match(compose, /SDKWORK_DATABASE_AUTO_MIGRATE:-false/u);
   assert.match(entrypoint, /sdkwork-api-cloud-gateway --migrate-databases/u);
   assert.match(systemd, /ExecStartPre=.* --migrate-databases/u);
   assert.doesNotMatch(gatewayCargo, /database-host/u);

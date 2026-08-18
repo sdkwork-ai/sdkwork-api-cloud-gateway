@@ -1,266 +1,216 @@
-# 远程 Ubuntu 服务器部署（Docker 方式，CI 预留）
+# WSL Ubuntu 22 多环境 Docker 部署（外连 PostgreSQL / Redis）
 
-本文档描述将 `sdkwork-api-cloud-gateway` 双环境（test / prod）部署到远程
-Ubuntu 服务器的方法：**本机构建容器镜像 → 传输 → 服务器 docker compose 编排**，
-并预留 GitHub Actions（`sdkwork.workflow.json`）发布路径作为正式迭代方式。
+本指南描述在 **WSL Ubuntu 22.04** 上同时运行 development、test、production
+三套（及可选 staging）网关容器，通过 **nginx 80 端口**对外提供域名访问，
+并使用 **外部部署** 的 PostgreSQL 与 Redis（Ubuntu 宿主机 apt 安装或远端托管）。
 
-## 部署总览
+## 架构概览
 
-| 环境 | Compose 项目 | 宿主端口 → 容器 3900 | 数据库（同名 schema） | 域名 |
+```mermaid
+flowchart LR
+  subgraph clients [Clients]
+    Browser[Browser / API client]
+  end
+  subgraph wsl [WSL Ubuntu 22]
+    Nginx[nginx :80 / :443]
+    Dev[container dev :3910]
+    Test[container test :3911]
+    Prod[container prod :3913]
+    PG[(PostgreSQL :5432)]
+    Redis[(Redis :6380)]
+  end
+  Browser -->|api-dev.*.com| Nginx
+  Browser -->|api-test.*.com| Nginx
+  Browser -->|api.*.com| Nginx
+  Nginx --> Dev
+  Nginx --> Test
+  Nginx --> Prod
+  Dev --> PG
+  Test --> PG
+  Prod --> PG
+  Dev --> Redis
+  Test --> Redis
+  Prod --> Redis
+```
+
+| 环境 | Compose 项目名 | 宿主端口 → 容器 3900 | 数据库（sdkwork-specs） | 域名（三品牌） |
 | --- | --- | --- | --- | --- |
-| test | `gateway-test` | 3911 | `sdkwork_ai_test` | `api-test.sdkwork.com` / `api-test.birdcoder.com` / `api-test.dtupay.com` |
-| production | `gateway-prod` | 3913 | `sdkwork_ai_prod` | `api.sdkwork.com` / `api.birdcoder.com` / `api.dtupay.com` |
+| development | `sdkwork-gateway-development` | **3910** | `sdkwork_ai_dev` | `api-dev.{sdkwork,birdcoder,dtupay}.com` |
+| test | `sdkwork-gateway-test` | **3911** | `sdkwork_ai_test` | `api-test.{sdkwork,birdcoder,dtupay}.com` |
+| staging | `sdkwork-gateway-staging` | **3912** | `sdkwork_ai_staging` | `api-staging.{sdkwork,birdcoder,dtupay}.com` |
+| production | `sdkwork-gateway-production` | **3913** | `sdkwork_ai_prod` | `api.{sdkwork,birdcoder,dtupay}.com` |
 
-服务器仅需 **Docker Engine + nginx**；PostgreSQL（pgvector）与 Redis 由
-compose 内置，无 Rust/Node 依赖。
+端口矩阵详见 [`deployments/README.md`](../../deployments/README.md)。
 
-## 依赖部署三模式（内置 / 外连远端 / Ubuntu 宿主原生）
+## 1. 宿主机依赖（Ubuntu 22.04）
 
-PostgreSQL 与 Redis 的依赖来源三选一，**同一套 compose 同时支持**，切换只改
-启动命令与 `.env` 连接值：
-
-| 模式 | 依赖来源 | 启动命令 | .env 关键值 |
-| --- | --- | --- | --- |
-| ① 内置（默认） | compose 内置 pgvector + Redis 容器 | `docker compose up -d` | 无需设置（默认 `postgres`/`redis` 主机名） |
-| ② 外连远端 | 已有远程/托管 PostgreSQL、Redis | `docker compose -f docker-compose.yml -f docker-compose.external.yml up -d` | `GATEWAY_POSTGRES_HOST=<远端IP>`、`GATEWAY_CLOUDROUTER_REDIS_HOST=<远端IP>` |
-| ③ Ubuntu 宿主原生 | 服务器 apt 已装 `postgresql`/`redis-server`（无容器） | 同上 external override | `GATEWAY_POSTGRES_HOST=host.docker.internal`、`GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal` |
-
-以上三种方式的单机 Compose 都默认在独立 `gateway-secrets` 卷中一次性生成 Payment
-凭据主密钥。多副本部署必须设置 `GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=false`，
-并把同一个运维或 KMS 管理的密钥挂载到
-`/run/secrets/sdkwork/api-gateway/payment-credential-master.key`。
-内嵌 PostgreSQL 会在持久卷中生成自签名服务证书并开启 TLS，staging/production
-模板使用 `sslmode=require`；外部 PostgreSQL 必须自行提供与所选 SSL mode 匹配的 TLS。
-
-`docker-compose.external.yml` 将内置 postgres/redis 移入永不启用的
-`external-disabled` profile，并注入 `host-gateway` extra host，因此 ②③
-共用同一 override；两种姿态只差 `.env` 里的 host 值与宿主侧服务准备。
-
-> WSL 本机的外部依赖模式完整演练与验证清单见
-> `WSL_EXTERNAL_DEPLOY.md`。test 环境统一使用 `api-test.*`。
-
-### 模式③ Ubuntu 宿主原生服务准备（一次性）
+### PostgreSQL + pgvector
 
 ```bash
-# 1) pgvector 扩展（knowledgebase 模块强依赖；与内置镜像同为主流版本 PG18，
-#    版本按服务器 PostgreSQL 大版本选包，官方源缺失时用 PGDG 源）
-sudo apt-get install -y postgresql-18-pgvector   # 或 postgresql-14/15/16/17-pgvector
-
-# 2) PostgreSQL 允许 docker 网段访问（host-gateway 经宿主 eth0 到达，
-#    默认只监听 127.0.0.1 无法被容器访问）
-sudo sed -i "s/^#\?listen_addresses.*/listen_addresses = '*'/" \
-  /etc/postgresql/*/main/postgresql.conf
-# 追加 pg_hba.conf（Docker 默认网段 172.16.0.0/12）：
-echo "host all all 172.16.0.0/12 scram-sha-256" | sudo tee -a \
-  /etc/postgresql/*/main/pg_hba.conf
-sudo systemctl restart postgresql
-
-# 3) Redis 允许容器访问（默认仅 bind 127.0.0.1）
-sudo sed -i "s/^bind 127.0.0.1 -::1$/bind 0.0.0.0 -::1/" /etc/redis/redis.conf
-sudo sed -i "s/^protected-mode yes$/protected-mode no/" /etc/redis/redis.conf
-sudo systemctl restart redis-server
-
-# 4) 建库 + 同名 schema + 授权（每个环境执行一次，脚本参数化见
-#    docker/postgres/external-schema.sql）
-sudo -u postgres psql -c "CREATE ROLE sdkwork_ai_test LOGIN PASSWORD 'change-me';"
-sudo -u postgres psql -c "CREATE DATABASE sdkwork_ai_test OWNER sdkwork_ai_test;"
-sudo -u postgres psql -d sdkwork_ai_test -v db=sdkwork_ai_test \
-  -v app_user=sdkwork_ai_test -f docker/postgres/external-schema.sql
-# prod 库同理：sdkwork_ai_prod
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib
+# 安装与服务器大版本匹配的 pgvector（示例 PG14）：
+sudo apt install -y postgresql-14-pgvector
 ```
 
-### 模式② 外连远端库准备（一次性）
+`postgresql.conf` 需允许 Docker 网桥访问：
+
+```ini
+listen_addresses = '*'
+```
+
+`pg_hba.conf` 追加（docker 默认网段）：
+
+```
+host    all    all    172.16.0.0/12    scram-sha-256
+```
+
+### Redis
 
 ```bash
-psql -h <远端IP> -U <admin> -c "CREATE DATABASE sdkwork_ai_test;"
-psql -h <远端IP> -U <admin> -d sdkwork_ai_test -v db=sdkwork_ai_test \
-  -v app_user=sdkwork_ai_test -f docker/postgres/external-schema.sql
-# prod 库同理；远端 Redis 需可被 docker 宿主机访问
+sudo apt install -y redis-server
 ```
 
-### 模式③ .env 连接值
+`/etc/redis/redis.conf`：
 
-```dotenv
-# 每个环境的环境文件里追加/覆盖：
-GATEWAY_POSTGRES_HOST=host.docker.internal
-GATEWAY_POSTGRES_PORT=5432
-GATEWAY_POSTGRES_DB=sdkwork_ai_test          # prod: sdkwork_ai_prod
-GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_test      # 必须等于库名
-GATEWAY_POSTGRES_USER=sdkwork_ai_test
-GATEWAY_POSTGRES_PASSWORD=<宿主角色的密码>
-GATEWAY_POSTGRES_SSL_MODE=disable
-
-GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal
-GATEWAY_CLOUDROUTER_REDIS_PORT=6379
-GATEWAY_CLOUDROUTER_REDIS_DATABASE=0
-GATEWAY_CLOUDROUTER_REDIS_PASSWORD=
+```ini
+port 6380
+bind 0.0.0.0
+# 内网免密可设 protected-mode no；生产请启用 ACL/密码
 ```
-
-> 宿主原生模式下 `docker compose ... up -d` 不会创建 postgres/redis 容器，
-> 健康检查由 external override 解除依赖；入口脚本会在服务启动前显式迁移
-> 全部数据库模块，包括 Models 与 CloudRouter。
-
-## 一、服务器准备
 
 ```bash
-# Docker Engine（Ubuntu 22.04）
-sudo apt-get update && sudo apt-get install -y docker.io docker-compose-plugin
-sudo systemctl enable --now docker
-sudo usermod -aG docker "$USER"     # 重新登录生效
-
-# nginx（域名分流）
-sudo apt-get install -y nginx
-
-# 目录布局
-sudo mkdir -p /opt/sdkwork/deploy/api-gateway/{test,prod}
-sudo chown -R "$USER":"$USER" /opt/sdkwork/deploy/api-gateway
+sudo systemctl restart postgresql redis-server
 ```
 
-## 二、本机构建与传输（WSL/构建机）
+## 2. 按环境初始化数据库
+
+遵循 `sdkwork-specs` ENVIRONMENT_SPEC §7.1：库名 = schema 名 = 用户名。
 
 ```bash
-# 1) 构建镜像（复用已有 release 二进制；镜像含 51 个数据库模块）
-cd /mnt/e/sdkwork-space/sdkwork-api-cloud-gateway
-pnpm build:container --skip-build
+cd /mnt/e/sdkwork-space/sdkwork-api-cloud-gateway   # 或你的仓库路径
 
-# 2) 导出并压缩（镜像约 1.5GB，gzip 后约 600-800MB）
-docker save sdkwork-api-cloud-gateway:local | gzip > gateway-image.tar.gz
+export SDKWORK_DATABASE_ADMIN_HOST=127.0.0.1
+export SDKWORK_DATABASE_ADMIN_PORT=5432
+export SDKWORK_DATABASE_ADMIN_USERNAME=postgres
+export SDKWORK_DATABASE_ADMIN_PASSWORD=<postgres-admin-password>
 
-# 3) 传输清单
-#    - gateway-image.tar.gz           容器镜像
-#    - docker-compose.yml             双环境共用编排（容器内 3900，宿主 3911/3913）
-#    - docker/                        配置挂载（config/、postgres/init/）
-#    - 双环境 .env（见第四节模板，密码在服务器本地生成）
-scp gateway-image.tar.gz docker-compose.yml user@server:/opt/sdkwork/gateway/
-scp -r docker user@server:/opt/sdkwork/gateway/
+# 为 dev / test / staging / prod 四套库建库、schema、vector 扩展、业务角色
+chmod +x scripts/provision-external-databases.sh
+scripts/provision-external-databases.sh
 ```
 
-> 镜像升级时重复 1-3 步，服务器端 `docker load` 后
-> `docker compose ... up -d --force-recreate`（数据卷保留，迁移自动执行）。
-
-## 三、服务器加载镜像
+也可单独初始化某一环境：
 
 ```bash
-cd /opt/sdkwork/gateway
-gzip -dc gateway-image.tar.gz | docker load
-docker images sdkwork-api-cloud-gateway:local
+scripts/provision-external-databases.sh development test
 ```
 
-## 四、双环境 .env（服务器本地生成，密钥不入库）
+## 3. 配置环境变量
+
+受控模板：`docker/env/<environment>.env.example`  
+部署副本（不入库）：`docker/env/<environment>.env`
 
 ```bash
-DB_PASS_TEST=$(openssl rand -hex 16)
-DB_PASS_PROD=$(openssl rand -hex 16)
+cp docker/env/development.env.example docker/env/development.env
+cp docker/env/test.env.example docker/env/test.env
+cp docker/env/production.env.example docker/env/production.env
+# 编辑各文件，替换 <CHANGE_ME> 密码与 CloudRouter 生产密钥
 ```
 
-`/opt/sdkwork/deploy/api-gateway/test/.env`：
+外连模式关键项（已在模板中）：
 
-```dotenv
-# sdkwork-api-cloud-gateway docker compose environment — test (api-test.*).
-GATEWAY_HOST_PORT=3911
-GATEWAY_POSTGRES_DB=sdkwork_ai_test
-GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_test   # 必须等于库名（进程池校验）
-GATEWAY_POSTGRES_USER=sdkwork_ai_test
-GATEWAY_POSTGRES_PASSWORD=<DB_PASS_TEST>
-GATEWAY_ALLOWED_HOSTS=api-test.sdkwork.com,api-test.birdcoder.com,api-test.dtupay.com,localhost:3911,127.0.0.1:3911
-GATEWAY_CORS_ALLOWED_ORIGINS=http://api-test.sdkwork.com,http://api-test.birdcoder.com,http://api-test.dtupay.com,http://localhost:3911,http://127.0.0.1:3911
-```
+| 变量 | 说明 |
+| --- | --- |
+| `GATEWAY_POSTGRES_HOST` | `host.docker.internal`（WSL 宿主 PG） |
+| `GATEWAY_POSTGRES_DB/SCHEMA/USER` | 按环境：`sdkwork_ai_dev` / `_test` / `_prod` |
+| `GATEWAY_CLOUDROUTER_REDIS_HOST` | `host.docker.internal` |
+| `GATEWAY_CLOUDROUTER_REDIS_PORT` | `6380` |
+| `GATEWAY_CLOUDROUTER_REDIS_KEY_PREFIX` | 按环境隔离键前缀 |
+| `GATEWAY_CORS_ALLOWED_ORIGINS` | 浏览器与桌面端 Origin 白名单；开发环境需包含 `app://dsh` 等桌面 shell scheme |
+| `GATEWAY_RTC_STATE_REDIS_URL` | 共享 Redis 时使用不同 logical DB（dev 1/2, test 3/4, prod 7/8） |
+| `GATEWAY_WEB_REDIS_URL` | 同上 |
 
-`/opt/sdkwork/deploy/api-gateway/prod/.env`：
-
-```dotenv
-# sdkwork-api-cloud-gateway docker compose environment — production (api.*).
-GATEWAY_HOST_PORT=3913
-GATEWAY_POSTGRES_DB=sdkwork_ai_prod
-GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_prod
-GATEWAY_POSTGRES_USER=sdkwork_ai_prod
-GATEWAY_POSTGRES_PASSWORD=<DB_PASS_PROD>
-GATEWAY_ALLOWED_HOSTS=api.sdkwork.com,api.birdcoder.com,api.dtupay.com,localhost:3913,127.0.0.1:3913
-GATEWAY_CORS_ALLOWED_ORIGINS=https://api.sdkwork.com,https://api.birdcoder.com,https://api.dtupay.com,https://console.sdkwork.com,http://localhost:3913,http://127.0.0.1:3913
-```
-
-> 必改密钥（非测试环境）：`GATEWAY_CLOUDROUTER_API_KEY_PEPPER`、
-> `GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING`、
-> `GATEWAY_CLOUDROUTER_*_SECRET`（在 .env 追加覆盖 compose 默认值，
-> 用 `openssl rand -base64 32` 生成；key ring 为 camelCase JSON，键长 ≥32 字节）。
-
-## 五、启动双环境
+## 4. 构建镜像并部署
 
 ```bash
-cd /opt/sdkwork/gateway
-docker compose -p gateway-test --env-file /opt/sdkwork/deploy/api-gateway/test/.env up -d
-docker compose -p gateway-prod --env-file /opt/sdkwork/deploy/api-gateway/prod/.env up -d
-# 首次启动迁移 46+ 个数据库模块，等待 healthy（start_period 240s）
-docker compose -p gateway-test ps
-docker compose -p gateway-prod ps
+pnpm build:container
+
+# 预检（矩阵校验域名、库名、外连必填项）
+pnpm check:container-deployment -- --matrix --compose
+
+# 启动单环境或全部环境（外连模式）
+chmod +x scripts/deploy-docker-environment.sh
+scripts/deploy-docker-environment.sh development --validate
+scripts/deploy-docker-environment.sh all --validate
 ```
 
-## 六、数据库生命周期
-
-容器入口先执行 `sdkwork-api-cloud-gateway --migrate-databases`，再启动服务。
-该显式步骤迁移完整模块清单，包括 Models 与 CloudRouter；服务运行阶段保持
-`SDKWORK_DATABASE_AUTO_MIGRATE=false`。多副本或外部发布系统应选举一个迁移任务，
-并对普通副本设置 `GATEWAY_MIGRATE_ON_START=false`。
-
-## 七、nginx 域名分流（服务器）
-
-启用 `docker/nginx/api-test.sdkwork.com.conf`（三个 api-test.* →
-`127.0.0.1:3911`）与 `docker/nginx/api.sdkwork.com.conf`（三个 api.* →
-`127.0.0.1:3913`）。生产证书放在模板声明的受保护路径。
+等价手动命令：
 
 ```bash
-sudo nginx -t && sudo systemctl reload nginx
+docker compose --env-file docker/env/development.env \
+  -p sdkwork-gateway-development \
+  -f docker-compose.yml -f docker-compose.external.yml up -d
 ```
 
-## 八、DNS 与自测
-
-- `api.*` 三域名 A 记录指向服务器公网 IP（真实上线必需）；`api-test.*` 可先
-  只做服务器本机 `/etc/hosts` 自测
-- 服务器 `/etc/hosts` 追加六域名 → `127.0.0.1`（对外发布后移除 test 条目）
-- 服务器防火墙放行 80/443（及必要的 3911/3913 管理端口）
-
-## 九、验证清单
+## 5. 配置 nginx（80 端口对外）
 
 ```bash
-# 容器健康
-docker compose -p gateway-test ps          # 全 healthy
-# 六域名（服务器本机）
-for d in api-test.sdkwork.com api-test.birdcoder.com api-test.dtupay.com \
-         api.sdkwork.com api.birdcoder.com api.dtupay.com; do
-  curl -s -o /dev/null -w "%{http_code} $d\n" http://$d/healthz
-done
-# Host 白名单（421）
-curl -s -o /dev/null -w "%{http_code}\n" -H "Host: evil.example.com" http://127.0.0.1:3911/healthz
-curl -s -o /dev/null -w "%{http_code}\n" -H "Host: api-test.sdkwork.com" http://127.0.0.1:3913/healthz
-# CORS 预检（允许 Origin 回显 allow-origin；禁止的不回显）
-curl -s -D - -o /dev/null -X OPTIONS -H "Origin: http://api-test.sdkwork.com" \
-  -H "Access-Control-Request-Method: GET" http://api-test.sdkwork.com/healthz | grep -i allow-origin
-# API 面（规范化 401 结构，非 5xx）
-curl -s http://api.sdkwork.com/backend/v3/api/iam/users | head -c 200
-# 库隔离
-docker exec gateway-test-postgres-1 psql -U sdkwork_ai_test -d sdkwork_ai_test -c "\dn"
+sudo apt install -y nginx
+chmod +x scripts/install-nginx-sites.sh
+sudo scripts/install-nginx-sites.sh all
 ```
 
-## 十、CI 预留（方案 C 切换点）
+各站点将 `server_name` 三品牌别名代理到对应宿主端口：
 
-`pnpm gateway:package:standalone` / `sdkwork.workflow.json` 发布后：
+| nginx 配置 | 代理目标 |
+| --- | --- |
+| `docker/nginx/api-dev.sdkwork.com.conf` | `127.0.0.1:3910` |
+| `docker/nginx/api-test.sdkwork.com.conf` | `127.0.0.1:3911` |
+| `docker/nginx/api-staging.sdkwork.com.conf` | `127.0.0.1:3912` |
+| `docker/nginx/api.sdkwork.com.conf` | `127.0.0.1:3913`（443 TLS + 80 重定向） |
 
-1. CI 产出 `sdkwork-api-cloud-gateway-<v>-linux-x64-standalone-server.tar.gz`
-   与 OCI 镜像（`registry.sdkwork.com/sdkwork-api-cloud-gateway`）
-2. 服务器改为拉取发布产物：
-   ```bash
-   docker pull registry.sdkwork.com/sdkwork-api-cloud-gateway:<tag>
-   docker tag registry.sdkwork.com/sdkwork-api-cloud-gateway:<tag> sdkwork-api-cloud-gateway:local
-   docker compose -p gateway-test --env-file ... up -d --force-recreate
-   ```
-3. 安装包模式（可选）按 `deployments/systemd/README.md` 走 systemd 部署
-4. 发布前用 `dist/` 内 `checksums.sha256` 校验产物完整性
+## 6. 域名解析
 
-## 常用运维
+**本地 WSL 开发**：Windows `hosts` 与 WSL `/etc/hosts` 追加：
+
+```
+127.0.0.1 api-dev.sdkwork.com api-dev.birdcoder.com api-dev.dtupay.com
+127.0.0.1 api-test.sdkwork.com api-test.birdcoder.com api-test.dtupay.com
+127.0.0.1 api.sdkwork.com api.birdcoder.com api.dtupay.com
+```
+
+**正式上线**：DNS A/AAAA 记录指向服务器公网 IP；生产 TLS 证书放入
+`/etc/ssl/sdkwork/api-gateway/`（见 `docker/nginx/api.sdkwork.com.conf`）。
+
+## 7. 验证
 
 ```bash
-docker compose -p gateway-test logs -f gateway
-docker compose -p gateway-prod restart gateway
-docker compose -p gateway-test down          # 停止（数据卷保留）
-docker compose -p gateway-prod down -v       # 停止并删数据卷（慎用）
+curl -fsS http://127.0.0.1:3910/healthz    # development
+curl -fsS http://127.0.0.1:3911/readyz     # test
+curl -fsS http://api-dev.sdkwork.com/healthz
+curl -fsS http://api-dev.birdcoder.com/readyz
+curl -fsS http://api-test.dtupay.com/healthz
+curl -fsS https://api.sdkwork.com/healthz  # production（需 TLS）
 ```
+
+Host 白名单隔离：用错误 Host 访问应返回 421：
+
+```bash
+curl -H "Host: api-test.sdkwork.com" http://127.0.0.1:3910/healthz   # 421
+```
+
+## 8. 打包分发
+
+```bash
+scripts/package-docker-environments.sh
+# 输出 dist/docker-packages/{development,test,staging,production}/
+```
+
+每个 bundle 含 compose 文件、环境 `.env`、nginx 站点与 README。
+
+## 相关文档
+
+- [DOCKER_STANDALONE_QUICK_DEPLOY.md](DOCKER_STANDALONE_QUICK_DEPLOY.md) — 镜像构建与单机快速启动
+- [DATABASE_INITIALIZATION.md](DATABASE_INITIALIZATION.md) — 迁移与 `db:init`
+- [`deployments/README.md`](../../deployments/README.md) — 完整端口矩阵

@@ -13,7 +13,7 @@ bind = "0.0.0.0:3907"
 
 [cors]
 allowAnyOrigin = false
-allowedOrigins = ["https://api-staging.sdkwork.com", "https://api-staging.birdcoder.com", "https://api-staging.dtupay.com"]
+allowedOrigins = ["https://api-staging.sdkwork.com", "https://api-staging.birdcoder.com", "https://api-staging.dtupay.com", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay"]
 
 [request]
 maxBodyBytes = 33554432

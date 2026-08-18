@@ -128,7 +128,10 @@ function resolveInside(root, reference) {
 
 function configuredSurfaceName(surface) {
   const normalized = String(surface ?? "").trim().toLowerCase();
-  return normalized.endsWith("-api") ? normalized : `${normalized}-api`;
+  if (["app", "backend", "open", "internal"].includes(normalized)) {
+    return `${normalized}-api`;
+  }
+  return normalized.endsWith("-api") ? normalized : normalized;
 }
 
 function pathMatchesPrefix(routePath, prefix) {
@@ -283,6 +286,23 @@ function routesFromScopedOpenApi(dependencyRoot, dependency, surfaceNames) {
 function routesFromAssemblyManifest(dependencyRoot, routeCrates, errors, serviceId) {
   const routes = [];
   for (const routeCrate of routeCrates) {
+    if (!routeCrate.routeManifestRef) {
+      const rustCandidates = [
+        path.join(dependencyRoot, routeCrate.memberDir ?? "", "src", "http_route_manifest.rs"),
+        path.join(dependencyRoot, routeCrate.memberDir ?? "", "src", "lib.rs"),
+      ];
+      const rustPath = rustCandidates.find((candidate) => fs.existsSync(candidate));
+      if (!rustPath) {
+        errors.push(
+          `${serviceId}: route crate ${routeCrate.packageName} has no routeManifestRef or rust route inventory`,
+        );
+        continue;
+      }
+      for (const route of routesFromRustManifest(rustPath)) {
+        routes.push({ route, sourcePath: rustPath });
+      }
+      continue;
+    }
     const manifestPath = resolveInside(dependencyRoot, routeCrate.routeManifestRef);
     if (!manifestPath) {
       errors.push(

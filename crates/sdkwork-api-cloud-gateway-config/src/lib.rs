@@ -798,8 +798,19 @@ impl GatewayRuntimeConfig {
                     "must contain at least one exact HTTP(S) origin for a production-like gateway that exposes app-api",
                 ));
             }
+            if !self
+                .cors
+                .allowed_origins
+                .iter()
+                .any(|origin| is_exact_http_origin(origin))
+            {
+                return Err(invalid_value(
+                    "cors.allowedOrigins",
+                    "must contain at least one exact HTTP(S) origin for a production-like gateway that exposes app-api",
+                ));
+            }
             for origin in &self.cors.allowed_origins {
-                validate_exact_http_origin("cors.allowedOrigins[]", origin)?;
+                validate_exact_allowed_origin("cors.allowedOrigins[]", origin)?;
             }
         }
 
@@ -1351,6 +1362,24 @@ fn normalize_environment(value: &str) -> Result<String, GatewayConfigError> {
     })
 }
 
+fn is_exact_http_origin(origin: &str) -> bool {
+    validate_exact_http_origin("cors.allowedOrigins[]", origin).is_ok()
+}
+
+fn is_exact_desktop_origin(origin: &str) -> bool {
+    let trimmed = origin.trim();
+    let Some(authority) = trimmed
+        .strip_prefix("app://")
+        .or_else(|| trimmed.strip_prefix("tauri://"))
+    else {
+        return false;
+    };
+    !(authority.is_empty()
+        || authority.contains(['/', '?', '#', '*'])
+        || authority.contains('@')
+        || trimmed != origin)
+}
+
 fn validate_exact_http_origin(key: &str, origin: &str) -> Result<(), GatewayConfigError> {
     let trimmed = origin.trim();
     let Some(authority) = trimmed
@@ -1370,6 +1399,16 @@ fn validate_exact_http_origin(key: &str, origin: &str) -> Result<(), GatewayConf
         ));
     }
     Ok(())
+}
+
+fn validate_exact_allowed_origin(key: &str, origin: &str) -> Result<(), GatewayConfigError> {
+    if is_exact_http_origin(origin) || is_exact_desktop_origin(origin) {
+        return Ok(());
+    }
+    Err(invalid_value(
+        key,
+        "must be an exact HTTP(S) origin or a registered desktop origin (app:// or tauri://) without credentials, wildcard, path, query, or fragment",
+    ))
 }
 
 fn invalid_value(key: &str, reason: impl Into<String>) -> GatewayConfigError {

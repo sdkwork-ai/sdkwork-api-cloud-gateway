@@ -147,6 +147,84 @@ fn production_app_api_accepts_exact_cors_origins() {
 }
 
 #[test]
+fn production_app_api_accepts_desktop_custom_scheme_origin() {
+    let toml = r#"
+        [service]
+        environment = "production"
+
+        [[dependencySurfaces]]
+        serviceId = "sdkwork-iam-app-api"
+        workspace = "sdkwork-appbase"
+        sdkFamily = "sdkwork-iam-app-sdk"
+        apiAuthority = "sdkwork-iam-app-api"
+        surface = "app"
+        apiPrefix = "/app/v3/api"
+        runtimeMode = "embedded"
+        executableExport = "sdkwork_api_iam_assembly::assemble_business_router"
+        cargoFeature = "foundation-appbase"
+        cargoDependency = "sdkwork-api-iam-assembly"
+        coverage = "embedded-assembly-routes"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://app.sdkwork.com", "app://dsh"]
+    "#;
+    GatewayRuntimeConfig::from_toml_str(toml).expect("desktop origin should be accepted");
+}
+
+#[test]
+fn production_app_api_accepts_branded_desktop_origins() {
+    let toml = r#"
+        [service]
+        environment = "production"
+
+        [[dependencySurfaces]]
+        serviceId = "sdkwork-iam-app-api"
+        workspace = "sdkwork-appbase"
+        sdkFamily = "sdkwork-iam-app-sdk"
+        apiAuthority = "sdkwork-iam-app-api"
+        surface = "app"
+        apiPrefix = "/app/v3/api"
+        runtimeMode = "embedded"
+        executableExport = "sdkwork_api_iam_assembly::assemble_business_router"
+        cargoFeature = "foundation-appbase"
+        cargoDependency = "sdkwork-api-iam-assembly"
+        coverage = "embedded-assembly-routes"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://app.sdkwork.com", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay"]
+    "#;
+    GatewayRuntimeConfig::from_toml_str(toml).expect("branded desktop origins should be accepted");
+}
+
+#[test]
+fn production_app_api_rejects_wildcard_desktop_origin() {
+    let toml = r#"
+        [service]
+        environment = "production"
+
+        [[dependencySurfaces]]
+        serviceId = "sdkwork-iam-app-api"
+        workspace = "sdkwork-appbase"
+        sdkFamily = "sdkwork-iam-app-sdk"
+        apiAuthority = "sdkwork-iam-app-api"
+        surface = "app"
+        apiPrefix = "/app/v3/api"
+        runtimeMode = "embedded"
+        executableExport = "sdkwork_api_iam_assembly::assemble_business_router"
+        cargoFeature = "foundation-appbase"
+        cargoDependency = "sdkwork-api-iam-assembly"
+        coverage = "embedded-assembly-routes"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://app.sdkwork.com", "app://sdkwork*"]
+    "#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
+}
+
+#[test]
 fn development_cors_can_be_overridden_for_lan_clients() {
     let mut env = HashMap::new();
     env.insert(

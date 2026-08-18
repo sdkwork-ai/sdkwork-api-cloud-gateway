@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     # Server-side connection ceiling: sized for the gateway foundation suite
     # module migrations (tune PG_MAX_CONNECTIONS together with
-    # GATEWAY_DATABASE_MAX_CONNECTIONS).
+    # SDKWORK_DATABASE_MAX_CONNECTIONS).
     entrypoint: ["/bin/sh", "/opt/sdkwork/postgres/entrypoint.sh"]
     command:
       - postgres
@@ -99,7 +99,7 @@ services:
       SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
       SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
-      SDKWORK_DATABASE_URL: ${GATEWAY_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
     volumes:
@@ -148,7 +148,7 @@ services:
       # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical
       # shared key (SOURCE_CONFIG_SPEC) resolved by both the gateway and the
       # IAM web adapter.
-      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://api-dev.sdkwork.com,http://api-dev.birdcoder.com,http://api-dev.dtupay.com,http://localhost:3910,http://127.0.0.1:3910}
+      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://api-dev.sdkwork.com,http://api-dev.birdcoder.com,http://api-dev.dtupay.com,http://localhost:3910,http://127.0.0.1:3910,app://dsh,app://birdcoder,app://sdkwork,app://dtupay}
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.
@@ -163,31 +163,27 @@ services:
       SDKWORK_DATABASE_SSL_MODE: ${GATEWAY_POSTGRES_SSL_MODE:-disable}
       # IM audit/realtime stores consume the canonical URL form. It is derived
       # from the same split fields unless an operator supplies a URL-encoded
-      # GATEWAY_DATABASE_URL (for example when credentials contain reserved
+      # SDKWORK_DATABASE_URL (for example when credentials contain reserved
       # URI characters).
-      SDKWORK_DATABASE_URL: ${GATEWAY_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
       # Native-TLS consumers (including IM r2d2 pools) use the standard trust
       # bundle plus the embedded PostgreSQL certificate. External deployments
       # override or remove this when their CA is provided by the base image.
       SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: /run/sdkwork/postgres-tls/server.crt
       SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/run/sdkwork/api-gateway/postgres-ca-bundle.crt}
-      # Platform shared pool owns no table prefix: every embedded module uses
-      # its literal table names (the derived "cloud_" prefix from the CLOUD
-      # service code would not match module migrations).
-      SDKWORK_DATABASE_TABLE_PREFIX: ${GATEWAY_DATABASE_TABLE_PREFIX:-}
       # Connection pool sizing: the foundation suite bootstraps 46 database
       # modules through the process-shared pool at startup; keep the server
       # max_connections comfortably above the pool ceiling.
-      SDKWORK_DATABASE_MAX_CONNECTIONS: ${GATEWAY_DATABASE_MAX_CONNECTIONS:-50}
-      SDKWORK_DATABASE_MIN_CONNECTIONS: ${GATEWAY_DATABASE_MIN_CONNECTIONS:-5}
-      SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${GATEWAY_DATABASE_ACQUIRE_TIMEOUT:-30}
-      SDKWORK_DATABASE_IDLE_TIMEOUT: ${GATEWAY_DATABASE_IDLE_TIMEOUT:-600}
-      SDKWORK_DATABASE_MAX_LIFETIME: ${GATEWAY_DATABASE_MAX_LIFETIME:-1800}
+      SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-50}
+      SDKWORK_DATABASE_MIN_CONNECTIONS: ${SDKWORK_DATABASE_MIN_CONNECTIONS:-5}
+      SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${SDKWORK_DATABASE_ACQUIRE_TIMEOUT:-30}
+      SDKWORK_DATABASE_IDLE_TIMEOUT: ${SDKWORK_DATABASE_IDLE_TIMEOUT:-600}
+      SDKWORK_DATABASE_MAX_LIFETIME: ${SDKWORK_DATABASE_MAX_LIFETIME:-1800}
       # Temporary driver pool reservations: the IM module (and peers) reserve
       # r2d2 capacity before process-pool bootstrap; without these, embedded
       # router construction fails ("IM r2d2 capacity was not reserved").
-      SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${GATEWAY_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
-      SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${GATEWAY_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
+      SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
+      SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
       # IM principal directory: all container profiles use the dynamic
       # PostgreSQL directory. This admits IAM-authenticated principals on
       # first sight and persists the decision for audit.
@@ -266,7 +262,7 @@ services:
       # including production; set MIGRATE_ON_START=false when another elected
       # release job owns migrations.
       SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}
-      SDKWORK_DATABASE_AUTO_MIGRATE: ${GATEWAY_DATABASE_AUTO_MIGRATE:-false}
+      SDKWORK_DATABASE_AUTO_MIGRATE: ${SDKWORK_DATABASE_AUTO_MIGRATE:-false}
       # Cloud Router runtime Redis (required by the cloudrouter foundation
       # module; mirror of the sdkwork-cloudrouter composition). External
       # deployments set GATEWAY_CLOUDROUTER_REDIS_* to an existing Redis and

@@ -278,6 +278,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "external-git-smart-http",
+      "prefix": "/git",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-drive-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "app",
       "prefix": "/app/v3/api/notary",
       "ownership": "dependency",
@@ -1944,7 +1951,8 @@
       "sdkFamily": "sdkwork-drive-app-sdk",
       "apiPrefixes": [
         "/app/v3/api/assets",
-        "/app/v3/api/drive"
+        "/app/v3/api/drive",
+        "/git"
       ],
       "cargoFeature": "foundation-drive",
       "cargoDependency": "sdkwork-api-drive-assembly",

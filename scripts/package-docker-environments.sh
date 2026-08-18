@@ -47,6 +47,10 @@ for env in development test staging production; do
     docker compose --env-file .env -p sdkwork-gateway-$env \\
       -f docker-compose.yml -f docker-compose.external.yml up -d
 
+Or from the repository root:
+
+    scripts/deploy-docker-environment.sh $env --validate
+
 ## Verify
 
     curl -fsS http://127.0.0.1:\$GATEWAY_HOST_PORT/healthz
