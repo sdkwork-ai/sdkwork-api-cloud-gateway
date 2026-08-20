@@ -4,10 +4,32 @@
 # Prerequisites: Docker, PostgreSQL (5432), Redis (6380), nginx on WSL Ubuntu.
 # Run from repository root inside WSL:
 #   scripts/setup-wsl-deployment.sh
+#   scripts/setup-wsl-deployment.sh --skip-build
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_root"
+
+skip_build=false
+for arg in "$@"; do
+  case "$arg" in
+    --skip-build) skip_build=true ;;
+    -h|--help)
+      cat <<'EOF'
+Usage: setup-wsl-deployment.sh [--skip-build]
+
+Rebuild the local container image, redeploy all standalone environments,
+and verify /healthz. Pass --skip-build only when the current
+sdkwork-api-cloud-gateway:local image is already the intended artifact.
+EOF
+      exit 0
+      ;;
+    *)
+      echo "unsupported option: $arg" >&2
+      exit 2
+      ;;
+  esac
+done
 
 chmod +x scripts/deploy-docker-environment.sh \
   scripts/install-nginx-sites.sh \
@@ -15,15 +37,17 @@ chmod +x scripts/deploy-docker-environment.sh \
   scripts/package-docker-environments.sh
 
 echo "==> validating deployment matrix"
-node scripts/validate-docker-deployment.mjs --matrix
+node scripts/validate-docker-deployment.mjs --matrix --compose
 
-if ! docker image inspect sdkwork-api-cloud-gateway:local >/dev/null 2>&1; then
+if [ "$skip_build" = true ] && docker image inspect sdkwork-api-cloud-gateway:local >/dev/null 2>&1; then
+  echo "==> skipping container rebuild (--skip-build)"
+else
   echo "==> building container image"
-  pnpm build:container
+  pnpm build:container --force
 fi
 
 echo "==> redeploying all environments (external PostgreSQL/Redis)"
-scripts/deploy-docker-environment.sh all
+scripts/deploy-docker-environment.sh all --validate
 
 echo "==> installing nginx sites (requires sudo)"
 if [ "$(id -u)" -eq 0 ]; then

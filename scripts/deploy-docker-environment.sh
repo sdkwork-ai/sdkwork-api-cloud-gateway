@@ -21,7 +21,7 @@ Environments: development, test, staging, production, all
 Options:
   --pull          docker compose pull before up
   --down          stop the selected stack instead of starting it
-  --validate      run pnpm check:container-deployment before compose up
+  --validate      validate the selected env file before compose up
   -h, --help      show this help
 EOF
 }
@@ -60,7 +60,7 @@ deploy_one() {
   fi
 
   if [ "$validate" = true ] && [ "$down" = false ]; then
-    (cd "$repo_root" && pnpm check:container-deployment -- --env-file "$env_file" --mode external --compose)
+    (cd "$repo_root" && node scripts/validate-docker-deployment.mjs --env-file "$env_file" --mode external --compose)
   fi
 
   compose_args=(

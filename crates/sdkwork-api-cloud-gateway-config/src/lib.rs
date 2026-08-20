@@ -3,6 +3,7 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use serde::{Deserialize, Serialize};
+use sdkwork_web_core::registered_client_origins::merge_registered_sdkwork_client_origins;
 use thiserror::Error;
 
 pub const DEFAULT_GATEWAY_SERVICE_NAME: &str = "sdkwork-api-cloud-gateway";
@@ -13,7 +14,9 @@ pub const APPBASE_BACKEND_API_SERVICE_ID: &str = "sdkwork-iam-backend-api";
 pub const APPBASE_BACKEND_API_PREFIX: &str = "/backend/v3/api/iam";
 pub const APPBASE_OPEN_API_SERVICE_ID: &str = "sdkwork-iam-open-api";
 pub const DRIVE_APP_API_SERVICE_ID: &str = "sdkwork-drive-app-api";
-pub const DRIVE_APP_API_PREFIX: &str = "/app/v3/api/assets";
+pub const DRIVE_APP_API_PREFIX: &str = "/app/v3/api/drive";
+pub const ASSETS_APP_API_SERVICE_ID: &str = "sdkwork-assets-app-api";
+pub const ASSETS_APP_API_PREFIX: &str = "/app/v3/api/assets";
 pub const DRIVE_BACKEND_API_SERVICE_ID: &str = "sdkwork-drive-backend-api";
 pub const DRIVE_OPEN_API_SERVICE_ID: &str = "sdkwork-drive-open-api";
 pub const NOTARY_APP_API_SERVICE_ID: &str = "sdkwork-notary-app-api";
@@ -47,7 +50,9 @@ pub const NOTES_APP_API_SERVICE_ID: &str = "sdkwork-notes-app-api";
 pub const NOTES_BACKEND_API_SERVICE_ID: &str = "sdkwork-notes-backend-api";
 pub const NOTES_OPEN_API_SERVICE_ID: &str = "sdkwork-notes-open-api";
 pub const GENERATIONS_APP_API_SERVICE_ID: &str = "sdkwork-generations-app-api";
+pub const GENERATIONS_APP_API_PREFIX: &str = "/app/v3/api/generations";
 pub const GENERATIONS_BACKEND_API_SERVICE_ID: &str = "sdkwork-generations-backend-api";
+pub const GENERATIONS_BACKEND_API_PREFIX: &str = "/backend/v3/api/generations";
 pub const COMMUNITY_APP_API_SERVICE_ID: &str = "sdkwork-community-app-api";
 pub const COMMUNITY_BACKEND_API_SERVICE_ID: &str = "sdkwork-community-backend-api";
 pub const COMMUNITY_OPEN_API_SERVICE_ID: &str = "sdkwork-community-open-api";
@@ -585,13 +590,15 @@ impl GatewayRuntimeConfig {
             config.cors = cors;
         }
 
+        config.finalize_registered_client_cors();
         config.validate()?;
         Ok(config)
     }
 
     pub fn from_sdkwork_manifest_str(input: &str) -> Result<Self, GatewayConfigError> {
         let manifest = serde_json::from_str::<SdkworkAppManifest>(input)?;
-        let config = Self::from_sdkwork_manifest(manifest);
+        let mut config = Self::from_sdkwork_manifest(manifest);
+        config.finalize_registered_client_cors();
         config.validate()?;
         Ok(config)
     }
@@ -657,6 +664,7 @@ impl GatewayRuntimeConfig {
             application_root.as_ref().join("specs/component.spec.json"),
         )?;
         self.dependency_surfaces = component.dependency_surfaces;
+        self.finalize_registered_client_cors();
         self.validate()?;
         Ok(self)
     }
@@ -759,8 +767,18 @@ impl GatewayRuntimeConfig {
         if let Some(path) = env.get("SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH") {
             self.diagnostics.path = path.clone();
         }
+        self.finalize_registered_client_cors();
         self.validate()?;
         Ok(self)
+    }
+
+    /// Ensures registered SDKWork desktop and mini program client origins are
+    /// always present on the configured CORS allowlist.
+    pub fn finalize_registered_client_cors(&mut self) {
+        if self.cors.allow_any_origin {
+            return;
+        }
+        merge_registered_sdkwork_client_origins(&mut self.cors.allowed_origins);
     }
 
     pub fn required_dependency_surfaces(

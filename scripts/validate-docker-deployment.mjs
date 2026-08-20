@@ -15,7 +15,9 @@ const DESKTOP_CORS_ORIGINS = [
   'app://birdcoder',
   'app://sdkwork',
   'app://dtupay',
+  'tauri://localhost',
 ];
+const MINI_PROGRAM_CORS_ORIGINS = ['https://servicewechat.com'];
 const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
 const DEPENDENCY_MODES = ['embedded', 'external'];
 const DATABASE_IDENTITIES = {
@@ -159,6 +161,11 @@ export function validateDeploymentEnvironment(env, mode) {
     }
   }
   for (const origin of DESKTOP_CORS_ORIGINS) {
+    if (!corsOrigins.includes(origin)) {
+      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${origin}`);
+    }
+  }
+  for (const origin of MINI_PROGRAM_CORS_ORIGINS) {
     if (!corsOrigins.includes(origin)) {
       throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${origin}`);
     }

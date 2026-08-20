@@ -267,7 +267,7 @@
       "surface": "app",
       "prefix": "/app/v3/api/assets",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-drive-app-api",
+      "dependencyServiceId": "sdkwork-assets-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -324,6 +324,20 @@
       "prefix": "/agent/v3/api",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-agent-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/generations",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-generations-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/generations",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-generations-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -1945,12 +1959,27 @@
       "coverage": "sdkwork-iam-open-api-embedded-assembly-routes"
     },
     {
+      "serviceId": "sdkwork-assets-app-api",
+      "workspace": "sdkwork-assets",
+      "apiAuthority": "sdkwork-assets-app-api",
+      "sdkFamily": "sdkwork-assets-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/assets"
+      ],
+      "cargoFeature": "foundation-assets",
+      "cargoDependency": "sdkwork-api-assets-assembly",
+      "coverage": "sdkwork-assets-app-api-embedded-assembly-routes",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_assets_assembly::assemble_api_router_with_pool"
+    },
+    {
       "serviceId": "sdkwork-drive-app-api",
       "workspace": "sdkwork-drive",
       "apiAuthority": "sdkwork-drive-app-api",
       "sdkFamily": "sdkwork-drive-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/assets",
         "/app/v3/api/drive",
         "/git"
       ],
@@ -2541,6 +2570,32 @@
         "embedded"
       ],
       "executableExport": "sdkwork_api_agents_assembly::assemble_api_router_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-generations-app-api",
+      "workspace": "sdkwork-generations",
+      "apiAuthority": "sdkwork-generations-app-api",
+      "sdkFamily": "sdkwork-generations-app-sdk",
+      "coverage": "sdkwork-generations-app-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-generations",
+      "cargoDependency": "sdkwork-api-generations-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_generations_assembly::assemble_api_router_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-generations-backend-api",
+      "workspace": "sdkwork-generations",
+      "apiAuthority": "sdkwork-generations-backend-api",
+      "sdkFamily": "sdkwork-generations-backend-sdk",
+      "coverage": "sdkwork-generations-backend-api-embedded-assembly-routes",
+      "cargoFeature": "foundation-generations",
+      "cargoDependency": "sdkwork-api-generations-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_generations_assembly::assemble_api_router_with_pool"
     },
     {
       "serviceId": "sdkwork-drive-backend-api",

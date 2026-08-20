@@ -11,6 +11,7 @@ foundation-appbase = [
     "dep:sdkwork-iam-web-adapter",
 ]
 foundation-drive = ["dep:sdkwork-api-drive-assembly"]
+foundation-assets = ["dep:sdkwork-api-assets-assembly"]
 foundation-membership = ["dep:sdkwork-api-membership-assembly",
 ]
 foundation-order = ["dep:sdkwork-api-order-assembly",
@@ -19,6 +20,7 @@ foundation-promotion = ["dep:sdkwork-api-promotion-assembly"]
 foundation-payment = ["dep:sdkwork-api-payment-assembly"]
 manager-operations-suite = [
     "foundation-drive",
+    "foundation-assets",
     "foundation-membership",
     "foundation-order",
     "foundation-promotion",
@@ -56,6 +58,7 @@ foundation-rtc = ["dep:sdkwork-api-rtc-assembly"]
 foundation-notary = ["dep:sdkwork-api-notary-assembly"]
 foundation-mail = ["dep:sdkwork-api-mail-assembly"]
 foundation-agents = ["dep:sdkwork-api-agents-assembly"]
+foundation-generations = ["dep:sdkwork-api-generations-assembly"]
 foundation-account = ["dep:sdkwork-api-account-assembly"]
 foundation-catalog = ["dep:sdkwork-api-catalog-assembly"]
 foundation-customerservice = ["dep:sdkwork-api-customerservice-assembly"]
@@ -129,6 +132,7 @@ platform-foundation-suite = [
     "foundation-mahjong",
     "foundation-doudizhu",
     "foundation-xiangqi",
+    "foundation-generations",
 ]
 
 [dependencies]
@@ -162,6 +166,7 @@ sdkwork-iam-web-adapter = { workspace = true, optional = true }
 sdkwork-api-iam-assembly = { workspace = true, optional = true }
 sdkwork-api-course-assembly = { workspace = true, optional = true }
 sdkwork-api-drive-assembly = { workspace = true, optional = true }
+sdkwork-api-assets-assembly = { workspace = true, optional = true }
 sdkwork-api-membership-assembly = { workspace = true, optional = true }
 sdkwork-api-order-assembly = { workspace = true, optional = true }
 sdkwork-api-promotion-assembly = { workspace = true, optional = true }
@@ -182,6 +187,7 @@ sdkwork-api-mail-assembly = { workspace = true, optional = true }
 sdkwork-api-aiot-assembly = { workspace = true, optional = true }
 sdkwork-api-appstore-assembly = { workspace = true, optional = true }
 sdkwork-api-agents-assembly = { workspace = true, optional = true }
+sdkwork-api-generations-assembly = { workspace = true, optional = true }
 sdkwork-api-account-assembly = { workspace = true, optional = true }
 sdkwork-api-catalog-assembly = { workspace = true, optional = true }
 sdkwork-api-customerservice-assembly = { workspace = true, optional = true }

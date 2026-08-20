@@ -252,6 +252,35 @@ fn development_cors_can_be_overridden_for_lan_clients() {
 }
 
 #[test]
+fn finalize_registered_client_cors_merges_desktop_and_mini_program_origins() {
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://console.sdkwork.com"]
+        "#,
+    )
+    .expect("production config");
+
+    for origin in [
+        "app://dsh",
+        "app://birdcoder",
+        "app://sdkwork",
+        "app://dtupay",
+        "tauri://localhost",
+        "https://servicewechat.com",
+    ] {
+        assert!(
+            config.cors.allowed_origins.contains(&origin.to_owned()),
+            "expected registered client origin `{origin}`"
+        );
+    }
+}
+
+#[test]
 fn production_cors_env_override_cannot_enable_any_origin() {
     let mut env = HashMap::new();
     env.insert(
@@ -370,7 +399,36 @@ fn catalog_app_authority_publishes_every_owned_prefix() {
 }
 
 #[test]
-fn drive_app_authority_publishes_assets_and_drive_prefixes() {
+fn assets_app_authority_publishes_assets_prefix() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(std::path::Path::parent)
+        .expect("workspace root");
+    let config = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let assets = config
+        .dependency_surfaces
+        .iter()
+        .filter(|surface| surface.service_id == "sdkwork-assets-app-api")
+        .collect::<Vec<_>>();
+    let prefixes = assets
+        .iter()
+        .map(|surface| surface.api_prefix.as_str())
+        .collect::<HashSet<_>>();
+
+    assert_eq!(prefixes, HashSet::from(["/app/v3/api/assets"]));
+    assert!(assets.iter().all(|surface| {
+        surface.workspace == "sdkwork-assets"
+            && surface.api_authority == "sdkwork-assets-app-api"
+            && surface.sdk_family == "sdkwork-assets-app-sdk"
+            && surface.cargo_feature.as_deref() == Some("foundation-assets")
+            && surface.cargo_dependency.as_deref() == Some("sdkwork-api-assets-assembly")
+            && surface.executable_export.as_deref()
+                == Some("sdkwork_api_assets_assembly::assemble_api_router_with_pool")
+    }));
+}
+
+#[test]
+fn drive_app_authority_publishes_drive_and_git_prefixes() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -386,10 +444,7 @@ fn drive_app_authority_publishes_assets_and_drive_prefixes() {
         .map(|surface| surface.api_prefix.as_str())
         .collect::<HashSet<_>>();
 
-    assert_eq!(
-        prefixes,
-        HashSet::from(["/app/v3/api/assets", "/app/v3/api/drive"])
-    );
+    assert_eq!(prefixes, HashSet::from(["/app/v3/api/drive", "/git"]));
     assert!(drive.iter().all(|surface| {
         surface.workspace == "sdkwork-drive"
             && surface.api_authority == "sdkwork-drive-app-api"
@@ -522,11 +577,13 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/app/v3/api/iam/invites",
             "/app/v3/api/iam/users/settings",
             "/app/v3/api/notification",
+            "/app/v3/api/partner_join",
             "/app/v3/api/runtime",
             "/app/v3/api/system/site",
             "/backend/v3/api/ai",
             "/backend/v3/api/billing",
             "/backend/v3/api/payments",
+            "/backend/v3/api/pricing",
             "/backend/v3/api/recharges",
             "/backend/v3/api/storage",
             "/backend/v3/api/system",

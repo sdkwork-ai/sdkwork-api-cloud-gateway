@@ -46,5 +46,86 @@ pub(crate) fn gateway_cors_policy(config: &GatewayRuntimeConfig) -> CorsPolicy {
             policy.allowed_origins.push(origin.clone());
         }
     }
-    policy
+    policy.with_registered_sdkwork_client_origins()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sdkwork_api_cloud_gateway_config::{CorsConfig, GatewayRuntimeConfig, ServiceConfig};
+
+    #[test]
+    fn gateway_cors_policy_always_allows_registered_desktop_origins() {
+        let config = GatewayRuntimeConfig {
+            service: ServiceConfig {
+                name: "sdkwork-api-cloud-gateway".to_owned(),
+                environment: "production".to_owned(),
+            },
+            cors: CorsConfig {
+                allow_any_origin: false,
+                allowed_origins: vec!["https://api.sdkwork.com".to_owned()],
+            },
+            ..GatewayRuntimeConfig::default()
+        };
+        let policy = gateway_cors_policy(&config);
+        policy
+            .validate_origin_value("app://dsh")
+            .expect("registered desktop origin");
+        policy
+            .validate_origin_value("https://servicewechat.com")
+            .expect("registered mini program origin");
+        policy
+            .validate_origin_value("https://api.sdkwork.com")
+            .expect("configured production origin");
+    }
+
+    #[tokio::test]
+    async fn gateway_cors_preflight_allows_registered_desktop_origin() {
+        use axum::body::Body;
+        use axum::http::{header, Method, Request, StatusCode};
+        use axum::routing::get;
+        use axum::Router;
+        use sdkwork_web_axum::cors_layer_from_policy;
+        use tower::ServiceExt;
+
+        let config = GatewayRuntimeConfig {
+            service: ServiceConfig {
+                name: "sdkwork-api-cloud-gateway".to_owned(),
+                environment: "production".to_owned(),
+            },
+            cors: CorsConfig {
+                allow_any_origin: false,
+                allowed_origins: vec!["https://console.sdkwork.com".to_owned()],
+            },
+            ..GatewayRuntimeConfig::default()
+        };
+        let router = Router::new()
+            .route(
+                "/app/v3/api/auth/sessions/current",
+                get(|| async { StatusCode::OK }),
+            )
+            .layer(cors_layer_from_policy(gateway_cors_policy(&config)));
+
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .method(Method::OPTIONS)
+                    .uri("/app/v3/api/auth/sessions/current")
+                    .header(header::ORIGIN, "app://dsh")
+                    .header(header::ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                    .body(Body::empty())
+                    .expect("preflight request"),
+            )
+            .await
+            .expect("preflight response");
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response
+                .headers()
+                .get(header::ACCESS_CONTROL_ALLOW_ORIGIN)
+                .and_then(|value| value.to_str().ok()),
+            Some("app://dsh")
+        );
+    }
 }

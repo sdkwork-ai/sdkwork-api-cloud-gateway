@@ -26,7 +26,7 @@ bind = "127.0.0.1:3906"
 
 [cors]
 allowAnyOrigin = false
-allowedOrigins = ["https://api-test.sdkwork.com", "https://api-test.birdcoder.com", "https://api-test.dtupay.com", "http://127.0.0.1:3906", "http://localhost:3906", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay"]
+allowedOrigins = ["https://api-test.sdkwork.com", "https://api-test.birdcoder.com", "https://api-test.dtupay.com", "http://127.0.0.1:3906", "http://localhost:3906", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay", "tauri://localhost", "https://servicewechat.com"]
 
 [request]
 maxBodyBytes = 33554432

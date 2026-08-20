@@ -25,7 +25,7 @@ enabled = false
 
 [cors]
 allowAnyOrigin = false
-allowedOrigins = ["https://api-dev.sdkwork.com", "https://api-dev.birdcoder.com", "https://api-dev.dtupay.com", "http://127.0.0.1:5173", "http://localhost:5173", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay"]
+allowedOrigins = ["http://api-dev.sdkwork.com", "http://api-dev.birdcoder.com", "http://api-dev.dtupay.com", "https://api-dev.sdkwork.com", "https://api-dev.birdcoder.com", "https://api-dev.dtupay.com", "http://127.0.0.1:5173", "http://localhost:5173", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay", "tauri://localhost", "https://servicewechat.com"]
 
 [request]
 maxBodyBytes = 33554432

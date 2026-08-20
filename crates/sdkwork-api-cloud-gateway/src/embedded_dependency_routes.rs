@@ -203,6 +203,15 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
+    #[cfg(feature = "foundation-assets")]
+    if workspace_surface_enabled(config, "sdkwork-assets") {
+        let contribution =
+            sdkwork_api_assets_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-assets", message))?;
+        contributions.push(contribution);
+    }
+
     #[cfg(feature = "foundation-drive")]
     if workspace_surface_enabled(config, "sdkwork-drive") {
         let postgres_pool = pool
@@ -409,6 +418,15 @@ pub async fn bootstrap_embedded_dependency_contributions(
         let contribution = sdkwork_api_agents_assembly::assemble_api_router_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-agents", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-generations")]
+    if workspace_surface_enabled(config, "sdkwork-generations") {
+        let contribution =
+            sdkwork_api_generations_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-generations", message))?;
         contributions.push(contribution);
     }
 
@@ -620,6 +638,7 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-xiangqi"));
         assert!(workspace_surface_enabled(&config, "sdkwork-notary"));
         assert!(workspace_surface_enabled(&config, "sdkwork-news"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-assets"));
         assert!(workspace_surface_enabled(&config, "sdkwork-drive"));
         assert!(workspace_surface_enabled(&config, "sdkwork-payment"));
         assert!(workspace_surface_enabled(&config, "sdkwork-im"));
@@ -637,6 +656,7 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-browser"));
         assert!(workspace_surface_enabled(&config, "sdkwork-llm"));
         assert!(workspace_surface_enabled(&config, "sdkwork-agents"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-generations"));
         assert!(workspace_surface_enabled(&config, "sdkwork-aiot"));
         assert!(workspace_surface_enabled(&config, "sdkwork-promotion"));
         assert!(workspace_surface_enabled(&config, "sdkwork-knowledgebase"));

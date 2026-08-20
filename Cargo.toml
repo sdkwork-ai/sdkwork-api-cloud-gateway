@@ -14,6 +14,7 @@ license = "AGPL-3.0-or-later"
 
 [workspace.dependencies]
 sdkwork-api-drive-assembly = { path = "../sdkwork-drive/crates/sdkwork-api-drive-assembly" }
+sdkwork-api-assets-assembly = { path = "../sdkwork-assets/crates/sdkwork-api-assets-assembly" }
 sdkwork-api-membership-assembly = { path = "../sdkwork-membership/crates/sdkwork-api-membership-assembly" }
 sdkwork-api-order-assembly = { path = "../sdkwork-order/crates/sdkwork-api-order-assembly" }
 sdkwork-api-promotion-assembly = { path = "../sdkwork-promotion/crates/sdkwork-api-promotion-assembly" }
@@ -35,6 +36,7 @@ sdkwork-api-mail-assembly = { path = "../sdkwork-mail/crates/sdkwork-api-mail-as
 sdkwork-api-aiot-assembly = { path = "../sdkwork-aiot/crates/sdkwork-api-aiot-assembly" }
 sdkwork-api-appstore-assembly = { path = "../sdkwork-appstore/crates/sdkwork-api-appstore-assembly" }
 sdkwork-api-agents-assembly = { path = "../sdkwork-agents/crates/sdkwork-api-agents-assembly" }
+sdkwork-api-generations-assembly = { path = "../sdkwork-generations/crates/sdkwork-api-generations-assembly" }
 sdkwork-api-account-assembly = { path = "../sdkwork-account/crates/sdkwork-api-account-assembly" }
 sdkwork-api-catalog-assembly = { path = "../sdkwork-catalog/crates/sdkwork-api-catalog-assembly" }
 sdkwork-api-customerservice-assembly = { path = "../sdkwork-customerservice/crates/sdkwork-api-customerservice-assembly" }

@@ -28,6 +28,7 @@ use sdkwork_api_cloud_gateway_registry::{
 };
 use sdkwork_web_bootstrap::{ApiAssemblyContribution, ComposedApiAssembly};
 use sdkwork_web_contract::HttpMethod;
+use sdkwork_web_core::SecurityPolicy;
 use sdkwork_web_core::new_request_id;
 use serde_json::json;
 use tower::ServiceExt;
@@ -517,6 +518,21 @@ fn apply_configured_secure_response_headers(state: &GatewayState, response: Resp
     security::apply_secure_response_headers(&state.config.security, false, response)
 }
 
+fn apply_gateway_cors_headers(
+    state: &GatewayState,
+    request_headers: &HeaderMap,
+    response: &mut Response,
+) {
+    let origin = request_headers
+        .get(header::ORIGIN)
+        .and_then(|value| value.to_str().ok());
+    SecurityPolicy::apply_cors_policy_headers_from_origin(
+        &web_framework::gateway_cors_policy(&state.config),
+        origin,
+        response,
+    );
+}
+
 async fn security_middleware(
     State(state): State<Arc<GatewayState>>,
     request: Request<Body>,
@@ -524,6 +540,7 @@ async fn security_middleware(
 ) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+    let instance = format!("{} {}", method.as_str(), path.as_str());
     let headers = request.headers().clone();
     let inspection = match security::validate_request(&state.config.security, &request) {
         Ok(inspection) => inspection,
@@ -572,8 +589,10 @@ async fn security_middleware(
                 rejection.title,
                 rejection.detail.as_str(),
                 request.headers(),
+                instance.as_str(),
             );
             rejection.apply_headers(response.headers_mut());
+            apply_gateway_cors_headers(state.as_ref(), &headers, &mut response);
             return apply_configured_secure_response_headers(state.as_ref(), response);
         }
     };
@@ -617,8 +636,10 @@ async fn security_middleware(
                     rejection.title,
                     rejection.detail.as_str(),
                     &headers,
+                    instance.as_str(),
                 );
                 rejection.apply_headers(response.headers_mut());
+                apply_gateway_cors_headers(state.as_ref(), &headers, &mut response);
                 return apply_configured_secure_response_headers(state.as_ref(), response);
             }
         };
@@ -658,6 +679,7 @@ async fn traffic_middleware(
 ) -> Response {
     let method = request.method().clone();
     let path = request.uri().path().to_string();
+    let instance = format!("{} {}", method.as_str(), path.as_str());
     let span = request_span(&state.config, &request);
     let _span_guard = span.enter();
     let service_id = state
@@ -700,8 +722,10 @@ async fn traffic_middleware(
                 rejection.title,
                 rejection.detail.as_str(),
                 request.headers(),
+                instance.as_str(),
             );
             rejection.apply_headers(response.headers_mut());
+            apply_gateway_cors_headers(state.as_ref(), request.headers(), &mut response);
             return apply_configured_secure_response_headers(state.as_ref(), response);
         }
     };
@@ -738,6 +762,7 @@ async fn gateway_fallback(
     let uri = request.uri().clone();
     let headers = request.headers().clone();
     let path = uri.path().to_string();
+    let instance = format!("{} {}", method.as_str(), path.as_str());
     let descriptor = state
         .registry
         .resolve(method.as_str(), path.as_str())
@@ -827,6 +852,7 @@ async fn gateway_fallback(
                     "gateway_route_not_implemented",
                     "the matched route is owned by the gateway but no handler is registered",
                     &headers,
+                    instance.as_str(),
                 ),
                 "gateway_route_not_implemented",
             );
@@ -852,10 +878,11 @@ async fn gateway_fallback(
             if let Some(router) = state.composed_router.clone() {
                 return match router.oneshot(request).await {
                     Ok(response) => response,
-                    Err(error) => problem_response(
+                    Err(error) => problem_response_with_instance(
                         StatusCode::INTERNAL_SERVER_ERROR,
                         "composed_api_host_error",
                         format!("composed API host failed: {error}"),
+                        instance.as_str(),
                     ),
                 };
             }
@@ -869,6 +896,7 @@ async fn gateway_fallback(
                             surface.service_id
                         ),
                         &headers,
+                        instance.as_str(),
                     ),
                     "dependency_not_available",
                 );
@@ -889,6 +917,7 @@ async fn gateway_fallback(
                     "gateway_route_not_found",
                     "no SDKWork gateway route matched the request",
                     &headers,
+                    instance.as_str(),
                 ),
                 "gateway_route_not_found",
             );
@@ -939,6 +968,7 @@ fn policy_rejection_response(
     path: &str,
     headers: &HeaderMap,
 ) -> Response {
+    let instance = format!("{} {}", method, path);
     state.metrics.record_policy_rejection(
         state.config.service.name.as_str(),
         rejection.kind,
@@ -964,6 +994,7 @@ fn policy_rejection_response(
         rejection.title,
         rejection.detail.as_str(),
         headers,
+        instance.as_str(),
     );
     rejection.apply_headers(response.headers_mut());
     mark_failure_class(response, rejection.title)
@@ -1067,10 +1098,11 @@ async fn route_dependency_request(
     if let Some(router) = state.composed_router.clone() {
         return match router.oneshot(request).await {
             Ok(response) => response,
-            Err(error) => problem_response(
+            Err(error) => problem_response_with_instance(
                 StatusCode::BAD_GATEWAY,
                 "composed_dependency_error",
                 format!("composed dependency host failed: {error}"),
+                format!("{} {}", request_method, request_path).as_str(),
             ),
         };
     }
@@ -1082,18 +1114,20 @@ async fn route_dependency_request(
     {
         return match router.oneshot(request).await {
             Ok(response) => response,
-            Err(error) => problem_response(
+            Err(error) => problem_response_with_instance(
                 StatusCode::BAD_GATEWAY,
                 "embedded_dependency_error",
                 format!("embedded dependency `{}` failed: {error}", route.service_id),
+                format!("{} {}", request_method, request_path).as_str(),
             ),
         };
     }
 
-    problem_response(
+    problem_response_with_instance(
         StatusCode::INTERNAL_SERVER_ERROR,
         "embedded_dependency_not_available",
         format!("dependency `{}` has no embedded router", route.service_id),
+        format!("{} {}", request_method, request_path).as_str(),
     )
 }
 
@@ -1116,6 +1150,7 @@ struct RequestBodyRejection {
     title: &'static str,
     detail: String,
     request_id: String,
+    instance: String,
 }
 
 impl RequestBodyRejection {
@@ -1125,6 +1160,7 @@ impl RequestBodyRejection {
             self.title,
             self.detail,
             Some(self.request_id.as_str()),
+            self.instance.as_str(),
         )
     }
 }
@@ -1135,6 +1171,7 @@ async fn enforce_request_body_limit(
 ) -> Result<Request<Body>, RequestBodyRejection> {
     let (parts, body) = request.into_parts();
     let request_id = request_id_for_headers(&parts.headers);
+    let instance = format!("{} {}", parts.method.as_str(), parts.uri.path());
     let body_bytes = match to_bytes(body, max_body_bytes).await {
         Ok(bytes) => bytes,
         Err(error) => {
@@ -1157,6 +1194,7 @@ async fn enforce_request_body_limit(
                 title,
                 detail,
                 request_id,
+                instance,
             });
         }
     };
@@ -1553,12 +1591,14 @@ fn same_origin(origin: &str, host: &str) -> bool {
     origin_host.eq_ignore_ascii_case(host.trim())
 }
 
-fn problem_response(
+fn problem_response_with_instance(
     status: StatusCode,
     title: impl Into<String>,
     detail: impl Into<String>,
+    instance: &str,
 ) -> Response {
-    problem_response_with_request_id(status, title, detail, None)
+    let trace_id = new_request_id();
+    problem_response_with_context(status, title, detail, None, &trace_id, instance)
 }
 
 fn problem_response_with_request_headers(
@@ -1566,6 +1606,7 @@ fn problem_response_with_request_headers(
     title: impl Into<String>,
     detail: impl Into<String>,
     headers: &HeaderMap,
+    instance: &str,
 ) -> Response {
     let request_id = request_id_for_headers(headers);
     let trace_id = trace_id_for_headers(headers);
@@ -1574,7 +1615,8 @@ fn problem_response_with_request_headers(
         title,
         detail,
         Some(request_id.as_str()),
-        trace_id.as_deref(),
+        &trace_id,
+        instance,
     )
 }
 
@@ -1583,8 +1625,32 @@ fn problem_response_with_request_id(
     title: impl Into<String>,
     detail: impl Into<String>,
     request_id: Option<&str>,
+    instance: &str,
 ) -> Response {
-    problem_response_with_context(status, title, detail, request_id, None)
+    let trace_id = new_request_id();
+    problem_response_with_context(status, title, detail, request_id, &trace_id, instance)
+}
+
+fn error_code_for_status(status: StatusCode) -> i32 {
+    match status.as_u16() {
+        400 | 422 => 40001,
+        401 => 40101,
+        403 => 40301,
+        404 => 40401,
+        405 => 40501,
+        408 => 40801,
+        409 => 40901,
+        412 => 41201,
+        413 => 41301,
+        429 => 42901,
+        500 => 50001,
+        501 => 50011,
+        502 => 50201,
+        503 => 50301,
+        504 => 50401,
+        status if (400..500).contains(&status) => 40001,
+        _ => 50001,
+    }
 }
 
 fn problem_response_with_context(
@@ -1592,19 +1658,21 @@ fn problem_response_with_context(
     title: impl Into<String>,
     detail: impl Into<String>,
     request_id: Option<&str>,
-    trace_id: Option<&str>,
+    trace_id: &str,
+    instance: &str,
 ) -> Response {
     let mut body = serde_json::Map::new();
     body.insert("type".to_string(), json!("about:blank"));
     body.insert("title".to_string(), json!(title.into()));
     body.insert("detail".to_string(), json!(detail.into()));
     body.insert("status".to_string(), json!(status.as_u16()));
-    if let Some(trace_id) = trace_id {
-        body.insert("traceId".to_string(), json!(trace_id));
-    }
+    body.insert("code".to_string(), json!(error_code_for_status(status)));
+    body.insert("traceId".to_string(), json!(trace_id));
+    body.insert("instance".to_string(), json!(instance));
     let mut builder = Response::builder()
         .status(status)
-        .header(header::CONTENT_TYPE, "application/problem+json");
+        .header(header::CONTENT_TYPE, "application/problem+json")
+        .header("x-sdkwork-trace-id", trace_id);
     if let Some(request_id) = request_id {
         builder = builder.header("x-request-id", request_id);
     }
@@ -1613,23 +1681,52 @@ fn problem_response_with_context(
         .unwrap_or_else(|_| StatusCode::INTERNAL_SERVER_ERROR.into_response())
 }
 
-fn trace_id_for_headers(headers: &HeaderMap) -> Option<String> {
-    let traceparent = headers.get("traceparent")?.to_str().ok()?;
+fn trace_id_for_headers(headers: &HeaderMap) -> String {
+    let traceparent = match headers.get("traceparent") {
+        Some(value) => match value.to_str() {
+            Ok(value) => value,
+            Err(_) => return new_request_id(),
+        },
+        None => return new_request_id(),
+    };
+
     let mut parts = traceparent.split('-');
-    let _version = parts.next()?;
-    let trace_id = parts.next()?;
-    if trace_id.len() != 32 || trace_id.chars().all(|character| character == '0') {
-        return None;
+    let _version = match parts.next() {
+        Some(value) => value,
+        None => return new_request_id(),
+    };
+    let trace_id = match parts.next() {
+        Some(value) => value,
+        None => return new_request_id(),
+    };
+    if trace_id.len() != 32
+        || trace_id
+            .chars()
+            .any(|character| !character.is_ascii_hexdigit())
+        || trace_id.chars().all(|character| character == '0')
+    {
+        return new_request_id();
     }
-    trace_id
-        .chars()
-        .all(|character| character.is_ascii_hexdigit())
-        .then(|| trace_id.to_ascii_lowercase())
+
+    // trace-id is 32 lowercase hex digits (OpenTelemetry / W3C). Convert to
+    // UUID wire shape: 8-4-4-4-12.
+    let trace_id = trace_id.to_ascii_lowercase();
+    let uuid = format!(
+        "{}-{}-{}-{}-{}",
+        &trace_id[0..8],
+        &trace_id[8..12],
+        &trace_id[12..16],
+        &trace_id[16..20],
+        &trace_id[20..32]
+    );
+    uuid
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use axum::http::HeaderValue;
+    use serde_json::Value;
 
     #[test]
     fn log_sampling_honors_disabled_and_full_rate() {
@@ -1644,5 +1741,60 @@ mod tests {
         let second = should_sample_log(2_500, &["request-1", "POST", "/app/v3/api/auth"]);
 
         assert_eq!(first, second);
+    }
+
+    #[test]
+    fn trace_id_for_headers_formats_w3c_traceparent_as_uuid() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "traceparent",
+            HeaderValue::from_static("00-0123456789abcdef0123456789abcdef-0123456789abcdef-01"),
+        );
+
+        let trace_id = trace_id_for_headers(&headers);
+
+        assert_eq!(trace_id, "01234567-89ab-cdef-0123-456789abcdef");
+    }
+
+    #[tokio::test]
+    async fn problem_response_includes_sdkwork_problem_detail_fields() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "traceparent",
+            HeaderValue::from_static("00-0123456789abcdef0123456789abcdef-0123456789abcdef-01"),
+        );
+
+        let response = problem_response_with_request_headers(
+            StatusCode::BAD_REQUEST,
+            "credential_headers_not_allowed_on_anonymous_route",
+            "anonymous auth route must not carry credential header `access-token`",
+            &headers,
+            "POST /app/v3/api/auth/sessions",
+        );
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(
+            response.headers().get(header::CONTENT_TYPE).unwrap(),
+            "application/problem+json"
+        );
+        assert_eq!(
+            response.headers().get("x-sdkwork-trace-id").unwrap(),
+            "01234567-89ab-cdef-0123-456789abcdef"
+        );
+
+        let bytes = to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("problem body bytes");
+        let json: Value = serde_json::from_slice(&bytes).expect("problem body json");
+
+        assert_eq!(json["type"], "about:blank");
+        assert_eq!(
+            json["title"],
+            "credential_headers_not_allowed_on_anonymous_route"
+        );
+        assert_eq!(json["status"], 400);
+        assert_eq!(json["code"], 40001);
+        assert_eq!(json["instance"], "POST /app/v3/api/auth/sessions");
+        assert_eq!(json["traceId"], "01234567-89ab-cdef-0123-456789abcdef");
     }
 }

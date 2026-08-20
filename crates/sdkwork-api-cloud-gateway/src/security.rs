@@ -4,6 +4,7 @@ use axum::{
     response::Response,
 };
 use sdkwork_api_cloud_gateway_config::GatewaySecurityConfig;
+use sdkwork_web_core::registered_client_origins::is_registered_sdkwork_client_origin;
 
 /// WAF JSON body inspection budget. Bodies larger than this are skipped by
 /// the WAF stage and left to the request body limit enforcement.
@@ -211,6 +212,9 @@ fn validate_csrf(
             "state-changing request with a session cookie must declare an Origin header",
         ));
     };
+    if is_registered_sdkwork_client_origin(origin) {
+        return Ok(());
+    }
     let host = request
         .headers()
         .get(header::HOST)
@@ -300,27 +304,79 @@ fn origin_host_matches(origin: &str, host: &str) -> bool {
 }
 
 /// Anonymous auth entry points where credential headers are rejected.
-/// Matches surface-agnostic `/auth`, `/oauth`, and account-recovery paths.
+/// Keep this list intentionally narrow: many `/app/v3/api/auth/*` and
+/// `/app/v3/api/oauth/*` routes use the IAM app-api credential bootstrap
+/// flow and legitimately carry `access-token`.
 fn is_anonymous_auth_route(path: &str) -> bool {
-    const ANONYMOUS_SEGMENTS: &[&str] = &[
-        "/auth/",
-        "/oauth/",
-        "/login",
-        "/register",
-        "/signup",
-        "/signin",
-        "/verify",
-        "/verify-email",
-        "/verify_phone",
-        "/forgot-password",
-        "/reset-password",
-        "/refresh-token",
-        "/password-reset",
-        "/magic-link",
+    const ANONYMOUS_EXACT_PATHS: &[&str] = &["/app/v3/api/oauth/device_authorizations"];
+    const ANONYMOUS_PATH_PREFIXES: &[&str] = &[
+        "/app/v3/api/oauth/device_authorizations/",
+        "/oauth/device_authorizations/",
     ];
-    ANONYMOUS_SEGMENTS
+    if ANONYMOUS_EXACT_PATHS
         .iter()
-        .any(|segment| path.contains(segment))
+        .any(|candidate| path.eq_ignore_ascii_case(candidate))
+    {
+        return true;
+    }
+    ANONYMOUS_PATH_PREFIXES
+        .iter()
+        .any(|prefix| path.starts_with(prefix))
+        && (path.contains("/session_exchanges") || path.ends_with("/token"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn bootstrap_auth_session_routes_are_not_treated_as_anonymous() {
+        for path in [
+            "/app/v3/api/auth/sessions",
+            "/app/v3/api/auth/sessions/login_context_selection",
+            "/app/v3/api/auth/sessions/organization_selection",
+            "/app/v3/api/auth/sessions/refresh",
+            "/app/v3/api/oauth/sessions",
+            "/app/v3/api/oauth/sessions/external",
+            "/app/v3/api/oauth/callbacks/wechat",
+        ] {
+            assert!(
+                !is_anonymous_auth_route(path),
+                "expected bootstrap route `{path}` to allow credential headers"
+            );
+        }
+    }
+
+    #[test]
+    fn anonymous_device_flow_routes_still_reject_credential_headers() {
+        for path in [
+            "/app/v3/api/oauth/device_authorizations",
+            "/app/v3/api/oauth/device_authorizations/abc/session_exchanges",
+        ] {
+            assert!(
+                is_anonymous_auth_route(path),
+                "expected anonymous route `{path}` to reject credential headers"
+            );
+        }
+    }
+
+    #[test]
+    fn csrf_guard_allows_registered_desktop_client_origins() {
+        let config = GatewaySecurityConfig {
+            csrf_guard_enabled: true,
+            ..GatewaySecurityConfig::default()
+        };
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/auth/sessions")
+            .header(header::HOST, "api-dev.birdcoder.com")
+            .header(header::ORIGIN, "app://dsh")
+            .header(header::COOKIE, "session=abc")
+            .body(Body::empty())
+            .expect("csrf request");
+
+        validate_csrf(&config, &request).expect("registered desktop origin");
+    }
 }
 
 fn inspect_waf(

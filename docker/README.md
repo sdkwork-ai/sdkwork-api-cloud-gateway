@@ -6,17 +6,17 @@ Multi-environment standalone container deployment for WSL Ubuntu / Linux hosts.
 
 ```bash
 # 1. Provision databases (sdkwork_ai_dev/test/staging/prod)
-pnpm docker:provision:db
+pnpm db:postgres:provision
 
 # 2. Configure secrets in docker/env/<environment>.env (from *.env.example)
 
 # 3. Build image and deploy
 pnpm build:container
-pnpm docker:deploy development --validate
-# or: pnpm docker:deploy all --validate
+pnpm deploy:apply:standalone -- development --validate
+# or: pnpm deploy:apply:standalone -- all --validate
 
 # 4. Install nginx port-80 sites
-sudo pnpm docker:nginx:install all
+sudo pnpm nginx:install -- all
 ```
 
 ## Port and domain matrix
@@ -41,11 +41,13 @@ docker/
 
 ## Commands
 
-| Script | Purpose |
-| --- | --- |
-| `scripts/deploy-docker-environment.sh` | Start/stop one or all environments (external mode) |
-| `scripts/install-nginx-sites.sh` | Install nginx sites to `/etc/nginx/sites-enabled/sdkwork/` |
-| `scripts/provision-external-databases.sh` | Create sdkwork-specs workspace databases on external PG |
-| `scripts/package-docker-environments.sh` | Bundle per-env deploy packages to `dist/docker-packages/` |
+| Public script | Implementation | Purpose |
+| --- | --- | --- |
+| `pnpm deploy:apply:standalone -- <env\|all>` | `scripts/deploy-docker-environment.sh` | Start/stop one or all standalone environments (external mode) |
+| `pnpm nginx:install -- all` | `scripts/install-nginx-sites.sh` | Install nginx sites to `/etc/nginx/sites-enabled/sdkwork/` |
+| `pnpm db:postgres:provision` | `scripts/provision-external-databases.sh` | Create sdkwork-specs workspace databases on external PG |
+| `pnpm install:wsl` | `scripts/setup-wsl-deployment.sh` | Rebuild image and redeploy all WSL environments |
+| `pnpm install:hosts` | `scripts/bind-windows-hosts.ps1` | Bind Windows hosts entries |
+| — | `scripts/package-docker-environments.sh` | Bundle per-env deploy packages to `dist/docker-packages/` |
 
 Full operator guide: [`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`](../docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md).

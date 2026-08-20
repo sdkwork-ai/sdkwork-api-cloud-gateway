@@ -57,7 +57,7 @@ test('docker examples bind exactly the registered host family', () => {
     assert.equal(resolved.GATEWAY_IM_ALLOW_ALL_PRINCIPALS, 'false');
     assert.match(resolved.GATEWAY_IM_ID_NODE_ID, /^(?:[0-9]|[1-9][0-9]{1,2}|10[01][0-9]|102[0-3])$/u);
     assert.ok(Number.parseInt(resolved.GATEWAY_KNOWLEDGEBASE_TENANT_ID, 10) > 0);
-    assert.ok(Number.parseInt(resolved.GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID, 10) > 0);
+    assert.equal(resolved.GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID, undefined);
     assert.match(resolved.GATEWAY_WEBSERVER_ACME_DIRECTORY_URL, /^https:\/\//u);
     assert.ok(resolved.GATEWAY_WEBSERVER_ACME_CONTACT_EMAIL.includes('@'));
     assert.ok(resolved.GATEWAY_WEBSERVER_NODE_UUID.length > 0);
@@ -177,7 +177,6 @@ test('container composition wires the IM Knowledgebase client through strict RPC
   assert.match(compose, /SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED: "true"/u);
   assert.match(compose, /SDKWORK_KNOWLEDGEBASE_RPC_SPIFFE_TRUST_DOMAIN: sdkwork\.internal/u);
   assert.match(compose, /SDKWORK_KNOWLEDGEBASE_TENANT_ID:/u);
-  assert.match(compose, /SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID:/u);
   assert.match(compose, /SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone/u);
   assert.match(compose, /SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE:/u);
   assert.match(compose, /SDKWORK_WEBSERVER_ENVIRONMENT:/u);

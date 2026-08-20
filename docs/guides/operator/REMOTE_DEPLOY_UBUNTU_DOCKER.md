@@ -137,12 +137,11 @@ cp docker/env/production.env.example docker/env/production.env
 pnpm build:container
 
 # 预检（矩阵校验域名、库名、外连必填项）
-pnpm check:container-deployment -- --matrix --compose
+pnpm check:container-deployment
 
 # 启动单环境或全部环境（外连模式）
-chmod +x scripts/deploy-docker-environment.sh
-scripts/deploy-docker-environment.sh development --validate
-scripts/deploy-docker-environment.sh all --validate
+pnpm deploy:apply:standalone -- development --validate
+pnpm deploy:apply:standalone -- all --validate
 ```
 
 等价手动命令：
@@ -157,8 +156,7 @@ docker compose --env-file docker/env/development.env \
 
 ```bash
 sudo apt install -y nginx
-chmod +x scripts/install-nginx-sites.sh
-sudo scripts/install-nginx-sites.sh all
+sudo pnpm nginx:install -- all
 ```
 
 各站点将 `server_name` 三品牌别名代理到对应宿主端口：

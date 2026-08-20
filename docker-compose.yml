@@ -98,7 +98,6 @@ services:
       SDKWORK_KNOWLEDGEBASE_OPERATOR_ID: sdkwork-knowledgebase
       SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
-      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
@@ -148,7 +147,7 @@ services:
       # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical
       # shared key (SOURCE_CONFIG_SPEC) resolved by both the gateway and the
       # IAM web adapter.
-      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://api-dev.sdkwork.com,http://api-dev.birdcoder.com,http://api-dev.dtupay.com,http://localhost:3910,http://127.0.0.1:3910,app://dsh,app://birdcoder,app://sdkwork,app://dtupay}
+      SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-http://api-dev.sdkwork.com,http://api-dev.birdcoder.com,http://api-dev.dtupay.com,http://localhost:3910,http://127.0.0.1:3910,app://dsh,app://birdcoder,app://sdkwork,app://dtupay,tauri://localhost,https://servicewechat.com}
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.
@@ -211,7 +210,6 @@ services:
       # Knowledgebase deployment scope (production-like runtime requires them).
       SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
-      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
       SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/knowledgebase-secrets.key
       # Managed Knowledgebase Provider credentials resolve secret:// locators
       # through Vault first when configured, then this operator-managed mount.
