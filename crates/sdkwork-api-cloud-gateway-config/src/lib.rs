@@ -2,8 +2,8 @@
 
 use std::{collections::HashMap, fs, path::Path};
 
-use serde::{Deserialize, Serialize};
 use sdkwork_web_core::registered_client_origins::merge_registered_sdkwork_client_origins;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub const DEFAULT_GATEWAY_SERVICE_NAME: &str = "sdkwork-api-cloud-gateway";

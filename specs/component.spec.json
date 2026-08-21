@@ -2896,7 +2896,7 @@
         "/internal/v3/api/web"
       ],
       "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
-      "cargoFeature": "foundation-web-server",
+      "cargoFeature": "foundation-webserver",
       "cargoDependency": "sdkwork-api-webserver-assembly",
       "runtimeModes": [
         "embedded"

@@ -28,8 +28,8 @@ use sdkwork_api_cloud_gateway_registry::{
 };
 use sdkwork_web_bootstrap::{ApiAssemblyContribution, ComposedApiAssembly};
 use sdkwork_web_contract::HttpMethod;
-use sdkwork_web_core::SecurityPolicy;
 use sdkwork_web_core::new_request_id;
+use sdkwork_web_core::SecurityPolicy;
 use serde_json::json;
 use tower::ServiceExt;
 use tracing::info;

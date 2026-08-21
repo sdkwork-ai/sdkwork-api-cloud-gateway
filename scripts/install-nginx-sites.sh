@@ -75,5 +75,13 @@ else
 fi
 
 nginx -t
-systemctl reload nginx
-echo "nginx reloaded; port 80 sites are active under $nginx_target"
+
+# Reload nginx in a way that works on both systemd hosts and WSL (no systemd).
+if command -v systemctl >/dev/null 2>&1 && systemctl cat nginx >/dev/null 2>&1; then
+  systemctl reload nginx
+elif command -v service >/dev/null 2>&1; then
+  service nginx reload
+else
+  nginx -s reload
+fi
+echo "nginx reloaded; port 80/443 sites are active under $nginx_target"

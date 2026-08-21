@@ -63,3 +63,9 @@ Thumbs.db
 # Per-host PostgreSQL CA material (public certs; regenerate per deployment host)
 docker/ca/
 !docker/ca/README.md
+
+# Generated self-signed TLS certs (per-environment, local dev only)
+docker/certs/
+
+# WorkBuddy local metadata (never committed)
+/.workbuddy/

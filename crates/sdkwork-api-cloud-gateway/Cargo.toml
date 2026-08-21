@@ -81,7 +81,7 @@ foundation-documents = ["dep:sdkwork-api-documents-assembly",
 foundation-modelkit = ["dep:sdkwork-api-modelkit-assembly"]
 foundation-prompts = ["dep:sdkwork-api-prompts-assembly",
 ]
-foundation-web-server = ["dep:sdkwork-api-webserver-assembly"]
+foundation-webserver = ["dep:sdkwork-api-webserver-assembly"]
 foundation-browser = ["dep:sdkwork-api-browser-assembly"]
 foundation-knowledgebase = [
     "dep:sdkwork-api-knowledgebase-assembly",
@@ -125,7 +125,7 @@ platform-foundation-suite = [
     "foundation-documents",
     "foundation-modelkit",
     "foundation-prompts",
-    "foundation-web-server",
+    "foundation-webserver",
     "foundation-browser",
     "foundation-knowledgebase",
     "foundation-llm",

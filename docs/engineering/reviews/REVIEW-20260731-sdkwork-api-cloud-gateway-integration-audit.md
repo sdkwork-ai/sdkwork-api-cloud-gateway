@@ -257,7 +257,7 @@ the workspace gateway-alignment result. `API findings` is the operation-pattern 
 | sdkwork-shop | 2 | no | pass | 303 |
 | sdkwork-skills | 2 | yes | pass | 0 |
 | sdkwork-voice | 2 | no | fail | 1 |
-| sdkwork-web-server | 1 | no | pass | 0 |
+| sdkwork-webserver | 1 | no | pass | 0 |
 | sdkwork-xiangqi | 2 | no | pass | 4 |
 
 Important: `Mounted=yes` is not a pass verdict. Documents has 26 API findings; IAM has an assembly

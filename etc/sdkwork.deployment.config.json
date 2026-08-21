@@ -66,5 +66,6 @@
     "cloud.production": {
       "config": "topology/cloud.production.env"
     }
-  }
+  },
+  "topology": "../specs/topology.spec.json"
 }

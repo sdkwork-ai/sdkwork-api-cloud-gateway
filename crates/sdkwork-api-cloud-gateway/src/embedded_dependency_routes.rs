@@ -3,7 +3,7 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::ApiAssemblyContribution;
-#[cfg(any(feature = "foundation-cloudrouter", feature = "foundation-web-server"))]
+#[cfg(any(feature = "foundation-cloudrouter", feature = "foundation-webserver"))]
 use sdkwork_web_contract::enrich_owned_openapi_document;
 
 use crate::GatewayRuntimeError;
@@ -205,10 +205,9 @@ pub async fn bootstrap_embedded_dependency_contributions(
 
     #[cfg(feature = "foundation-assets")]
     if workspace_surface_enabled(config, "sdkwork-assets") {
-        let contribution =
-            sdkwork_api_assets_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-assets", message))?;
+        let contribution = sdkwork_api_assets_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-assets", message))?;
         contributions.push(contribution);
     }
 
@@ -360,7 +359,7 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
-    #[cfg(feature = "foundation-web-server")]
+    #[cfg(feature = "foundation-webserver")]
     if workspace_surface_enabled(config, "sdkwork-webserver") {
         let assembly = sdkwork_api_webserver_assembly::assemble_api_router(
             sdkwork_api_webserver_assembly::ApiAssemblyContext::cloud_gateway(),
