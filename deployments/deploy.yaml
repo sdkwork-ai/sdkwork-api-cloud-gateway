@@ -40,6 +40,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-dev.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-dev.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-dev.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-dev.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.86offer.cn
     packages: []
     overrides:
       topology:
@@ -85,6 +117,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api.86offer.cn
     packages: []
     overrides:
       topology:
@@ -130,6 +194,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-staging.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-staging.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-staging.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-staging.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.86offer.cn
     packages: []
     overrides:
       topology:
@@ -175,6 +271,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-test.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-test.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-test.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-test.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-test.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-test.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-test.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-test.86offer.cn
     packages: []
     overrides:
       topology:
@@ -220,6 +348,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-dev.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-dev.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-dev.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-dev.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.86offer.cn
     packages: []
     overrides:
       topology:
@@ -265,6 +425,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api.86offer.cn
     packages: []
     overrides:
       topology:
@@ -310,6 +502,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-staging.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-staging.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-staging.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-staging.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.86offer.cn
     packages: []
     overrides:
       topology:
@@ -355,6 +579,38 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.cn
+      - tls: skubc.com
+        mode: web
+        web: adaptive
+        domain: api-test.skubc.com
+      - tls: skubc.cn
+        mode: web
+        web: adaptive
+        domain: api-test.skubc.cn
+      - tls: zowalk.com
+        mode: web
+        web: adaptive
+        domain: api-test.zowalk.com
+      - tls: zowalk.cn
+        mode: web
+        web: adaptive
+        domain: api-test.zowalk.cn
+      - tls: offer86.com
+        mode: web
+        web: adaptive
+        domain: api-test.offer86.com
+      - tls: offer86.cn
+        mode: web
+        web: adaptive
+        domain: api-test.offer86.cn
+      - tls: 86offer.com
+        mode: web
+        web: adaptive
+        domain: api-test.86offer.com
+      - tls: 86offer.cn
+        mode: web
+        web: adaptive
+        domain: api-test.86offer.cn
     packages: []
     overrides:
       topology:
