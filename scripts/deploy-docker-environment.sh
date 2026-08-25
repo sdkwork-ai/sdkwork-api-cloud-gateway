@@ -67,7 +67,6 @@ deploy_one() {
     --env-file "$env_file"
     -p "$project"
     -f docker-compose.yml
-    -f docker-compose.external.yml
   )
 
   if [ "$down" = true ]; then

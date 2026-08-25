@@ -1,11 +1,10 @@
 #!/bin/bash
 # Package per-environment docker deployment bundles.
 #
-# Each bundle is self-contained: the compose files, the environment's real
-# .env (external PostgreSQL/Redis via host.docker.internal), the nginx site
-# config, and an install README. Ports differ per environment (3910-3913);
-# the external PostgreSQL/Redis instance is shared while database+schema
-# differ per environment (sdkwork_ai_dev/test/staging/prod).
+# Each bundle is self-contained: compose + env (external PostgreSQL/Redis via
+# host.docker.internal) + Ubuntu-aligned config.toml. Ports differ per
+# environment (3910-3913). Reverse proxy is owned by sdkwork-webserver — this
+# bundle does not ship nginx site mappings.
 #
 # Usage: scripts/package-docker-environments.sh
 # Output: dist/docker-packages/<environment>/
@@ -18,34 +17,34 @@ mkdir -p "$dist_root"
 
 for env in development test staging production; do
   target="$dist_root/$env"
-  mkdir -p "$target/nginx"
+  mkdir -p "$target"
   install -m 0644 "$repo_root/docker-compose.yml" "$target/docker-compose.yml"
-  install -m 0644 "$repo_root/docker-compose.external.yml" "$target/docker-compose.external.yml"
   install -m 0640 "$repo_root/docker/env/$env.env" "$target/.env"
-  install -m 0644 "$repo_root/docker/config/sdkwork-api-cloud-gateway.toml" "$target/sdkwork-api-cloud-gateway.toml"
+  install -m 0644 "$repo_root/docker/config/config.toml" "$target/config.toml"
 
   case "$env" in
-    development) domain=api-dev.sdkwork.com ;;
-    test) domain=api-test.sdkwork.com ;;
-    staging) domain=api-staging.sdkwork.com ;;
-    production) domain=api.sdkwork.com ;;
+    development) port=3910 ;;
+    test) port=3911 ;;
+    staging) port=3912 ;;
+    production) port=3913 ;;
   esac
-  install -m 0644 "$repo_root/docker/nginx/$domain.conf" "$target/nginx/$domain.conf"
 
   cat > "$target/README.md" <<EOF
 # SDKWork API Cloud Gateway — $env docker deployment bundle
 
 - Environment: $env (profile \`standalone.$env\`)
-- Host port: ${env_port:-} (see .env GATEWAY_HOST_PORT)
-- External dependencies: shared PostgreSQL (host.docker.internal:5432) and
-  Redis (host.docker.internal:6380) — same instance across environments,
-  per-environment database+schema (see GATEWAY_POSTGRES_DB/SCHEMA).
-- Nginx site: nginx/$domain.conf -> /etc/nginx/sites-enabled/sdkwork/
+- Host port: $port (host mapping $port -> 3900 in the container)
+- Config mount: \`config.toml\` -> \`/etc/sdkwork/api_gateway/config.toml\`
+  (same path as Ubuntu install; APPLICATION_DEPLOY_LAYOUT_SPEC)
+- External dependencies: PostgreSQL (\`host.docker.internal:5432\`) and
+  Redis (\`host.docker.internal:6380\`, **no password**), per-environment
+  database+schema (see GATEWAY_POSTGRES_DB/SCHEMA).
+- Reverse proxy: configure the independent \`sdkwork-webserver\` deployment
+  to upstream \`127.0.0.1:$port\` — this gateway bundle does not install nginx.
 
 ## Deploy
 
-    docker compose --env-file .env -p sdkwork-gateway-$env \\
-      -f docker-compose.yml -f docker-compose.external.yml up -d
+    docker compose --env-file .env -p sdkwork-gateway-$env -f docker-compose.yml up -d
 
 Or from the repository root:
 
@@ -53,17 +52,9 @@ Or from the repository root:
 
 ## Verify
 
-    curl -fsS http://127.0.0.1:\$GATEWAY_HOST_PORT/healthz
+    curl -fsS http://127.0.0.1:$port/healthz
 EOF
 
-  # README host port per environment
-  case "$env" in
-    development) port=3910 ;;
-    test) port=3911 ;;
-    staging) port=3912 ;;
-    production) port=3913 ;;
-  esac
-  sed -i "s/^\\- Host port: .*/\\- Host port: $port (host mapping $port -> 3900 in the container)/" "$target/README.md"
   echo "packaged $env -> $target"
 done
 

@@ -90,7 +90,10 @@ foundation-llm = ["dep:sdkwork-api-llm-assembly"]
 foundation-mahjong = ["dep:sdkwork-api-mahjong-assembly"]
 foundation-doudizhu = ["dep:sdkwork-api-doudizhu-assembly"]
 foundation-xiangqi = ["dep:sdkwork-api-xiangqi-assembly"]
-platform-foundation-suite = [
+# Container images deliberately omit foundation-webserver: reverse proxy and
+# site edge belong to host nginx / the separate sdkwork-webserver product, not
+# the gateway container process (see docker/README.md).
+platform-foundation-suite-container = [
     "foundation-appbase",
     "manager-operations-suite",
     "foundation-course",
@@ -125,7 +128,6 @@ platform-foundation-suite = [
     "foundation-documents",
     "foundation-modelkit",
     "foundation-prompts",
-    "foundation-webserver",
     "foundation-browser",
     "foundation-knowledgebase",
     "foundation-llm",
@@ -133,6 +135,10 @@ platform-foundation-suite = [
     "foundation-doudizhu",
     "foundation-xiangqi",
     "foundation-generations",
+]
+platform-foundation-suite = [
+    "platform-foundation-suite-container",
+    "foundation-webserver",
 ]
 
 [dependencies]

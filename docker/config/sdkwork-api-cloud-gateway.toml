@@ -1,7 +1,7 @@
 # SDKWork API Cloud Gateway — container runtime config (host-mounted override).
 #
 # This file is mounted read-only at the canonical container config path
-#   /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
+#   /etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml
 # (RUNTIME_DIRECTORY_SPEC §4.5 Container Scope). It mirrors the packaged
 # production template so the mounted copy is the operator-visible default;
 # edit it to change settings that environment variables do not cover.
@@ -19,7 +19,7 @@
 # snowflake node id, payment master key. Values set there override this file.
 #
 # Secrets never belong here: mount them under
-# /run/secrets/sdkwork/api-gateway/<secret-name> (container secret mount) and
+# /run/secrets/sdkwork/api_gateway/<secret-name> (container secret mount) and
 # reference the file path from config, or inject SDKWORK_*_FILE env pointers
 # (ENVIRONMENT_SPEC §7.3, RUNTIME_DIRECTORY_SPEC §11).
 

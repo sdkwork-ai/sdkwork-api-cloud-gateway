@@ -9,6 +9,19 @@
   sidecar；仅监听 `127.0.0.1:50054`，并通过持久化 mTLS 和签名调用上下文与
   网关中的 IM 模块通信。
 
+安装路径遵循 `topology.applicationCode = api_gateway`
+（`APPLICATION_DEPLOY_LAYOUT_SPEC` / `RUNTIME_DIRECTORY_SPEC` §4.1）：
+
+| Purpose | Path |
+| --- | --- |
+| Config | `/etc/sdkwork/api_gateway/config.toml` |
+| Process env | `/etc/sdkwork/api_gateway/api_gateway.env` |
+| Secrets | `/etc/sdkwork/api_gateway/secrets/` |
+| Data | `/var/lib/sdkwork/api_gateway` |
+| Install | `/opt/sdkwork/api_gateway` |
+
+与 Docker 容器布局一致（容器 secrets 在 `/run/secrets/sdkwork/api_gateway`）。
+
 ## 安装步骤（Ubuntu）
 
 安装前先校验工作流发布的归档 sidecar 和 detached signature：
@@ -28,30 +41,42 @@ openssl dgst -sha256 \
 provenance 和 `.sdkwork/evidence/<package-id>.json`。artifact evidence 的 digest、版本、
 source commit、package id、deployment profile 与 runtime target 必须与待安装归档一致。
 
+推荐使用包内安装器（落位 `config.toml` + `api_gateway.env` + secrets）：
+
 ```bash
-# 1. 解压服务包到安装根（归档安装规范路径，RUNTIME_DIRECTORY_SPEC §4.1）
-sudo mkdir -p /opt/sdkwork/api-gateway
+sudo bash scripts/install-ubuntu.sh \
+  --environment production \
+  --deployment-profile standalone
+```
+
+手工步骤（与安装器等价）：
+
+```bash
+# 1. 解压服务包到安装根
+sudo mkdir -p /opt/sdkwork/api_gateway
 sudo tar -xzf sdkwork-api-cloud-gateway-<version>-linux-x64-standalone-server.tar.gz \
-  -C /opt/sdkwork/api-gateway --strip-components=1
+  -C /opt/sdkwork/api_gateway --strip-components=1
 
-# 2. 创建系统用户与运行时目录（RUNTIME_DIRECTORY_SPEC §4.1）
+# 2. 创建系统用户与运行时目录
 sudo groupadd --system sdkwork || true
-sudo useradd --system --gid sdkwork --home-dir /opt/sdkwork/api-gateway sdkwork || true
-sudo install -d -o root -g sdkwork -m 0750 /etc/sdkwork/api-gateway
-sudo install -d -o sdkwork -g sdkwork -m 0750 /var/lib/sdkwork/api-gateway \
-  /var/log/sdkwork/api-gateway /var/cache/sdkwork/api-gateway /run/sdkwork/api-gateway
+sudo useradd --system --gid sdkwork --home-dir /opt/sdkwork/api_gateway sdkwork || true
+sudo install -d -o root -g sdkwork -m 0750 /etc/sdkwork/api_gateway \
+  /etc/sdkwork/api_gateway/secrets
+sudo install -d -o sdkwork -g sdkwork -m 0750 /var/lib/sdkwork/api_gateway \
+  /var/log/sdkwork/api_gateway /var/cache/sdkwork/api_gateway /run/sdkwork/api_gateway
 
-# 3. 落位运行时配置（模板 → 规范路径）与环境覆盖文件（0640）
+# 3. 落位运行时配置（APPLICATION_DEPLOY_LAYOUT_SPEC: config.toml）
 sudo install -o root -g sdkwork -m 0640 \
   config/sdkwork-api-cloud-gateway.production.toml \
-  /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
-sudo touch /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
-sudo chmod 0640 /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
-sudo editor /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
+  /etc/sdkwork/api_gateway/config.toml
+sudo install -o root -g sdkwork -m 0640 /dev/null \
+  /etc/sdkwork/api_gateway/api_gateway.env
+sudo editor /etc/sdkwork/api_gateway/api_gateway.env
 #   SDKWORK_DATABASE_* 连接注入（密码走 /etc/sdkwork/database/database.secret
 #   或 SDKWORK_DATABASE_PASSWORD_FILE，禁止写入本文件，PACKAGING_SPEC §5.5）
+#   Redis：外部实例、无密码（空 SDKWORK_CLOUDROUTER_REDIS_PASSWORD）
 
-# 4. 安装服务单元并启动（PACKAGING_SPEC §5.5 服务名 sdkwork-api-gateway）
+# 4. 安装服务单元并启动
 sudo install -o root -g root -m 0644 \
   sdkwork-api-gateway.service sdkwork-knowledgebase-rpc.service \
   /usr/lib/systemd/system/
@@ -71,25 +96,21 @@ sudo journalctl -u sdkwork-api-gateway -f
 
 ## 端口与环境选择
 
-- 直接部署（本单元，development）：`127.0.0.1:3900`（默认
-  `config/sdkwork-api-cloud-gateway.development.toml`）。
-- 测试环境直接部署：把 `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE` 指向
-  `config/sdkwork-api-cloud-gateway.test.toml`（`127.0.0.1:3906`），数据库切到
-  `sdkwork_ai_test`。
-- 生产环境直接部署：使用 `config/sdkwork-api-cloud-gateway.production.toml`
-  （`0.0.0.0:3900`），仅在未启用 Docker 容器部署（3910-3913）时使用。
-- Docker 容器部署占 391x 段（3910/3911/3912/3913 → 容器内 3900），与本单元共存时
-  互不冲突；IM 实时平面 opt-in 监听占 1900x 段（TCP 19000 / UDP 19001 /
-  QUIC 19002）。完整矩阵见 `deployments/README.md`。
+- 直接部署（本单元，development）：`127.0.0.1:3900`
+- 测试环境直接部署：`127.0.0.1:3906`（`etc` / TOML 环境绑定）
+- 生产环境直接部署：`0.0.0.0:3900`
+- Docker 容器部署占 391x 段（3910/3911/3912/3913 → 容器内 3900）
+
+完整矩阵见 `deployments/README.md`。
 
 ## 规范要点
 
 - 单元文件不内嵌环境赋值（`PACKAGING_SPEC.md` §5.5）：安装期生成的值一律放
-  `EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env`。
+  `EnvironmentFile=/etc/sdkwork/api_gateway/api_gateway.env`。
 - 数据库凭据禁止写入 env 文件、单元文件或配置模板；通过
   `password_file` / `/etc/sdkwork/database/database.secret` / 平台密钥注入。
-- nginx 站点文件放 `/etc/nginx/sites-enabled/sdkwork/<domain>.conf`，上游指向
-  `http://127.0.0.1:3900`（`NGINX_SPEC.md`）。
+- **本网关不安装 nginx 站点映射。** 公网反向代理由独立产品
+  `sdkwork-webserver` 配置并对上游 `GATEWAY_HOST_PORT` / `127.0.0.1:3900` 转发。
 
 完整的多 OS（Linux/Windows/macOS/容器）安装与配置规范见
 `docs/guides/operator/INSTALLATION_STANDARDS.md`。

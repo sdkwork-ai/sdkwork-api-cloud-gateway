@@ -1,95 +1,13 @@
-# sdkwork-api-cloud-gateway external-dependency mode override.
+# Compatibility shim: external PostgreSQL/Redis is now the default in
+# docker-compose.yml (RUNTIME_DIRECTORY_SPEC §4.5). Keeping this file lets
+# existing operator commands that pass `-f docker-compose.external.yml`
+# continue to work without behavioral change.
 #
-# One override serves BOTH external-dependency postures (choose via .env):
+# Prefer:
+#   docker compose --env-file docker/env/<env>.env -f docker-compose.yml up -d
 #
-#   ② Remote/remote managed services — PostgreSQL/Redis already exist outside
-#      this composition (cloud databases, existing installations):
-#        GATEWAY_POSTGRES_HOST=db.internal.example.com
-#        GATEWAY_CLOUDROUTER_REDIS_HOST=redis.internal.example.com
-#
-#   ③ Ubuntu host-native services — the server itself runs apt-installed
-#      postgresql/redis-server (no containers). Point the gateway at the docker
-#      host loopback through the host-gateway extra host below:
-#        GATEWAY_POSTGRES_HOST=host.docker.internal
-#        GATEWAY_CLOUDROUTER_REDIS_HOST=host.docker.internal
-#      Host-side prerequisites: PostgreSQL must listen on an interface the
-#      docker bridge can reach (listen_addresses + pg_hba), carry the `vector`
-#      extension (postgresql-14-pgvector etc.), and have the canonical database,
-#      same-named role/schema, and schema-local vector extension provisioned by
-#      docker/postgres/external-schema.sql; Redis
-#      must bind beyond 127.0.0.1 (bind 0.0.0.0 or the bridge interface).
-#
-# Mode ① (built-in postgres/redis containers) stays the default: plain
-# `docker compose up -d` without this override.
-#
-# Start either external posture with:
-#
-#   docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
-#
-# and configure the connection through .env (GATEWAY_POSTGRES_*,
-# GATEWAY_CLOUDROUTER_REDIS_*). The built-in postgres/redis services are moved
-# to a never-enabled profile so they are NOT started by this composition; the
-# gateway's internal dependency wiring is reset. The external PostgreSQL must
-# already contain the canonical database with its same-named role/schema and
-# schema-local vector extension (see docker/postgres/external-schema.sql; run
-# it per environment, e.g. with `-v db=sdkwork_ai_dev`,
-# `-v db=sdkwork_ai_test`, or `-v db=sdkwork_ai_prod`).
+# Optional in-compose databases:
+#   docker compose --profile embedded -f docker-compose.yml -f docker-compose.embedded.yml up -d
 
-services:
-  postgres:
-    profiles: ["external-disabled"]
-
-  redis:
-    profiles: ["external-disabled"]
-
-  knowledgebase-rpc:
-    depends_on: !reset []
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    environment:
-      # TLS-required environments (staging/production) verify the external
-      # PostgreSQL server certificate against the injected CA bundle; dev/test
-      # stay plaintext (sslmode=disable) and keep the system bundle.
-      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
-    volumes:
-      # Combined trust bundle (system CAs + the deployment's private PostgreSQL
-      # CA, generated per host into docker/ca/postgres-ca-bundle.crt). Empty
-      # GATEWAY_POSTGRES_SSL_CERT_FILE leaves the bundle unused.
-      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
-
-  gateway:
-    depends_on: !override
-      knowledgebase-rpc:
-        condition: service_healthy
-    environment:
-      SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:?GATEWAY_POSTGRES_HOST is required in external mode}
-      SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
-      SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:?GATEWAY_POSTGRES_DB is required in external mode}
-      SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:?GATEWAY_POSTGRES_SCHEMA is required in external mode}
-      SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:?GATEWAY_POSTGRES_USER is required in external mode}
-      SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-}
-      SDKWORK_DATABASE_PASSWORD_FILE: ${GATEWAY_POSTGRES_PASSWORD_FILE:-}
-      # Managed/external databases use the image system trust store by
-      # default. Mount a private CA (GATEWAY_POSTGRES_CA_FILE_MOUNT) and set
-      # GATEWAY_POSTGRES_CA_FILE + GATEWAY_POSTGRES_SSL_CERT_FILE when the
-      # external service is signed by an internal authority; the entrypoint
-      # merges the CA into the trust bundle at
-      # /run/sdkwork/api-gateway/postgres-ca-bundle.crt (RUNTIME_DIRECTORY_SPEC
-      # §11; the generated bundle path is enforced by the entrypoint).
-      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
-      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
-      SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}
-      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
-      SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-}
-      SDKWORK_CLOUDROUTER_REDIS_PASSWORD_FILE: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD_FILE:-}
-      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/1}
-      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://${GATEWAY_CLOUDROUTER_REDIS_HOST:?GATEWAY_CLOUDROUTER_REDIS_HOST is required in external mode}:${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}/2}
-    volumes:
-      # Combined trust bundle (system CAs + the deployment's private PostgreSQL
-      # CA, generated per host into docker/ca/postgres-ca-bundle.crt). Empty
-      # GATEWAY_POSTGRES_SSL_CERT_FILE leaves the bundle unused.
-      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
-    extra_hosts:
-      # Lets the gateway reach a database/redis running on the docker host
-      # (e.g. another WSL service or a Windows host service).
-      - "host.docker.internal:host-gateway"
+# No-op overlay (compose requires at least one top-level key).
+name: sdkwork-api-cloud-gateway-external-shim

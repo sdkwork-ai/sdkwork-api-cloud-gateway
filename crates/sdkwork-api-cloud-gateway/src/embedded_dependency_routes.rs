@@ -359,8 +359,13 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(contribution);
     }
 
+    // Container runtime never boots sdkwork-webserver: reverse proxy is host
+    // nginx (`deployments/webserver/` / `docker/nginx/`), and the Web Server
+    // product runs as its own containers when needed.
     #[cfg(feature = "foundation-webserver")]
-    if workspace_surface_enabled(config, "sdkwork-webserver") {
+    if workspace_surface_enabled(config, "sdkwork-webserver")
+        && !container_runtime_skips_webserver()
+    {
         let assembly = sdkwork_api_webserver_assembly::assemble_api_router(
             sdkwork_api_webserver_assembly::ApiAssemblyContext::cloud_gateway(),
         )
@@ -557,6 +562,13 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
         .dependency_surfaces
         .iter()
         .any(|surface| surface.workspace == workspace)
+}
+
+fn container_runtime_skips_webserver() -> bool {
+    match std::env::var("SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET") {
+        Ok(value) => value.eq_ignore_ascii_case("container"),
+        Err(_) => false,
+    }
 }
 
 /// Bootstraps the embedded IM realtime plane and the IM API assembly wired to

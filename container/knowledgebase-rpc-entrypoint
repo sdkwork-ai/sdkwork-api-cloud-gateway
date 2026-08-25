@@ -1,13 +1,15 @@
 #!/bin/sh
 set -eu
 
-secrets_root=${SDKWORK_KNOWLEDGEBASE_RPC_SECRETS_ROOT:-/run/secrets/sdkwork/api-gateway/knowledgebase-rpc}
+# Paths follow topology.applicationCode `api_gateway`
+# (APPLICATION_DEPLOY_LAYOUT_SPEC / RUNTIME_DIRECTORY_SPEC §4.5).
+secrets_root=${SDKWORK_KNOWLEDGEBASE_RPC_SECRETS_ROOT:-/run/secrets/sdkwork/api_gateway/knowledgebase-rpc}
 provision=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
 
 case "$secrets_root" in
-  /run/secrets/sdkwork/api-gateway/*|/etc/sdkwork/api-gateway/*) ;;
+  /run/secrets/sdkwork/api_gateway/*|/etc/sdkwork/api_gateway/secrets/*) ;;
   *)
-    echo "Knowledgebase RPC secrets must be under /run/secrets/sdkwork/api-gateway or /etc/sdkwork/api-gateway" >&2
+    echo "Knowledgebase RPC secrets must be under /run/secrets/sdkwork/api_gateway or /etc/sdkwork/api_gateway/secrets" >&2
     exit 1
     ;;
 esac
@@ -110,4 +112,4 @@ if [ "${1:-}" = "--provision-only" ]; then
   exit 0
 fi
 
-exec /opt/sdkwork/api-gateway/bin/sdkwork-intelligence-knowledgebase-rpc-bin
+exec /opt/sdkwork/api_gateway/bin/sdkwork-intelligence-knowledgebase-rpc-bin

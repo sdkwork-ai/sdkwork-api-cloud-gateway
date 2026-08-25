@@ -29,7 +29,8 @@ import process from 'node:process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import {
-  DATABASE_ASSET_METADATA_ARGS,
+  CONTAINER_CARGO_FEATURES,
+  CONTAINER_DATABASE_ASSET_METADATA_ARGS,
   RELEASE_CONFIG_TEMPLATES,
   resolveCargoReleaseDir,
   resolveDatabaseHostCratesFromMetadata,
@@ -176,7 +177,7 @@ async function loadPackageJson() {
 }
 
 async function loadCargoMetadata() {
-  const { stdout } = await execFileAsync('cargo', DATABASE_ASSET_METADATA_ARGS, {
+  const { stdout } = await execFileAsync('cargo', CONTAINER_DATABASE_ASSET_METADATA_ARGS, {
     cwd: appRoot,
     maxBuffer: 64 * 1024 * 1024,
   });
@@ -332,7 +333,7 @@ async function runCargoBuild(plan) {
     BINARY_NAME,
     '--no-default-features',
     '--features',
-    'platform-foundation-suite',
+    CONTAINER_CARGO_FEATURES,
   ];
   const { stdout, stderr } = await execFileAsync('cargo', args, {
     cwd: appRoot,
@@ -571,7 +572,7 @@ function createContainerMetadata(plan) {
     version: plan.package.version,
     runtimeTarget: 'container',
     deploymentProfile: plan.package.deploymentProfile,
-    entrypoint: '/opt/sdkwork/api-gateway/container/entrypoint',
+    entrypoint: '/opt/sdkwork/api_gateway/container/entrypoint',
     healthPath: '/healthz',
     readinessPath: '/readyz',
   };

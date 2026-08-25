@@ -43,7 +43,7 @@ mkdir -p "$(dirname "$ca_bundle")"
 PG_ADMIN_USER=${SDKWORK_DATABASE_ADMIN_USERNAME:-postgres}
 PG_ADMIN_PASS=${SDKWORK_DATABASE_ADMIN_PASSWORD:-sdkworkdev123}
 PG_PORT=${SDKWORK_DATABASE_ADMIN_PORT:-5432}
-REDIS_PORT=${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
+REDIS_PORT=${GATEWAY_CLOUDROUTER_REDIS_PORT:-6380}
 
 log() { printf '\033[36m[prepare-host]\033[0m %s\n' "$*"; }
 ok()  { printf '\033[32m[prepare-host]\033[0m %s\n' "$*"; }
@@ -166,18 +166,34 @@ PGPASSWORD="$PG_ADMIN_PASS" psql -h 127.0.0.1 -p "$PG_PORT" -U "$PG_ADMIN_USER" 
   || log "could not set admin password via psql (continuing)"
 ok "postgresql listening on 0.0.0.0:$PG_PORT"
 
-# ---- 5. redis bind ----------------------------------------------------------
-redis_conf=$(redis-cli CONFIG GET dir 2>/dev/null | tail -1 || true)
+# ---- 5. redis bind + port (must match docker/env GATEWAY_CLOUDROUTER_REDIS_PORT) -
+redis_restart() {
+  if command -v systemctl >/dev/null 2>&1 && systemctl cat redis-server >/dev/null 2>&1; then
+    systemctl restart redis-server
+  elif command -v service >/dev/null 2>&1; then
+    service redis-server restart
+  else
+    redis-cli -p "$REDIS_PORT" shutdown nosave 2>/dev/null || true
+    redis-server /etc/redis/redis.conf --daemonize yes 2>/dev/null || redis-server --daemonize yes
+  fi
+}
 if [ -f /etc/redis/redis.conf ]; then
+  redis_changed=false
   if ! grep -qE "^bind[[:space:]]+0.0.0.0" /etc/redis/redis.conf; then
     sed -i -E 's/^#?[[:space:]]*bind[[:space:]]+.*/bind 0.0.0.0/' /etc/redis/redis.conf
-    if command -v systemctl >/dev/null 2>&1 && systemctl cat redis-server >/dev/null 2>&1; then
-      systemctl restart redis-server
-    elif command -v service >/dev/null 2>&1; then
-      service redis-server restart
-    else
-      redis-cli shutdown nosave 2>/dev/null || true; redis-server --daemonize yes
+    redis_changed=true
+  fi
+  if grep -qE '^port[[:space:]]+[0-9]+' /etc/redis/redis.conf; then
+    if ! grep -qE "^port[[:space:]]+$REDIS_PORT" /etc/redis/redis.conf; then
+      sed -i -E '/^[[:space:]]*#/! s/^port[[:space:]]+[0-9]+/port '"$REDIS_PORT"'/' /etc/redis/redis.conf
+      redis_changed=true
     fi
+  else
+    echo "port $REDIS_PORT" >> /etc/redis/redis.conf
+    redis_changed=true
+  fi
+  if [ "$redis_changed" = true ]; then
+    redis_restart
   fi
   ok "redis bound to 0.0.0.0:$REDIS_PORT"
 fi

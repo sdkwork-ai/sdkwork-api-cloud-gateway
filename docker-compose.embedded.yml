@@ -1,0 +1,42 @@
+# Optional embedded PostgreSQL + Redis for disposable local smoke tests.
+#
+# Default deployments use external PostgreSQL/Redis (docker-compose.yml alone).
+# Enable this override only when you intentionally want in-compose databases:
+#
+#   docker compose --profile embedded \
+#     -f docker-compose.yml -f docker-compose.embedded.yml up -d
+#
+# Redis runs without a password. PostgreSQL credentials come from
+# GATEWAY_POSTGRES_* in the selected docker/env/<environment>.env.
+
+services:
+  knowledgebase-rpc:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+
+  gateway:
+    depends_on:
+      knowledgebase-rpc:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SDKWORK_DATABASE_HOST: postgres
+      SDKWORK_DATABASE_PORT: "5432"
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: /run/sdkwork/postgres-tls/server.crt
+      SSL_CERT_FILE: /run/sdkwork/api_gateway/postgres-ca-bundle.crt
+      SDKWORK_CLOUDROUTER_REDIS_HOST: redis
+      SDKWORK_CLOUDROUTER_REDIS_PORT: "6379"
+      SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ""
+      SDKWORK_RTC_STATE_REDIS_URL: redis://redis:6379/1
+      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: redis://redis:6379/2
+    volumes:
+      - postgres-tls:/run/sdkwork/postgres-tls:ro

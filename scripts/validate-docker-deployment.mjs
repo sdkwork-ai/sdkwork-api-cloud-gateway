@@ -191,9 +191,11 @@ export function validateDeploymentEnvironment(env, mode) {
 }
 
 function runComposeConfig(appRoot, envFile, mode, environmentOverrides = {}) {
+  // External PostgreSQL/Redis is the default compose posture; the optional
+  // docker-compose.external.yml shim is a no-op kept for operator habit.
   const args = ['compose', '--env-file', envFile, '-f', 'docker-compose.yml'];
-  if (mode === 'external') {
-    args.push('-f', 'docker-compose.external.yml');
+  if (mode === 'embedded') {
+    args.push('--profile', 'embedded', '-f', 'docker-compose.embedded.yml');
   }
   args.push('config', '--quiet');
   const result = spawnSync('docker', args, {

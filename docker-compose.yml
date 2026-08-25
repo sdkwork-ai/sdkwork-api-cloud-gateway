@@ -1,30 +1,32 @@
 # sdkwork-api-cloud-gateway standalone container composition.
 #
 # runtimeTarget = "container", deploymentProfile = "standalone".
-# Build the image first with `pnpm build:container` (produces
-# sdkwork-api-cloud-gateway:local), then `docker compose up -d`.
+# Install layout matches Ubuntu (APPLICATION_DEPLOY_LAYOUT_SPEC):
+#   config  /etc/sdkwork/api_gateway/config.toml
+#   secrets /run/secrets/sdkwork/api_gateway
+#   data    /var/lib/sdkwork/api_gateway
+#   install /opt/sdkwork/api_gateway
 #
-# Port strategy: the container listens on 0.0.0.0:3900 (the application public
-# ingress, per APP_RUNTIME_TOPOLOGY_SPEC the single HTTP bind of the gateway
-# plane). The host side maps 3910 -> 3900 so the container never collides with
-# `pnpm dev` (3900 gateway, 3901 vite), the reserved 3902 client-only ingress,
-# or the sdkwork-cloudrouter container (3903). 391x is the reserved host port
-# band for this gateway's docker deployments (3911+ spare). PostgreSQL stays on
-# the compose network and exposes no host port, so the container composition is
-# conflict-free by construction.
+# Default dependency posture (RUNTIME_DIRECTORY_SPEC §4.5):
+#   external PostgreSQL + Redis (no password on Redis). Point
+#   GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_* at the host or a managed
+#   endpoint. Built-in postgres/redis containers are opt-in via profile
+#   `embedded` (`docker compose --profile embedded -f docker-compose.yml
+#   -f docker-compose.embedded.yml up -d`).
+#
+# Public reverse proxy is owned by the independent sdkwork-webserver product.
+# This composition does not install or map nginx sites.
+#
+# Port strategy: container listens on 0.0.0.0:3900; host maps
+# GATEWAY_HOST_PORT (3910–3913 per environment) -> 3900.
 
 services:
   postgres:
+    profiles: ["embedded"]
     # pgvector image: the knowledgebase foundation module requires the
     # `vector` extension, which the stock postgres image does not ship.
-    # Rolling `pg18` tag tracks the latest pgvector release for PostgreSQL 18
-    # (the current stable major; pgvector 0.8.x ships in the image).
     image: pgvector/pgvector:pg18
-    # Survive host/WSL restarts together with the gateway.
     restart: unless-stopped
-    # Server-side connection ceiling: sized for the gateway foundation suite
-    # module migrations (tune PG_MAX_CONNECTIONS together with
-    # SDKWORK_DATABASE_MAX_CONNECTIONS).
     entrypoint: ["/bin/sh", "/opt/sdkwork/postgres/entrypoint.sh"]
     command:
       - postgres
@@ -41,21 +43,9 @@ services:
       POSTGRES_USER: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
       POSTGRES_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
     volumes:
-      # PostgreSQL 18+ images store data under /var/lib/postgresql in a
-      # pg_ctlcluster-compatible layout (/var/lib/postgresql/<major>/main,
-      # docker-library/postgres PR #1259); the single mount point is the
-      # parent directory. Mounting /var/lib/postgresql/data (the pre-18
-      # layout) is rejected by the 18+ entrypoint as an unused volume.
       - postgres-data:/var/lib/postgresql
-      # Creates the same-named workspace schema on first initialization
-      # (the sdkwork-database lifecycle pins search_path to it).
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-      # The wrapper creates a persistent self-signed certificate before the
-      # official PostgreSQL entrypoint starts. Clients use sslmode=require;
-      # managed external databases should provide their own trusted TLS.
       - ./docker/postgres/entrypoint.sh:/opt/sdkwork/postgres/entrypoint.sh:ro
-      # Public trust bundle only. The server private key remains exclusively
-      # in postgres-data and is never mounted into the gateway container.
       - postgres-tls:/var/run/sdkwork-postgres-tls
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod} -d ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}"]
@@ -64,10 +54,8 @@ services:
       retries: 12
 
   redis:
-    # The cloudrouter foundation module requires Redis for its runtime
-    # (mirrors the sdkwork-cloudrouter composition). No host ports are
-    # exposed; the gateway reaches it on the compose network. Rolling 8.x
-    # tag tracks the current stable Redis 8 line.
+    profiles: ["embedded"]
+    # Opt-in only. Default deployments use external Redis with no password.
     image: redis:8-alpine
     restart: unless-stopped
     volumes:
@@ -80,7 +68,9 @@ services:
 
   knowledgebase-rpc:
     image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
-    entrypoint: ["/opt/sdkwork/api-gateway/container/knowledgebase-rpc-entrypoint"]
+    entrypoint: ["/opt/sdkwork/api_gateway/container/knowledgebase-rpc-entrypoint"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
       SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
@@ -89,26 +79,21 @@ services:
       SDKWORK_KNOWLEDGEBASE_RPC_TLS_ENABLED: "true"
       SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED: "true"
       SDKWORK_KNOWLEDGEBASE_RPC_HEALTH_ENABLED: "true"
-      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.crt
-      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.key
-      SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/server.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/server.key
+      SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/ca.crt
       SDKWORK_KNOWLEDGEBASE_RPC_SPIFFE_TRUST_DOMAIN: sdkwork.internal
-      SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
-      SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT: /var/lib/sdkwork/api-gateway/knowledgebase-drive
+      SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/caller-context.key
+      SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT: /var/lib/sdkwork/api_gateway/knowledgebase-drive
       SDKWORK_KNOWLEDGEBASE_OPERATOR_ID: sdkwork-knowledgebase
       SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
-      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
     volumes:
-      - gateway-data:/var/lib/sdkwork/api-gateway
-      - gateway-secrets:/run/secrets/sdkwork/api-gateway
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - gateway-data:/var/lib/sdkwork/api_gateway
+      - gateway-secrets:/run/secrets/sdkwork/api_gateway
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/50054'"]
@@ -121,6 +106,8 @@ services:
     image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
     ports:
       - "${GATEWAY_HOST_PORT:-3910}:3900"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       # Deployment identity (DEPLOYMENT_SPEC §5.2); the entrypoint pins these
       # too, so the values here are belt-and-suspenders.
@@ -130,18 +117,16 @@ services:
       SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
       SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.development}
       # Runtime config comes from the mounted host copy at
-      # /etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml (§4.5 config
-      # mount; the image bakes the production template as the same file);
+      # /etc/sdkwork/api_gateway/config.toml (APPLICATION_DEPLOY_LAYOUT_SPEC /
+      # RUNTIME_DIRECTORY_SPEC §4.5 config mount; the image bakes the production
+      # template as the same file);
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
       # so only the container-specific values are injected here.
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
-      # Host allowlist: the selected environment's registered API domains plus the
-      # host-mapped port for direct access. The nginx proxy forwards the real
-      # Host header, so every public domain must be listed here. Production
-      # traffic through api.sdkwork.com / api.birdcoder.com / api.dtupay.com
-      # switches this via GATEWAY_ALLOWED_HOSTS (see docker/env and
-      # docker/nginx/api.sdkwork.com.conf).
-      SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-api-dev.sdkwork.com,api-dev.birdcoder.com,api-dev.dtupay.com,localhost:3910,127.0.0.1:3910}
+      # Host allowlist: registered API domains plus host-mapped port for direct
+      # access. sdkwork-webserver (independent deploy) forwards Host when it
+      # reverse-proxies to GATEWAY_HOST_PORT. Empty = accept all Host headers.
+      SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
       # Browser CORS allow-list (API plane): the gateway runs in production
       # posture, where cross-origin browser requests are rejected unless the
       # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical
@@ -151,25 +136,21 @@ services:
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.
+      # Default: external PostgreSQL (RUNTIME_DIRECTORY_SPEC §4.5).
       SDKWORK_DATABASE_ENGINE: postgresql
-      SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:-postgres}
+      SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:-host.docker.internal}
       SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
-      SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}
-      SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}
+      SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}
       SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: "false"
-      SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}
-      SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
+      SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}
+      SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}
       SDKWORK_DATABASE_SSL_MODE: ${GATEWAY_POSTGRES_SSL_MODE:-disable}
-      # IM audit/realtime stores consume the canonical URL form. It is derived
-      # from the same split fields unless an operator supplies a URL-encoded
-      # SDKWORK_DATABASE_URL (for example when credentials contain reserved
-      # URI characters).
-      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod}:${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}@${GATEWAY_POSTGRES_HOST:-postgres}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_prod}}
-      # Native-TLS consumers (including IM r2d2 pools) use the standard trust
-      # bundle plus the embedded PostgreSQL certificate. External deployments
-      # override or remove this when their CA is provided by the base image.
-      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: /run/sdkwork/postgres-tls/server.crt
-      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/run/sdkwork/api-gateway/postgres-ca-bundle.crt}
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+      # External TLS: leave CA empty for sslmode=disable; set GATEWAY_POSTGRES_CA_FILE
+      # when sslmode=require against an internal CA.
+      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
+      SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
       # Connection pool sizing: the foundation suite bootstraps 46 database
       # modules through the process-shared pool at startup; keep the server
       # max_connections comfortably above the pool ceiling.
@@ -189,18 +170,18 @@ services:
       SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
       SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
       SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
-      SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
+      SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api_gateway/iam-signing-master.key
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
       SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
-      SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/im-launch-ticket.key
+      SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/im-launch-ticket.key
       # IM -> Knowledgebase lifecycle uses the generated RPC SDK over the
       # single-node composition's persistent mTLS and signed caller context.
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.key
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/ca.crt
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/client.crt
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/client.key
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TLS_DOMAIN: knowledgebase.local
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/caller-context.key
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CREDENTIAL_TTL_SECONDS: ${GATEWAY_KNOWLEDGEBASE_RPC_CREDENTIAL_TTL_SECONDS:-60}
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TIMEOUT_MS: ${GATEWAY_KNOWLEDGEBASE_RPC_TIMEOUT_MS:-5000}
       # RTC hydrate scope: the assembly loads runtime persistence for the
@@ -210,30 +191,16 @@ services:
       # Knowledgebase deployment scope (production-like runtime requires them).
       SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
-      SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/knowledgebase-secrets.key
+      SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/knowledgebase-secrets.key
       # Managed Knowledgebase Provider credentials resolve secret:// locators
       # through Vault first when configured, then this operator-managed mount.
-      SDKWORK_SECRETS_DIR: /run/secrets/sdkwork/api-gateway
+      SDKWORK_SECRETS_DIR: /run/secrets/sdkwork/api_gateway
       SDKWORK_VAULT_ADDR: ${GATEWAY_VAULT_ADDR:-}
       SDKWORK_VAULT_TOKEN: ${GATEWAY_VAULT_TOKEN:-}
       SDKWORK_VAULT_MOUNT: ${GATEWAY_VAULT_MOUNT:-secret}
       SDKWORK_VAULT_NAMESPACE: ${GATEWAY_VAULT_NAMESPACE:-}
-      SDKWORK_WEBSERVER_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
-      SDKWORK_WEBSERVER_DEPLOYMENT_PROFILE: standalone
-      SDKWORK_WEBSERVER_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.development}
-      SDKWORK_WEBSERVER_SECRET_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/webserver-secrets.key
-      SDKWORK_WEBSERVER_ACME_PROFILE: ${GATEWAY_WEBSERVER_ACME_PROFILE:-staging}
-      SDKWORK_WEBSERVER_ACME_DIRECTORY_URL: ${GATEWAY_WEBSERVER_ACME_DIRECTORY_URL:-https://acme-staging-v02.api.letsencrypt.org/directory}
-      SDKWORK_WEBSERVER_ACME_CONTACT_EMAIL: ${GATEWAY_WEBSERVER_ACME_CONTACT_EMAIL:-admin@localhost}
-      SDKWORK_WEBSERVER_ACME_WEBROOT: /var/lib/sdkwork/api-gateway/webserver-acme-webroot
-      SDKWORK_WEBSERVER_ACME_ACCOUNT_ROOT: /var/lib/sdkwork/api-gateway/webserver-acme-accounts
-      SDKWORK_WEBSERVER_CERT_WORKER_ID: ${GATEWAY_WEBSERVER_CERT_WORKER_ID:-api-gateway-cert-worker-0}
-      SDKWORK_WEBSERVER_NODE_UUID: ${GATEWAY_WEBSERVER_NODE_UUID:-api-gateway-node-0}
-      SDKWORK_WEBSERVER_TLS_MATERIAL_ROOT: /var/lib/sdkwork/api-gateway/webserver-tls-materials
-      SDKWORK_WEBSERVER_TLS_RUNTIME_SNAPSHOT_FILE: /var/lib/sdkwork/api-gateway/webserver-tls-materials/tls-runtime.json
-      SDKWORK_WEBSERVER_TLS_SNAPSHOT_ALPN: h2,http/1.1
-      # Docker test posture: explicit scopes are injected above; the
-      # development environment flag keeps the non-production seed fallbacks.
+      # sdkwork-webserver is an independent Docker deployment — never started
+      # by this gateway composition. Public reverse proxy is configured there.
       SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
       SDKWORK_IM_ALLOW_ALL_PRINCIPALS: ${GATEWAY_IM_ALLOW_ALL_PRINCIPALS:-false}
       # Cloud Router OpenAPI base URL: the image generation foundation module
@@ -261,13 +228,10 @@ services:
       # release job owns migrations.
       SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}
       SDKWORK_DATABASE_AUTO_MIGRATE: ${SDKWORK_DATABASE_AUTO_MIGRATE:-false}
-      # Cloud Router runtime Redis (required by the cloudrouter foundation
-      # module; mirror of the sdkwork-cloudrouter composition). External
-      # deployments set GATEWAY_CLOUDROUTER_REDIS_* to an existing Redis and
-      # disable the built-in service via docker-compose.external.yml.
+      # Default: external Redis, no password (GATEWAY_CLOUDROUTER_REDIS_*).
       SDKWORK_CLOUDROUTER_REDIS_ENABLED: "true"
-      SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:-redis}
-      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
+      SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:-host.docker.internal}
+      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6380}
       SDKWORK_CLOUDROUTER_REDIS_DATABASE: ${GATEWAY_CLOUDROUTER_REDIS_DATABASE:-0}
       SDKWORK_CLOUDROUTER_REDIS_USERNAME: ${GATEWAY_CLOUDROUTER_REDIS_USERNAME:-}
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-}
@@ -275,25 +239,24 @@ services:
       SDKWORK_CLOUDROUTER_REDIS_TLS: ${GATEWAY_CLOUDROUTER_REDIS_TLS:-false}
       SDKWORK_CLOUDROUTER_REDIS_KEY_PREFIX: ${GATEWAY_CLOUDROUTER_REDIS_KEY_PREFIX:-cloudrouter}
       SDKWORK_CLOUDROUTER_REDIS_MAX_CONNECTIONS: ${GATEWAY_CLOUDROUTER_REDIS_MAX_CONNECTIONS:-50}
-      # IM RTC requires a shared Redis-backed signal limiter in production-like
-      # profiles. DB 1 keeps its keys separate from CloudRouter's default DB 0.
-      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://redis:6379/1}
-      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://redis:6379/2}
+      # Shared external Redis; DB indexes isolate RTC / web keys.
+      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://host.docker.internal:6380/1}
+      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6380/2}
       # Image generation Drive import object store: the default is a relative
       # `.data` path which is not writable inside the container (install root
       # is read-only for the sdkwork user); point it at the durable data
       # volume (RUNTIME_DIRECTORY_SPEC §4.5).
-      IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/image-drive-objects
+      IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api_gateway/image-drive-objects
       # Voice generation Drive sync object store: same relative-`.data` default
       # problem as the image module; point it at the durable data volume.
-      VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/voice-drive-objects
-      # Web Server snowflake node id: single-instance docker deployment pins a
-      # unique node id (multi-instance deployments must vary it per instance).
-      SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID: ${GATEWAY_WEBSERVER_SNOWFLAKE_NODE_ID:-1}
+      VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api_gateway/voice-drive-objects
+      # Deployments Drive sandbox defaults to /opt/deploy (host install layout);
+      # the sdkwork container user cannot create that path — use the data volume.
+      SDKWORK_DEPLOY_SANDBOX_ROOT: /var/lib/sdkwork/api_gateway/deploy-sandbox
       # Payment credential master key: the single-node composition provisions
       # it once in the canonical secret mount. Multi-replica deployments must
       # set provisioning false and mount the same operator/KMS-managed key.
-      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api-gateway/payment-credential-master.key
+      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api_gateway/payment-credential-master.key
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY: ${GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true}
       # Process log level (tracing reads RUST_LOG directly).
       RUST_LOG: ${RUST_LOG:-info}
@@ -302,18 +265,12 @@ services:
       # the host copy overrides the image-baked production template without a
       # rebuild. Environment variables below still win over it (ENVIRONMENT_SPEC
       # §3 precedence: defaults -> TOML -> process env -> CLI -> secrets).
-      - ./docker/config/sdkwork-api-cloud-gateway.toml:/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml:ro
-      # Secret files (optional): mount into /run/secrets/sdkwork/api-gateway/
-      # and reference them from config or SDKWORK_*_FILE env pointers
-      # (RUNTIME_DIRECTORY_SPEC §11 Secrets Standard). Never bake secrets into
-      # the image or this compose file. Example:
-      #   - ./docker/secrets/payment-credential-master.key:/run/secrets/sdkwork/api-gateway/payment-credential-master.key:ro
-      # Durable data lives on a mounted volume (RUNTIME_DIRECTORY_SPEC §4.5).
-      - gateway-data:/var/lib/sdkwork/api-gateway
-      # Single-node secret persistence. Set key provisioning false and replace
-      # this volume with an operator-managed secret mount for replicas.
-      - gateway-secrets:/run/secrets/sdkwork/api-gateway
-      - postgres-tls:/run/sdkwork/postgres-tls:ro
+      # Same Ubuntu install path: /etc/sdkwork/api_gateway/config.toml
+      - ./docker/config/config.toml:/etc/sdkwork/api_gateway/config.toml:ro
+      - gateway-data:/var/lib/sdkwork/api_gateway
+      - gateway-secrets:/run/secrets/sdkwork/api_gateway
+      # Optional private PostgreSQL CA for external TLS (empty file is fine).
+      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api_gateway/postgres-ca-bundle.crt:ro
     depends_on:
       knowledgebase-rpc:
         condition: service_healthy

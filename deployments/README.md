@@ -4,13 +4,23 @@ Purpose: deployment topology, infrastructure descriptors, release handoff files,
 
 Owner: `sdkwork-api-cloud-gateway` maintainers.
 
-Allowed content: Docker, Kubernetes, systemd, nginx, environment topology, release handoff, and deployment runbook examples.
+Allowed content: Docker, Kubernetes, systemd, environment topology, release handoff, and deployment runbook examples. Declarative `deployments/webserver/` is deploy-time source for the **independent** sdkwork-webserver reverse-proxy product — this gateway runtime does **not** install nginx site mappings.
 
 Forbidden content: live secrets, private keys, local override files, runtime user config, and mutable runtime state.
 
-Related specs: `../sdkwork-specs/DEPLOYMENT_SPEC.md`, `../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md`, and `../sdkwork-specs/RUNTIME_DIRECTORY_SPEC.md`.
+Related specs: `../sdkwork-specs/APPLICATION_DEPLOY_LAYOUT_SPEC.md`, `../sdkwork-specs/RUNTIME_DIRECTORY_SPEC.md`, `../sdkwork-specs/DEPLOYMENT_SPEC.md`, `../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md`.
 
-Verification: deployment artifacts must be validated by `sdkwork.workflow.json` lifecycle steps or documented smoke checks before release.
+Canonical install / container config root (`topology.applicationCode = api_gateway`):
+
+| Purpose | Path |
+| --- | --- |
+| Config | `/etc/sdkwork/api_gateway/config.toml` |
+| Process env | `/etc/sdkwork/api_gateway/api_gateway.env` |
+| Secrets (host) | `/etc/sdkwork/api_gateway/secrets/` |
+| Data | `/var/lib/sdkwork/api_gateway` |
+| Install | `/opt/sdkwork/api_gateway` |
+
+Verification: `node ../sdkwork-specs/tools/check-application-deploy-layout.mjs --root .`
 
 ## Port Matrix
 

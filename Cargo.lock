@@ -1071,6 +1071,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
+name = "bcrypt"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abaf6da45c74385272ddf00e1ac074c7d8a6c1a1dda376902bd6a427522a8b2c"
+dependencies = [
+ "base64 0.22.1",
+ "blowfish",
+ "getrandom 0.3.4",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
 name = "bigdecimal"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1150,6 +1163,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8894febbff9f758034a5b8e12d87918f56dfc64a8e1fe757d65e29041538d93"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "blowfish"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e412e2cd0f2b2d93e02543ceae7917b3c70331573df19ee046bcbc35e45e87d7"
+dependencies = [
+ "byteorder",
+ "cipher",
 ]
 
 [[package]]
@@ -10509,6 +10532,7 @@ dependencies = [
  "sdkwork-webserver-contract",
  "sdkwork-webserver-database-host",
  "sdkwork-webserver-edge-runtime",
+ "sdkwork-webserver-resolver-cache",
  "sdkwork-webserver-source-provider",
  "serde",
  "serde_json",
@@ -14944,12 +14968,16 @@ dependencies = [
  "sdkwork-iam-web-adapter",
  "sdkwork-intelligence-webserver-service",
  "sdkwork-routes-webserver-common",
+ "sdkwork-server-files-service",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "sdkwork-webserver-contract",
  "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -15189,6 +15217,19 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
+]
+
+[[package]]
+name = "sdkwork-server-files-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -15600,13 +15641,21 @@ name = "sdkwork-webserver-core"
 version = "0.1.0"
 dependencies = [
  "arc-swap",
+ "base64 0.22.1",
+ "bcrypt",
  "ipnet",
  "jsonschema",
+ "md-5 0.10.6",
+ "rcgen",
+ "regex",
  "sdkwork-utils-rust",
+ "sdkwork-webserver-resolver-cache",
  "serde",
  "serde_json",
+ "sha1 0.10.7",
  "thiserror 2.0.19",
  "toml 0.8.23",
+ "tracing",
  "url",
 ]
 
@@ -15647,6 +15696,18 @@ dependencies = [
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "sdkwork-webserver-contract",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-webserver-resolver-cache"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
  "tokio",
  "tracing",
 ]

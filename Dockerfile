@@ -1,5 +1,9 @@
 # sdkwork-api-cloud-gateway standalone container image.
 # runtimeTarget = "container", deploymentProfile = "standalone".
+# Built with platform-foundation-suite-container (foundation-webserver omitted).
+# Install layout matches Ubuntu: /opt/sdkwork/api_gateway + /etc/sdkwork/api_gateway.
+# Public reverse proxy is owned by the independent sdkwork-webserver deployment —
+# this image does not install or start nginx site mappings.
 # Build context: an unpacked server install package directory containing
 # bin/, config/, specs/, database-modules/, sdkwork.app.config.json,
 # INSTALL.md, install-manifest.json and container/ (entrypoint + metadata.json).
@@ -7,31 +11,31 @@
 # This file is the build input for `pnpm build:container`
 # (scripts/build-api-cloud-gateway-container.mjs). Build the image first with
 # `pnpm build:container` (produces sdkwork-api-cloud-gateway:local), then
-# `docker compose up -d`.
+# `docker compose up -d` (external PostgreSQL + Redis by default).
 
 FROM debian:bookworm-slim
 
 ARG GATEWAY_BINARY=sdkwork-api-cloud-gateway
 ARG KNOWLEDGEBASE_RPC_BINARY=sdkwork-intelligence-knowledgebase-rpc-bin
-ARG INSTALL_ROOT=/opt/sdkwork/api-gateway
-ARG CONFIG_FILE=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml
+ARG INSTALL_ROOT=/opt/sdkwork/api_gateway
+ARG CONFIG_FILE=/etc/sdkwork/api_gateway/config.toml
 ARG VERSION=0.0.0
 
 # Runtime directory layout (RUNTIME_DIRECTORY_SPEC §4.5 Container Scope):
-#   config    /etc/sdkwork/api-gateway/<process>.toml   (config mount)
-#   secrets   /run/secrets/sdkwork/api-gateway          (secret mount)
-#   data      /var/lib/sdkwork/api-gateway              (data volume)
-#   cache     /var/cache/sdkwork/api-gateway            (cache volume)
-#   run       /run/sdkwork/api-gateway                  (runtime state)
-#   logs      /var/log/sdkwork/api-gateway              (file logs only when
+#   config    /etc/sdkwork/api_gateway/<process>.toml   (config mount)
+#   secrets   /run/secrets/sdkwork/api_gateway          (secret mount)
+#   data      /var/lib/sdkwork/api_gateway              (data volume)
+#   cache     /var/cache/sdkwork/api_gateway            (cache volume)
+#   run       /run/sdkwork/api_gateway                  (runtime state)
+#   logs      /var/log/sdkwork/api_gateway              (file logs only when
 #                                                         journald/stdout is not
 #                                                         enough)
-# The install root /opt/sdkwork/api-gateway holds the immutable package tree.
-# The runtime config file is materialized at the canonical §4.5 path from the
-# packaged production template; a mounted host config (docker compose
-# ./docker/config/sdkwork-api-cloud-gateway.toml) overrides it without
-# rebuilding the image. Secret files injected by the platform (Docker secrets,
-# mounts) land under /run/secrets/sdkwork/api-gateway per §11 Secrets Standard.
+# The install root /opt/sdkwork/api_gateway holds the immutable package tree.
+# Runtime config is materialized at /etc/sdkwork/api_gateway/config.toml
+# (APPLICATION_DEPLOY_LAYOUT_SPEC). A mounted host config
+# (./docker/config/config.toml) overrides it without rebuilding the image.
+# Secret files injected by the platform (Docker secrets, mounts) land under
+# /run/secrets/sdkwork/api_gateway per RUNTIME_DIRECTORY_SPEC §4.5 / §11.
 # libssl3/ca-certificates are runtime dependencies of the gateway binary
 # (PostgreSQL TLS and outbound HTTPS); the slim base image does not carry them.
 # curl is used by the container healthcheck and operational diagnostics.
@@ -43,14 +47,14 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system sdkwork \
   && useradd --system --gid sdkwork --home-dir ${INSTALL_ROOT} sdkwork \
-  && mkdir -p ${INSTALL_ROOT} /etc/sdkwork/api-gateway \
-    /run/secrets/sdkwork/api-gateway /run/sdkwork/api-gateway \
-    /var/lib/sdkwork/api-gateway /var/cache/sdkwork/api-gateway \
-    /var/log/sdkwork/api-gateway \
-  && chown -R sdkwork:sdkwork /etc/sdkwork/api-gateway \
-    /run/secrets/sdkwork/api-gateway /run/sdkwork/api-gateway \
-    /var/lib/sdkwork/api-gateway /var/cache/sdkwork/api-gateway \
-    /var/log/sdkwork/api-gateway
+  && mkdir -p ${INSTALL_ROOT} /etc/sdkwork/api_gateway \
+    /run/secrets/sdkwork/api_gateway /run/sdkwork/api_gateway \
+    /var/lib/sdkwork/api_gateway /var/cache/sdkwork/api_gateway \
+    /var/log/sdkwork/api_gateway \
+  && chown -R sdkwork:sdkwork /etc/sdkwork/api_gateway \
+    /run/secrets/sdkwork/api_gateway /run/sdkwork/api_gateway \
+    /var/lib/sdkwork/api_gateway /var/cache/sdkwork/api_gateway \
+    /var/log/sdkwork/api_gateway
 
 WORKDIR ${INSTALL_ROOT}
 COPY . ${INSTALL_ROOT}
@@ -58,11 +62,12 @@ RUN chmod 0755 ${INSTALL_ROOT}/bin/${GATEWAY_BINARY} \
     ${INSTALL_ROOT}/bin/${KNOWLEDGEBASE_RPC_BINARY} \
     ${INSTALL_ROOT}/container/entrypoint \
     ${INSTALL_ROOT}/container/knowledgebase-rpc-entrypoint \
-  && mkdir -p /etc/sdkwork/api-gateway \
+  && mkdir -p /etc/sdkwork/api_gateway \
   && cp ${INSTALL_ROOT}/config/sdkwork-api-cloud-gateway.production.toml \
     ${CONFIG_FILE} \
   && chown sdkwork:sdkwork ${CONFIG_FILE}
 
+ENV SDKWORK_API_GATEWAY_CONFIG_FILE=${CONFIG_FILE}
 ENV SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=${CONFIG_FILE}
 ENV SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone
 ENV SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
@@ -125,7 +130,6 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_SHOP_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-shop \
     SDKWORK_SKILLS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-skills \
     SDKWORK_VOICE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-voice \
-    SDKWORK_WEBSERVER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-webserver \
     SDKWORK_XIANGQI_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-xiangqi \
     # appbase hosts (base/edu/med data) all resolve the same packaged module
     # (mirrors sdkwork-cloudrouter's install plan).
@@ -145,4 +149,4 @@ LABEL org.opencontainers.image.vendor="sdkwork"
 
 USER sdkwork
 EXPOSE 3900
-ENTRYPOINT ["/opt/sdkwork/api-gateway/container/entrypoint"]
+ENTRYPOINT ["/opt/sdkwork/api_gateway/container/entrypoint"]

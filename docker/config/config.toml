@@ -1,0 +1,145 @@
+# SDKWork API Cloud Gateway — container runtime config (host-mounted override).
+#
+# This file is mounted read-only at the canonical container/Ubuntu config path
+#   /etc/sdkwork/api_gateway/config.toml
+# (APPLICATION_DEPLOY_LAYOUT_SPEC + RUNTIME_DIRECTORY_SPEC §4.5). Same layout
+# as the Ubuntu systemd install. Edit host-side to change settings that
+# environment variables do not cover.
+#
+# Configuration precedence (ENVIRONMENT_SPEC §3):
+#   1. built-in defaults
+#   2. this TOML file
+#   3. process environment (docker-compose.yml / .env)  <- wins over this file
+#   4. command-line arguments (local tooling only)
+#   5. secret manager / OS secure storage
+#
+# docker-compose.yml injects the container-specific values via SDKWORK_* env:
+# bind address, Host allow-list, CORS origins, PostgreSQL connection,
+# IM principal directory, Cloud Router secrets, Redis, object store roots,
+# snowflake node id, payment master key. Values set there override this file.
+#
+# Secrets never belong here: mount them under
+# /run/secrets/sdkwork/api_gateway/<secret-name> (container) or
+# /etc/sdkwork/api_gateway/secrets/ (Ubuntu install) and reference file paths
+# from config, or inject SDKWORK_*_FILE env pointers
+# (ENVIRONMENT_SPEC §7.3, RUNTIME_DIRECTORY_SPEC §11).
+
+mode = "embedded"
+
+[service]
+name = "sdkwork-api-cloud-gateway"
+environment = "production"
+
+[server]
+bind = "0.0.0.0:3900"
+
+[database]
+# Container entrypoint runs the explicit `--migrate-databases` lifecycle step
+# before service startup. Runtime auto-migration remains disabled.
+autoMigrate = false
+bind = "0.0.0.0:3900"
+
+[cors]
+allowAnyOrigin = false
+allowedOrigins = ["https://api.sdkwork.com", "https://api.birdcoder.com", "https://api.dtupay.com", "https://console.sdkwork.com", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay", "tauri://localhost", "https://servicewechat.com"]
+
+[request]
+maxBodyBytes = 33554432
+
+[observability]
+accessLogEnabled = true
+auditLogEnabled = true
+metricsEnabled = true
+metricsPath = "/metrics"
+tracingEnabled = true
+redactHeaders = ["authorization", "access-token", "cookie", "x-api-key", "set-cookie"]
+
+# OpenTelemetry OTLP span export. Enable once a collector endpoint exists:
+#   [observability.otel]
+#   enabled = true
+#   endpoint = "http://otel-collector.internal:4317"
+#   serviceName = "sdkwork-api-cloud-gateway"
+[observability.otel]
+enabled = false
+endpoint = "http://localhost:4317"
+
+
+[diagnostics]
+enabled = false
+path = "/internal/gateway/diagnostics"
+includePolicyInventory = true
+includeRouteInventory = true
+
+[security]
+allowedHosts = ["api.sdkwork.com", "api.birdcoder.com", "api.dtupay.com", "console.sdkwork.com"]
+trustedProxyCidrs = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+secureHeadersEnabled = true
+maxHeaderBytes = 65536
+maxHeaderCount = 128
+rejectCredentialHeadersOnAnonymousAuthRoutes = true
+csrfGuardEnabled = true
+
+[security.waf]
+enabled = true
+mode = "enforce"
+inspectQuery = true
+inspectHeaders = true
+inspectJsonBody = true
+
+# Rate limits are per-gateway-instance token buckets; matching rules compose
+# (every matching rule must allow the request). Cluster-wide enforcement is
+# the sum of instance budgets at the load balancer.
+#
+# For cluster-wide shared budgets, switch to a Redis backend:
+#   rateLimitBackend = "redis"
+#   redisUrl = "redis://redis.internal:6379"
+#   redisKeyPrefix = "sdkwork:gateway:ratelimit"
+# Unreachable Redis degrades to in-process buckets with a
+# `rate_limit_redis_fallbacks_total` metric, never blocking the data plane.
+[traffic]
+rateLimitEnabled = true
+compatXRateLimitHeaders = true
+globalMaxInFlight = 4096
+rateLimits = [
+  # Credential routes: brute-force protection, strict per-IP budget.
+  { id = "auth-credential-ip", matchPathPrefix = "/app/v3/api/auth", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },
+  { id = "iam-backend-ip", matchPathPrefix = "/backend/v3/api/iam", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },
+  # Lifecycle probes from load balancers and orchestrators: wide budget.
+  { id = "lifecycle-healthz", matchPathPrefix = "/healthz", key = "client-ip", capacity = 1000, refillPerSecond = 500, rejectStatus = 429 },
+  { id = "lifecycle-livez", matchPathPrefix = "/livez", key = "client-ip", capacity = 1000, refillPerSecond = 500, rejectStatus = 429 },
+  { id = "lifecycle-readyz", matchPathPrefix = "/readyz", key = "client-ip", capacity = 1000, refillPerSecond = 500, rejectStatus = 429 },
+  # Open APIs: public read amplification.
+  { id = "open-api-ip", matchPathPrefix = "/open-api", key = "client-ip", capacity = 400, refillPerSecond = 200, rejectStatus = 429 },
+  # Transactional write surfaces: per-IP 30 rps burst 60.
+  { id = "order-write-ip", matchPathPrefix = "/backend/v3/api/order", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },
+  { id = "community-write-ip", matchPathPrefix = "/app/v3/api/community", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },
+  { id = "payment-write-ip", matchPathPrefix = "/backend/v3/api/payment", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },
+  # Default per-IP budget for every other surface.
+  { id = "global-ip-default", key = "client-ip", capacity = 200, refillPerSecond = 100, rejectStatus = 429 },
+  # Instance-wide total budget keyed by Host as a last-resort ceiling.
+  { id = "instance-host-total", key = "host", capacity = 10000, refillPerSecond = 5000, rejectStatus = 429 },
+]
+concurrencyLimits = [
+  { id = "concurrency-auth", matchPathPrefix = "/app/v3/api/auth", maxInFlight = 512 },
+  { id = "concurrency-iam", matchPathPrefix = "/backend/v3/api/iam", maxInFlight = 512 },
+  { id = "concurrency-im", matchPathPrefix = "/app/v3/api/im", maxInFlight = 1024 },
+  { id = "concurrency-im-backend", matchPathPrefix = "/backend/v3/api/im", maxInFlight = 1024 },
+  { id = "concurrency-drive", matchPathPrefix = "/backend/v3/api/drive", maxInFlight = 512 },
+  { id = "concurrency-open-api", matchPathPrefix = "/open-api", maxInFlight = 1024 },
+  { id = "concurrency-webserver", matchPathPrefix = "/app/v3/api/webserver", maxInFlight = 1024 },
+]
+
+[policy]
+enabled = true
+dryRun = false
+rules = [
+  # Credential payloads are small and hot: cap bodies tight.
+  { id = "auth-body-limit", matchPathPrefix = "/app/v3/api/auth", maxBodyBytes = 1048576 },
+  { id = "iam-body-limit", matchPathPrefix = "/backend/v3/api/iam", maxBodyBytes = 1048576 },
+  # Chat messages are bounded text; keep them lean.
+  { id = "chat-body-limit", matchPathPrefix = "/app/v3/api/im", maxBodyBytes = 2097152 },
+  # Media uploads stream through Drive; allow large payloads there only.
+  { id = "media-upload-limit", matchPathPrefix = "/backend/v3/api/drive", maxBodyBytes = 67108864 },
+  # Every other write surface stays under the global request cap.
+  { id = "default-write-limit", maxBodyBytes = 16777216 },
+]

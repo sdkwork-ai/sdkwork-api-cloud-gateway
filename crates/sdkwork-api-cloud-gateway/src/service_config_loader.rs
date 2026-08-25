@@ -17,9 +17,11 @@ where
 {
     let application_root = application_root.as_ref();
     let config = if let Some(path) = config_path_from_args(args).or_else(|| {
-        env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE")
+        env.get("SDKWORK_API_GATEWAY_CONFIG_FILE")
+            .or_else(|| env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE"))
             .or_else(|| env.get("SDKWORK_API_CLOUD_GATEWAY_CONFIG"))
             .map(PathBuf::from)
+            .or_else(default_installed_config_path)
     }) {
         let config = GatewayRuntimeConfig::from_path(resolve_config_path(application_root, path))
             .context("failed to load explicit gateway config")?;
@@ -65,4 +67,21 @@ fn resolve_config_path(application_root: &Path, path: PathBuf) -> PathBuf {
     } else {
         application_root.join(path)
     }
+}
+
+/// Installed Linux/container discovery order (APPLICATION_DEPLOY_LAYOUT_SPEC):
+/// 1. `/etc/sdkwork/api_gateway/config.toml` (canonical)
+/// 2. legacy process toml under the same config root
+/// 3. legacy hyphenated path from pre-layout installs
+fn default_installed_config_path() -> Option<PathBuf> {
+    const CANDIDATES: &[&str] = &[
+        "/etc/sdkwork/api_gateway/config.toml",
+        "/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml",
+        "/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml",
+        "/etc/sdkwork/api-gateway/config.toml",
+    ];
+    CANDIDATES
+        .iter()
+        .map(PathBuf::from)
+        .find(|path| path.is_file())
 }
