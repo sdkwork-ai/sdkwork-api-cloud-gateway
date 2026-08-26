@@ -88,6 +88,7 @@ services:
       SDKWORK_KNOWLEDGEBASE_OPERATOR_ID: sdkwork-knowledgebase
       SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
+      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
@@ -191,6 +192,7 @@ services:
       # Knowledgebase deployment scope (production-like runtime requires them).
       SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
+      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
       SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/knowledgebase-secrets.key
       # Managed Knowledgebase Provider credentials resolve secret:// locators
       # through Vault first when configured, then this operator-managed mount.

@@ -28,7 +28,7 @@ $ErrorActionPreference = 'Stop'
 $repoWin = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path
 $drive = $repoWin.Substring(0, 1).ToLower()
 $rest = $repoWin.Substring(3) -replace '\\', '/'
-$repoWsl = "/mnt/$drive$rest"
+$repoWsl = "/mnt/$drive/$rest"
 
 $argsList = @()
 if ($SkipBuild) { $argsList += '--skip-build' }

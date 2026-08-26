@@ -57,7 +57,11 @@ test('docker examples bind exactly the registered host family', () => {
     assert.equal(resolved.GATEWAY_IM_ALLOW_ALL_PRINCIPALS, 'false');
     assert.match(resolved.GATEWAY_IM_ID_NODE_ID, /^(?:[0-9]|[1-9][0-9]{1,2}|10[01][0-9]|102[0-3])$/u);
     assert.ok(Number.parseInt(resolved.GATEWAY_KNOWLEDGEBASE_TENANT_ID, 10) > 0);
-    assert.equal(resolved.GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID, undefined);
+    assert.ok(
+      resolved.GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID !== undefined
+        && /^(?:0|[1-9][0-9]*)$/u.test(resolved.GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID),
+      'GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID must be a nonnegative integer',
+    );
   }
 });
 
