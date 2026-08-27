@@ -73,3 +73,5 @@ docker/certs/
 
 # WorkBuddy local metadata (never committed)
 /.workbuddy/
+# Runtime-generated environment configuration
+**/public/runtime-env.json
