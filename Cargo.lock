@@ -6689,6 +6689,7 @@ dependencies = [
  "sdkwork-api-models-assembly",
  "sdkwork-cloudrouter-edge-runtime",
  "sdkwork-cloudrouter-http",
+ "sdkwork-cloudrouter-security",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-routes-agent-open-api",
