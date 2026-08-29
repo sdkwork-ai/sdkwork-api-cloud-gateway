@@ -32,59 +32,488 @@
         "check": "sdkwork_database_sqlx::DatabasePool::health_check",
         "evidence": "crates/sdkwork-api-cloud-gateway/src/health.rs"
       },
-      "productionSourceRoots": ["crates/sdkwork-api-cloud-gateway/src"],
+      "productionSourceRoots": [
+        "crates/sdkwork-api-cloud-gateway/src"
+      ],
       "consumers": [
-        {"module": "sdkwork-account", "ownerAssembly": "sdkwork-api-account-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-agents", "ownerAssembly": "sdkwork-api-agents-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-aiot", "ownerAssembly": "sdkwork-api-aiot-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-assets", "ownerAssembly": "sdkwork-api-assets-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-iam", "ownerAssembly": "sdkwork-api-iam-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-appstore", "ownerAssembly": "sdkwork-api-appstore-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-browser", "ownerAssembly": "sdkwork-api-browser-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-catalog", "ownerAssembly": "sdkwork-api-catalog-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-cloudrouter", "ownerAssembly": "sdkwork-api-cloudrouter-assembly", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-cms", "ownerAssembly": "sdkwork-api-cms-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-community", "ownerAssembly": "sdkwork-api-community-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-course", "ownerAssembly": "sdkwork-api-course-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-customerservice", "ownerAssembly": "sdkwork-api-customerservice-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-deployments", "ownerAssembly": "sdkwork-api-deployments-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-dezhou", "ownerAssembly": "sdkwork-api-dezhou-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-documents", "ownerAssembly": "sdkwork-api-documents-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-doudizhu", "ownerAssembly": "sdkwork-api-doudizhu-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-drive", "ownerAssembly": "sdkwork-api-drive-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-forum", "ownerAssembly": "sdkwork-api-forum-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-gameengine", "ownerAssembly": "sdkwork-api-gameengine-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-generations", "ownerAssembly": "sdkwork-api-generations-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-im", "ownerAssembly": "sdkwork-api-im-assembly", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-image", "ownerAssembly": "sdkwork-api-image-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-inventory", "ownerAssembly": "sdkwork-api-inventory-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-invoice", "ownerAssembly": "sdkwork-api-invoice-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-knowledgebase", "ownerAssembly": "sdkwork-api-knowledgebase-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-llm", "ownerAssembly": "sdkwork-api-llm-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-local-router", "ownerAssembly": "sdkwork-api-local-router-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-mahjong", "ownerAssembly": "sdkwork-api-mahjong-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-mail", "ownerAssembly": "sdkwork-api-mail-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-manager", "ownerAssembly": "sdkwork-api-manager-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-mcp", "ownerAssembly": "sdkwork-api-mcp-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-membership", "ownerAssembly": "sdkwork-api-membership-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-modelkit", "ownerAssembly": "sdkwork-api-modelkit-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-news", "ownerAssembly": "sdkwork-api-news-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-notary", "ownerAssembly": "sdkwork-api-notary-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-order", "ownerAssembly": "sdkwork-api-order-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-payment", "ownerAssembly": "sdkwork-api-payment-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-portal", "ownerAssembly": "sdkwork-api-portal-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-promotion", "ownerAssembly": "sdkwork-api-promotion-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-prompts", "ownerAssembly": "sdkwork-api-prompts-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-rtc", "ownerAssembly": "sdkwork-api-rtc-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-shop", "ownerAssembly": "sdkwork-api-shop-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-skills", "ownerAssembly": "sdkwork-api-skills-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-voice", "ownerAssembly": "sdkwork-api-voice-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-webserver", "ownerAssembly": "sdkwork-api-webserver-assembly", "poolMode": "installed-process-pool", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]},
-        {"module": "sdkwork-xiangqi", "ownerAssembly": "sdkwork-api-xiangqi-assembly", "poolMode": "injected", "evidence": ["crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"]}
+        {
+          "module": "sdkwork-account",
+          "ownerAssembly": "sdkwork-api-account-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-agents",
+          "ownerAssembly": "sdkwork-api-agents-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-aiot",
+          "ownerAssembly": "sdkwork-api-aiot-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-appbase",
+          "ownerAssembly": "sdkwork-api-appbase-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-appstore",
+          "ownerAssembly": "sdkwork-api-appstore-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-assets",
+          "ownerAssembly": "sdkwork-api-assets-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-birdcoder",
+          "ownerAssembly": "sdkwork-api-birdcoder-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-browser",
+          "ownerAssembly": "sdkwork-api-browser-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-canvas",
+          "ownerAssembly": "sdkwork-api-canvas-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-catalog",
+          "ownerAssembly": "sdkwork-api-catalog-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-cloudrouter",
+          "ownerAssembly": "sdkwork-api-cloudrouter-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-cms",
+          "ownerAssembly": "sdkwork-api-cms-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-community",
+          "ownerAssembly": "sdkwork-api-community-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-company",
+          "ownerAssembly": "sdkwork-api-company-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-course",
+          "ownerAssembly": "sdkwork-api-course-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-customerservice",
+          "ownerAssembly": "sdkwork-api-customerservice-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-deployments",
+          "ownerAssembly": "sdkwork-api-deployments-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-dezhou",
+          "ownerAssembly": "sdkwork-api-dezhou-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-documents",
+          "ownerAssembly": "sdkwork-api-documents-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-doudizhu",
+          "ownerAssembly": "sdkwork-api-doudizhu-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-drive",
+          "ownerAssembly": "sdkwork-api-drive-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-feeds",
+          "ownerAssembly": "sdkwork-api-feeds-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-forum",
+          "ownerAssembly": "sdkwork-api-forum-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-gameengine",
+          "ownerAssembly": "sdkwork-api-gameengine-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-generations",
+          "ownerAssembly": "sdkwork-api-generations-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-github",
+          "ownerAssembly": "sdkwork-api-github-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-iam",
+          "ownerAssembly": "sdkwork-api-iam-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-im",
+          "ownerAssembly": "sdkwork-api-im-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-image",
+          "ownerAssembly": "sdkwork-api-image-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-inventory",
+          "ownerAssembly": "sdkwork-api-inventory-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-invoice",
+          "ownerAssembly": "sdkwork-api-invoice-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-knowledgebase",
+          "ownerAssembly": "sdkwork-api-knowledgebase-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-llm",
+          "ownerAssembly": "sdkwork-api-llm-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-local-router",
+          "ownerAssembly": "sdkwork-api-local-router-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-log",
+          "ownerAssembly": "sdkwork-api-log-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-mahjong",
+          "ownerAssembly": "sdkwork-api-mahjong-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-mail",
+          "ownerAssembly": "sdkwork-api-mail-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-manager",
+          "ownerAssembly": "sdkwork-api-manager-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-mcp",
+          "ownerAssembly": "sdkwork-api-mcp-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-membership",
+          "ownerAssembly": "sdkwork-api-membership-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-messaging",
+          "ownerAssembly": "sdkwork-api-messaging-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-modelkit",
+          "ownerAssembly": "sdkwork-api-modelkit-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-news",
+          "ownerAssembly": "sdkwork-api-news-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-notary",
+          "ownerAssembly": "sdkwork-api-notary-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-notes",
+          "ownerAssembly": "sdkwork-api-notes-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-order",
+          "ownerAssembly": "sdkwork-api-order-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-payment",
+          "ownerAssembly": "sdkwork-api-payment-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-portal",
+          "ownerAssembly": "sdkwork-api-portal-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-promotion",
+          "ownerAssembly": "sdkwork-api-promotion-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-prompts",
+          "ownerAssembly": "sdkwork-api-prompts-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-rtc",
+          "ownerAssembly": "sdkwork-api-rtc-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-search",
+          "ownerAssembly": "sdkwork-api-search-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-settings",
+          "ownerAssembly": "sdkwork-api-settings-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-shop",
+          "ownerAssembly": "sdkwork-api-shop-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-skills",
+          "ownerAssembly": "sdkwork-api-skills-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-voice",
+          "ownerAssembly": "sdkwork-api-voice-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-webserver",
+          "ownerAssembly": "sdkwork-api-webserver-assembly",
+          "poolMode": "installed-process-pool",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
+          "module": "sdkwork-xiangqi",
+          "ownerAssembly": "sdkwork-api-xiangqi-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        }
       ],
       "nestedLifecycleDependencies": [
-        {"ownerAssembly": "sdkwork-api-shop-assembly", "dependencyAssembly": "sdkwork-api-merchandise-assembly", "order": "merchandise-before-shop-routes", "evidence": "../sdkwork-shop/crates/sdkwork-api-shop-assembly/src/environment.rs"},
-        {"ownerAssembly": "sdkwork-api-cloudrouter-assembly", "dependencyAssembly": "sdkwork-api-models-assembly", "order": "models-before-cloudrouter-runtime", "evidence": "../sdkwork-cloudrouter/crates/sdkwork-api-cloudrouter-assembly/src/bootstrap.rs"}
+        {
+          "ownerAssembly": "sdkwork-api-shop-assembly",
+          "dependencyAssembly": "sdkwork-api-merchandise-assembly",
+          "order": "merchandise-before-shop-routes",
+          "evidence": "../sdkwork-shop/crates/sdkwork-api-shop-assembly/src/environment.rs"
+        },
+        {
+          "ownerAssembly": "sdkwork-api-cloudrouter-assembly",
+          "dependencyAssembly": "sdkwork-api-models-assembly",
+          "order": "models-before-cloudrouter-runtime",
+          "evidence": "../sdkwork-cloudrouter/crates/sdkwork-api-cloudrouter-assembly/src/bootstrap.rs"
+        }
       ],
       "temporaryDriverExceptions": [
         {
@@ -104,7 +533,9 @@
           "removalMilestone": "Migrate IM synchronous repositories to the canonical SQLx pool before the next gateway production release",
           "combinedConnectionBudget": 10,
           "adr": "docs/architecture/decisions/ADR-20260719-embedded-database-driver-migration.md",
-          "evidence": ["../sdkwork-im/crates/sdkwork-im-database-pool/src/lib.rs"]
+          "evidence": [
+            "../sdkwork-im/crates/sdkwork-im-database-pool/src/lib.rs"
+          ]
         },
         {
           "driver": "sqlx::PgPool (IM realtime plane)",

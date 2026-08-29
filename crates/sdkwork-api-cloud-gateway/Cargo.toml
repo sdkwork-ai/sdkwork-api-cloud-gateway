@@ -90,6 +90,20 @@ foundation-llm = ["dep:sdkwork-api-llm-assembly"]
 foundation-mahjong = ["dep:sdkwork-api-mahjong-assembly"]
 foundation-doudizhu = ["dep:sdkwork-api-doudizhu-assembly"]
 foundation-xiangqi = ["dep:sdkwork-api-xiangqi-assembly"]
+# Extended foundation surfaces added by the full-space api-assembly audit.
+# `foundation-appbase` is taken by the IAM/appbase dependency, so the
+# sdkwork-appbase data surfaces use an explicit `-data` feature name.
+foundation-appbase-data = ["dep:sdkwork-api-appbase-assembly"]
+foundation-birdcoder = ["dep:sdkwork-api-birdcoder-assembly"]
+foundation-canvas = ["dep:sdkwork-api-canvas-assembly"]
+foundation-company = ["dep:sdkwork-api-company-assembly"]
+foundation-feeds = ["dep:sdkwork-api-feeds-assembly"]
+foundation-github = ["dep:sdkwork-api-github-assembly"]
+foundation-log = ["dep:sdkwork-api-log-assembly"]
+foundation-messaging = ["dep:sdkwork-api-messaging-assembly"]
+foundation-notes = ["dep:sdkwork-api-notes-assembly"]
+foundation-search = ["dep:sdkwork-api-search-assembly"]
+foundation-settings = ["dep:sdkwork-api-settings-assembly"]
 # Container images deliberately omit foundation-webserver: reverse proxy and
 # site edge belong to host nginx / the separate sdkwork-webserver product, not
 # the gateway container process (see docker/README.md).
@@ -135,6 +149,17 @@ platform-foundation-suite-container = [
     "foundation-doudizhu",
     "foundation-xiangqi",
     "foundation-generations",
+    "foundation-appbase-data",
+    "foundation-birdcoder",
+    "foundation-canvas",
+    "foundation-company",
+    "foundation-feeds",
+    "foundation-github",
+    "foundation-log",
+    "foundation-messaging",
+    "foundation-notes",
+    "foundation-search",
+    "foundation-settings",
 ]
 platform-foundation-suite = [
     "platform-foundation-suite-container",
@@ -218,6 +243,17 @@ sdkwork-api-llm-assembly = { workspace = true, optional = true }
 sdkwork-api-mahjong-assembly = { workspace = true, optional = true }
 sdkwork-api-doudizhu-assembly = { workspace = true, optional = true }
 sdkwork-api-xiangqi-assembly = { workspace = true, optional = true }
+sdkwork-api-appbase-assembly = { workspace = true, optional = true }
+sdkwork-api-birdcoder-assembly = { workspace = true, optional = true }
+sdkwork-api-canvas-assembly = { workspace = true, optional = true }
+sdkwork-api-company-assembly = { workspace = true, optional = true }
+sdkwork-api-feeds-assembly = { workspace = true, optional = true }
+sdkwork-api-github-assembly = { workspace = true, optional = true }
+sdkwork-api-log-assembly = { workspace = true, optional = true }
+sdkwork-api-messaging-assembly = { workspace = true, optional = true }
+sdkwork-api-notes-assembly = { workspace = true, optional = true }
+sdkwork-api-search-assembly = { workspace = true, optional = true }
+sdkwork-api-settings-assembly = { workspace = true, optional = true }
 
 [dev-dependencies]
 http-body-util.workspace = true

@@ -61,6 +61,17 @@ sdkwork-api-llm-assembly = { path = "../sdkwork-llm/crates/sdkwork-api-llm-assem
 sdkwork-api-mahjong-assembly = { path = "../sdkwork-mahjong/crates/sdkwork-api-mahjong-assembly" }
 sdkwork-api-doudizhu-assembly = { path = "../sdkwork-doudizhu/crates/sdkwork-api-doudizhu-assembly" }
 sdkwork-api-xiangqi-assembly = { path = "../sdkwork-xiangqi/crates/sdkwork-api-xiangqi-assembly" }
+sdkwork-api-appbase-assembly = { path = "../sdkwork-appbase/crates/sdkwork-api-appbase-assembly" }
+sdkwork-api-birdcoder-assembly = { path = "../sdkwork-birdcoder/crates/sdkwork-api-birdcoder-assembly" }
+sdkwork-api-canvas-assembly = { path = "../sdkwork-canvas/crates/sdkwork-api-canvas-assembly" }
+sdkwork-api-company-assembly = { path = "../sdkwork-company/crates/sdkwork-api-company-assembly" }
+sdkwork-api-feeds-assembly = { path = "../sdkwork-feeds/crates/sdkwork-api-feeds-assembly" }
+sdkwork-api-github-assembly = { path = "../sdkwork-github/crates/sdkwork-api-github-assembly" }
+sdkwork-api-log-assembly = { path = "../sdkwork-log/crates/sdkwork-api-log-assembly" }
+sdkwork-api-messaging-assembly = { path = "../sdkwork-messaging/crates/sdkwork-api-messaging-assembly" }
+sdkwork-api-notes-assembly = { path = "../sdkwork-notes/crates/sdkwork-api-notes-assembly" }
+sdkwork-api-search-assembly = { path = "../sdkwork-search/crates/sdkwork-api-search-assembly" }
+sdkwork-api-settings-assembly = { path = "../sdkwork-settings/crates/sdkwork-api-settings-assembly" }
 anyhow = "1.0"
 axum = { version = "0.8", features = ["ws"] }
 bytes = "1"

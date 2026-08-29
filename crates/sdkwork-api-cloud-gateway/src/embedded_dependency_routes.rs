@@ -551,6 +551,111 @@ pub async fn bootstrap_embedded_dependency_contributions(
         contributions.push(assembly.contribution);
     }
 
+    #[cfg(feature = "foundation-appbase-data")]
+    if workspace_surface_enabled(config, "sdkwork-appbase") {
+        let contribution = sdkwork_api_appbase_assembly::assemble_backend_api_contribution()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-appbase", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-birdcoder")]
+    if workspace_surface_enabled(config, "sdkwork-birdcoder") {
+        // Birdcoder exports a typed assembly struct rather than the web-bootstrap
+        // contribution, so the gateway folds its fields into one indivisible
+        // contribution instead of projecting only the router.
+        let birdcoder_config =
+            sdkwork_api_birdcoder_assembly::bootstrap::config::BirdServerConfig::from_env()
+                .map_err(|error| {
+                    workspace_build_error(config, "sdkwork-birdcoder", format!("{error}"))
+                })?;
+        let assembly = sdkwork_api_birdcoder_assembly::assemble_api_router(&birdcoder_config)
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-birdcoder", message))?;
+        contributions.push(ApiAssemblyContribution {
+            owner: "sdkwork-birdcoder",
+            router: assembly.router,
+            route_manifest: assembly.route_manifest,
+            openapi: assembly.openapi,
+            permission_catalog: assembly.permission_catalog,
+            domain_context_injectors: assembly.domain_context_injectors,
+            readiness_check: assembly.readiness_check,
+        });
+    }
+
+    #[cfg(feature = "foundation-canvas")]
+    if workspace_surface_enabled(config, "sdkwork-canvas") {
+        let contribution = sdkwork_api_canvas_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-canvas", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-company")]
+    if workspace_surface_enabled(config, "sdkwork-company") {
+        let contribution =
+            sdkwork_api_company_assembly::assemble_api_router_with_pool(pool.clone())
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-company", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-feeds")]
+    if workspace_surface_enabled(config, "sdkwork-feeds") {
+        let contribution = sdkwork_api_feeds_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-feeds", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-github")]
+    if workspace_surface_enabled(config, "sdkwork-github") {
+        let contribution = sdkwork_api_github_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-github", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-log")]
+    if workspace_surface_enabled(config, "sdkwork-log") {
+        let contribution = sdkwork_api_log_assembly::assemble_api_router_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-log", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-messaging")]
+    if workspace_surface_enabled(config, "sdkwork-messaging") {
+        let contribution = sdkwork_api_messaging_assembly::assemble_api_router()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-messaging", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-notes")]
+    if workspace_surface_enabled(config, "sdkwork-notes") {
+        let contribution = sdkwork_api_notes_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-notes", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-search")]
+    if workspace_surface_enabled(config, "sdkwork-search") {
+        let contribution = sdkwork_api_search_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-search", message))?;
+        contributions.push(contribution);
+    }
+
+    #[cfg(feature = "foundation-settings")]
+    if workspace_surface_enabled(config, "sdkwork-settings") {
+        let contribution = sdkwork_api_settings_assembly::assemble_api_router_from_env()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-settings", message))?;
+        contributions.push(contribution);
+    }
+
     Ok(EmbeddedDependencyBootstrap {
         contributions,
         runtime,
@@ -683,6 +788,17 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-catalog"));
         assert!(workspace_surface_enabled(&config, "sdkwork-gameengine"));
         assert!(workspace_surface_enabled(&config, "sdkwork-local-router"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-appbase"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-birdcoder"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-canvas"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-company"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-feeds"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-github"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-log"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-messaging"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-notes"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-search"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-settings"));
         assert!(!workspace_surface_enabled(&config, "unknown-workspace"));
     }
 

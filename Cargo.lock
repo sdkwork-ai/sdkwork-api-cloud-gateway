@@ -1942,6 +1942,17 @@ dependencies = [
 
 [[package]]
 name = "etcetera"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "136d1b5283a1ab77bd9257427ffd09d8667ced0570b6f938942bc7568ed5b943"
+dependencies = [
+ "cfg-if",
+ "home",
+ "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "etcetera"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de48cc4d1c1d97a20fd819def54b890cadde72ed3ad0c614822a0a433361be96"
@@ -2070,6 +2081,17 @@ dependencies = [
  "borrow-or-share",
  "ref-cast",
  "serde",
+]
+
+[[package]]
+name = "flume"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da0e4dd2a88388a1f4ccc7c9ce104604dab68d9f408dc34cd45823d5a9069095"
+dependencies = [
+ "futures-core",
+ "futures-sink",
+ "spin 0.9.9",
 ]
 
 [[package]]
@@ -2451,6 +2473,8 @@ version = "0.15.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
+ "allocator-api2",
+ "equivalent",
  "foldhash 0.1.5",
 ]
 
@@ -2474,6 +2498,15 @@ dependencies = [
  "allocator-api2",
  "equivalent",
  "foldhash 0.2.0",
+]
+
+[[package]]
+name = "hashlink"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7382cf6263419f2d8df38c55d7da83da5c18aef87fc7a7fc1fb1e344edfe14c1"
+dependencies = [
+ "hashbrown 0.15.5",
 ]
 
 [[package]]
@@ -2671,6 +2704,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6303bc9732ae41b04cb554b844a762b4115a61bfaa81e3e83050991eeb56863f"
 dependencies = [
  "digest 0.11.3",
+]
+
+[[package]]
+name = "home"
+version = "0.5.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc627f471c528ff0c4a49e1d5e60450c8f6461dd6d10ba9dcd3a61d3dff7728d"
+dependencies = [
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3589,14 +3631,17 @@ version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2026a5056764a10b2bf5d56488cba40da507f5493a6a429340e2004d9ed085fa"
 dependencies = [
+ "bitflags",
  "libc",
+ "plain",
+ "redox_syscall 0.9.3",
 ]
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.37.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f111c8c41e7c61a49cd34e44c7619462967221a6443b0ec299e0ac30cfb9b1"
+checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
  "cc",
  "pkg-config",
@@ -4402,7 +4447,7 @@ checksum = "2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1"
 dependencies = [
  "cfg-if",
  "libc",
- "redox_syscall",
+ "redox_syscall 0.5.18",
  "smallvec",
  "windows-link",
 ]
@@ -4629,6 +4674,12 @@ name = "pkg-config"
 version = "0.3.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19f132c84eca552bf34cab8ec81f1c1dcc229b811638f9d283dceabe58c5569e"
+
+[[package]]
+name = "plain"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "polyval"
@@ -5301,6 +5352,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_syscall"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d678d17679829e73d371e96880897e98fee2ded7acc0a50bdf8af2affa4b2fe5"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "ref-cast"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5826,7 +5886,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -5869,7 +5929,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
 ]
@@ -6211,6 +6271,7 @@ name = "sdkwork-agents-tool-cloudrouter"
 version = "0.1.0"
 dependencies = [
  "cloudrouter-open-sdk",
+ "reqwest 0.12.28",
  "sdkwork-agent-kernel",
  "sdkwork-agent-provider-rig",
  "sdkwork-agents-tool-contract",
@@ -6391,7 +6452,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -6466,6 +6527,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-appbase-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-base-data-service-host",
+ "sdkwork-edu-data-service-host",
+ "sdkwork-med-data-service-host",
+ "sdkwork-routes-base-data-backend-api",
+ "sdkwork-routes-edu-data-backend-api",
+ "sdkwork-routes-med-data-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+]
+
+[[package]]
 name = "sdkwork-api-appstore-assembly"
 version = "0.1.0"
 dependencies = [
@@ -6510,7 +6586,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tower-http 0.6.11",
@@ -6531,7 +6607,20 @@ dependencies = [
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-birdcoder-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-routes-system-app-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
  "tokio",
 ]
 
@@ -6549,6 +6638,28 @@ dependencies = [
  "sdkwork-routes-browser-support",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-canvas-assembly"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "reqwest 0.12.28",
+ "sdkwork-canvas-pages-repository-sqlx",
+ "sdkwork-canvas-pages-service",
+ "sdkwork-database-config",
+ "sdkwork-drive-app-sdk-generated-rust",
+ "sdkwork-routes-canvas-app-api",
+ "sdkwork-routes-canvas-backend-api",
+ "sdkwork-routes-canvas-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-bootstrap",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx 0.8.6",
  "tokio",
 ]
 
@@ -6580,9 +6691,12 @@ dependencies = [
  "sdkwork-api-account-assembly",
  "sdkwork-api-agents-assembly",
  "sdkwork-api-aiot-assembly",
+ "sdkwork-api-appbase-assembly",
  "sdkwork-api-appstore-assembly",
  "sdkwork-api-assets-assembly",
+ "sdkwork-api-birdcoder-assembly",
  "sdkwork-api-browser-assembly",
+ "sdkwork-api-canvas-assembly",
  "sdkwork-api-catalog-assembly",
  "sdkwork-api-cloud-gateway-config",
  "sdkwork-api-cloud-gateway-observability",
@@ -6590,6 +6704,7 @@ dependencies = [
  "sdkwork-api-cloudrouter-assembly",
  "sdkwork-api-cms-assembly",
  "sdkwork-api-community-assembly",
+ "sdkwork-api-company-assembly",
  "sdkwork-api-course-assembly",
  "sdkwork-api-customerservice-assembly",
  "sdkwork-api-deployments-assembly",
@@ -6597,9 +6712,11 @@ dependencies = [
  "sdkwork-api-documents-assembly",
  "sdkwork-api-doudizhu-assembly",
  "sdkwork-api-drive-assembly",
+ "sdkwork-api-feeds-assembly",
  "sdkwork-api-forum-assembly",
  "sdkwork-api-gameengine-assembly",
  "sdkwork-api-generations-assembly",
+ "sdkwork-api-github-assembly",
  "sdkwork-api-iam-assembly",
  "sdkwork-api-im-assembly",
  "sdkwork-api-image-assembly",
@@ -6608,20 +6725,25 @@ dependencies = [
  "sdkwork-api-knowledgebase-assembly",
  "sdkwork-api-llm-assembly",
  "sdkwork-api-local-router-assembly",
+ "sdkwork-api-log-assembly",
  "sdkwork-api-mahjong-assembly",
  "sdkwork-api-mail-assembly",
  "sdkwork-api-manager-assembly",
  "sdkwork-api-mcp-assembly",
  "sdkwork-api-membership-assembly",
+ "sdkwork-api-messaging-assembly",
  "sdkwork-api-modelkit-assembly",
  "sdkwork-api-news-assembly",
  "sdkwork-api-notary-assembly",
+ "sdkwork-api-notes-assembly",
  "sdkwork-api-order-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-portal-assembly",
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-prompts-assembly",
  "sdkwork-api-rtc-assembly",
+ "sdkwork-api-search-assembly",
+ "sdkwork-api-settings-assembly",
  "sdkwork-api-shop-assembly",
  "sdkwork-api-skills-assembly",
  "sdkwork-api-voice-assembly",
@@ -6686,12 +6808,14 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-account-repository-sqlx",
  "sdkwork-account-service-host",
+ "sdkwork-api-feeds-assembly",
  "sdkwork-api-models-assembly",
  "sdkwork-cloudrouter-edge-runtime",
  "sdkwork-cloudrouter-http",
  "sdkwork-cloudrouter-security",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
+ "sdkwork-iam-web-adapter",
  "sdkwork-routes-agent-open-api",
  "sdkwork-routes-audio-open-api",
  "sdkwork-routes-cloudrouter-app-api",
@@ -6706,6 +6830,7 @@ dependencies = [
  "sdkwork-routes-paas-open-api",
  "sdkwork-routes-payment-open-api",
  "sdkwork-routes-video-open-api",
+ "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -6731,7 +6856,7 @@ dependencies = [
  "sdkwork-routes-cms-open-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -6794,7 +6919,7 @@ dependencies = [
  "sdkwork-routes-customerservice-internal-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -6873,7 +6998,7 @@ dependencies = [
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -6941,6 +7066,7 @@ dependencies = [
  "sdkwork-api-drive-assembly",
  "sdkwork-database-sqlx",
  "sdkwork-generations-database-host",
+ "sdkwork-generations-provider-adapter",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
  "sdkwork-iam-web-adapter",
@@ -6954,10 +7080,27 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "sdkwork-api-github-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-github-database-host",
+ "sdkwork-github-integration-repository-sqlx",
+ "sdkwork-github-integration-service",
+ "sdkwork-routes-github-app-api",
+ "sdkwork-routes-github-backend-api",
+ "sdkwork-web-bootstrap",
+ "sqlx 0.9.0",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -7196,7 +7339,7 @@ dependencies = [
  "sdkwork-routes-mahjong-app-api",
  "sdkwork-routes-mahjong-backend-api",
  "sdkwork-web-bootstrap",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -7247,7 +7390,7 @@ dependencies = [
  "sdkwork-routes-mcp-shared",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -7317,7 +7460,7 @@ dependencies = [
  "sdkwork-routes-models-catalog-backend-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -7334,7 +7477,7 @@ dependencies = [
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -7349,6 +7492,29 @@ dependencies = [
  "sdkwork-routes-notary-backend-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-notes-assembly"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "reqwest 0.12.28",
+ "sdkwork-database-config",
+ "sdkwork-drive-app-sdk-generated-rust",
+ "sdkwork-notes-pages-repository-sqlx",
+ "sdkwork-notes-pages-service",
+ "sdkwork-routes-notes-app-api",
+ "sdkwork-routes-notes-backend-api",
+ "sdkwork-routes-notes-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx 0.8.6",
  "tokio",
 ]
 
@@ -7456,6 +7622,57 @@ dependencies = [
  "sdkwork-rtc-service-host",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-search-assembly"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "sdkwork-database-config",
+ "sdkwork-drive-storage-local",
+ "sdkwork-drive-uploader-service",
+ "sdkwork-drive-workspace-service",
+ "sdkwork-routes-search-app-api",
+ "sdkwork-routes-search-backend-api",
+ "sdkwork-search-indexing-repository-sqlx",
+ "sdkwork-search-indexing-service",
+ "sdkwork-search-promotion-service",
+ "sdkwork-search-provider-memory",
+ "sdkwork-search-provider-postgresql",
+ "sdkwork-search-provider-spi",
+ "sdkwork-search-query-service",
+ "sdkwork-search-recommendation-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-api-settings-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-routes-settings-app-api",
+ "sdkwork-routes-settings-backend-api",
+ "sdkwork-settings-database-host",
+ "sdkwork-settings-service-host",
+ "sdkwork-settings-web-bootstrap",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
  "serde_json",
  "tokio",
 ]
@@ -7677,7 +7894,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -7786,7 +8003,7 @@ dependencies = [
  "async-trait",
  "sdkwork-base-data-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -7805,6 +8022,39 @@ dependencies = [
  "sdkwork-base-data-database-host",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-birdcoder-errors"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "time",
+]
+
+[[package]]
+name = "sdkwork-birdcoder-router-context"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder-errors",
+ "sdkwork-iam-context-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-core",
+]
+
+[[package]]
+name = "sdkwork-birdcoder-system-descriptor-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-utils-rust",
+ "sdkwork-web-contract",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -7944,6 +8194,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-canvas-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-canvas-pages-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-canvas-database-host",
+ "sdkwork-canvas-pages-service",
+ "sdkwork-database-config",
+ "sdkwork-database-repository",
+ "sdkwork-database-sqlx",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+]
+
+[[package]]
+name = "sdkwork-canvas-pages-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-catalog-database-host"
 version = "0.1.0"
 dependencies = [
@@ -7972,7 +8260,7 @@ dependencies = [
  "sdkwork-models-catalog-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -7984,7 +8272,7 @@ dependencies = [
  "sdkwork-models-catalog-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -7994,7 +8282,7 @@ dependencies = [
  "sdkwork-cloudrouter-router-service",
  "sdkwork-database-sqlx",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8029,7 +8317,7 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -8098,7 +8386,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -8139,7 +8427,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tower-http 0.6.11",
@@ -8285,7 +8573,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
  "url",
@@ -8318,7 +8606,7 @@ dependencies = [
  "sdkwork-models-catalog-service",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8362,7 +8650,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -8391,7 +8679,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -8499,7 +8787,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -8532,7 +8820,7 @@ dependencies = [
  "sdkwork-forum-database-host",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
  "uuid",
@@ -8564,7 +8852,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -8589,7 +8877,7 @@ dependencies = [
  "sdkwork-rtc-database-host",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8655,7 +8943,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8712,7 +9000,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8727,7 +9015,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 1.0.69",
  "tracing",
  "uuid",
@@ -8757,7 +9045,7 @@ dependencies = [
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -8768,7 +9056,7 @@ dependencies = [
  "async-trait",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8783,7 +9071,7 @@ dependencies = [
  "sdkwork-documents-contract",
  "sdkwork-documents-database-host",
  "sdkwork-utils-rust",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -8824,7 +9112,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -8955,7 +9243,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
 ]
@@ -8968,7 +9256,7 @@ dependencies = [
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
 ]
@@ -8980,7 +9268,7 @@ dependencies = [
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-id-core",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -8996,7 +9284,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
  "tracing",
@@ -9029,7 +9317,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
  "tracing",
@@ -9056,7 +9344,7 @@ dependencies = [
  "libsqlite3-sys",
  "sdkwork-database-config",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
  "tokio",
  "tracing",
@@ -9200,7 +9488,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-dezhou-table-service",
  "sdkwork-utils-rust",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9266,7 +9554,7 @@ dependencies = [
  "sdkwork-doudizhu-match-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9345,7 +9633,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -9369,7 +9657,7 @@ dependencies = [
  "sdkwork-drive-storage-local",
  "sdkwork-drive-storage-s3",
  "sdkwork-drive-workspace-service",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "url",
 ]
@@ -9477,7 +9765,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
  "uuid",
@@ -9507,7 +9795,7 @@ dependencies = [
  "async-trait",
  "sdkwork-edu-data-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9606,7 +9894,7 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-forum-database-host",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -9620,7 +9908,7 @@ dependencies = [
  "sdkwork-game-catalog-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
 ]
 
@@ -9643,7 +9931,7 @@ dependencies = [
  "sdkwork-game-leaderboard-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9664,7 +9952,7 @@ dependencies = [
  "sdkwork-game-room-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9711,6 +9999,79 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-generations-provider-adapter"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "cloudrouter-open-sdk",
+ "sdkwork-intelligence-generations-service",
+ "serde",
+ "serde_json",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-github-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-github-integration-provider-github"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "base64 0.22.1",
+ "chrono",
+ "rand 0.8.7",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.19",
+ "tracing",
+ "urlencoding",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-github-integration-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-github-integration-service",
+ "serde",
+ "sqlx 0.9.0",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-github-integration-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-github-integration-provider-github",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-iam-bootstrap"
 version = "0.1.0"
 dependencies = [
@@ -9725,7 +10086,7 @@ dependencies = [
  "sdkwork-iam-module-registry",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -9755,7 +10116,7 @@ dependencies = [
  "sdkwork-iam-module-registry",
  "sdkwork-iam-web-adapter",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -9776,7 +10137,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -9808,7 +10169,7 @@ dependencies = [
  "serde_json",
  "sha1 0.10.7",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "urlencoding",
  "uuid",
@@ -10073,7 +10434,7 @@ dependencies = [
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "session-gateway",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -10173,7 +10534,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
 ]
 
@@ -10255,7 +10616,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "time",
  "tokio",
  "tokio-stream",
@@ -10279,7 +10640,7 @@ dependencies = [
  "sdkwork-intelligence-deploy-service",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -10317,7 +10678,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 1.0.69",
  "time",
  "tokio",
@@ -10349,7 +10710,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 1.0.69",
  "time",
  "tokio",
@@ -10438,7 +10799,7 @@ dependencies = [
  "sdkwork-mcp-contract",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -10475,7 +10836,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -10500,7 +10861,7 @@ dependencies = [
  "sdkwork-skills-contract",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -10537,7 +10898,7 @@ dependencies = [
  "sdkwork-webserver-source-provider",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -10579,7 +10940,7 @@ dependencies = [
  "sdkwork-inventory-service",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -10621,7 +10982,7 @@ dependencies = [
  "sdkwork-invoice-service",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -10725,7 +11086,7 @@ dependencies = [
  "sdkwork-intelligence-knowledgebase-object-key-service",
  "sdkwork-intelligence-knowledgebase-service",
  "sdkwork-utils-rust",
- "sqlx",
+ "sqlx 0.9.0",
  "time",
  "url",
  "uuid",
@@ -10985,7 +11346,7 @@ dependencies = [
  "sdkwork-llm-spi",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "thiserror 2.0.19",
 ]
 
@@ -11042,7 +11403,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-log-core",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -11144,7 +11505,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -11181,7 +11542,7 @@ dependencies = [
  "sdkwork-mahjong-match-service",
  "sdkwork-utils-rust",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11298,7 +11659,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11325,7 +11686,7 @@ dependencies = [
  "async-trait",
  "sdkwork-med-data-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11355,7 +11716,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11369,7 +11730,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11388,7 +11749,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-membership-database-host",
  "sdkwork-membership-repository-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -11416,7 +11777,7 @@ dependencies = [
  "sdkwork-merchandise-service",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -11454,7 +11815,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -11483,7 +11844,7 @@ dependencies = [
  "async-trait",
  "sdkwork-modelkit-catalog-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -11509,7 +11870,7 @@ dependencies = [
  "sdkwork-modelkit-catalog-service",
  "sdkwork-modelkit-preferences-repository-sqlx",
  "sdkwork-modelkit-preferences-service",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11519,7 +11880,7 @@ dependencies = [
  "async-trait",
  "sdkwork-modelkit-preferences-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11563,7 +11924,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -11594,7 +11955,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11653,7 +12014,7 @@ dependencies = [
  "sdkwork-notary-database-host",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11702,7 +12063,45 @@ dependencies = [
  "sdkwork-routes-notary-backend-api",
  "sdkwork-utils-rust",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-notes-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-notes-pages-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-database-config",
+ "sdkwork-database-repository",
+ "sdkwork-database-sqlx",
+ "sdkwork-notes-database-host",
+ "sdkwork-notes-pages-service",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+]
+
+[[package]]
+name = "sdkwork-notes-pages-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
  "tokio",
 ]
 
@@ -11715,7 +12114,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -11734,7 +12133,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -11757,7 +12156,7 @@ dependencies = [
  "sdkwork-contract-service",
  "sdkwork-database-sqlx",
  "sdkwork-order-service",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -11775,7 +12174,7 @@ dependencies = [
  "sdkwork-payment-repository-sqlx",
  "sdkwork-payment-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -11794,7 +12193,7 @@ dependencies = [
  "sdkwork-shop-repository-sqlx",
  "sdkwork-shop-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -11820,7 +12219,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -11855,7 +12254,7 @@ dependencies = [
  "sdkwork-order-service",
  "sdkwork-payment-providers",
  "sdkwork-payment-repository-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -11931,7 +12330,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "uuid",
 ]
@@ -11973,7 +12372,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-platform-manager-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -11998,7 +12397,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-platform-portal-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -12084,7 +12483,7 @@ dependencies = [
  "sdkwork-intelligence-prompts-ai-contract",
  "sdkwork-intelligence-prompts-ai-repository-sqlx",
  "sdkwork-prompts-database-host",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -12102,7 +12501,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -12123,7 +12522,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -12144,7 +12543,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -12260,7 +12659,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tower 0.5.3",
 ]
 
@@ -12303,7 +12702,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -12352,6 +12751,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-canvas-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-canvas-pages-service",
+ "sdkwork-database-config",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-routes-canvas-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-routes-canvas-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-canvas-pages-service",
+ "sdkwork-database-config",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-routes-canvas-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-routes-canvas-http-auth"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-canvas-pages-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sdkwork-routes-catalog-app-api"
 version = "0.1.0"
 dependencies = [
@@ -12369,7 +12820,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -12382,6 +12833,7 @@ dependencies = [
  "sdkwork-agents-database-host",
  "sdkwork-api-account-assembly",
  "sdkwork-api-agents-assembly",
+ "sdkwork-api-assets-assembly",
  "sdkwork-api-community-assembly",
  "sdkwork-api-drive-assembly",
  "sdkwork-api-iam-assembly",
@@ -12392,6 +12844,7 @@ dependencies = [
  "sdkwork-api-partner-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-promotion-assembly",
+ "sdkwork-api-skills-assembly",
  "sdkwork-catalog-database-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
@@ -12423,7 +12876,7 @@ dependencies = [
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -12472,7 +12925,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
  "url",
@@ -12921,7 +13374,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tempfile",
  "tokio",
  "tower 0.5.3",
@@ -12948,7 +13401,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -12973,7 +13426,7 @@ dependencies = [
  "sdkwork-web-axum",
  "sdkwork-web-core",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -12998,7 +13451,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -13021,7 +13474,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -13198,6 +13651,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-github-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-github-integration-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-routes-github-common",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "urlencoding",
+]
+
+[[package]]
+name = "sdkwork-routes-github-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-github-integration-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-routes-github-common",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+]
+
+[[package]]
+name = "sdkwork-routes-github-common"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-github-integration-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-core",
+ "serde",
+]
+
+[[package]]
 name = "sdkwork-routes-iaas-open-api"
 version = "0.3.0"
 dependencies = [
@@ -13230,7 +13726,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "time",
  "tokio",
  "tracing",
@@ -13252,7 +13748,7 @@ dependencies = [
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "urlencoding",
  "uuid",
@@ -13270,7 +13766,7 @@ dependencies = [
  "sdkwork-web-contract",
  "sdkwork-web-core",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -13487,7 +13983,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -13508,7 +14004,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -13530,7 +14026,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -13608,7 +14104,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "time",
  "tokio",
  "tracing",
@@ -13634,7 +14130,7 @@ dependencies = [
  "sdkwork-web-store-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -14048,7 +14544,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14064,7 +14560,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14079,7 +14575,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14098,7 +14594,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -14119,7 +14615,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14139,7 +14635,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14172,7 +14668,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -14271,7 +14767,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -14286,7 +14782,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -14302,7 +14798,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -14351,6 +14847,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-notes-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-database-config",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-notes-pages-service",
+ "sdkwork-routes-notes-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-routes-notes-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-database-config",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-notes-pages-service",
+ "sdkwork-routes-notes-http-auth",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-routes-notes-http-auth"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http 1.5.0",
+ "sdkwork-notes-pages-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sdkwork-routes-order-app-api"
 version = "0.1.0"
 dependencies = [
@@ -14372,7 +14920,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
  "uuid",
 ]
@@ -14398,7 +14946,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tracing",
 ]
 
@@ -14467,7 +15015,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -14491,7 +15039,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -14559,7 +15107,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -14738,6 +15286,68 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-search-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-search-indexing-service",
+ "sdkwork-search-promotion-service",
+ "sdkwork-search-provider-spi",
+ "sdkwork-search-query-service",
+ "sdkwork-search-recommendation-service",
+ "sdkwork-web-contract",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-routes-search-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-search-indexing-service",
+ "sdkwork-search-promotion-service",
+ "sdkwork-search-provider-spi",
+ "sdkwork-search-query-service",
+ "sdkwork-search-recommendation-service",
+ "sdkwork-web-contract",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-routes-settings-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-settings-contract",
+ "sdkwork-settings-service-host",
+ "sdkwork-utils-rust",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-routes-settings-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-settings-contract",
+ "sdkwork-settings-service-host",
+ "sdkwork-utils-rust",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-routes-shop-app-api"
 version = "0.1.0"
 dependencies = [
@@ -14758,7 +15368,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -14779,7 +15389,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -14843,11 +15453,24 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower 0.5.3",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "sdkwork-routes-system-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder-errors",
+ "sdkwork-birdcoder-router-context",
+ "sdkwork-birdcoder-system-descriptor-service",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
 ]
 
 [[package]]
@@ -14939,7 +15562,7 @@ dependencies = [
  "sdkwork-web-framework-admin-repository-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -15221,6 +15844,129 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-search-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-search-indexing-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-search-database-host",
+ "sdkwork-search-indexing-service",
+ "sdkwork-search-promotion-service",
+ "sdkwork-search-provider-spi",
+ "sdkwork-search-query-service",
+ "sdkwork-search-recommendation-service",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-search-indexing-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-search-promotion-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-search-provider-memory"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-search-provider-postgresql"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "sqlx 0.8.6",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-search-provider-spi"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-search-query-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-search-recommendation-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-search-provider-spi",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-server-files-service"
 version = "0.1.0"
 dependencies = [
@@ -15229,6 +15975,61 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.19",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-settings-contract"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.19",
+]
+
+[[package]]
+name = "sdkwork-settings-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-settings-service-host"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-database-sqlx",
+ "sdkwork-platform-id-service",
+ "sdkwork-settings-contract",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx 0.9.0",
+ "thiserror 2.0.19",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-settings-web-bootstrap"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-routes-settings-app-api",
+ "sdkwork-routes-settings-backend-api",
+ "sdkwork-settings-service-host",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
  "tokio",
  "tracing",
 ]
@@ -15255,7 +16056,7 @@ dependencies = [
  "sdkwork-shop-service",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "uuid",
 ]
 
@@ -15303,7 +16104,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -15334,7 +16135,7 @@ dependencies = [
  "sdkwork-drive-storage-contract",
  "sdkwork-drive-workspace-service",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
 ]
 
@@ -15372,7 +16173,7 @@ dependencies = [
  "sdkwork-voice-contract",
  "sdkwork-voice-service",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -15431,7 +16232,7 @@ dependencies = [
  "sdkwork-voice-contract",
  "sdkwork-voice-database-host",
  "sdkwork-voice-service",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -15481,7 +16282,7 @@ dependencies = [
  "sdkwork-web-store-sqlx",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tower-http 0.7.0",
  "tracing",
@@ -15547,7 +16348,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -15588,7 +16389,7 @@ dependencies = [
  "sdkwork-webstore-database-host",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tracing",
 ]
@@ -15727,7 +16528,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "sdkwork-webserver-contract",
  "sha2 0.10.9",
- "sqlx",
+ "sqlx 0.9.0",
  "tempfile",
  "tokio",
  "url",
@@ -15765,7 +16566,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "sdkwork-xiangqi-match-service",
  "serde",
- "sqlx",
+ "sqlx 0.9.0",
 ]
 
 [[package]]
@@ -15999,7 +16800,7 @@ dependencies = [
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.9.0",
  "tokio",
  "tokio-stream",
  "tracing",
@@ -16260,15 +17061,66 @@ dependencies = [
 
 [[package]]
 name = "sqlx"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fefb893899429669dcdd979aff487bd78f4064e5e7907e4269081e0ef7d97dc"
+dependencies = [
+ "sqlx-core 0.8.6",
+ "sqlx-macros 0.8.6",
+ "sqlx-mysql 0.8.6",
+ "sqlx-postgres 0.8.6",
+ "sqlx-sqlite 0.8.6",
+]
+
+[[package]]
+name = "sqlx"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "378620ccc25c62c89d8be1c819e76a88d59bdcc3304733330788948e619bfd71"
 dependencies = [
- "sqlx-core",
- "sqlx-macros",
- "sqlx-mysql",
- "sqlx-postgres",
- "sqlx-sqlite",
+ "sqlx-core 0.9.0",
+ "sqlx-macros 0.9.0",
+ "sqlx-mysql 0.9.0",
+ "sqlx-postgres 0.9.0",
+ "sqlx-sqlite 0.9.0",
+]
+
+[[package]]
+name = "sqlx-core"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee6798b1838b6a0f69c007c133b8df5866302197e404e8b6ee8ed3e3a5e68dc6"
+dependencies = [
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "crc",
+ "crossbeam-queue",
+ "either",
+ "event-listener 5.4.2",
+ "futures-core",
+ "futures-intrusive",
+ "futures-io",
+ "futures-util",
+ "hashbrown 0.15.5",
+ "hashlink 0.10.0",
+ "indexmap 2.14.0",
+ "log",
+ "memchr",
+ "once_cell",
+ "percent-encoding",
+ "rustls 0.23.43",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "smallvec",
+ "thiserror 2.0.19",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "url",
+ "uuid",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -16291,7 +17143,7 @@ dependencies = [
  "futures-io",
  "futures-util",
  "hashbrown 0.16.1",
- "hashlink",
+ "hashlink 0.11.1",
  "indexmap 2.14.0",
  "log",
  "memchr",
@@ -16313,15 +17165,53 @@ dependencies = [
 
 [[package]]
 name = "sqlx-macros"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2d452988ccaacfbf5e0bdbc348fb91d7c8af5bee192173ac3636b5fb6e6715d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "sqlx-core 0.8.6",
+ "sqlx-macros-core 0.8.6",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "sqlx-macros"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd2b84f2bc39a5705ef27ec785a11c934a41bbd4a24941e257927cddc26b60bf"
 dependencies = [
  "proc-macro2",
  "quote",
- "sqlx-core",
- "sqlx-macros-core",
+ "sqlx-core 0.9.0",
+ "sqlx-macros-core 0.9.0",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "sqlx-macros-core"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19a9c1841124ac5a61741f96e1d9e2ec77424bf323962dd894bdb93f37d5219b"
+dependencies = [
+ "dotenvy",
+ "either",
+ "heck",
+ "hex",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx-core 0.8.6",
+ "sqlx-mysql 0.8.6",
+ "sqlx-postgres 0.8.6",
+ "sqlx-sqlite 0.8.6",
+ "syn 2.0.119",
+ "tokio",
+ "url",
 ]
 
 [[package]]
@@ -16340,14 +17230,58 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "sqlx-core",
- "sqlx-mysql",
- "sqlx-postgres",
- "sqlx-sqlite",
+ "sqlx-core 0.9.0",
+ "sqlx-mysql 0.9.0",
+ "sqlx-postgres 0.9.0",
+ "sqlx-sqlite 0.9.0",
  "syn 2.0.119",
  "thiserror 2.0.19",
  "tokio",
  "url",
+]
+
+[[package]]
+name = "sqlx-mysql"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa003f0038df784eb8fecbbac13affe3da23b45194bd57dba231c8f48199c526"
+dependencies = [
+ "atoi",
+ "base64 0.22.1",
+ "bitflags",
+ "byteorder",
+ "bytes",
+ "chrono",
+ "crc",
+ "digest 0.10.7",
+ "dotenvy",
+ "either",
+ "futures-channel",
+ "futures-core",
+ "futures-io",
+ "futures-util",
+ "generic-array",
+ "hex",
+ "hkdf 0.12.4",
+ "hmac 0.12.1",
+ "itoa",
+ "log",
+ "md-5 0.10.6",
+ "memchr",
+ "once_cell",
+ "percent-encoding",
+ "rand 0.8.7",
+ "rsa",
+ "serde",
+ "sha1 0.10.7",
+ "sha2 0.10.9",
+ "smallvec",
+ "sqlx-core 0.8.6",
+ "stringprep",
+ "thiserror 2.0.19",
+ "tracing",
+ "uuid",
+ "whoami 1.6.1",
 ]
 
 [[package]]
@@ -16373,11 +17307,50 @@ dependencies = [
  "serde",
  "sha1 0.11.0",
  "sha2 0.11.0",
- "sqlx-core",
+ "sqlx-core 0.9.0",
  "thiserror 2.0.19",
  "time",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "sqlx-postgres"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db58fcd5a53cf07c184b154801ff91347e4c30d17a3562a635ff028ad5deda46"
+dependencies = [
+ "atoi",
+ "base64 0.22.1",
+ "bitflags",
+ "byteorder",
+ "chrono",
+ "crc",
+ "dotenvy",
+ "etcetera 0.8.0",
+ "futures-channel",
+ "futures-core",
+ "futures-util",
+ "hex",
+ "hkdf 0.12.4",
+ "hmac 0.12.1",
+ "home",
+ "itoa",
+ "log",
+ "md-5 0.10.6",
+ "memchr",
+ "once_cell",
+ "rand 0.8.7",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "smallvec",
+ "sqlx-core 0.8.6",
+ "stringprep",
+ "thiserror 2.0.19",
+ "tracing",
+ "uuid",
+ "whoami 1.6.1",
 ]
 
 [[package]]
@@ -16394,7 +17367,7 @@ dependencies = [
  "chrono",
  "crc",
  "dotenvy",
- "etcetera",
+ "etcetera 0.11.0",
  "futures-channel",
  "futures-core",
  "futures-util",
@@ -16411,13 +17384,39 @@ dependencies = [
  "serde_json",
  "sha2 0.11.0",
  "smallvec",
- "sqlx-core",
+ "sqlx-core 0.9.0",
  "stringprep",
  "thiserror 2.0.19",
  "time",
  "tracing",
  "uuid",
- "whoami",
+ "whoami 2.1.2",
+]
+
+[[package]]
+name = "sqlx-sqlite"
+version = "0.8.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c2d12fe70b2c1b4401038055f90f151b78208de1f9f89a7dbfd41587a10c3eea"
+dependencies = [
+ "atoi",
+ "chrono",
+ "flume 0.11.1",
+ "futures-channel",
+ "futures-core",
+ "futures-executor",
+ "futures-intrusive",
+ "futures-util",
+ "libsqlite3-sys",
+ "log",
+ "percent-encoding",
+ "serde",
+ "serde_urlencoded",
+ "sqlx-core 0.8.6",
+ "thiserror 2.0.19",
+ "tracing",
+ "url",
+ "uuid",
 ]
 
 [[package]]
@@ -16428,7 +17427,7 @@ checksum = "488e99c397a62007e4229aec669a179816339afc6d2620ca6fa420dbee2e982c"
 dependencies = [
  "atoi",
  "chrono",
- "flume",
+ "flume 0.12.0",
  "form_urlencoded",
  "futures-channel",
  "futures-core",
@@ -16439,7 +17438,7 @@ dependencies = [
  "log",
  "percent-encoding",
  "serde",
- "sqlx-core",
+ "sqlx-core 0.9.0",
  "thiserror 2.0.19",
  "time",
  "tracing",
@@ -16817,7 +17816,7 @@ dependencies = [
  "socket2 0.6.5",
  "tokio",
  "tokio-util",
- "whoami",
+ "whoami 2.1.2",
 ]
 
 [[package]]
@@ -17655,6 +18654,12 @@ dependencies = [
 
 [[package]]
 name = "wasite"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8dad83b4f25e74f184f64c43b150b91efe7647395b42289f38e50566d82855b"
+
+[[package]]
+name = "wasite"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66fe902b4a6b8028a753d5424909b764ccf79b7a209eac9bf97e59cda9f71a42"
@@ -17804,6 +18809,16 @@ dependencies = [
 
 [[package]]
 name = "whoami"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d4a4db5077702ca3015d3d02d74974948aba2ad9e12ab7df718ee64ccd7e97d"
+dependencies = [
+ "libredox",
+ "wasite 0.1.0",
+]
+
+[[package]]
+name = "whoami"
 version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "998767ef88740d1f5b0682a9c53c24431453923962269c2db68ee43788c5a40d"
@@ -17811,7 +18826,7 @@ dependencies = [
  "libc",
  "libredox",
  "objc2-system-configuration",
- "wasite",
+ "wasite 1.0.2",
  "web-sys",
 ]
 
@@ -17902,11 +18917,20 @@ dependencies = [
 
 [[package]]
 name = "windows-sys"
+version = "0.48.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9"
+dependencies = [
+ "windows-targets 0.48.5",
+]
+
+[[package]]
+name = "windows-sys"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
 dependencies = [
- "windows-targets",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -17915,7 +18939,7 @@ version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
 dependencies = [
- "windows-targets",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -17929,19 +18953,40 @@ dependencies = [
 
 [[package]]
 name = "windows-targets"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a2fa6e2155d7247be68c096456083145c183cbbbc2764150dda45a87197940c"
+dependencies = [
+ "windows_aarch64_gnullvm 0.48.5",
+ "windows_aarch64_msvc 0.48.5",
+ "windows_i686_gnu 0.48.5",
+ "windows_i686_msvc 0.48.5",
+ "windows_x86_64_gnu 0.48.5",
+ "windows_x86_64_gnullvm 0.48.5",
+ "windows_x86_64_msvc 0.48.5",
+]
+
+[[package]]
+name = "windows-targets"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973"
 dependencies = [
- "windows_aarch64_gnullvm",
- "windows_aarch64_msvc",
- "windows_i686_gnu",
+ "windows_aarch64_gnullvm 0.52.6",
+ "windows_aarch64_msvc 0.52.6",
+ "windows_i686_gnu 0.52.6",
  "windows_i686_gnullvm",
- "windows_i686_msvc",
- "windows_x86_64_gnu",
- "windows_x86_64_gnullvm",
- "windows_x86_64_msvc",
+ "windows_i686_msvc 0.52.6",
+ "windows_x86_64_gnu 0.52.6",
+ "windows_x86_64_gnullvm 0.52.6",
+ "windows_x86_64_msvc 0.52.6",
 ]
+
+[[package]]
+name = "windows_aarch64_gnullvm"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b38e32f0abccf9987a4e3079dfb67dcd799fb61361e53e2882c3cbaf0d905d8"
 
 [[package]]
 name = "windows_aarch64_gnullvm"
@@ -17951,9 +18996,21 @@ checksum = "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3"
 
 [[package]]
 name = "windows_aarch64_msvc"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc35310971f3b2dbbf3f0690a219f40e2d9afcf64f9ab7cc1be722937c26b4bc"
+
+[[package]]
+name = "windows_aarch64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469"
+
+[[package]]
+name = "windows_i686_gnu"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75915e7def60c94dcef72200b9a8e58e5091744960da64ec734a6c6e9b3743e"
 
 [[package]]
 name = "windows_i686_gnu"
@@ -17969,9 +19026,21 @@ checksum = "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66"
 
 [[package]]
 name = "windows_i686_msvc"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f55c233f70c4b27f66c523580f78f1004e8b5a8b659e05a4eb49d4166cca406"
+
+[[package]]
+name = "windows_i686_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66"
+
+[[package]]
+name = "windows_x86_64_gnu"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53d40abd2583d23e4718fddf1ebec84dbff8381c07cae67ff7768bbf19c6718e"
 
 [[package]]
 name = "windows_x86_64_gnu"
@@ -17981,9 +19050,21 @@ checksum = "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78"
 
 [[package]]
 name = "windows_x86_64_gnullvm"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b7b52767868a23d5bab768e390dc5f5c55825b6d30b86c844ff2dc7414044cc"
+
+[[package]]
+name = "windows_x86_64_gnullvm"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d"
+
+[[package]]
+name = "windows_x86_64_msvc"
+version = "0.48.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "windows_x86_64_msvc"
