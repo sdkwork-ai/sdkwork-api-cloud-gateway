@@ -70,15 +70,16 @@ fn resolve_config_path(application_root: &Path, path: PathBuf) -> PathBuf {
 }
 
 /// Installed Linux/container discovery order (APPLICATION_DEPLOY_LAYOUT_SPEC):
-/// 1. `/etc/sdkwork/api_gateway/config.toml` (canonical)
-/// 2. legacy process toml under the same config root
-/// 3. legacy hyphenated path from pre-layout installs
+/// `topology.applicationCode = api-gateway` (lowercase kebab-case); the
+/// canonical path is `/etc/sdkwork/api-gateway/config.toml`. The legacy
+/// underscore paths below remain only as fallbacks for pre-migration
+/// installs and are never written by new installers.
 fn default_installed_config_path() -> Option<PathBuf> {
     const CANDIDATES: &[&str] = &[
+        "/etc/sdkwork/api-gateway/config.toml",
+        "/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml",
         "/etc/sdkwork/api_gateway/config.toml",
         "/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml",
-        "/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml",
-        "/etc/sdkwork/api-gateway/config.toml",
     ];
     CANDIDATES
         .iter()

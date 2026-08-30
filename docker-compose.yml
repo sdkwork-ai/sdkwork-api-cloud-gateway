@@ -2,10 +2,10 @@
 #
 # runtimeTarget = "container", deploymentProfile = "standalone".
 # Install layout matches Ubuntu (APPLICATION_DEPLOY_LAYOUT_SPEC):
-#   config  /etc/sdkwork/api_gateway/config.toml
-#   secrets /run/secrets/sdkwork/api_gateway
-#   data    /var/lib/sdkwork/api_gateway
-#   install /opt/sdkwork/api_gateway
+#   config  /etc/sdkwork/api-gateway/config.toml
+#   secrets /run/secrets/sdkwork/api-gateway
+#   data    /var/lib/sdkwork/api-gateway
+#   install /opt/sdkwork/api-gateway
 #
 # Default dependency posture (RUNTIME_DIRECTORY_SPEC §4.5):
 #   external PostgreSQL + Redis (no password on Redis). Point
@@ -68,7 +68,7 @@ services:
 
   knowledgebase-rpc:
     image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
-    entrypoint: ["/opt/sdkwork/api_gateway/container/knowledgebase-rpc-entrypoint"]
+    entrypoint: ["/opt/sdkwork/api-gateway/container/knowledgebase-rpc-entrypoint"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -79,12 +79,12 @@ services:
       SDKWORK_KNOWLEDGEBASE_RPC_TLS_ENABLED: "true"
       SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED: "true"
       SDKWORK_KNOWLEDGEBASE_RPC_HEALTH_ENABLED: "true"
-      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/server.crt
-      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/server.key
-      SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/ca.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.key
+      SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
       SDKWORK_KNOWLEDGEBASE_RPC_SPIFFE_TRUST_DOMAIN: sdkwork.internal
-      SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/caller-context.key
-      SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT: /var/lib/sdkwork/api_gateway/knowledgebase-drive
+      SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
+      SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT: /var/lib/sdkwork/api-gateway/knowledgebase-drive
       SDKWORK_KNOWLEDGEBASE_OPERATOR_ID: sdkwork-knowledgebase
       SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
@@ -93,8 +93,8 @@ services:
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
     volumes:
-      - gateway-data:/var/lib/sdkwork/api_gateway
-      - gateway-secrets:/run/secrets/sdkwork/api_gateway
+      - gateway-data:/var/lib/sdkwork/api-gateway
+      - gateway-secrets:/run/secrets/sdkwork/api-gateway
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/50054'"]
@@ -118,7 +118,7 @@ services:
       SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
       SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.development}
       # Runtime config comes from the mounted host copy at
-      # /etc/sdkwork/api_gateway/config.toml (APPLICATION_DEPLOY_LAYOUT_SPEC /
+      # /etc/sdkwork/api-gateway/config.toml (APPLICATION_DEPLOY_LAYOUT_SPEC /
       # RUNTIME_DIRECTORY_SPEC §4.5 config mount; the image bakes the production
       # template as the same file);
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
@@ -171,18 +171,18 @@ services:
       SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
       SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
       SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
-      SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api_gateway/iam-signing-master.key
+      SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
       SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
-      SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/im-launch-ticket.key
+      SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/im-launch-ticket.key
       # IM -> Knowledgebase lifecycle uses the generated RPC SDK over the
       # single-node composition's persistent mTLS and signed caller context.
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/ca.crt
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/client.crt
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/client.key
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.key
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TLS_DOMAIN: knowledgebase.local
-      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/caller-context.key
+      SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CREDENTIAL_TTL_SECONDS: ${GATEWAY_KNOWLEDGEBASE_RPC_CREDENTIAL_TTL_SECONDS:-60}
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TIMEOUT_MS: ${GATEWAY_KNOWLEDGEBASE_RPC_TIMEOUT_MS:-5000}
       # RTC hydrate scope: the assembly loads runtime persistence for the
@@ -193,10 +193,10 @@ services:
       SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
       SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
-      SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api_gateway/knowledgebase-rpc/knowledgebase-secrets.key
+      SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/knowledgebase-secrets.key
       # Managed Knowledgebase Provider credentials resolve secret:// locators
       # through Vault first when configured, then this operator-managed mount.
-      SDKWORK_SECRETS_DIR: /run/secrets/sdkwork/api_gateway
+      SDKWORK_SECRETS_DIR: /run/secrets/sdkwork/api-gateway
       SDKWORK_VAULT_ADDR: ${GATEWAY_VAULT_ADDR:-}
       SDKWORK_VAULT_TOKEN: ${GATEWAY_VAULT_TOKEN:-}
       SDKWORK_VAULT_MOUNT: ${GATEWAY_VAULT_MOUNT:-secret}
@@ -248,17 +248,17 @@ services:
       # `.data` path which is not writable inside the container (install root
       # is read-only for the sdkwork user); point it at the durable data
       # volume (RUNTIME_DIRECTORY_SPEC §4.5).
-      IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api_gateway/image-drive-objects
+      IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/image-drive-objects
       # Voice generation Drive sync object store: same relative-`.data` default
       # problem as the image module; point it at the durable data volume.
-      VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api_gateway/voice-drive-objects
+      VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/voice-drive-objects
       # Deployments Drive sandbox defaults to /opt/deploy (host install layout);
       # the sdkwork container user cannot create that path — use the data volume.
-      SDKWORK_DEPLOY_SANDBOX_ROOT: /var/lib/sdkwork/api_gateway/deploy-sandbox
+      SDKWORK_DEPLOY_SANDBOX_ROOT: /var/lib/sdkwork/api-gateway/deploy-sandbox
       # Payment credential master key: the single-node composition provisions
       # it once in the canonical secret mount. Multi-replica deployments must
       # set provisioning false and mount the same operator/KMS-managed key.
-      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api_gateway/payment-credential-master.key
+      SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api-gateway/payment-credential-master.key
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY: ${GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true}
       # Process log level (tracing reads RUST_LOG directly).
       RUST_LOG: ${RUST_LOG:-info}
@@ -267,12 +267,12 @@ services:
       # the host copy overrides the image-baked production template without a
       # rebuild. Environment variables below still win over it (ENVIRONMENT_SPEC
       # §3 precedence: defaults -> TOML -> process env -> CLI -> secrets).
-      # Same Ubuntu install path: /etc/sdkwork/api_gateway/config.toml
-      - ./docker/config/config.toml:/etc/sdkwork/api_gateway/config.toml:ro
-      - gateway-data:/var/lib/sdkwork/api_gateway
-      - gateway-secrets:/run/secrets/sdkwork/api_gateway
+      # Same Ubuntu install path: /etc/sdkwork/api-gateway/config.toml
+      - ./docker/config/config.toml:/etc/sdkwork/api-gateway/config.toml:ro
+      - gateway-data:/var/lib/sdkwork/api-gateway
+      - gateway-secrets:/run/secrets/sdkwork/api-gateway
       # Optional private PostgreSQL CA for external TLS (empty file is fine).
-      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api_gateway/postgres-ca-bundle.crt:ro
+      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
     depends_on:
       knowledgebase-rpc:
         condition: service_healthy

@@ -82,7 +82,7 @@ docker compose --env-file .env ps
 ```
 
 单机 Compose 默认设置 `GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=true`，首次启动时在
-`gateway-secrets` 卷的 `/run/secrets/sdkwork/api_gateway/` 下生成权限为 `0600` 的
+`gateway-secrets` 卷的 `/run/secrets/sdkwork/api-gateway/` 下生成权限为 `0600` 的
 Payment 凭据主密钥，后续启动复用且不会覆盖。多副本部署必须将该值设为 `false`，并在
 同一路径挂载由运维或 KMS 管理的共享密钥；丢失或让副本使用不同密钥会导致已有支付凭据
 无法解密。
@@ -185,11 +185,11 @@ curl http://api-dev.dtupay.com/healthz
 - **配置格式**：TOML（ENVIRONMENT_SPEC §2/§9："TOML is preferred for SDKWork Rust
   services"）。配置优先级：内置默认 → TOML → 环境变量 → CLI → 密钥
   （ENVIRONMENT_SPEC §3）。
-- **配置位置**：`/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml`（§4.5
+- **配置位置**：`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml`（§4.5
   config mount）。镜像内置 production 模板为该路径的默认内容；`docker-compose.yml`
   将宿主文件 `docker/config/sdkwork-api-cloud-gateway.toml` 只读挂载覆盖之，
   修改限流/请求体/策略等环境变量未覆盖的字段无需重建镜像。
-- **密钥**：`/run/secrets/sdkwork/api_gateway/<secret-name>`（§4.5 secret mount、
+- **密钥**：`/run/secrets/sdkwork/api-gateway/<secret-name>`（§4.5 secret mount、
   §11 Secrets Standard）。本仓库不放置真实密钥；部署时把平台 secret 挂载到该目录
   并从配置或 `SDKWORK_*_FILE` 环境变量引用。禁止把密钥写进镜像层或 compose 文件。
 - 部署期配置通过 `docker-compose.yml` / `.env` 注入（环境变量优先于 TOML）：
@@ -197,7 +197,7 @@ curl http://api-dev.dtupay.com/healthz
   - `SDKWORK_CORS_ALLOWED_ORIGINS` — 浏览器 CORS 白名单（规范共享键）
   - `SDKWORK_DATABASE_*` — PostgreSQL 连接（compose 内置 postgres 服务）
   - `GATEWAY_HOST_PORT` — 主机映射端口（默认 3910）
-- 数据卷：`postgres-data`、`gateway-data`（`/var/lib/sdkwork/api_gateway`，
+- 数据卷：`postgres-data`、`gateway-data`（`/var/lib/sdkwork/api-gateway`，
   RUNTIME_DIRECTORY_SPEC §4.5 容器范围）。
 - 多操作系统（Ubuntu systemd / Windows SCM / macOS launchd / 容器）的安装与配置
   规范见 [INSTALLATION_STANDARDS.md](INSTALLATION_STANDARDS.md)；Ubuntu systemd

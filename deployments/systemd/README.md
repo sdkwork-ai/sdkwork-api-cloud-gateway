@@ -9,18 +9,18 @@
   sidecar；仅监听 `127.0.0.1:50054`，并通过持久化 mTLS 和签名调用上下文与
   网关中的 IM 模块通信。
 
-安装路径遵循 `topology.applicationCode = api_gateway`
+安装路径遵循 `topology.applicationCode = api-gateway`
 （`APPLICATION_DEPLOY_LAYOUT_SPEC` / `RUNTIME_DIRECTORY_SPEC` §4.1）：
 
 | Purpose | Path |
 | --- | --- |
-| Config | `/etc/sdkwork/api_gateway/config.toml` |
-| Process env | `/etc/sdkwork/api_gateway/api_gateway.env` |
-| Secrets | `/etc/sdkwork/api_gateway/secrets/` |
-| Data | `/var/lib/sdkwork/api_gateway` |
-| Install | `/opt/sdkwork/api_gateway` |
+| Config | `/etc/sdkwork/api-gateway/config.toml` |
+| Process env | `/etc/sdkwork/api-gateway/api-gateway.env` |
+| Secrets | `/etc/sdkwork/api-gateway/secrets/` |
+| Data | `/var/lib/sdkwork/api-gateway` |
+| Install | `/opt/sdkwork/api-gateway` |
 
-与 Docker 容器布局一致（容器 secrets 在 `/run/secrets/sdkwork/api_gateway`）。
+与 Docker 容器布局一致（容器 secrets 在 `/run/secrets/sdkwork/api-gateway`）。
 
 ## 安装步骤（Ubuntu）
 
@@ -41,7 +41,7 @@ openssl dgst -sha256 \
 provenance 和 `.sdkwork/evidence/<package-id>.json`。artifact evidence 的 digest、版本、
 source commit、package id、deployment profile 与 runtime target 必须与待安装归档一致。
 
-推荐使用包内安装器（落位 `config.toml` + `api_gateway.env` + secrets）：
+推荐使用包内安装器（落位 `config.toml` + `api-gateway.env` + secrets）：
 
 ```bash
 sudo bash scripts/install-ubuntu.sh \
@@ -53,25 +53,25 @@ sudo bash scripts/install-ubuntu.sh \
 
 ```bash
 # 1. 解压服务包到安装根
-sudo mkdir -p /opt/sdkwork/api_gateway
+sudo mkdir -p /opt/sdkwork/api-gateway
 sudo tar -xzf sdkwork-api-cloud-gateway-<version>-linux-x64-standalone-server.tar.gz \
-  -C /opt/sdkwork/api_gateway --strip-components=1
+  -C /opt/sdkwork/api-gateway --strip-components=1
 
 # 2. 创建系统用户与运行时目录
 sudo groupadd --system sdkwork || true
-sudo useradd --system --gid sdkwork --home-dir /opt/sdkwork/api_gateway sdkwork || true
-sudo install -d -o root -g sdkwork -m 0750 /etc/sdkwork/api_gateway \
-  /etc/sdkwork/api_gateway/secrets
-sudo install -d -o sdkwork -g sdkwork -m 0750 /var/lib/sdkwork/api_gateway \
-  /var/log/sdkwork/api_gateway /var/cache/sdkwork/api_gateway /run/sdkwork/api_gateway
+sudo useradd --system --gid sdkwork --home-dir /opt/sdkwork/api-gateway sdkwork || true
+sudo install -d -o root -g sdkwork -m 0750 /etc/sdkwork/api-gateway \
+  /etc/sdkwork/api-gateway/secrets
+sudo install -d -o sdkwork -g sdkwork -m 0750 /var/lib/sdkwork/api-gateway \
+  /var/log/sdkwork/api-gateway /var/cache/sdkwork/api-gateway /run/sdkwork/api-gateway
 
 # 3. 落位运行时配置（APPLICATION_DEPLOY_LAYOUT_SPEC: config.toml）
 sudo install -o root -g sdkwork -m 0640 \
   config/sdkwork-api-cloud-gateway.production.toml \
-  /etc/sdkwork/api_gateway/config.toml
+  /etc/sdkwork/api-gateway/config.toml
 sudo install -o root -g sdkwork -m 0640 /dev/null \
-  /etc/sdkwork/api_gateway/api_gateway.env
-sudo editor /etc/sdkwork/api_gateway/api_gateway.env
+  /etc/sdkwork/api-gateway/api-gateway.env
+sudo editor /etc/sdkwork/api-gateway/api-gateway.env
 #   SDKWORK_DATABASE_* 连接注入（密码走 /etc/sdkwork/database/database.secret
 #   或 SDKWORK_DATABASE_PASSWORD_FILE，禁止写入本文件，PACKAGING_SPEC §5.5）
 #   Redis：外部实例、无密码（空 SDKWORK_CLOUDROUTER_REDIS_PASSWORD）
@@ -106,7 +106,7 @@ sudo journalctl -u sdkwork-api-gateway -f
 ## 规范要点
 
 - 单元文件不内嵌环境赋值（`PACKAGING_SPEC.md` §5.5）：安装期生成的值一律放
-  `EnvironmentFile=/etc/sdkwork/api_gateway/api_gateway.env`。
+  `EnvironmentFile=/etc/sdkwork/api-gateway/api-gateway.env`。
 - 数据库凭据禁止写入 env 文件、单元文件或配置模板；通过
   `password_file` / `/etc/sdkwork/database/database.secret` / 平台密钥注入。
 - **本网关不安装 nginx 站点映射。** 公网反向代理由独立产品

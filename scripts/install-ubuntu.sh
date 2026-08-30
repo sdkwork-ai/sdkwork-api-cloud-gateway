@@ -109,16 +109,16 @@ if [ -z "$destdir" ]; then
     groupadd --system sdkwork
   fi
   if ! id sdkwork >/dev/null 2>&1; then
-    useradd --system --gid sdkwork --home-dir /opt/sdkwork/api_gateway sdkwork
+    useradd --system --gid sdkwork --home-dir /opt/sdkwork/api-gateway sdkwork
   fi
 fi
 
-install_root=$destdir/opt/sdkwork/api_gateway
-config_root=$destdir/etc/sdkwork/api_gateway
-data_root=$destdir/var/lib/sdkwork/api_gateway
-log_root=$destdir/var/log/sdkwork/api_gateway
-cache_root=$destdir/var/cache/sdkwork/api_gateway
-run_root=$destdir/run/sdkwork/api_gateway
+install_root=$destdir/opt/sdkwork/api-gateway
+config_root=$destdir/etc/sdkwork/api-gateway
+data_root=$destdir/var/lib/sdkwork/api-gateway
+log_root=$destdir/var/log/sdkwork/api-gateway
+cache_root=$destdir/var/cache/sdkwork/api-gateway
+run_root=$destdir/run/sdkwork/api-gateway
 unit_root=$destdir/usr/lib/systemd/system
 
 install -d -m 0755 "$install_root/bin" "$install_root/database-modules" "$install_root/data" "$install_root/specs"
@@ -147,7 +147,7 @@ if [ ! -e "$config_target" ]; then
   install -m 0640 "$config_source" "$config_target"
 fi
 
-env_target=$config_root/api_gateway.env
+env_target=$config_root/api-gateway.env
 if [ ! -e "$env_target" ]; then
   umask 027
   {
@@ -156,28 +156,28 @@ if [ ! -e "$env_target" ]; then
     echo "SDKWORK_ENVIRONMENT=$environment"
     echo "SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID=$deployment_profile.$environment"
     echo "SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=server"
-    echo "SDKWORK_API_GATEWAY_CONFIG_FILE=/etc/sdkwork/api_gateway/config.toml"
-    echo "SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api_gateway/config.toml"
-    echo "SDKWORK_APP_ROOT=/opt/sdkwork/api_gateway"
-    echo "SDKWORK_DATABASE_MODULES_ROOT=/opt/sdkwork/api_gateway/database-modules"
-    echo "SDKWORK_MODELS_APP_ROOT=/opt/sdkwork/api_gateway/database-modules/sdkwork-models"
-    echo "SDKWORK_MODELS_CATALOG_ROOT=/opt/sdkwork/api_gateway/data/sdkwork-models"
+    echo "SDKWORK_API_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/config.toml"
+    echo "SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/config.toml"
+    echo "SDKWORK_APP_ROOT=/opt/sdkwork/api-gateway"
+    echo "SDKWORK_DATABASE_MODULES_ROOT=/opt/sdkwork/api-gateway/database-modules"
+    echo "SDKWORK_MODELS_APP_ROOT=/opt/sdkwork/api-gateway/database-modules/sdkwork-models"
+    echo "SDKWORK_MODELS_CATALOG_ROOT=/opt/sdkwork/api-gateway/data/sdkwork-models"
     echo "SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC=false"
     echo "SDKWORK_IM_PRINCIPAL_DIRECTORY=postgres"
-    echo "SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE=/etc/sdkwork/api_gateway/secrets/iam-signing-master.key"
-    echo "SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE=/etc/sdkwork/api_gateway/secrets/payment-credential-master.key"
-    echo "SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/im-launch-ticket.key"
+    echo "SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE=/etc/sdkwork/api-gateway/secrets/iam-signing-master.key"
+    echo "SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE=/etc/sdkwork/api-gateway/secrets/payment-credential-master.key"
+    echo "SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/im-launch-ticket.key"
     echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT=https://127.0.0.1:50054"
-    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/ca.crt"
-    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/client.crt"
-    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/client.key"
+    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/ca.crt"
+    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/client.crt"
+    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/client.key"
     echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TLS_DOMAIN=knowledgebase.local"
-    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/caller-context.key"
-    echo "SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/knowledgebase-secrets.key"
+    echo "SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/caller-context.key"
+    echo "SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/knowledgebase-secrets.key"
     echo "SDKWORK_KNOWLEDGEBASE_ENVIRONMENT=$environment"
     echo "SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE=$deployment_profile"
     echo "SDKWORK_KNOWLEDGEBASE_TENANT_ID=100001"
-    echo "SDKWORK_SECRETS_DIR=/etc/sdkwork/api_gateway/secrets"
+    echo "SDKWORK_SECRETS_DIR=/etc/sdkwork/api-gateway/secrets"
   } > "$env_target"
   chmod 0640 "$env_target"
 fi
@@ -193,13 +193,13 @@ if [ ! -e "$knowledgebase_rpc_env_target" ]; then
     echo "SDKWORK_KNOWLEDGEBASE_RPC_TLS_ENABLED=true"
     echo "SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED=true"
     echo "SDKWORK_KNOWLEDGEBASE_RPC_HEALTH_ENABLED=true"
-    echo "SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/server.crt"
-    echo "SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/server.key"
-    echo "SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/ca.crt"
+    echo "SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/server.crt"
+    echo "SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/server.key"
+    echo "SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/ca.crt"
     echo "SDKWORK_KNOWLEDGEBASE_RPC_SPIFFE_TRUST_DOMAIN=sdkwork.internal"
-    echo "SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE=/etc/sdkwork/api_gateway/secrets/knowledgebase-rpc/caller-context.key"
+    echo "SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/caller-context.key"
     if [ "$deployment_profile" = standalone ]; then
-      echo "SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT=/var/lib/sdkwork/api_gateway/knowledgebase-drive"
+      echo "SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT=/var/lib/sdkwork/api-gateway/knowledgebase-drive"
     else
       echo "# SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_PROVIDER_ID=<managed-provider-id>"
     fi

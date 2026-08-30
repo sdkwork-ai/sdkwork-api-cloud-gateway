@@ -57,10 +57,10 @@ Authority: `APPLICATION_DEPLOY_LAYOUT_SPEC.md` (`../sdkwork-specs/`).
 | Item | Value |
 | --- | --- |
 | `appId` | `sdkwork-api-cloud-gateway` |
-| `runtimeCode` | `api_gateway` |
-| Config root | `/etc/sdkwork/api_gateway/` |
-| Runtime TOML | `/etc/sdkwork/api_gateway/config.toml` |
-| Secrets | `/etc/sdkwork/api_gateway/secrets/` |
+| `runtimeCode` | `api-gateway` |
+| Config root | `/etc/sdkwork/api-gateway/` |
+| Runtime TOML | `/etc/sdkwork/api-gateway/config.toml` |
+| Secrets | `/etc/sdkwork/api-gateway/secrets/` |
 | Override | `SDKWORK_API_GATEWAY_CONFIG_FILE` |
 
 Source profiles live under `etc/` (`sdkwork.deployment.config.json` index). Deploy manifest: `deployments/deploy.yaml`. Web data-plane source: `deployments/webserver/` (`SDKWORK_WEBSERVER_SPEC.md` layout v3).

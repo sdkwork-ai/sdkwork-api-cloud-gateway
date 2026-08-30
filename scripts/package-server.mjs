@@ -622,10 +622,10 @@ RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
 (\`/usr/lib/systemd/system/${serviceName}.service\`, PACKAGING_SPEC §5.5):
 
 1. Materialize \`config/sdkwork-api-cloud-gateway.production.toml\` at the
-   canonical config path \`/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml\`
+   canonical config path \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml\`
    (\`root:sdkwork\`, 0640).
 2. Put installation-generated overrides in
-   \`/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.env\` (0640) — never
+   \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env\` (0640) — never
    embed them in the unit file.
 3. Inject the unified PostgreSQL profile through \`SDKWORK_DATABASE_*\` with
    password material via \`password_file\` or
@@ -674,20 +674,20 @@ async function createInstallManifest(context) {
       systemdUnit: '/usr/lib/systemd/system/sdkwork-api-gateway.service',
       requiredServices: ['sdkwork-knowledgebase-rpc.service'],
       directories: {
-        config: '/etc/sdkwork/api_gateway',
-        data: '/var/lib/sdkwork/api_gateway',
-        logs: '/var/log/sdkwork/api_gateway',
-        cache: '/var/cache/sdkwork/api_gateway',
-        run: '/run/sdkwork/api_gateway',
-        installRoot: '/opt/sdkwork/api_gateway',
+        config: '/etc/sdkwork/api-gateway',
+        data: '/var/lib/sdkwork/api-gateway',
+        logs: '/var/log/sdkwork/api-gateway',
+        cache: '/var/cache/sdkwork/api-gateway',
+        run: '/run/sdkwork/api-gateway',
+        installRoot: '/opt/sdkwork/api-gateway',
       },
-      configFile: '/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml',
-      envFile: '/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.env',
-      secretsDir: '/etc/sdkwork/api_gateway',
+      configFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml',
+      envFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env',
+      secretsDir: '/etc/sdkwork/api-gateway',
       container: {
-        configMount: '/etc/sdkwork/api_gateway',
-        secretsMount: '/run/secrets/sdkwork/api_gateway',
-        dataVolume: '/var/lib/sdkwork/api_gateway',
+        configMount: '/etc/sdkwork/api-gateway',
+        secretsMount: '/run/secrets/sdkwork/api-gateway',
+        dataVolume: '/var/lib/sdkwork/api-gateway',
       },
       database: {
         canonicalName: 'sdkwork_ai_prod',

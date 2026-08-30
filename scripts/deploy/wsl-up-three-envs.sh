@@ -4,12 +4,10 @@ cd "$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
 mkdir -p docker/ca
 [[ -f docker/ca/postgres-ca-bundle.crt ]] || : > docker/ca/postgres-ca-bundle.crt
 
-COMPAT=(-f docker-compose.yml -f docker-compose.image-path-compat.yml)
-
 for name in development test production; do
   echo "==> deploy $name"
   docker compose --env-file "docker/env/${name}.env" -p "sdkwork-gateway-${name}" \
-    "${COMPAT[@]}" up -d
+    -f docker-compose.yml up -d
 done
 
 echo "==> waiting for readiness"

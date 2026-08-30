@@ -10,15 +10,15 @@ Forbidden content: live secrets, private keys, local override files, runtime use
 
 Related specs: `../sdkwork-specs/APPLICATION_DEPLOY_LAYOUT_SPEC.md`, `../sdkwork-specs/RUNTIME_DIRECTORY_SPEC.md`, `../sdkwork-specs/DEPLOYMENT_SPEC.md`, `../sdkwork-specs/GITHUB_WORKFLOW_SPEC.md`.
 
-Canonical install / container config root (`topology.applicationCode = api_gateway`):
+Canonical install / container config root (`topology.applicationCode = api-gateway`):
 
 | Purpose | Path |
 | --- | --- |
-| Config | `/etc/sdkwork/api_gateway/config.toml` |
-| Process env | `/etc/sdkwork/api_gateway/api_gateway.env` |
-| Secrets (host) | `/etc/sdkwork/api_gateway/secrets/` |
-| Data | `/var/lib/sdkwork/api_gateway` |
-| Install | `/opt/sdkwork/api_gateway` |
+| Config | `/etc/sdkwork/api-gateway/config.toml` |
+| Process env | `/etc/sdkwork/api-gateway/api-gateway.env` |
+| Secrets (host) | `/etc/sdkwork/api-gateway/secrets/` |
+| Data | `/var/lib/sdkwork/api-gateway` |
+| Install | `/opt/sdkwork/api-gateway` |
 
 Verification: `node ../sdkwork-specs/tools/check-application-deploy-layout.mjs --root .`
 

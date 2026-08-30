@@ -32,7 +32,7 @@ services:
       SDKWORK_DATABASE_PORT: "5432"
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
       SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: /run/sdkwork/postgres-tls/server.crt
-      SSL_CERT_FILE: /run/sdkwork/api_gateway/postgres-ca-bundle.crt
+      SSL_CERT_FILE: /run/sdkwork/api-gateway/postgres-ca-bundle.crt
       SDKWORK_CLOUDROUTER_REDIS_HOST: redis
       SDKWORK_CLOUDROUTER_REDIS_PORT: "6379"
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ""

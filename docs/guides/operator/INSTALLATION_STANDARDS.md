@@ -48,17 +48,17 @@
 
 | 用途 | 规范路径 | 属主 |
 | --- | --- | --- |
-| 运行时配置 | `/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml` | `root:sdkwork` |
-| 进程环境覆盖 | `/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.env` | `root:sdkwork`，0640 |
-| 密钥文件 | `/etc/sdkwork/api_gateway/*.secret` | `root:sdkwork`，0600/0640 |
+| 运行时配置 | `/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml` | `root:sdkwork` |
+| 进程环境覆盖 | `/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env` | `root:sdkwork`，0640 |
+| 密钥文件 | `/etc/sdkwork/api-gateway/*.secret` | `root:sdkwork`，0600/0640 |
 | 工作区数据库配置 | `/etc/sdkwork/database/database.toml` + `database.secret` | `root:sdkwork` |
-| 私有不可变资产 | `/usr/lib/sdkwork/api-gateway`（或归档安装 `/opt/sdkwork/api_gateway`） | `root:root` |
+| 私有不可变资产 | `/usr/lib/sdkwork/api-gateway`（或归档安装 `/opt/sdkwork/api-gateway`） | `root:root` |
 | 共享只读资产 | `/usr/share/sdkwork/api-gateway` | `root:root` |
 | 文档 | `/usr/share/doc/sdkwork/api-gateway` | `root:root` |
-| 可变数据 | `/var/lib/sdkwork/api_gateway` | `sdkwork:sdkwork` |
-| 日志 | `/var/log/sdkwork/api_gateway` | `sdkwork:adm` 或 `sdkwork:sdkwork` |
-| 缓存 | `/var/cache/sdkwork/api_gateway` | `sdkwork:sdkwork` |
-| 运行态 | `/run/sdkwork/api_gateway` | `sdkwork:sdkwork` |
+| 可变数据 | `/var/lib/sdkwork/api-gateway` | `sdkwork:sdkwork` |
+| 日志 | `/var/log/sdkwork/api-gateway` | `sdkwork:adm` 或 `sdkwork:sdkwork` |
+| 缓存 | `/var/cache/sdkwork/api-gateway` | `sdkwork:sdkwork` |
+| 运行态 | `/run/sdkwork/api-gateway` | `sdkwork:sdkwork` |
 | 服务注册 | `/usr/lib/systemd/system/sdkwork-api-gateway.service` | `PACKAGING_SPEC.md` §5.5 |
 
 禁止裸进程名路径（如 `/etc/sdkwork-api-cloud-gateway`、`/var/lib/api-gateway`）。
@@ -96,13 +96,13 @@
 
 | 用途 | 规范路径 | 说明 |
 | --- | --- | --- |
-| 配置挂载 | `/etc/sdkwork/api_gateway` | 宿主 config 只读挂载 |
-| 配置文件 | `/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.toml` | `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE` 可覆盖 |
-| 密钥挂载 | `/run/secrets/sdkwork/api_gateway` | 平台 secret 挂载（§11） |
-| 数据卷 | `/var/lib/sdkwork/api_gateway` | 持久数据，禁止放镜像层 |
-| 缓存卷 | `/var/cache/sdkwork/api_gateway` | 可重建 |
-| 运行态 | `/run/sdkwork/api_gateway` | PID/锁 |
-| 安装根 | `/opt/sdkwork/api_gateway` | 不可变包树（镜像层） |
+| 配置挂载 | `/etc/sdkwork/api-gateway` | 宿主 config 只读挂载 |
+| 配置文件 | `/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml` | `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE` 可覆盖 |
+| 密钥挂载 | `/run/secrets/sdkwork/api-gateway` | 平台 secret 挂载（§11） |
+| 数据卷 | `/var/lib/sdkwork/api-gateway` | 持久数据，禁止放镜像层 |
+| 缓存卷 | `/var/cache/sdkwork/api-gateway` | 可重建 |
+| 运行态 | `/run/sdkwork/api-gateway` | PID/锁 |
+| 安装根 | `/opt/sdkwork/api-gateway` | 不可变包树（镜像层） |
 
 容器内目录布局在 `Dockerfile` 中声明（§4.5 注释 + mkdir/chown），本仓库的
 `docker-compose.yml` 按上表挂载 config 与数据卷。参考交付：`docker/`、
@@ -114,11 +114,11 @@
 
 ### 3.1 安装方式
 
-1. **归档安装**（当前交付，`TAR_GZ`）：解压到 `/opt/sdkwork/api_gateway`，随后
+1. **归档安装**（当前交付，`TAR_GZ`）：解压到 `/opt/sdkwork/api-gateway`，随后
    手工完成 §2.1 目录/配置/服务注册（详见 `deployments/systemd/README.md`）。
 2. **原生安装器**（规划，`.deb`）：按 `PACKAGING_SPEC.md` §5.5 矩阵落位：
    `/usr/lib/systemd/system/sdkwork-api-gateway.service`、
-   `/etc/sdkwork/api_gateway/`、`/var/lib/sdkwork/api_gateway/` 等；
+   `/etc/sdkwork/api-gateway/`、`/var/lib/sdkwork/api-gateway/` 等；
    `postinst`/`prerm` 只做运行时布局与服务注册（§5.2），禁止内嵌密钥。
 
 ### 3.2 服务单元（`deployments/systemd/sdkwork-api-gateway.service`）
@@ -128,10 +128,10 @@
 Type=simple
 User=sdkwork
 Group=sdkwork
-EnvironmentFile=/etc/sdkwork/api_gateway/sdkwork-api-cloud-gateway.env
-WorkingDirectory=/opt/sdkwork/api_gateway
-ExecStartPre=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
-ExecStart=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway
+EnvironmentFile=/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env
+WorkingDirectory=/opt/sdkwork/api-gateway
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 ```
 
 - 安装期生成的环境赋值放 `EnvironmentFile`（0640），**不得内嵌到单元文件**
@@ -183,7 +183,7 @@ ExecStart=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway
   New-Service -Name sdkwork-api-gateway -BinaryPathName `
     "C:\Program Files\sdkwork\api-gateway\bin\sdkwork-api-cloud-gateway.exe" `
     -StartupType Automatic -Description "SDKWork API Cloud Gateway"
-  $env:SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE = "C:\ProgramData\sdkwork\api_gateway\sdkwork-api-cloud-gateway.toml"
+  $env:SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE = "C:\ProgramData\sdkwork\api-gateway\sdkwork-api-cloud-gateway.toml"
   ```
 
 - 服务账户对 `%ProgramData%\sdkwork\api-gateway` 有读写、对
@@ -234,7 +234,7 @@ ExecStart=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway
 | `[observability]` | 日志/指标/追踪/OTLP | `RUST_LOG` |
 
 生产模板：`etc/sdkwork-api-cloud-gateway.production.toml`；容器宿主可编辑副本：
-`docker/config/sdkwork-api-cloud-gateway.toml`（挂载到 `/etc/sdkwork/api_gateway/`）。
+`docker/config/sdkwork-api-cloud-gateway.toml`（挂载到 `/etc/sdkwork/api-gateway/`）。
 
 ### 6.2 数据库（`ENVIRONMENT_SPEC.md` §7.3、§9 `[database]`）
 
@@ -255,9 +255,9 @@ snowflake node id、支付主密钥文件路径。密钥不落入镜像层与 co
 
 ## 7. 密钥规范（`RUNTIME_DIRECTORY_SPEC.md` §11 Secrets Standard）
 
-- Linux：`/etc/sdkwork/api_gateway/*.secret`，`0600`/`0640`，仅服务账户与管理
+- Linux：`/etc/sdkwork/api-gateway/*.secret`，`0600`/`0640`，仅服务账户与管理
   员可读；启动时缺失必需密钥必须 fail-closed（占位符安装器只用于安装期）。
-- 容器：优先平台 secret 挂载 `/run/secrets/sdkwork/api_gateway/<secret-name>`
+- 容器：优先平台 secret 挂载 `/run/secrets/sdkwork/api-gateway/<secret-name>`
   （secret-name 即文件名），配置中引用路径或 `SDKWORK_*_FILE` env 指针。
 - 数据库密码：`/etc/sdkwork/database/database.secret`（`password_file`），
   禁止写入 env 文件、单元文件、配置模板（`PACKAGING_SPEC.md` §5.5）。
@@ -292,8 +292,8 @@ snowflake node id、支付主密钥文件路径。密钥不落入镜像层与 co
 - [ ] 配置文件为 TOML，位于规范路径（§2 对应 OS 行），权限 0640/0644 合规
 - [ ] 密钥材料在 `*.secret` / `/run/secrets/...` / `password_file`，不在配置与单元文件
 - [ ] systemd 单元名 `sdkwork-api-gateway`，`EnvironmentFile` 0640，无内嵌 env 赋值
-- [ ] 容器：config 挂载 `/etc/sdkwork/api_gateway/`、secret 挂载
-      `/run/secrets/sdkwork/api_gateway`、数据卷 `/var/lib/sdkwork/api_gateway`
+- [ ] 容器：config 挂载 `/etc/sdkwork/api-gateway/`、secret 挂载
+      `/run/secrets/sdkwork/api-gateway`、数据卷 `/var/lib/sdkwork/api-gateway`
 - [ ] 安装包含 `INSTALL.md`、`install-manifest.json`、`checksums.sha256`、
       配置模板、`specs/`，且 manifest 声明 `installConfiguration`
 - [ ] `/healthz`、`/readyz` 通过；数据库经 `SDKWORK_DATABASE_*` 注入，

@@ -5,7 +5,7 @@ Ubuntu / WSL.
 
 Packages **development / test / staging / production** with non-conflicting
 host ports, **external PostgreSQL + Redis (no Redis password)**, and the same
-FHS layout as Ubuntu install (`/etc/sdkwork/api_gateway/config.toml`).
+FHS layout as Ubuntu install (`/etc/sdkwork/api-gateway/config.toml`).
 
 > Public reverse proxy is **not** owned here. Configure
 > `sdkwork-webserver` (independent Docker product) to forward

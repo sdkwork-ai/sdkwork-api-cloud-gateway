@@ -1,4 +1,4 @@
-# Example runtime config for sdkwork-api-cloud-gateway. Installers write /etc/sdkwork/api_gateway/config.toml.
+# Example runtime config for sdkwork-api-cloud-gateway. Installers write /etc/sdkwork/api-gateway/config.toml.
 # Development: SDKWORK_API_GATEWAY_CONFIG_FILE=etc/examples/config.toml.example
 
 [profile]

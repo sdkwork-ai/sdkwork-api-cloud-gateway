@@ -52,7 +52,7 @@ fi
 )
 
 unit_root="$validation_root/stage/usr/lib/systemd/system"
-install_root="$validation_root/stage/opt/sdkwork/api_gateway"
+install_root="$validation_root/stage/opt/sdkwork/api-gateway"
 test -f "$unit_root/sdkwork-api-gateway.service"
 test -f "$unit_root/sdkwork-knowledgebase-rpc.service"
 "$install_root/bin/sdkwork-api-cloud-gateway" --version

@@ -1,6 +1,6 @@
 specVersion = 1
 kind = "sdkwork.webserver.server"
-id = "api_gateway"
+id = "api-gateway"
 description = "sdkwork-api-cloud-gateway web server (platform.api-gateway)"
 
 [nginx]
@@ -13,8 +13,8 @@ confFile = "nginx.conf"
 [main]
 user = "sdkwork"
 workerProcesses = "auto"
-pid = "/run/sdkwork/api_gateway/webserver.pid"
-errorLog = "/var/log/sdkwork/api_gateway/webserver/error.log warn"
+pid = "/run/sdkwork/api-gateway/webserver.pid"
+errorLog = "/var/log/sdkwork/api-gateway/webserver/error.log warn"
 
 [main.events]
 workerConnections = 1024

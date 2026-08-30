@@ -572,7 +572,7 @@ function createContainerMetadata(plan) {
     version: plan.package.version,
     runtimeTarget: 'container',
     deploymentProfile: plan.package.deploymentProfile,
-    entrypoint: '/opt/sdkwork/api_gateway/container/entrypoint',
+    entrypoint: '/opt/sdkwork/api-gateway/container/entrypoint',
     healthPath: '/healthz',
     readinessPath: '/readyz',
   };

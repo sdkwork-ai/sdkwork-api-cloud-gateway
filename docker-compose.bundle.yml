@@ -1,0 +1,205 @@
+# sdkwork-api-cloud-gateway — unified install-image bundle composition.
+#
+# One image, any environment, N instances per environment
+# (DEPLOYMENT_SPEC.md §6 / PNPM_SCRIPT_SPEC.md §4.4). This file is
+# environment-neutral: deploy.sh supplies GATEWAY_ENVIRONMENT, the
+# per-instance host port (GATEWAY_INSTANCE_HOST_PORT), the image tag
+# (GATEWAY_IMAGE), and the per-environment shared network and volumes named
+# below (created once per environment by deploy.sh).
+#
+# Layout:
+#   deps project:     docker compose -p sdkwork-api-cloud-gateway-<env>-deps \
+#                       --env-file env/<env>.env --profile deps up -d
+#                     (one knowledgebase-rpc singleton per environment)
+#   instance project: docker compose -p sdkwork-api-cloud-gateway-<env>-i<i> \
+#                       --env-file env/<env>.env --profile instance up -d
+#   Instance 1 runs the database migration first (GATEWAY_MIGRATE_ON_START=true);
+#   instances 2..N start with GATEWAY_MIGRATE_ON_START=false (set by deploy.sh).
+#
+# Dependencies: external PostgreSQL + Redis (no embedded databases in the
+# bundle; point GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_* at the host
+# or managed endpoint via the env file). The public reverse proxy is owned by
+# the independent sdkwork-webserver deployment — this bundle installs no nginx.
+#
+# Values marked `:?required` MUST come from the --env-file or process env.
+
+x-gateway-common: &gateway-common
+  image: ${GATEWAY_IMAGE:?required}
+  restart: unless-stopped
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  networks:
+    - sdkwork
+  environment:
+    # Deployment identity (DEPLOYMENT_SPEC §5.2); the entrypoint pins these too.
+    SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: standalone
+    SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container
+    SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
+    SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
+    SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.${GATEWAY_ENVIRONMENT}}
+    SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
+    SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
+    SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-}
+    # Migration ownership: instance 1 migrates; instances 2..N must not.
+    SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}
+    SDKWORK_DATABASE_AUTO_MIGRATE: ${SDKWORK_DATABASE_AUTO_MIGRATE:-false}
+    # External PostgreSQL (split fields + explicit schema identity).
+    SDKWORK_DATABASE_ENGINE: postgresql
+    SDKWORK_DATABASE_HOST: ${GATEWAY_POSTGRES_HOST:-host.docker.internal}
+    SDKWORK_DATABASE_PORT: ${GATEWAY_POSTGRES_PORT:-5432}
+    SDKWORK_DATABASE_NAME: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}
+    SDKWORK_DATABASE_SCHEMA: ${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}
+    SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: "false"
+    SDKWORK_DATABASE_USERNAME: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}
+    SDKWORK_DATABASE_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}
+    SDKWORK_DATABASE_SSL_MODE: ${GATEWAY_POSTGRES_SSL_MODE:-disable}
+    SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+    SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
+    SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
+    SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-50}
+    SDKWORK_DATABASE_MIN_CONNECTIONS: ${SDKWORK_DATABASE_MIN_CONNECTIONS:-5}
+    SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${SDKWORK_DATABASE_ACQUIRE_TIMEOUT:-30}
+    SDKWORK_DATABASE_IDLE_TIMEOUT: ${SDKWORK_DATABASE_IDLE_TIMEOUT:-600}
+    SDKWORK_DATABASE_MAX_LIFETIME: ${SDKWORK_DATABASE_MAX_LIFETIME:-1800}
+    SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
+    SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
+    # IM principal directory (dynamic PostgreSQL directory in containers).
+    SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
+    SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
+    SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
+    SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
+    SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
+    SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
+    SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/im-launch-ticket.key
+    # IM -> Knowledgebase RPC over the per-environment shared network: the
+    # deps-project knowledgebase-rpc singleton resolves by service DNS name.
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.key
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TLS_DOMAIN: knowledgebase.local
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CREDENTIAL_TTL_SECONDS: ${GATEWAY_KNOWLEDGEBASE_RPC_CREDENTIAL_TTL_SECONDS:-60}
+    SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_TIMEOUT_MS: ${GATEWAY_KNOWLEDGEBASE_RPC_TIMEOUT_MS:-5000}
+    SDKWORK_IM_ALLOW_ALL_PRINCIPALS: ${GATEWAY_IM_ALLOW_ALL_PRINCIPALS:-false}
+    SDKWORK_RTC_HYDRATE_TENANT_ID: ${GATEWAY_RTC_HYDRATE_TENANT_ID:-100001}
+    SDKWORK_RTC_HYDRATE_ORGANIZATION_ID: ${GATEWAY_RTC_HYDRATE_ORGANIZATION_ID:-0}
+    # Knowledgebase deployment scope.
+    SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
+    SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
+    SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
+    SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
+    SDKWORK_KNOWLEDGEBASE_SECRETS_ENCRYPTION_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/knowledgebase-secrets.key
+    SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
+    SDKWORK_SECRETS_DIR: /run/secrets/sdkwork/api-gateway
+    SDKWORK_VAULT_ADDR: ${GATEWAY_VAULT_ADDR:-}
+    SDKWORK_VAULT_TOKEN: ${GATEWAY_VAULT_TOKEN:-}
+    SDKWORK_VAULT_MOUNT: ${GATEWAY_VAULT_MOUNT:-secret}
+    SDKWORK_VAULT_NAMESPACE: ${GATEWAY_VAULT_NAMESPACE:-}
+    # Cloud Router runtime inputs (injected at deploy time, never baked).
+    SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
+    SDKWORK_CLOUDROUTER_API_KEY_PEPPER: ${GATEWAY_CLOUDROUTER_API_KEY_PEPPER:-}
+    SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING: ${GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING:-}
+    SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET: ${GATEWAY_CLOUDROUTER_TRUSTED_SUBJECT_SECRET:-}
+    SDKWORK_CLOUDROUTER_APP_SESSION_SECRET: ${GATEWAY_CLOUDROUTER_APP_SESSION_SECRET:-}
+    SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET: ${GATEWAY_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:-}
+    SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET: ${GATEWAY_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:-}
+    # External Redis (no embedded Redis in the bundle).
+    SDKWORK_CLOUDROUTER_REDIS_ENABLED: "true"
+    SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:-host.docker.internal}
+    SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6380}
+    SDKWORK_CLOUDROUTER_REDIS_DATABASE: ${GATEWAY_CLOUDROUTER_REDIS_DATABASE:-0}
+    SDKWORK_CLOUDROUTER_REDIS_USERNAME: ${GATEWAY_CLOUDROUTER_REDIS_USERNAME:-}
+    SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-}
+    SDKWORK_CLOUDROUTER_REDIS_PASSWORD_FILE: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD_FILE:-}
+    SDKWORK_CLOUDROUTER_REDIS_TLS: ${GATEWAY_CLOUDROUTER_REDIS_TLS:-false}
+    SDKWORK_CLOUDROUTER_REDIS_KEY_PREFIX: ${GATEWAY_CLOUDROUTER_REDIS_KEY_PREFIX:-cloudrouter}
+    SDKWORK_CLOUDROUTER_REDIS_MAX_CONNECTIONS: ${GATEWAY_CLOUDROUTER_REDIS_MAX_CONNECTIONS:-50}
+    SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://host.docker.internal:6380/1}
+    SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6380/2}
+    # Durable object stores live on the shared per-environment data volume.
+    IMAGE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/image-drive-objects
+    VOICE_DRIVE_OBJECT_STORE_ROOT: /var/lib/sdkwork/api-gateway/voice-drive-objects
+    SDKWORK_DEPLOY_SANDBOX_ROOT: /var/lib/sdkwork/api-gateway/deploy-sandbox
+    # Payment credential master key: multi-replica deployments MUST set
+    # GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY=false and mount an
+    # operator/KMS-managed key (the first boot provisions it once).
+    SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api-gateway/payment-credential-master.key
+    SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY: ${GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true}
+    RUST_LOG: ${RUST_LOG:-info}
+  volumes:
+    # Per-environment shared state: every instance mounts the same volumes.
+    - gateway-secrets:/run/secrets/sdkwork/api-gateway
+    - gateway-data:/var/lib/sdkwork/api-gateway
+  # Deployment guardrails (tune via the env file).
+  deploy:
+    resources:
+      limits:
+        cpus: ${GATEWAY_CPU_LIMIT:-2.0}
+        memory: ${GATEWAY_MEMORY_LIMIT:-2g}
+      reservations:
+        cpus: ${GATEWAY_CPU_RESERVATION:-0.5}
+        memory: ${GATEWAY_MEMORY_RESERVATION:-512m}
+
+services:
+  # One knowledgebase-rpc singleton per environment (shared by all gateway
+  # instances over the per-environment network). Started and awaited before
+  # instance 1; it provisions the shared mTLS/secrets material.
+  knowledgebase-rpc:
+    <<: *gateway-common
+    profiles: [deps]
+    entrypoint: ["/opt/sdkwork/api-gateway/container/knowledgebase-rpc-entrypoint"]
+    environment:
+      SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
+      SDKWORK_KNOWLEDGEBASE_DEPLOYMENT_PROFILE: standalone
+      SDKWORK_KNOWLEDGEBASE_RPC_ENABLED: "true"
+      SDKWORK_KNOWLEDGEBASE_RPC_BIND_ADDR: 0.0.0.0:50054
+      SDKWORK_KNOWLEDGEBASE_RPC_TLS_ENABLED: "true"
+      SDKWORK_KNOWLEDGEBASE_RPC_MTLS_ENABLED: "true"
+      SDKWORK_KNOWLEDGEBASE_RPC_HEALTH_ENABLED: "true"
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SERVER_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/server.key
+      SDKWORK_KNOWLEDGEBASE_RPC_CLIENT_CA_CERTIFICATE_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
+      SDKWORK_KNOWLEDGEBASE_RPC_SPIFFE_TRUST_DOMAIN: sdkwork.internal
+      SDKWORK_KNOWLEDGEBASE_RPC_IM_CALLER_CONTEXT_SIGNING_KEY_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/caller-context.key
+      SDKWORK_KNOWLEDGEBASE_DRIVE_STORAGE_ROOT: /var/lib/sdkwork/api-gateway/knowledgebase-drive
+      SDKWORK_KNOWLEDGEBASE_OPERATOR_ID: sdkwork-knowledgebase
+      SDKWORK_KNOWLEDGEBASE_ACTOR_ID: ${GATEWAY_KNOWLEDGEBASE_ACTOR_ID:-1}
+      SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
+      SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+      SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
+      RUST_LOG: ${RUST_LOG:-info}
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/127.0.0.1/50054'"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 30s
+
+  # One gateway instance per compose project (deploy.sh runs instances 1..N as
+  # independent projects so N instances coexist without name collisions).
+  gateway:
+    <<: *gateway-common
+    profiles: [instance]
+    ports:
+      - "${GATEWAY_INSTANCE_HOST_PORT:?required}:3900"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3900/readyz >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 240s
+
+networks:
+  sdkwork:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}
+    external: true
+
+volumes:
+  gateway-secrets:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}-secrets
+    external: true
+  gateway-data:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}-data
+    external: true

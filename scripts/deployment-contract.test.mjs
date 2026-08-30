@@ -143,7 +143,7 @@ test('default compose uses external PostgreSQL/Redis; embedded is opt-in', () =>
   assert.match(compose, /GATEWAY_CLOUDROUTER_REDIS_HOST:-host\.docker\.internal/u);
   assert.match(compose, /GATEWAY_CLOUDROUTER_REDIS_PORT:-6380/u);
   assert.match(compose, /SDKWORK_CLOUDROUTER_REDIS_PASSWORD: \$\{GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-\}/u);
-  assert.match(compose, /\/etc\/sdkwork\/api_gateway\/config\.toml/u);
+  assert.match(compose, /\/etc\/sdkwork\/api-gateway\/config\.toml/u);
   assert.match(compose, /host\.docker\.internal:host-gateway/u);
   assert.match(compose, /sdkwork-webserver is an independent Docker deployment/u);
   assert.doesNotMatch(compose, /SDKWORK_WEBSERVER_/u);
@@ -219,16 +219,16 @@ test('container entrypoint does not bootstrap sdkwork-webserver secrets', () => 
   assert.doesNotMatch(envExample, /^GATEWAY_WEBSERVER_/mu);
 });
 
-test('ubuntu and container share api_gateway config layout; gateway does not own nginx', () => {
+test('ubuntu and container share api-gateway config layout; gateway does not own nginx', () => {
   const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const apply = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'apply.sh'), 'utf8');
   const ports = { development: 3910, test: 3911, staging: 3912, production: 3913 };
 
-  assert.match(installer, /config_root=\$destdir\/etc\/sdkwork\/api_gateway/u);
+  assert.match(installer, /config_root=\$destdir\/etc\/sdkwork\/api-gateway/u);
   assert.match(installer, /config_target=\$config_root\/config\.toml/u);
-  assert.match(installer, /env_target=\$config_root\/api_gateway\.env/u);
-  assert.match(compose, /\/etc\/sdkwork\/api_gateway\/config\.toml/u);
+  assert.match(installer, /env_target=\$config_root\/api-gateway\.env/u);
+  assert.match(compose, /\/etc\/sdkwork\/api-gateway\/config\.toml/u);
   assert.match(compose, /SDKWORK_CLOUDROUTER_REDIS_PASSWORD: \$\{GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-\}/u);
   assert.match(apply, /does NOT generate or install nginx/u);
 
@@ -298,11 +298,11 @@ test('Ubuntu installer uses canonical runtime paths and preserves operator confi
     path.join(appRoot, 'deployments', 'systemd', 'sdkwork-knowledgebase-rpc.service'),
     'utf8',
   );
-  assert.match(installer, /\/opt\/sdkwork\/api_gateway/u);
-  assert.match(installer, /\/etc\/sdkwork\/api_gateway/u);
-  assert.match(installer, /\/var\/lib\/sdkwork\/api_gateway/u);
+  assert.match(installer, /\/opt\/sdkwork\/api-gateway/u);
+  assert.match(installer, /\/etc\/sdkwork\/api-gateway/u);
+  assert.match(installer, /\/var\/lib\/sdkwork\/api-gateway/u);
   assert.match(installer, /config\.toml/u);
-  assert.match(installer, /api_gateway\.env/u);
+  assert.match(installer, /api-gateway\.env/u);
   assert.match(installer, /if \[ ! -e "\$config_target" \]/u);
   assert.match(installer, /--destdir/u);
   assert.match(installer, /SDKWORK_IM_PRINCIPAL_DIRECTORY=postgres/u);
@@ -310,7 +310,7 @@ test('Ubuntu installer uses canonical runtime paths and preserves operator confi
   assert.match(installer, /SDKWORK_DATABASE_URL_FILE=\/etc\/sdkwork\/database\/database\.url\.secret/u);
   assert.match(installer, /knowledgebase-rpc-entrypoint.*--provision-only/u);
   assert.match(installer, /"\$binary_source" --version >\/dev\/null/u);
-  assert.match(gatewayUnit, /EnvironmentFile=\/etc\/sdkwork\/api_gateway\/api_gateway\.env/u);
+  assert.match(gatewayUnit, /EnvironmentFile=\/etc\/sdkwork\/api-gateway\/api-gateway\.env/u);
   assert.match(gatewayUnit, /Requires=sdkwork-knowledgebase-rpc\.service/u);
   assert.match(knowledgebaseUnit, /ExecStart=.*knowledgebase-rpc-entrypoint/u);
 });
@@ -356,16 +356,16 @@ test('single-node containers provision the Payment key in the canonical secret m
 
   assert.match(
     compose,
-    /SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: \/run\/secrets\/sdkwork\/api_gateway\//u,
+    /SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: \/run\/secrets\/sdkwork\/api-gateway\//u,
   );
-  assert.match(compose, /gateway-secrets:\/run\/secrets\/sdkwork\/api_gateway/u);
+  assert.match(compose, /gateway-secrets:\/run\/secrets\/sdkwork\/api-gateway/u);
   assert.match(compose, /GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true/u);
   assert.match(
     compose,
     /SDKWORK_IM_PRINCIPAL_DIRECTORY: \$\{GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres\}/u,
   );
   assert.match(entrypoint, /SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY/u);
-  assert.match(entrypoint, /\/run\/secrets\/sdkwork\/api_gateway\/\*/u);
+  assert.match(entrypoint, /\/run\/secrets\/sdkwork\/api-gateway\/\*/u);
   assert.match(entrypoint, /umask 077/u);
   assert.match(entrypoint, /dd if=\/dev\/urandom bs=32 count=1/u);
   assert.match(entrypoint, /set -C/u);
@@ -389,7 +389,7 @@ test('production-like embedded PostgreSQL enables transport encryption', () => {
   );
   assert.match(
     embedded,
-    /SSL_CERT_FILE: \/run\/sdkwork\/api_gateway\/postgres-ca-bundle\.crt/u,
+    /SSL_CERT_FILE: \/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.crt/u,
   );
   assert.match(embedded, /postgres-tls:\/run\/sdkwork\/postgres-tls:ro/u);
   assert.match(postgresEntrypoint, /openssl req -new -x509 -nodes/u);

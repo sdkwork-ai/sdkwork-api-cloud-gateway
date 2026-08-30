@@ -5,15 +5,15 @@
 
 公网反向代理由独立产品 **sdkwork-webserver** 配置；本网关 **不安装 nginx 站点映射**。
 
-容器与 Ubuntu 安装使用同一配置根（`topology.applicationCode = api_gateway`）：
+容器与 Ubuntu 安装使用同一配置根（`topology.applicationCode = api-gateway`）：
 
 | Purpose | Path |
 | --- | --- |
-| Config | `/etc/sdkwork/api_gateway/config.toml` |
-| Secrets (container) | `/run/secrets/sdkwork/api_gateway` |
-| Secrets (host) | `/etc/sdkwork/api_gateway/secrets/` |
-| Data | `/var/lib/sdkwork/api_gateway` |
-| Install | `/opt/sdkwork/api_gateway` |
+| Config | `/etc/sdkwork/api-gateway/config.toml` |
+| Secrets (container) | `/run/secrets/sdkwork/api-gateway` |
+| Secrets (host) | `/etc/sdkwork/api-gateway/secrets/` |
+| Data | `/var/lib/sdkwork/api-gateway` |
+| Install | `/opt/sdkwork/api-gateway` |
 
 ## 架构概览
 
@@ -105,5 +105,5 @@ curl -fsS http://127.0.0.1:3913/healthz
 
 ```bash
 node ../sdkwork-specs/tools/check-application-deploy-layout.mjs --root .
-# ok  sdkwork-api-cloud-gateway (api_gateway) -> /etc/sdkwork/api_gateway/config.toml
+# ok  sdkwork-api-cloud-gateway (api-gateway) -> /etc/sdkwork/api-gateway/config.toml
 ```

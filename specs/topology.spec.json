@@ -2,7 +2,7 @@
   "schemaVersion": 5,
   "kind": "sdkwork.app.topology",
   "appId": "sdkwork-api-cloud-gateway",
-  "applicationCode": "api_gateway",
+  "applicationCode": "api-gateway",
   "archetype": "application-http-gateway",
   "archetypeNotes": "Platform cloud gateway host; platform.api-gateway is the public HTTP ingress.",
   "profileRoot": "etc/topology",

@@ -1,6 +1,6 @@
 # Web Server Configuration (layout v3)
 
-Module `sdkwork-api-cloud-gateway` · runtime code `api_gateway` · enabled
+Module `sdkwork-api-cloud-gateway` · runtime code `api-gateway` · enabled
 
 Authority: `SDKWORK_WEBSERVER_SPEC.md` · hosts: `APP_RUNTIME_TOPOLOGY_NAMING.md` §9.
 

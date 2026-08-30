@@ -34,7 +34,7 @@ for env in development test staging production; do
 
 - Environment: $env (profile \`standalone.$env\`)
 - Host port: $port (host mapping $port -> 3900 in the container)
-- Config mount: \`config.toml\` -> \`/etc/sdkwork/api_gateway/config.toml\`
+- Config mount: \`config.toml\` -> \`/etc/sdkwork/api-gateway/config.toml\`
   (same path as Ubuntu install; APPLICATION_DEPLOY_LAYOUT_SPEC)
 - External dependencies: PostgreSQL (\`host.docker.internal:5432\`) and
   Redis (\`host.docker.internal:6380\`, **no password**), per-environment

@@ -2,18 +2,18 @@
 #
 # Canonical location: /usr/lib/systemd/system/sdkwork-api-gateway.service
 # Service registration name keeps the product-facing unit id; filesystem
-# paths follow topology.applicationCode `api_gateway`
+# paths follow topology.applicationCode `api-gateway`
 # (APPLICATION_DEPLOY_LAYOUT_SPEC / RUNTIME_DIRECTORY_SPEC §4.1).
 #
 # Layout:
-#   config   /etc/sdkwork/api_gateway/config.toml
-#   env      /etc/sdkwork/api_gateway/api_gateway.env   (0640)
-#   secrets  /etc/sdkwork/api_gateway/secrets/         (0600)
-#   data     /var/lib/sdkwork/api_gateway
-#   logs     /var/log/sdkwork/api_gateway
-#   cache    /var/cache/sdkwork/api_gateway
-#   run      /run/sdkwork/api_gateway
-#   install  /opt/sdkwork/api_gateway
+#   config   /etc/sdkwork/api-gateway/config.toml
+#   env      /etc/sdkwork/api-gateway/api-gateway.env   (0640)
+#   secrets  /etc/sdkwork/api-gateway/secrets/         (0600)
+#   data     /var/lib/sdkwork/api-gateway
+#   logs     /var/log/sdkwork/api-gateway
+#   cache    /var/cache/sdkwork/api-gateway
+#   run      /run/sdkwork/api-gateway
+#   install  /opt/sdkwork/api-gateway
 #
 # PACKAGING_SPEC §5.5 rules honored here:
 #   - installation-generated values live in the EnvironmentFile below, not in
@@ -35,10 +35,10 @@ After=sdkwork-knowledgebase-rpc.service
 Type=simple
 User=sdkwork
 Group=sdkwork
-EnvironmentFile=/etc/sdkwork/api_gateway/api_gateway.env
-WorkingDirectory=/opt/sdkwork/api_gateway
-ExecStartPre=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
-ExecStart=/opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway
+EnvironmentFile=/etc/sdkwork/api-gateway/api-gateway.env
+WorkingDirectory=/opt/sdkwork/api-gateway
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 Restart=on-failure
 RestartSec=5
 TimeoutStopSec=60

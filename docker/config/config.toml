@@ -1,7 +1,7 @@
 # SDKWork API Cloud Gateway — container runtime config (host-mounted override).
 #
 # This file is mounted read-only at the canonical container/Ubuntu config path
-#   /etc/sdkwork/api_gateway/config.toml
+#   /etc/sdkwork/api-gateway/config.toml
 # (APPLICATION_DEPLOY_LAYOUT_SPEC + RUNTIME_DIRECTORY_SPEC §4.5). Same layout
 # as the Ubuntu systemd install. Edit host-side to change settings that
 # environment variables do not cover.
@@ -19,8 +19,8 @@
 # snowflake node id, payment master key. Values set there override this file.
 #
 # Secrets never belong here: mount them under
-# /run/secrets/sdkwork/api_gateway/<secret-name> (container) or
-# /etc/sdkwork/api_gateway/secrets/ (Ubuntu install) and reference file paths
+# /run/secrets/sdkwork/api-gateway/<secret-name> (container) or
+# /etc/sdkwork/api-gateway/secrets/ (Ubuntu install) and reference file paths
 # from config, or inject SDKWORK_*_FILE env pointers
 # (ENVIRONMENT_SPEC §7.3, RUNTIME_DIRECTORY_SPEC §11).
 

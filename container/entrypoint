@@ -23,9 +23,9 @@ provision_postgres_trust_bundle() {
 
   trust_bundle=${SSL_CERT_FILE:-}
   case "$trust_bundle" in
-    /run/sdkwork/api_gateway/*) ;;
+    /run/sdkwork/api-gateway/*) ;;
     *)
-      echo "generated PostgreSQL trust bundle must be under /run/sdkwork/api_gateway" >&2
+      echo "generated PostgreSQL trust bundle must be under /run/sdkwork/api-gateway" >&2
       exit 1
       ;;
   esac
@@ -56,9 +56,9 @@ provision_payment_credential_key() {
 
   key_file=${SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE:-}
   case "$key_file" in
-    /run/secrets/sdkwork/api_gateway/*) ;;
+    /run/secrets/sdkwork/api-gateway/*) ;;
     *)
-      echo "payment credential key provisioning requires a path under /run/secrets/sdkwork/api_gateway" >&2
+      echo "payment credential key provisioning requires a path under /run/secrets/sdkwork/api-gateway" >&2
       exit 1
       ;;
   esac
@@ -95,9 +95,9 @@ provision_iam_signing_master_secret() {
 
   secret_file=${SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE:-}
   case "$secret_file" in
-    /run/secrets/sdkwork/api_gateway/*) ;;
+    /run/secrets/sdkwork/api-gateway/*) ;;
     *)
-      echo "IAM signing master secret provisioning requires a path under /run/secrets/sdkwork/api_gateway" >&2
+      echo "IAM signing master secret provisioning requires a path under /run/secrets/sdkwork/api-gateway" >&2
       exit 1
       ;;
   esac
@@ -146,7 +146,7 @@ provision_iam_signing_master_secret
 load_iam_signing_master_secret
 
 if [ "${SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:-true}" = "true" ]; then
-  /opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
+  /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
 fi
 
-exec /opt/sdkwork/api_gateway/bin/sdkwork-api-cloud-gateway "$@"
+exec /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway "$@"
