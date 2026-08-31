@@ -77,3 +77,5 @@ docker/certs/
 /.workbuddy/
 # Runtime-generated environment configuration
 **/public/runtime-env.json
+
+.workbuddy/

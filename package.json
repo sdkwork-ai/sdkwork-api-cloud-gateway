@@ -44,6 +44,8 @@
     "gateway:matrix:standalone": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --deployment-profile standalone --profile server --platform all --architecture all --format tar.gz",
     "gateway:matrix:cloud": "node ../sdkwork-github-workflow/scripts/sdkwork-workflow.mjs matrix --config sdkwork.workflow.json --deployment-profile cloud --profile server --platform all --architecture all --format tar.gz",
     "gateway:api:validate": "node scripts/check-gateway-api-closure.mjs --root .",
+    "gateway:api:dedup:audit": "node ../sdkwork-specs/tools/check-cross-module-api-collisions.mjs --workspace ..",
+    "gateway:api:dedup:strict": "node ../sdkwork-specs/tools/check-cross-module-api-collisions.mjs --workspace .. --strict",
     "gateway:package": "node scripts/package-server.mjs package",
     "gateway:package:standalone": "node scripts/package-server.mjs package --deployment-profile standalone",
     "gateway:package:cloud": "node scripts/package-server.mjs package --deployment-profile cloud",

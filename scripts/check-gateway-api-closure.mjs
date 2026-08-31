@@ -634,10 +634,22 @@ export function validateGatewayApiClosure(root) {
     owners.add(route.serviceId);
     ownersByRoute.set(key, owners);
   }
-  for (const [route, owners] of ownersByRoute) {
-    if (owners.size > 1) {
-      errors.push(`${route}: owned by multiple services: ${[...owners].sort().join(", ")}`);
+  const resolvedDedup = new Set();
+  for (const [routeKey, owners] of ownersByRoute) {
+    if (owners.size <= 1) continue;
+    // Cross-module ownership resolution (API_ASSEMBLY_SPEC.md "Cross-Module
+    // Composition Dedup And Collision Resolution"): the first apiSurfaces
+    // declaration whose prefix matches the route path is the primary owner.
+    // Non-primary duplicate contributions are skipped at runtime; they are
+    // not contract violations.
+    const [method, ...pathParts] = routeKey.split(" ");
+    const routePath = pathParts.join(" ");
+    const primary = primarySurfaceFor(surfaces, routePath);
+    if (primary && owners.has(primary.dependencyServiceId)) {
+      resolvedDedup.add(routeKey);
+      continue;
     }
+    errors.push(`${routeKey}: owned by multiple services: ${[...owners].sort().join(", ")}`);
   }
 
   compiledRoutes.sort(
@@ -647,6 +659,13 @@ export function validateGatewayApiClosure(root) {
       left.serviceId.localeCompare(right.serviceId),
   );
   return { errors: [...new Set(errors)].sort(), routes: compiledRoutes };
+}
+
+function primarySurfaceFor(surfaces, routePath) {
+  const matching = (surfaces ?? [])
+    .filter((surface) => pathMatchesPrefix(routePath, surface.prefix))
+    .sort((left, right) => right.prefix.length - left.prefix.length);
+  return matching[0] ?? null;
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;

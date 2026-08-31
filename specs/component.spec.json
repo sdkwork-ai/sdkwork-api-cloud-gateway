@@ -182,6 +182,23 @@
       "specs/topology.spec.json",
       ".env.postgres",
       "sdkwork.workflow.json"
+    ],
+    "resolvedDedup": [
+      {
+        "primaryOwner": "sdkwork-deploy-backend-api",
+        "excludedContribution": "sdkwork-webserver-backend-api",
+        "surface": "backend-api",
+        "reason": "platform infrastructure ownership: nginx/servers/audit_logs management belongs to sdkwork-deployments; sdkwork-webserver keeps the surface for its standalone host but excludes it from cloud composition via ApiAssemblyContext::cloud_gateway() (API_ASSEMBLY_SPEC 4.2.2)",
+        "routes": [
+          "GET /backend/v3/api/nginx/configs",
+          "POST /backend/v3/api/nginx/configs",
+          "POST /backend/v3/api/nginx/reload",
+          "GET /backend/v3/api/nginx/status",
+          "GET /backend/v3/api/servers",
+          "POST /backend/v3/api/servers",
+          "GET /backend/v3/api/audit_logs"
+        ]
+      }
     ]
   },
   "componentId": "sdkwork-api-cloud-gateway",
@@ -273,13 +290,6 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/drive",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-drive-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "external-git-smart-http",
-      "prefix": "/git",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-drive-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -763,6 +773,13 @@
     {
       "surface": "open",
       "prefix": "/nano-banana/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/elevenlabs/v1",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -2134,8 +2151,7 @@
       "apiAuthority": "sdkwork-drive-app-api",
       "sdkFamily": "sdkwork-drive-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/drive",
-        "/git"
+        "/app/v3/api/drive"
       ],
       "cargoFeature": "foundation-drive",
       "cargoDependency": "sdkwork-api-drive-assembly",
@@ -2257,6 +2273,7 @@
         "/kling/v1",
         "/midjourney/v1",
         "/nano-banana/v1",
+        "/elevenlabs/v1",
         "/v1"
       ],
       "coverage": "sdkwork-cloudrouter-open-api-embedded-assembly-routes",

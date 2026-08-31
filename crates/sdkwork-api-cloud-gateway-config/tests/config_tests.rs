@@ -428,7 +428,7 @@ fn assets_app_authority_publishes_assets_prefix() {
 }
 
 #[test]
-fn drive_app_authority_publishes_drive_and_git_prefixes() {
+fn drive_app_authority_publishes_the_drive_prefix() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(std::path::Path::parent)
@@ -444,7 +444,7 @@ fn drive_app_authority_publishes_drive_and_git_prefixes() {
         .map(|surface| surface.api_prefix.as_str())
         .collect::<HashSet<_>>();
 
-    assert_eq!(prefixes, HashSet::from(["/app/v3/api/drive", "/git"]));
+    assert_eq!(prefixes, HashSet::from(["/app/v3/api/drive"]));
     assert!(drive.iter().all(|surface| {
         surface.workspace == "sdkwork-drive"
             && surface.api_authority == "sdkwork-drive-app-api"
@@ -595,6 +595,7 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/kling/v1",
             "/midjourney/v1",
             "/nano-banana/v1",
+            "/elevenlabs/v1",
             "/v1",
         ])
     );
