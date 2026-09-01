@@ -11,10 +11,16 @@ import {
 } from './validate-docker-deployment.mjs';
 
 const appRoot = path.resolve('.');
-const environments = ['development', 'test', 'staging', 'production'];
+const environments = ['development', 'test', 'staging', 'demo', 'production'];
 const profiles = ['standalone', 'cloud'];
 const baseDomains = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
-const suffixes = { development: 'dev', test: 'test', staging: 'staging', production: '' };
+const suffixes = {
+  development: 'dev',
+  test: 'test',
+  staging: 'staging',
+  demo: 'demo',
+  production: '',
+};
 
 function expectedHosts(environment) {
   const role = suffixes[environment] ? `api-${suffixes[environment]}` : 'api';
@@ -223,7 +229,7 @@ test('ubuntu and container share api-gateway config layout; gateway does not own
   const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const apply = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'apply.sh'), 'utf8');
-  const ports = { development: 3910, test: 3911, staging: 3912, production: 3913 };
+  const ports = { development: 3910, test: 3911, staging: 3912, demo: 3914, production: 3913 };
 
   assert.match(installer, /config_root=\$destdir\/etc\/sdkwork\/api-gateway/u);
   assert.match(installer, /config_target=\$config_root\/config\.toml/u);

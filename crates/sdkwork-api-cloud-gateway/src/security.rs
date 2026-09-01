@@ -10,6 +10,7 @@ use sdkwork_web_core::registered_client_origins::is_registered_sdkwork_client_or
 /// the WAF stage and left to the request body limit enforcement.
 const WAF_JSON_BODY_LIMIT: usize = 1024 * 1024;
 
+#[derive(Debug)]
 pub(crate) struct SecurityRejection {
     pub(crate) status: StatusCode,
     pub(crate) title: &'static str,
@@ -23,7 +24,7 @@ pub(crate) struct SecurityInspection {
     events: Vec<SecurityEvent>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) struct SecurityEvent {
     pub(crate) kind: &'static str,
     pub(crate) action: &'static str,
@@ -137,6 +138,14 @@ fn validate_allowed_host(
         return Ok(());
     }
 
+    // Deployments that must stay reachable directly through the host IP (LAN
+    // smoke checks, load-balancer health probes) accept raw IP literal Host
+    // headers explicitly via SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS;
+    // registered domain names keep matching the allowlist as before.
+    if config.allow_ip_hosts && is_ip_literal_host(&host) {
+        return Ok(());
+    }
+
     Err(SecurityRejection {
         status: StatusCode::MISDIRECTED_REQUEST,
         title: "host_not_allowed",
@@ -144,6 +153,17 @@ fn validate_allowed_host(
         headers: Vec::new(),
         events: Vec::new(),
     })
+}
+
+/// Reports whether the normalized host (ports already stripped) is a raw IP
+/// literal. IPv6 keeps its bracket form after `normalize_host`, so the
+/// brackets are removed before parsing.
+fn is_ip_literal_host(host: &str) -> bool {
+    let candidate = host
+        .strip_prefix('[')
+        .and_then(|rest| rest.strip_suffix(']'))
+        .unwrap_or(host);
+    candidate.parse::<std::net::IpAddr>().is_ok()
 }
 
 fn validate_header_limits(
@@ -376,6 +396,54 @@ mod tests {
             .expect("csrf request");
 
         validate_csrf(&config, &request).expect("registered desktop origin");
+    }
+
+    #[test]
+    fn ip_literal_hosts_are_rejected_by_default_and_allowed_when_enabled() {
+        let host_header = |value: &str| {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::HOST, value.parse().expect("host header"));
+            headers
+        };
+        let mut config = GatewaySecurityConfig {
+            allowed_hosts: vec!["api-test.sdkwork.com".to_string()],
+            ..GatewaySecurityConfig::default()
+        };
+
+        // Default posture: raw IP literals stay rejected while the registered
+        // domain keeps matching the allowlist.
+        for host in ["192.168.8.24:3911", "[fd00::5]:3911"] {
+            assert!(
+                validate_allowed_host(&config, &host_header(host)).is_err(),
+                "IP literal `{host}` must stay rejected while allow_ip_hosts is off"
+            );
+        }
+        assert!(validate_allowed_host(&config, &host_header("api-test.sdkwork.com:3911")).is_ok());
+
+        // Explicit deploy-time switch: IPv4 and IPv6 literals pass, unknown
+        // domains stay rejected.
+        config.allow_ip_hosts = true;
+        for host in ["192.168.8.24", "192.168.8.24:3911", "[fd00::5]:3911", "127.0.0.1"] {
+            assert!(
+                validate_allowed_host(&config, &host_header(host)).is_ok(),
+                "IP literal `{host}` must be allowed with allow_ip_hosts on"
+            );
+        }
+        assert!(
+            validate_allowed_host(&config, &host_header("evil.example.com")).is_err(),
+            "non-IP host outside the allowlist must stay rejected"
+        );
+    }
+
+    #[test]
+    fn ip_literal_host_detection_covers_v4_v6_and_names() {
+        assert!(is_ip_literal_host("192.168.8.24"));
+        assert!(is_ip_literal_host("127.0.0.1"));
+        assert!(is_ip_literal_host("[::1]"));
+        assert!(is_ip_literal_host("[fd00::5]"));
+        assert!(!is_ip_literal_host("api-test.sdkwork.com"));
+        assert!(!is_ip_literal_host("localhost"));
+        assert!(!is_ip_literal_host("999.1.1.1"));
     }
 }
 

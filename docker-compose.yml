@@ -127,7 +127,10 @@ services:
       # Host allowlist: registered API domains plus host-mapped port for direct
       # access. sdkwork-webserver (independent deploy) forwards Host when it
       # reverse-proxies to GATEWAY_HOST_PORT. Empty = accept all Host headers.
+      # GATEWAY_SECURITY_ALLOW_IP_HOSTS=true additionally accepts raw IP
+      # literal Host headers (direct host-IP access without editing the list).
       SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
+      SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS: ${GATEWAY_SECURITY_ALLOW_IP_HOSTS:-false}
       # Browser CORS allow-list (API plane): the gateway runs in production
       # posture, where cross-origin browser requests are rejected unless the
       # origin is listed here. SDKWORK_CORS_ALLOWED_ORIGINS is the canonical

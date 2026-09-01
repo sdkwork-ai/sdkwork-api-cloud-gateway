@@ -18,18 +18,20 @@ const DESKTOP_CORS_ORIGINS = [
   'tauri://localhost',
 ];
 const MINI_PROGRAM_CORS_ORIGINS = ['https://servicewechat.com'];
-const ENVIRONMENTS = ['development', 'test', 'staging', 'production'];
+const ENVIRONMENTS = ['development', 'test', 'staging', 'demo', 'production'];
 const DEPENDENCY_MODES = ['embedded', 'external'];
 const DATABASE_IDENTITIES = {
   development: 'sdkwork_ai_dev',
   test: 'sdkwork_ai_test',
   staging: 'sdkwork_ai_staging',
+  demo: 'sdkwork_ai_demo',
   production: 'sdkwork_ai_prod',
 };
 const ENVIRONMENT_SUFFIX = {
   development: 'dev',
   test: 'test',
   staging: 'staging',
+  demo: 'demo',
   production: '',
 };
 const PRODUCTION_SECRET_KEYS = [

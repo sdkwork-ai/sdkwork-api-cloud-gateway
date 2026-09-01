@@ -35,7 +35,7 @@ import { createGzip } from 'node:zlib';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DEFAULT_OUTPUT_ROOT = path.join(REPO_ROOT, 'dist', 'docker-install');
-const ENVIRONMENTS = Object.freeze(['development', 'test', 'staging', 'production']);
+const ENVIRONMENTS = Object.freeze(['development', 'test', 'staging', 'demo', 'production']);
 const DEFAULT_IMAGE_REPOSITORY = 'registry.sdkwork.com/apps/sdkwork-api-cloud-gateway';
 
 function appVersion() {
@@ -179,8 +179,8 @@ const BUNDLE_README = `# sdkwork-api-cloud-gateway install bundle
 
 Self-contained deployment bundle for the unified install image
 (DEPLOYMENT_SPEC.md §6 / PNPM_SCRIPT_SPEC.md §4.4). One image, any
-environment (development / test / staging / production), N gateway instances
-per environment.
+environment (development / test / staging / demo / production), N gateway
+instances per environment.
 
 Quick start on any Docker host (external PostgreSQL + Redis required):
 

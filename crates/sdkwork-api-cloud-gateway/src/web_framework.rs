@@ -52,12 +52,12 @@ pub(crate) fn gateway_cors_policy(config: &GatewayRuntimeConfig) -> CorsPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sdkwork_api_cloud_gateway_config::{CorsConfig, GatewayRuntimeConfig, ServiceConfig};
+    use sdkwork_api_cloud_gateway_config::{CorsConfig, GatewayRuntimeConfig, GatewayServiceConfig};
 
     #[test]
     fn gateway_cors_policy_always_allows_registered_desktop_origins() {
         let config = GatewayRuntimeConfig {
-            service: ServiceConfig {
+            service: GatewayServiceConfig {
                 name: "sdkwork-api-cloud-gateway".to_owned(),
                 environment: "production".to_owned(),
             },
@@ -89,7 +89,7 @@ mod tests {
         use tower::ServiceExt;
 
         let config = GatewayRuntimeConfig {
-            service: ServiceConfig {
+            service: GatewayServiceConfig {
                 name: "sdkwork-api-cloud-gateway".to_owned(),
                 environment: "production".to_owned(),
             },

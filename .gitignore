@@ -79,3 +79,6 @@ docker/certs/
 **/public/runtime-env.json
 
 .workbuddy/
+
+# Local artifacts and build output (do not commit)
+/demo.env

@@ -13,8 +13,11 @@
   lifecycle environment (development / test / staging / production) and the
   instance count are **deployment-time inputs** resolved by the container
   entrypoint at start.
-- **Any environment**: development, test, staging, and production share the
-  same image tag; the env file selects the environment (`GATEWAY_ENVIRONMENT`).
+- **Any environment**: development, test, staging, demo, and production share
+  the same image tag; the env file selects the environment
+  (`GATEWAY_ENVIRONMENT`). demo (the independent showcase tier) stays fully
+  isolated from dev/test/staging/prod (dedicated `sdkwork_ai_demo` database,
+  dedicated Redis logical DB indexes 9/10).
 - **Every environment supports N instances**: N gateway instances share one
   network (`sdkwork-api-cloud-gateway-<env>`) and one secrets/data volume pair;
   each instance owns its own compose project
@@ -53,6 +56,7 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
 │   ├── development.env.example
 │   ├── test.env.example
 │   ├── staging.env.example
+│   ├── demo.env.example
 │   └── production.env.example
 ├── deploy.sh                                 # single generic entrypoint
 ├── manifest.json                             # version / image / sha256 metadata
@@ -85,7 +89,7 @@ bash deploy.sh --environment test --down --purge  # also delete volumes/network
 
 Key rules:
 
-- `--environment` is required (development | test | staging | production); a
+- `--environment` is required (development | test | staging | demo | production); a
   missing or unknown value fails **before any side effect**. Re-running apply
   is idempotent (updates the existing stack in place).
 - First deployment creates `env/<environment>.env` from the example — **fill
@@ -117,8 +121,24 @@ instance i host port = GATEWAY_HOST_PORT + (i - 1) * 10   ->  container 3900
 | test | 3911 | `sdkwork_ai_test` | 3911 / 3921 / 3931 |
 | staging | 3912 | `sdkwork_ai_staging` | 3912 / 3922 / 3932 |
 | production | 3913 | `sdkwork_ai_prod` | 3913 / 3923 / 3933 |
+| demo | 3914 | `sdkwork_ai_demo` | 3914 / 3924 / 3934 |
 
 Health: `curl http://127.0.0.1:<instance-port>/healthz` (readiness: `/readyz`).
+
+### Direct host-IP access
+
+The gateway binds `0.0.0.0:3900` inside the container and the instance port is
+published on every host interface, so `http://<host-ip>:<instance-port>/healthz`
+is reachable out of the box. Host-header validation (security layer) has two
+postures:
+
+- development / test / demo: the env files preset
+  `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true` (`security.allowIpHosts`), so the
+  gateway accepts raw IP-literal Host headers from any machine without editing
+  the allowlist per host.
+- staging / production: exact domain allowlist (`api...` host family). For IP
+  access (health probes, operator smoke checks) either append the IP to
+  `GATEWAY_ALLOWED_HOSTS` or set `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`.
 
 `sdkwork-webserver` is an independent Docker deployment owning the public
 reverse proxy: point each environment's API upstreams (`/app/`, `/backend/`,

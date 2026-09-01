@@ -230,6 +230,130 @@ on:
         description: sdkwork-web-server commit/ref.
         required: false
         default: main
+      sdkwork_account_ref:
+        description: sdkwork-account commit/ref.
+        required: false
+        default: main
+      sdkwork_appbase_ref:
+        description: sdkwork-appbase commit/ref.
+        required: false
+        default: main
+      sdkwork_assets_ref:
+        description: sdkwork-assets commit/ref.
+        required: false
+        default: main
+      sdkwork_birdcoder_ref:
+        description: sdkwork-birdcoder commit/ref.
+        required: false
+        default: main
+      sdkwork_browser_ref:
+        description: sdkwork-browser commit/ref.
+        required: false
+        default: main
+      sdkwork_canvas_ref:
+        description: sdkwork-canvas commit/ref.
+        required: false
+        default: main
+      sdkwork_catalog_ref:
+        description: sdkwork-catalog commit/ref.
+        required: false
+        default: main
+      sdkwork_company_ref:
+        description: sdkwork-company commit/ref.
+        required: false
+        default: main
+      sdkwork_customerservice_ref:
+        description: sdkwork-customerservice commit/ref.
+        required: false
+        default: main
+      sdkwork_doudizhu_ref:
+        description: sdkwork-doudizhu commit/ref.
+        required: false
+        default: main
+      sdkwork_feeds_ref:
+        description: sdkwork-feeds commit/ref.
+        required: false
+        default: main
+      sdkwork_gameengine_ref:
+        description: sdkwork-gameengine commit/ref.
+        required: false
+        default: main
+      sdkwork_generations_ref:
+        description: sdkwork-generations commit/ref.
+        required: false
+        default: main
+      sdkwork_github_ref:
+        description: sdkwork-github commit/ref.
+        required: false
+        default: main
+      sdkwork_inventory_ref:
+        description: sdkwork-inventory commit/ref.
+        required: false
+        default: main
+      sdkwork_invoice_ref:
+        description: sdkwork-invoice commit/ref.
+        required: false
+        default: main
+      sdkwork_knowledgebase_ref:
+        description: sdkwork-knowledgebase commit/ref.
+        required: false
+        default: main
+      sdkwork_llm_ref:
+        description: sdkwork-llm commit/ref.
+        required: false
+        default: main
+      sdkwork_local_router_ref:
+        description: sdkwork-local-router commit/ref.
+        required: false
+        default: main
+      sdkwork_log_ref:
+        description: sdkwork-log commit/ref.
+        required: false
+        default: main
+      sdkwork_mahjong_ref:
+        description: sdkwork-mahjong commit/ref.
+        required: false
+        default: main
+      sdkwork_manager_ref:
+        description: sdkwork-manager commit/ref.
+        required: false
+        default: main
+      sdkwork_news_ref:
+        description: sdkwork-news commit/ref.
+        required: false
+        default: main
+      sdkwork_notes_ref:
+        description: sdkwork-notes commit/ref.
+        required: false
+        default: main
+      sdkwork_portal_ref:
+        description: sdkwork-portal commit/ref.
+        required: false
+        default: main
+      sdkwork_search_ref:
+        description: sdkwork-search commit/ref.
+        required: false
+        default: main
+      sdkwork_settings_ref:
+        description: sdkwork-settings commit/ref.
+        required: false
+        default: main
+      sdkwork_shop_ref:
+        description: sdkwork-shop commit/ref.
+        required: false
+        default: main
+      sdkwork_skills_ref:
+        description: sdkwork-skills commit/ref.
+        required: false
+        default: main
+      sdkwork_xiangqi_ref:
+        description: sdkwork-xiangqi commit/ref.
+        required: false
+        default: main
+      sdkwork_id_ref:
+        description: sdkwork-id commit/ref.
+        required: false
+        default: main
 
 permissions:
   contents: write
@@ -292,6 +416,37 @@ jobs:
           "SDKWORK_PROMPTS_REF": "${{ github.event.inputs.sdkwork_prompts_ref || vars.SDKWORK_PROMPTS_REF }}",
           "SDKWORK_RTC_REF": "${{ github.event.inputs.sdkwork_rtc_ref || vars.SDKWORK_RTC_REF }}",
           "SDKWORK_VOICE_REF": "${{ github.event.inputs.sdkwork_voice_ref || vars.SDKWORK_VOICE_REF }}",
-          "SDKWORK_WEBSERVER_REF": "${{ github.event.inputs.sdkwork_webserver_ref || vars.SDKWORK_WEBSERVER_REF }}"
+          "SDKWORK_WEBSERVER_REF": "${{ github.event.inputs.sdkwork_webserver_ref || vars.SDKWORK_WEBSERVER_REF }}",
+          "SDKWORK_ACCOUNT_REF": "${{ github.event.inputs.sdkwork_account_ref || vars.SDKWORK_ACCOUNT_REF }}",
+          "SDKWORK_APPBASE_REF": "${{ github.event.inputs.sdkwork_appbase_ref || vars.SDKWORK_APPBASE_REF }}",
+          "SDKWORK_ASSETS_REF": "${{ github.event.inputs.sdkwork_assets_ref || vars.SDKWORK_ASSETS_REF }}",
+          "SDKWORK_BIRDCODER_REF": "${{ github.event.inputs.sdkwork_birdcoder_ref || vars.SDKWORK_BIRDCODER_REF }}",
+          "SDKWORK_BROWSER_REF": "${{ github.event.inputs.sdkwork_browser_ref || vars.SDKWORK_BROWSER_REF }}",
+          "SDKWORK_CANVAS_REF": "${{ github.event.inputs.sdkwork_canvas_ref || vars.SDKWORK_CANVAS_REF }}",
+          "SDKWORK_CATALOG_REF": "${{ github.event.inputs.sdkwork_catalog_ref || vars.SDKWORK_CATALOG_REF }}",
+          "SDKWORK_COMPANY_REF": "${{ github.event.inputs.sdkwork_company_ref || vars.SDKWORK_COMPANY_REF }}",
+          "SDKWORK_CUSTOMERSERVICE_REF": "${{ github.event.inputs.sdkwork_customerservice_ref || vars.SDKWORK_CUSTOMERSERVICE_REF }}",
+          "SDKWORK_DOUDIZHU_REF": "${{ github.event.inputs.sdkwork_doudizhu_ref || vars.SDKWORK_DOUDIZHU_REF }}",
+          "SDKWORK_FEEDS_REF": "${{ github.event.inputs.sdkwork_feeds_ref || vars.SDKWORK_FEEDS_REF }}",
+          "SDKWORK_GAMEENGINE_REF": "${{ github.event.inputs.sdkwork_gameengine_ref || vars.SDKWORK_GAMEENGINE_REF }}",
+          "SDKWORK_GENERATIONS_REF": "${{ github.event.inputs.sdkwork_generations_ref || vars.SDKWORK_GENERATIONS_REF }}",
+          "SDKWORK_GITHUB_REF": "${{ github.event.inputs.sdkwork_github_ref || vars.SDKWORK_GITHUB_REF }}",
+          "SDKWORK_INVENTORY_REF": "${{ github.event.inputs.sdkwork_inventory_ref || vars.SDKWORK_INVENTORY_REF }}",
+          "SDKWORK_INVOICE_REF": "${{ github.event.inputs.sdkwork_invoice_ref || vars.SDKWORK_INVOICE_REF }}",
+          "SDKWORK_KNOWLEDGEBASE_REF": "${{ github.event.inputs.sdkwork_knowledgebase_ref || vars.SDKWORK_KNOWLEDGEBASE_REF }}",
+          "SDKWORK_LLM_REF": "${{ github.event.inputs.sdkwork_llm_ref || vars.SDKWORK_LLM_REF }}",
+          "SDKWORK_LOCAL_ROUTER_REF": "${{ github.event.inputs.sdkwork_local_router_ref || vars.SDKWORK_LOCAL_ROUTER_REF }}",
+          "SDKWORK_LOG_REF": "${{ github.event.inputs.sdkwork_log_ref || vars.SDKWORK_LOG_REF }}",
+          "SDKWORK_MAHJONG_REF": "${{ github.event.inputs.sdkwork_mahjong_ref || vars.SDKWORK_MAHJONG_REF }}",
+          "SDKWORK_MANAGER_REF": "${{ github.event.inputs.sdkwork_manager_ref || vars.SDKWORK_MANAGER_REF }}",
+          "SDKWORK_NEWS_REF": "${{ github.event.inputs.sdkwork_news_ref || vars.SDKWORK_NEWS_REF }}",
+          "SDKWORK_NOTES_REF": "${{ github.event.inputs.sdkwork_notes_ref || vars.SDKWORK_NOTES_REF }}",
+          "SDKWORK_PORTAL_REF": "${{ github.event.inputs.sdkwork_portal_ref || vars.SDKWORK_PORTAL_REF }}",
+          "SDKWORK_SEARCH_REF": "${{ github.event.inputs.sdkwork_search_ref || vars.SDKWORK_SEARCH_REF }}",
+          "SDKWORK_SETTINGS_REF": "${{ github.event.inputs.sdkwork_settings_ref || vars.SDKWORK_SETTINGS_REF }}",
+          "SDKWORK_SHOP_REF": "${{ github.event.inputs.sdkwork_shop_ref || vars.SDKWORK_SHOP_REF }}",
+          "SDKWORK_SKILLS_REF": "${{ github.event.inputs.sdkwork_skills_ref || vars.SDKWORK_SKILLS_REF }}",
+          "SDKWORK_XIANGQI_REF": "${{ github.event.inputs.sdkwork_xiangqi_ref || vars.SDKWORK_XIANGQI_REF }}",
+          "SDKWORK_ID_REF": "${{ github.event.inputs.sdkwork_id_ref || vars.SDKWORK_ID_REF }}"
         }
     secrets: inherit

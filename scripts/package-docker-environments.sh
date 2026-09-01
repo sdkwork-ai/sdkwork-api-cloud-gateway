@@ -3,8 +3,8 @@
 #
 # Each bundle is self-contained: compose + env (external PostgreSQL/Redis via
 # host.docker.internal) + Ubuntu-aligned config.toml. Ports differ per
-# environment (3910-3913). Reverse proxy is owned by sdkwork-webserver — this
-# bundle does not ship nginx site mappings.
+# environment (3910-3912, 3914, 3913). Reverse proxy is owned by
+# sdkwork-webserver — this bundle does not ship nginx site mappings.
 #
 # Usage: scripts/package-docker-environments.sh
 # Output: dist/docker-packages/<environment>/
@@ -15,7 +15,7 @@ dist_root="$repo_root/dist/docker-packages"
 rm -rf "$dist_root"
 mkdir -p "$dist_root"
 
-for env in development test staging production; do
+for env in development test staging demo production; do
   target="$dist_root/$env"
   mkdir -p "$target"
   install -m 0644 "$repo_root/docker-compose.yml" "$target/docker-compose.yml"
@@ -26,6 +26,7 @@ for env in development test staging production; do
     development) port=3910 ;;
     test) port=3911 ;;
     staging) port=3912 ;;
+    demo) port=3914 ;;
     production) port=3913 ;;
   esac
 

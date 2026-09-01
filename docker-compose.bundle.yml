@@ -39,6 +39,9 @@ x-gateway-common: &gateway-common
     SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.${GATEWAY_ENVIRONMENT}}
     SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
     SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
+    # Accept raw IP literal Host headers when the deployment must stay
+    # reachable directly through the host IP (security.allowIpHosts).
+    SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS: ${GATEWAY_SECURITY_ALLOW_IP_HOSTS:-false}
     SDKWORK_CORS_ALLOWED_ORIGINS: ${GATEWAY_CORS_ALLOWED_ORIGINS:-}
     # Migration ownership: instance 1 migrates; instances 2..N must not.
     SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}

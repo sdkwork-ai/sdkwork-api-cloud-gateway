@@ -7,8 +7,8 @@
 
 `pnpm build:container:install` 产出**一个统一安装镜像包**（self-contained install bundle）：
 
-- **一个镜像**：镜像本身与环境和实例数无关（environment-neutral），构建时**不**烘焙任何环境、域名、数据库或凭据信息；生命周期环境（development / test / staging / production）与实例数全部是**部署时输入**，由容器 entrypoint 启动时解析。
-- **任意环境**：development、test、staging、production 使用同一个镜像 tag，部署时通过 env 文件选择环境（`GATEWAY_ENVIRONMENT`）。
+- **一个镜像**：镜像本身与环境和实例数无关（environment-neutral），构建时**不**烘焙任何环境、域名、数据库或凭据信息；生命周期环境（development / test / staging / demo / production）与实例数全部是**部署时输入**，由容器 entrypoint 启动时解析。
+- **任意环境**：development、test、staging、demo、production 使用同一个镜像 tag，部署时通过 env 文件选择环境（`GATEWAY_ENVIRONMENT`）。demo（独立演示层）与 dev/test/staging/prod 完全隔离（独立数据库 `sdkwork_ai_demo`、独立 Redis 逻辑库 9/10）。
 - **每个环境支持多实例**：N 个网关实例共享同一网络（`sdkwork-api-cloud-gateway-<env>`）与同一份 secrets/data 卷；每个实例拥有独立 compose 项目名（`sdkwork-api-cloud-gateway-<env>-i<index>`）和独立宿主机端口；实例 1 先执行数据库迁移，实例 2..N 在其健康后才启动。
 - **依赖外部化**：bundle 不内置 PostgreSQL/Redis；`GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*` 指向外部实例。公网反向代理由独立的 `sdkwork-webserver` 部署持有，本 bundle 不安装 nginx。
 
@@ -39,6 +39,7 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
 │   ├── development.env.example
 │   ├── test.env.example
 │   ├── staging.env.example
+│   ├── demo.env.example
 │   └── production.env.example
 ├── deploy.sh                                 # 通用部署脚本（唯一入口）
 ├── manifest.json                             # 版本 / 镜像 / sha256 元数据
@@ -47,7 +48,7 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
 
 ## 3. 部署（任意 Docker 主机）
 
-前置条件：外部 PostgreSQL（建议 pgvector 扩展）与 Redis 可达（`host.docker.internal` 或托管端点），数据库与 schema 已按环境创建（`sdkwork_ai_dev/test/staging/prod`，可先用 `pnpm db:postgres:provision`）。
+前置条件：外部 PostgreSQL（建议 pgvector 扩展）与 Redis 可达（`host.docker.internal` 或托管端点），数据库与 schema 已按环境创建（`sdkwork_ai_dev/test/staging/demo/prod`，可先用 `pnpm db:postgres:provision`）。
 
 把 bundle 目录拷贝到目标主机后，唯一入口是 `deploy.sh`：
 
@@ -67,7 +68,7 @@ bash deploy.sh --environment test --down --purge  # 连同卷/网络一并删除
 
 关键规则：
 
-- `--environment` 必填（development | test | staging | production），缺失或未知**在产生任何副作用之前**报错退出；重复执行 apply 幂等（原地更新既有栈）。
+- `--environment` 必填（development | test | staging | demo | production），缺失或未知**在产生任何副作用之前**报错退出；重复执行 apply 幂等（原地更新既有栈）。
 - 首次部署会从 `env/<environment>.env.example` 生成 `env/<environment>.env`，**请先填好 PostgreSQL、Redis、Cloud Router 密钥再对外暴露**。
 - 若镜像未加载，脚本自动 `docker load image.tar.gz`。
 - 启动顺序：每环境一个 `knowledgebase-rpc` 单例（deps 项目，负责预置共享 mTLS/密钥材料）→ 网关实例 1（执行 `--migrate-databases`）→ 实例 2..N（`GATEWAY_MIGRATE_ON_START=false`，避免迁移竞态）。
@@ -93,8 +94,22 @@ pnpm deploy:apply:standalone:docker -- --environment development --down
 | test | 3911 | `sdkwork_ai_test` | 3911 / 3921 / 3931 |
 | staging | 3912 | `sdkwork_ai_staging` | 3912 / 3922 / 3932 |
 | production | 3913 | `sdkwork_ai_prod` | 3913 / 3923 / 3933 |
+| demo | 3914 | `sdkwork_ai_demo` | 3914 / 3924 / 3934 |
 
 健康检查：`curl http://127.0.0.1:<实例端口>/healthz`（就绪探针 `/readyz`）。
+
+### 4.1 直接通过宿主机 IP 访问
+
+容器内网关绑定 `0.0.0.0:3900`，实例端口发布在宿主机所有接口上，因此
+`http://<宿主机IP>:<实例端口>/healthz` 天然可达。Host 头校验（安全层）按
+环境有两种姿态：
+
+- development / test / demo：env 预置 `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`，
+  网关接受任意 IP 字面量 Host（`security.allowIpHosts`），任何机器直接
+  `curl http://<主机IP>:3910/healthz` 即可，无需为每台机器改 allowlist。
+- staging / production：保持精确域名 allowlist（`api…` 域名族）。如需 IP
+  直连（健康探针、运维 smoke check），二选一：把该 IP 追加进
+  `GATEWAY_ALLOWED_HOSTS`，或显式设置 `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`。
 
 `sdkwork-webserver` 是独立的 Docker 部署，负责公网反代：把每个环境域名的
 `/app/`、`/backend/` 等 API 上游指向该环境的网关实例端口列表做负载均衡
@@ -109,6 +124,7 @@ pnpm deploy:apply:standalone:docker -- --environment development --down
 - **共享密钥**：secrets 卷按环境共享。首启实例以 noclobber 方式生成支付主密钥 / IAM 签名主密钥 / Knowledgebase RPC mTLS 材料；多实例并发首启安全（仅一个进程创建）。合规要求更严格时，把 env 文件中 `GATEWAY_PROVISION_*` 置为 `false` 并挂载运营方/KMS 管理的密钥。
 - **无状态水平扩展**：网关实例共享 PostgreSQL 与 Redis（RTC 状态、web 会话走 Redis DB index 隔离），可随时 `--replicas N` 重建或缩容。
 - **实例级覆盖**：需要单实例差异化配置时，创建 `env/<environment>.i<index>.env`，deploy.sh 会叠加在基础 env 之上（后者 `--env-file` 优先）。
+- **唯一节点身份**：deploy.sh 按实例推导 `SDKWORK_IM_ID_NODE_ID`（实例 1 用 env 基值，实例 2..N 依次 +1），保证同环境多实例的雪花 ID 生成不冲突（DEPLOYMENT_SPEC §6）。
 - **资源限制**：每实例默认 2 CPU / 2GiB 上限，通过 `GATEWAY_CPU_LIMIT` / `GATEWAY_MEMORY_LIMIT` 调整。
 
 ## 6. 运维与验证清单

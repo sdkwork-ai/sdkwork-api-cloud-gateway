@@ -5,6 +5,7 @@
 #   development -> sdkwork_ai_dev
 #   test        -> sdkwork_ai_test
 #   staging     -> sdkwork_ai_staging
+#   demo        -> sdkwork_ai_demo
 #   production  -> sdkwork_ai_prod
 #
 # Each database uses the same name for database, schema, and role. The vector
@@ -28,7 +29,7 @@ usage() {
   cat <<'EOF'
 Usage: provision-external-databases.sh [environment ...]
 
-Environments: development, test, staging, production (default: all four)
+Environments: development, test, staging, demo, production (default: all five)
 
 Admin connection (required):
   SDKWORK_DATABASE_ADMIN_HOST      default 127.0.0.1
@@ -55,6 +56,7 @@ db_identity() {
     development) echo sdkwork_ai_dev ;;
     test) echo sdkwork_ai_test ;;
     staging) echo sdkwork_ai_staging ;;
+    demo) echo sdkwork_ai_demo ;;
     production) echo sdkwork_ai_prod ;;
     *) return 1 ;;
   esac
@@ -63,7 +65,7 @@ db_identity() {
 default_password() {
   case "$1" in
     development) echo sdkworkdev123 ;;
-    test|staging|production) echo "" ;;
+    test|staging|demo|production) echo "" ;;
   esac
 }
 
@@ -116,7 +118,7 @@ provision_one() {
 
 targets=("$@")
 if [ "${#targets[@]}" -eq 0 ]; then
-  targets=(development test staging production)
+  targets=(development test staging demo production)
 fi
 
 if [ "${targets[0]}" = "-h" ] || [ "${targets[0]}" = "--help" ]; then

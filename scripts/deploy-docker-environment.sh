@@ -16,7 +16,7 @@ usage() {
   cat <<'EOF'
 Usage: deploy-docker-environment.sh <environment|all> [options]
 
-Environments: development, test, staging, production, all
+Environments: development, test, staging, demo, production, all
 
 Options:
   --pull          docker compose pull before up
@@ -85,11 +85,11 @@ deploy_one() {
 }
 
 case "$target" in
-  development|test|staging|production)
+  development|test|staging|demo|production)
     deploy_one "$target"
     ;;
   all)
-    for env_name in development test staging production; do
+    for env_name in development test staging demo production; do
       deploy_one "$env_name"
     done
     ;;

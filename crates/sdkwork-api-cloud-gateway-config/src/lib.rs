@@ -281,6 +281,14 @@ pub struct GatewayOtelConfig {
 pub struct GatewaySecurityConfig {
     #[serde(default)]
     pub allowed_hosts: Vec<String>,
+    /// Accept requests whose Host header is a raw IP literal (IPv4/IPv6) even
+    /// when `allowed_hosts` is non-empty. Disabled by default: production
+    /// keeps the exact domain allowlist. Standalone container deployments
+    /// that must stay reachable directly through the host IP (operator
+    /// smoke checks, LAN clients, load-balancer health probes) enable it at
+    /// deploy time via `SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS`.
+    #[serde(default)]
+    pub allow_ip_hosts: bool,
     #[serde(default)]
     pub trusted_proxy_cidrs: Vec<String>,
     #[serde(default = "default_true")]
@@ -739,6 +747,14 @@ impl GatewayRuntimeConfig {
         if let Some(allowed_hosts) = env.get("SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS") {
             self.security.allowed_hosts = parse_csv_env(allowed_hosts);
         }
+        if let Some(allow_ip_hosts) =
+            env.get("SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS")
+        {
+            self.security.allow_ip_hosts = parse_bool_env(
+                "SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS",
+                allow_ip_hosts,
+            )?;
+        }
         if let Some(allow_any_origin) = env.get("SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN") {
             self.cors.allow_any_origin = parse_bool_env(
                 "SDKWORK_API_CLOUD_GATEWAY_CORS_ALLOW_ANY_ORIGIN",
@@ -1046,6 +1062,7 @@ impl Default for GatewaySecurityConfig {
     fn default() -> Self {
         Self {
             allowed_hosts: Vec::new(),
+            allow_ip_hosts: false,
             trusted_proxy_cidrs: Vec::new(),
             secure_headers_enabled: true,
             max_header_bytes: default_max_header_bytes(),
@@ -1370,7 +1387,7 @@ fn normalize_environment(value: &str) -> Result<String, GatewayConfigError> {
     let normalized = value.trim().to_ascii_lowercase();
     if matches!(
         normalized.as_str(),
-        "development" | "test" | "staging" | "production"
+        "development" | "test" | "staging" | "production" | "demo"
     ) {
         return Ok(normalized);
     }

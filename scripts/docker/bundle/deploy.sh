@@ -11,7 +11,7 @@
 #   repo:    ../../docker-compose.bundle.yml  + ../../docker/env/
 #
 # Usage:
-#   deploy.sh --environment <development|test|staging|production> [options]
+#   deploy.sh --environment <development|test|staging|demo|production> [options]
 #     --replicas <N>     gateway instances to run (default 1; every env
 #                        supports N; read from GATEWAY_REPLICAS when omitted)
 #     --image-tag <tag>  override GATEWAY_IMAGE tag
@@ -33,8 +33,7 @@
 # Examples:
 #   deploy.sh --environment development
 #   deploy.sh --environment production --replicas 3
-#   deploy.sh --environment test --down --purge
-#
+#   deploy.sh --environment test --down --purge#
 # Idempotent: re-running apply updates the existing stack in place.
 # ============================================================================
 set -euo pipefail
@@ -88,10 +87,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n "${ENVIRONMENT}" ] || die "--environment is required (development|test|staging|production)"
+[ -n "${ENVIRONMENT}" ] || die "--environment is required (development|test|staging|demo|production)"
 case "${ENVIRONMENT}" in
-  development|test|staging|production) ;;
-  *) die "unsupported environment: ${ENVIRONMENT} (development|test|staging|production)" ;;
+  development|test|staging|demo|production) ;;
+  *) die "unsupported environment: ${ENVIRONMENT} (development|test|staging|demo|production)" ;;
 esac
 command -v docker >/dev/null 2>&1 || { [ "${DRY_RUN}" = "1" ] || die "docker is required"; }
 if [ "${DRY_RUN}" != "1" ]; then
@@ -134,7 +133,21 @@ if [ -z "${IMAGE_TAG}" ]; then
   IMAGE_TAG="$(env_key GATEWAY_IMAGE | sed 's/.*://')"
 fi
 IMAGE_TAG="${IMAGE_TAG:-0.1.0}"
-IMAGE_REF="registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:${IMAGE_TAG}"
+# Image base: bundle deployments always use the canonical registry name (the
+# loaded image.tar.gz restores it verbatim); repo-layout deployments honor the
+# env-file GATEWAY_IMAGE repository so a locally built image is used as-is.
+IMAGE_BASE="registry.sdkwork.com/apps/sdkwork-api-cloud-gateway"
+if [ -z "${BUNDLE_IMAGE_ENV}" ]; then
+  env_image="$(env_key GATEWAY_IMAGE)"
+  case "${env_image}" in
+    *:*) env_image_base="${env_image%:*}" ;;
+    *)   env_image_base="${env_image}" ;;
+  esac
+  if [ -n "${env_image_base}" ]; then
+    IMAGE_BASE="${env_image_base}"
+  fi
+fi
+IMAGE_REF="${IMAGE_BASE}:${IMAGE_TAG}"
 export GATEWAY_IMAGE="${IMAGE_REF}"
 export GATEWAY_ENVIRONMENT="${ENVIRONMENT}"
 
@@ -192,6 +205,13 @@ export_instance_env() {
   local index="$1"
   export GATEWAY_INSTANCE_HOST_PORT=$((HOST_PORT_BASE + (index - 1) * 10))
   export GATEWAY_PROFILE_ID="standalone.${ENVIRONMENT}.i${index}"
+  # Unique node identity per instance (DEPLOYMENT_SPEC §6): instance 1 keeps
+  # the env-file base node id; instances 2..N advance it by one so snowflake
+  # id generation never collides between replicas of the same environment.
+  local node_base
+  node_base="$(env_key GATEWAY_IM_ID_NODE_ID)"
+  node_base="${node_base:-2}"
+  export GATEWAY_IM_ID_NODE_ID=$((node_base + index - 1))
   if [ "${index}" -eq 1 ]; then
     # Instance 1 owns migration; the env-file value (default true) applies.
     export GATEWAY_MIGRATE_ON_START="$(env_key GATEWAY_MIGRATE_ON_START)"
