@@ -422,3 +422,18 @@ test('server install manifest declares its self-referential checksum exclusions'
     /contentManifestExclusions:\s*\[\s*'install-manifest\.json',\s*'checksums\.sha256'/u,
   );
 });
+
+test('bundle compose mounts the PostgreSQL CA trust bundle like the repo layout', () => {
+  const bundle = readFileSync(path.join(appRoot, 'docker-compose.bundle.yml'), 'utf8');
+  // The bundle distribution must provide the same external-TLS trust anchor as
+  // docker-compose.yml: GATEWAY_POSTGRES_SSL_CERT_FILE points at the mounted
+  // bundle path, so dropping the mount silently breaks sslmode=require pools.
+  assert.match(
+    bundle,
+    /SSL_CERT_FILE: \$\{GATEWAY_POSTGRES_SSL_CERT_FILE:-\/etc\/ssl\/certs\/ca-certificates\.crt\}/u,
+  );
+  assert.match(
+    bundle,
+    /\$\{GATEWAY_POSTGRES_CA_FILE_MOUNT:-\.\/docker\/ca\/postgres-ca-bundle\.crt\}:\/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.crt:ro/u,
+  );
+});

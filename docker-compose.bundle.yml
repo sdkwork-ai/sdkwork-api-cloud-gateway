@@ -134,6 +134,11 @@ x-gateway-common: &gateway-common
     # Per-environment shared state: every instance mounts the same volumes.
     - gateway-secrets:/run/secrets/sdkwork/api-gateway
     - gateway-data:/var/lib/sdkwork/api-gateway
+    # Optional private PostgreSQL CA for external TLS (empty file is fine).
+    # Mirrors docker-compose.yml: when GATEWAY_POSTGRES_SSL_CERT_FILE points
+    # here, the mounted bundle (system CA + server leaf, see docker/ca/README.md)
+    # becomes the IM r2d2 pool trust anchor.
+    - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
   # Deployment guardrails (tune via the env file).
   deploy:
     resources:
