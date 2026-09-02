@@ -384,13 +384,6 @@ function runCargoBuild(context) {
     CARGO_TARGET_DIR: context.cargoTargetDir,
     CARGO_INCREMENTAL: '0',
     PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
-    // Path-dependency build scripts (sdkwork-cloudrouter-http) regenerate
-    // OpenAPI schemas via python + PyYAML in `generate` mode. Release builds
-    // use the committed sdk OpenAPI documents instead (same default as
-    // cloudrouter's own run-cloud-router-rust-tests.mjs) so packaging does
-    // not depend on ambient python tooling on CI runners.
-    SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE:
-      process.env.SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE || 'copy',
   };
   for (const command of createCargoBuildCommands(context)) {
     run('cargo', command.args, {
