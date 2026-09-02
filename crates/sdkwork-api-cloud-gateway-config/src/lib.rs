@@ -747,9 +747,7 @@ impl GatewayRuntimeConfig {
         if let Some(allowed_hosts) = env.get("SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS") {
             self.security.allowed_hosts = parse_csv_env(allowed_hosts);
         }
-        if let Some(allow_ip_hosts) =
-            env.get("SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS")
-        {
+        if let Some(allow_ip_hosts) = env.get("SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS") {
             self.security.allow_ip_hosts = parse_bool_env(
                 "SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS",
                 allow_ip_hosts,

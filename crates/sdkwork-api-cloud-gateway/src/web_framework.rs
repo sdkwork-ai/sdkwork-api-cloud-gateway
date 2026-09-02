@@ -52,7 +52,9 @@ pub(crate) fn gateway_cors_policy(config: &GatewayRuntimeConfig) -> CorsPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sdkwork_api_cloud_gateway_config::{CorsConfig, GatewayRuntimeConfig, GatewayServiceConfig};
+    use sdkwork_api_cloud_gateway_config::{
+        CorsConfig, GatewayRuntimeConfig, GatewayServiceConfig,
+    };
 
     #[test]
     fn gateway_cors_policy_always_allows_registered_desktop_origins() {

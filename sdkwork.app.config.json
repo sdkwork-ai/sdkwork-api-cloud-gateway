@@ -119,16 +119,27 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.0",
+    "currentVersion": "0.1.1",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.0"
+      "BETA": "0.1.1"
     },
     "notes": [
       {
-        "version": "0.1.0",
+        "version": "0.1.1",
         "channel": "BETA",
         "current": true,
+        "summary": "Deterministic release packaging: cloudrouter OpenAPI build scripts default to copy mode; rustfmt cleanups; multi-environment bundle and docker deployment hardening.",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.0",
+        "channel": "BETA",
+        "current": false,
         "summary": "Initial SDKWork App Standard v3 gateway manifest.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
@@ -153,9 +164,9 @@
           "packageId": "linux-x64-standalone-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.0-linux-x64-standalone-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.1-linux-x64-standalone-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.0-linux-x64-standalone-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.1-linux-x64-standalone-server.tar.gz"
             }
           ]
         },
@@ -165,9 +176,9 @@
           "packageId": "linux-x64-cloud-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.0-linux-x64-cloud-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.1-linux-x64-cloud-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.0-linux-x64-cloud-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.1-linux-x64-cloud-server.tar.gz"
             }
           ]
         }

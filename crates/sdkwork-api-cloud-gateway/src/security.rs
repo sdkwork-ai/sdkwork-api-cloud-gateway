@@ -423,7 +423,12 @@ mod tests {
         // Explicit deploy-time switch: IPv4 and IPv6 literals pass, unknown
         // domains stay rejected.
         config.allow_ip_hosts = true;
-        for host in ["192.168.8.24", "192.168.8.24:3911", "[fd00::5]:3911", "127.0.0.1"] {
+        for host in [
+            "192.168.8.24",
+            "192.168.8.24:3911",
+            "[fd00::5]:3911",
+            "127.0.0.1",
+        ] {
             assert!(
                 validate_allowed_host(&config, &host_header(host)).is_ok(),
                 "IP literal `{host}` must be allowed with allow_ip_hosts on"

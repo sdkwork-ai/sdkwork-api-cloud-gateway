@@ -6632,7 +6632,7 @@ dependencies = [
 
 [[package]]
 name = "sdkwork-api-cloud-gateway"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
@@ -6726,7 +6726,7 @@ dependencies = [
 
 [[package]]
 name = "sdkwork-api-cloud-gateway-config"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sdkwork-utils-rust",
  "sdkwork-web-core",
@@ -6738,7 +6738,7 @@ dependencies = [
 
 [[package]]
 name = "sdkwork-api-cloud-gateway-observability"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sdkwork-api-cloud-gateway-config",
  "sdkwork-api-cloud-gateway-registry",
@@ -6747,7 +6747,7 @@ dependencies = [
 
 [[package]]
 name = "sdkwork-api-cloud-gateway-registry"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "sdkwork-api-cloud-gateway-config",
  "serde",

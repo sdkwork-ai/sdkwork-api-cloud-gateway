@@ -339,11 +339,15 @@ async function runCargoBuild(plan) {
     cwd: appRoot,
     // Some path-dependency build scripts (sdkwork-cloudrouter-http) invoke
     // `python` to generate OpenAPI sources; Debian/Ubuntu only ships python3,
-    // so default PYTHON to python3 on Linux hosts.
+    // so default PYTHON to python3 on Linux hosts. Release/container builds
+    // use the committed sdk OpenAPI documents (copy mode) so they do not
+    // depend on ambient python + PyYAML tooling.
     env: {
       ...process.env,
       CARGO_INCREMENTAL: '0',
       PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
+      SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE:
+        process.env.SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE || 'copy',
     },
     maxBuffer: 32 * 1024 * 1024,
   });
@@ -373,6 +377,8 @@ async function runCargoBuild(plan) {
       ...process.env,
       CARGO_INCREMENTAL: '0',
       PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
+      SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE:
+        process.env.SDKWORK_CLOUDROUTER_HTTP_OPENAPI_BUILD_MODE || 'copy',
     },
     maxBuffer: 32 * 1024 * 1024,
   });
