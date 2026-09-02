@@ -6706,6 +6706,8 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-im-database-pool",
+ "sdkwork-image-generation-provider-adapter",
+ "sdkwork-image-generation-provider-spi",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
@@ -6819,6 +6821,8 @@ name = "sdkwork-api-community-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-community-commerce-membership-embedded",
+ "sdkwork-community-commerce-order-embedded",
  "sdkwork-community-service-host",
  "sdkwork-database-sqlx",
  "sdkwork-routes-community-app-api",
@@ -7121,6 +7125,7 @@ dependencies = [
  "sdkwork-catalog-database-host",
  "sdkwork-comms-conversation-service",
  "sdkwork-community-database-host",
+ "sdkwork-community-feeds-community-embedded",
  "sdkwork-community-service-host",
  "sdkwork-company-database-host",
  "sdkwork-content-feeds-service",
@@ -7173,6 +7178,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-database-sqlx",
  "sdkwork-image-generation-host",
+ "sdkwork-image-generation-provider-spi",
  "sdkwork-routes-image-app-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
@@ -8853,6 +8859,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-community-commerce-membership-embedded"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-community-service",
+ "sdkwork-database-sqlx",
+ "sdkwork-membership-repository-sqlx",
+]
+
+[[package]]
+name = "sdkwork-community-commerce-order-embedded"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-community-service",
+ "sdkwork-database-sqlx",
+ "sdkwork-order-repository-sqlx",
+ "sdkwork-order-service",
+]
+
+[[package]]
 name = "sdkwork-community-core-rust"
 version = "0.1.0"
 
@@ -8865,6 +8890,18 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-community-feeds-community-embedded"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-community-service",
+ "sdkwork-community-storage-sqlx-rust",
+ "sdkwork-content-feeds-core-rust",
+ "sdkwork-content-feeds-service",
+ "serde_json",
 ]
 
 [[package]]
@@ -10466,10 +10503,12 @@ name = "sdkwork-image-generation-provider-adapter"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum 0.8.9",
  "cloudrouter-open-sdk",
  "sdkwork-image-generation-provider-spi",
  "serde",
  "serde_json",
+ "tower 0.5.3",
 ]
 
 [[package]]

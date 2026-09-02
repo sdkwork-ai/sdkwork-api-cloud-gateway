@@ -2108,7 +2108,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool",
+      "executableExport": "sdkwork_api_iam_assembly::web_module_with_pool",
       "coverage": "sdkwork-iam-app-api-embedded-assembly-routes"
     },
     {
@@ -2126,7 +2126,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool",
+      "executableExport": "sdkwork_api_iam_assembly::web_module_with_pool",
       "coverage": "sdkwork-iam-open-api-embedded-assembly-routes"
     },
     {
@@ -2143,7 +2143,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_assets_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_assets_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-drive-app-api",
@@ -2159,7 +2159,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_drive_assembly::web_module_with_postgres_pool"
     },
     {
       "serviceId": "sdkwork-notary-app-api",
@@ -2172,7 +2172,7 @@
       ],
       "cargoFeature": "foundation-notary",
       "cargoDependency": "sdkwork-api-notary-assembly",
-      "executableExport": "sdkwork_api_notary_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_notary_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-voice-app-api",
@@ -2185,7 +2185,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_voice_assembly::assemble_contribution_with_pool"
+      "executableExport": "sdkwork_api_voice_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-voice-backend-api",
@@ -2198,7 +2198,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_voice_assembly::assemble_contribution_with_pool"
+      "executableExport": "sdkwork_api_voice_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-rtc-backend-api",
@@ -2211,7 +2211,7 @@
       ],
       "cargoFeature": "foundation-rtc",
       "cargoDependency": "sdkwork-api-rtc-assembly",
-      "executableExport": "sdkwork_api_rtc_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_rtc_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-cloudrouter-app-api",
@@ -2235,7 +2235,7 @@
       ],
       "cargoFeature": "foundation-cloudrouter",
       "cargoDependency": "sdkwork-api-cloudrouter-assembly",
-      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_cloudrouter_assembly::web_module_with_context"
     },
     {
       "serviceId": "sdkwork-cloudrouter-backend-api",
@@ -2257,7 +2257,7 @@
       ],
       "cargoFeature": "foundation-cloudrouter",
       "cargoDependency": "sdkwork-api-cloudrouter-assembly",
-      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_cloudrouter_assembly::web_module_with_context"
     },
     {
       "serviceId": "sdkwork-cloudrouter-open-api",
@@ -2282,7 +2282,7 @@
       ],
       "cargoFeature": "foundation-cloudrouter",
       "cargoDependency": "sdkwork-api-cloudrouter-assembly",
-      "executableExport": "sdkwork_api_cloudrouter_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_cloudrouter_assembly::web_module_with_context"
     },
     {
       "serviceId": "sdkwork-appstore-app-api",
@@ -2304,7 +2304,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_appstore_assembly::assemble_contribution_with_pool"
+      "executableExport": "sdkwork_api_appstore_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-appstore-backend-api",
@@ -2327,7 +2327,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_appstore_assembly::assemble_contribution_with_pool"
+      "executableExport": "sdkwork_api_appstore_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-appstore-open-api",
@@ -2347,7 +2347,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_appstore_assembly::assemble_contribution_with_pool"
+      "executableExport": "sdkwork_api_appstore_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-iam-backend-api",
@@ -2360,7 +2360,7 @@
       ],
       "cargoFeature": "foundation-appbase",
       "cargoDependency": "sdkwork-api-iam-assembly",
-      "executableExport": "sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool"
+      "executableExport": "sdkwork_api_iam_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-course-app-api",
@@ -2373,7 +2373,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_course_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_course_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-course-backend-api",
@@ -2386,7 +2386,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_course_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_course_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-cms-app-api",
@@ -2399,7 +2399,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_cms_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-cms-backend-api",
@@ -2412,7 +2412,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_cms_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-cms-open-api",
@@ -2425,7 +2425,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_cms_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_cms_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-forum-app-api",
@@ -2438,7 +2438,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_forum_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-forum-backend-api",
@@ -2451,7 +2451,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_forum_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_forum_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-im-app-api",
@@ -2480,7 +2480,7 @@
       ],
       "cargoFeature": "foundation-im",
       "cargoDependency": "sdkwork-api-im-assembly",
-      "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_im_assembly::web_module_with_realtime_bootstrap"
     },
     {
       "serviceId": "sdkwork-im-backend-api",
@@ -2499,7 +2499,7 @@
       ],
       "cargoFeature": "foundation-im",
       "cargoDependency": "sdkwork-api-im-assembly",
-      "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_im_assembly::web_module_with_realtime_bootstrap"
     },
     {
       "serviceId": "sdkwork-im-open-api",
@@ -2515,7 +2515,7 @@
       ],
       "cargoFeature": "foundation-im",
       "cargoDependency": "sdkwork-api-im-assembly",
-      "executableExport": "sdkwork_api_im_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_im_assembly::web_module_with_realtime_bootstrap"
     },
     {
       "serviceId": "sdkwork-im-realtime-plane",
@@ -2545,7 +2545,7 @@
       ],
       "cargoFeature": "foundation-rtc",
       "cargoDependency": "sdkwork-api-rtc-assembly",
-      "executableExport": "sdkwork_api_rtc_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_rtc_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mail-app-api",
@@ -2558,7 +2558,7 @@
       ],
       "cargoFeature": "foundation-mail",
       "cargoDependency": "sdkwork-api-mail-assembly",
-      "executableExport": "sdkwork_api_mail_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mail_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mail-backend-api",
@@ -2571,7 +2571,7 @@
       ],
       "cargoFeature": "foundation-mail",
       "cargoDependency": "sdkwork-api-mail-assembly",
-      "executableExport": "sdkwork_api_mail_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mail_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mcp-app-api",
@@ -2584,7 +2584,7 @@
       ],
       "cargoFeature": "foundation-mcp",
       "cargoDependency": "sdkwork-api-mcp-assembly",
-      "executableExport": "sdkwork_api_mcp_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mcp_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mcp-backend-api",
@@ -2597,7 +2597,7 @@
       ],
       "cargoFeature": "foundation-mcp",
       "cargoDependency": "sdkwork-api-mcp-assembly",
-      "executableExport": "sdkwork_api_mcp_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mcp_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-dezhou-app-api",
@@ -2610,7 +2610,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_dezhou_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_dezhou_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-dezhou-backend-api",
@@ -2623,7 +2623,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_dezhou_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_dezhou_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-image-app-api",
@@ -2636,7 +2636,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_image_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_image_assembly::web_module_with_pool_retaining_background"
     },
     {
       "serviceId": "sdkwork-aiot-app-api",
@@ -2649,7 +2649,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_aiot_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_aiot_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-aiot-backend-api",
@@ -2662,7 +2662,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_aiot_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_aiot_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-community-app-api",
@@ -2675,7 +2675,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_community_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-community-backend-api",
@@ -2688,7 +2688,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_community_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-community-open-api",
@@ -2701,7 +2701,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_community_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_community_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-agent-app-api",
@@ -2714,7 +2714,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_agents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-agent-backend-api",
@@ -2727,7 +2727,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_agents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-agent-open-api",
@@ -2740,7 +2740,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_agents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_agents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-generations-app-api",
@@ -2753,7 +2753,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_generations_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_generations_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-generations-backend-api",
@@ -2766,7 +2766,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_generations_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_generations_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-drive-backend-api",
@@ -2782,7 +2782,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_drive_assembly::web_module_with_postgres_pool"
     },
     {
       "serviceId": "sdkwork-membership-backend-api",
@@ -2795,7 +2795,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_membership_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-order-app-api",
@@ -2818,7 +2818,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_order_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_order_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-order-backend-api",
@@ -2840,7 +2840,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_order_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_order_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-promotion-backend-api",
@@ -2856,7 +2856,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_promotion_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-payment-backend-api",
@@ -2872,7 +2872,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_payment_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_payment_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-drive-open-api",
@@ -2888,7 +2888,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_drive_assembly::web_module_with_postgres_pool"
     },
     {
       "serviceId": "sdkwork-drive-internal-api",
@@ -2904,7 +2904,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_drive_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_drive_assembly::web_module_with_postgres_pool"
     },
     {
       "serviceId": "sdkwork-notary-backend-api",
@@ -2917,7 +2917,7 @@
       ],
       "cargoFeature": "foundation-notary",
       "cargoDependency": "sdkwork-api-notary-assembly",
-      "executableExport": "sdkwork_api_notary_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_notary_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-documents-app-api",
@@ -2930,7 +2930,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_documents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-documents-backend-api",
@@ -2943,7 +2943,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_documents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-documents-open-api",
@@ -2956,7 +2956,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_documents_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_documents_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-prompts-app-api",
@@ -2972,7 +2972,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_prompts_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-prompts-backend-api",
@@ -2988,7 +2988,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_prompts_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-prompts-open-api",
@@ -3004,7 +3004,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_prompts_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_prompts_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-deploy-app-api",
@@ -3028,7 +3028,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_deployments_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-deploy-backend-api",
@@ -3056,7 +3056,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_deployments_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-webserver-internal-api",
@@ -3072,7 +3072,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_webserver_assembly::assemble_api_router"
+      "executableExport": "sdkwork_api_webserver_assembly::web_module_with_context"
     },
     {
       "serviceId": "sdkwork-browser-app-api",
@@ -3088,7 +3088,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_browser_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_browser_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-browser-backend-api",
@@ -3104,7 +3104,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_browser_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_browser_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-knowledgebase-app-api",
@@ -3120,7 +3120,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::web_module_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-knowledgebase-backend-api",
@@ -3136,7 +3136,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::web_module_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-knowledgebase-open-api",
@@ -3153,7 +3153,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment"
+      "executableExport": "sdkwork_api_knowledgebase_assembly::web_module_with_pool_for_environment"
     },
     {
       "serviceId": "sdkwork-llm-app-api",
@@ -3169,7 +3169,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_llm_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_llm_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-llm-backend-api",
@@ -3185,7 +3185,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_llm_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_llm_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-llm-open-api",
@@ -3201,7 +3201,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_llm_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_llm_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mahjong-app-api",
@@ -3217,7 +3217,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_mahjong_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mahjong_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-mahjong-backend-api",
@@ -3233,7 +3233,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_mahjong_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_mahjong_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-doudizhu-app-api",
@@ -3249,7 +3249,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_doudizhu_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_doudizhu_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-doudizhu-backend-api",
@@ -3265,7 +3265,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_doudizhu_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_doudizhu_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-xiangqi-app-api",
@@ -3281,7 +3281,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_xiangqi_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_xiangqi_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-xiangqi-backend-api",
@@ -3297,7 +3297,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_xiangqi_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_xiangqi_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-modelkit-app-api",
@@ -3310,7 +3310,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_modelkit_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_modelkit_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-account-app-api",
@@ -3329,7 +3329,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_account_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_account_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-account-backend-api",
@@ -3346,7 +3346,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_account_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_account_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-catalog-app-api",
@@ -3364,7 +3364,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_catalog_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_catalog_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-customerservice-app-api",
@@ -3381,7 +3381,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_customerservice_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_customerservice_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-customerservice-backend-api",
@@ -3397,7 +3397,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_customerservice_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_customerservice_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-gameengine-app-api",
@@ -3413,7 +3413,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_gameengine_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_gameengine_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-gameengine-backend-api",
@@ -3429,7 +3429,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_gameengine_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_gameengine_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-inventory-app-api",
@@ -3445,7 +3445,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_inventory_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_inventory_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-inventory-backend-api",
@@ -3461,7 +3461,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_inventory_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_inventory_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-invoice-app-api",
@@ -3477,7 +3477,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_invoice_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_invoice_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-local-router-app-api",
@@ -3493,7 +3493,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_local_router_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_local_router_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-local-router-backend-api",
@@ -3509,7 +3509,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_local_router_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_local_router_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-local-router-open-api",
@@ -3527,7 +3527,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_local_router_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_local_router_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-manager-app-api",
@@ -3543,7 +3543,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_manager_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_manager_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-manager-backend-api",
@@ -3559,7 +3559,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_manager_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_manager_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-news-app-api",
@@ -3575,7 +3575,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_news_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_news_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-news-backend-api",
@@ -3591,7 +3591,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_news_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_news_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-news-open-api",
@@ -3607,7 +3607,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_news_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_news_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-portal-app-api",
@@ -3623,7 +3623,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_portal_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_portal_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-portal-backend-api",
@@ -3639,7 +3639,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_portal_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_portal_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-shop-app-api",
@@ -3655,7 +3655,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_shop_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_shop_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-shop-backend-api",
@@ -3672,7 +3672,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_shop_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_shop_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-skills-app-api",
@@ -3691,7 +3691,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_skills_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_skills_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-skills-backend-api",
@@ -3710,7 +3710,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_skills_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_skills_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-membership-app-api",
@@ -3723,7 +3723,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_membership_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_membership_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-promotion-app-api",
@@ -3740,7 +3740,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_promotion_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_promotion_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-payment-app-api",
@@ -3757,7 +3757,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_payment_assembly::assemble_api_router_with_pool"
+      "executableExport": "sdkwork_api_payment_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-appbase-backend-api",
@@ -3774,7 +3774,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_appbase_assembly::assemble_backend_api_contribution",
+      "executableExport": "sdkwork_api_appbase_assembly::web_module",
       "coverage": "sdkwork-appbase-backend-api-embedded-assembly-routes"
     },
     {
@@ -3790,7 +3790,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_birdcoder_assembly::assemble_api_router",
+      "executableExport": "sdkwork_api_birdcoder_assembly::web_module",
       "coverage": "sdkwork-birdcoder-app-api-embedded-assembly-routes"
     },
     {
@@ -3806,7 +3806,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_canvas_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_canvas_assembly::web_module",
       "coverage": "sdkwork-canvas-app-api-embedded-assembly-routes"
     },
     {
@@ -3822,7 +3822,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_canvas_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_canvas_assembly::web_module",
       "coverage": "sdkwork-canvas-backend-api-embedded-assembly-routes"
     },
     {
@@ -3838,7 +3838,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_company_assembly::assemble_api_router_with_pool",
+      "executableExport": "sdkwork_api_company_assembly::web_module_with_pool",
       "coverage": "sdkwork-company-app-api-embedded-assembly-routes"
     },
     {
@@ -3854,7 +3854,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_company_assembly::assemble_api_router_with_pool",
+      "executableExport": "sdkwork_api_company_assembly::web_module_with_pool",
       "coverage": "sdkwork-company-backend-api-embedded-assembly-routes"
     },
     {
@@ -3870,7 +3870,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_company_assembly::assemble_api_router_with_pool",
+      "executableExport": "sdkwork_api_company_assembly::web_module_with_pool",
       "coverage": "sdkwork-company-open-api-embedded-assembly-routes"
     },
     {
@@ -3886,7 +3886,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_feeds_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_feeds_assembly::web_module",
       "coverage": "sdkwork-feeds-app-api-embedded-assembly-routes"
     },
     {
@@ -3902,7 +3902,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_feeds_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_feeds_assembly::web_module",
       "coverage": "sdkwork-feeds-backend-api-embedded-assembly-routes"
     },
     {
@@ -3918,7 +3918,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_feeds_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_feeds_assembly::web_module",
       "coverage": "sdkwork-feeds-open-api-embedded-assembly-routes"
     },
     {
@@ -3934,7 +3934,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_github_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_github_assembly::web_module",
       "coverage": "sdkwork-github-app-api-embedded-assembly-routes"
     },
     {
@@ -3950,7 +3950,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_github_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_github_assembly::web_module",
       "coverage": "sdkwork-github-backend-api-embedded-assembly-routes"
     },
     {
@@ -3966,7 +3966,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_log_assembly::assemble_api_router_with_pool",
+      "executableExport": "sdkwork_api_log_assembly::web_module_with_pool",
       "coverage": "sdkwork-log-backend-api-embedded-assembly-routes"
     },
     {
@@ -3982,7 +3982,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_messaging_assembly::assemble_api_router",
+      "executableExport": "sdkwork_api_messaging_assembly::web_module",
       "coverage": "sdkwork-messaging-backend-api-embedded-assembly-routes"
     },
     {
@@ -3998,7 +3998,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_notes_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_notes_assembly::web_module",
       "coverage": "sdkwork-notes-app-api-embedded-assembly-routes"
     },
     {
@@ -4014,7 +4014,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_notes_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_notes_assembly::web_module",
       "coverage": "sdkwork-notes-backend-api-embedded-assembly-routes"
     },
     {
@@ -4030,7 +4030,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_search_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_search_assembly::web_module",
       "coverage": "sdkwork-search-app-api-embedded-assembly-routes"
     },
     {
@@ -4046,7 +4046,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_search_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_search_assembly::web_module",
       "coverage": "sdkwork-search-backend-api-embedded-assembly-routes"
     },
     {
@@ -4062,7 +4062,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_settings_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_settings_assembly::web_module",
       "coverage": "sdkwork-settings-app-api-embedded-assembly-routes"
     },
     {
@@ -4078,7 +4078,7 @@
       "runtimeModes": [
         "embedded"
       ],
-      "executableExport": "sdkwork_api_settings_assembly::assemble_api_router_from_env",
+      "executableExport": "sdkwork_api_settings_assembly::web_module",
       "coverage": "sdkwork-settings-backend-api-embedded-assembly-routes"
     }
   ],

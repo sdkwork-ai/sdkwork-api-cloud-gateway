@@ -87,10 +87,17 @@ test('embedded PostgreSQL URL replaces legacy spaced search_path options', () =>
   assert.doesNotMatch(resolved, /legacy/u);
 });
 
-test('embedded dependencies use the local gateway origin by default', () => {
-  const resolved = resolveEmbeddedDependencyEnv({});
+test('embedded dependencies never default a dependency base URL to the gateway origin', () => {
+  // APPLICATION_GATEWAY_SPEC §2.3: this gateway composes CloudRouter
+  // in-process, so the image generation module is wired through the injected
+  // in-process dispatch adapter and no per-dependency HTTP base URL is set at
+  // all — a default pointing at any listener (own or external) would describe
+  // a deployment shape this gateway no longer has.
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_API_CLOUD_GATEWAY_BIND: '127.0.0.1:3900',
+  });
 
-  assert.equal(resolved.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, 'http://127.0.0.1:3900');
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, undefined);
   assert.equal(
     resolved.SDKWORK_CLOUDROUTER_API_KEY_PEPPER,
     'sdkwork-cloudrouter-local-dev-secret-20260507',
@@ -105,6 +112,10 @@ test('embedded dependencies use the local gateway origin by default', () => {
   );
   assert.equal(
     resolved.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET,
+    'sdkwork-cloudrouter-local-dev-secret-20260507',
+  );
+  assert.equal(
+    resolved.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET,
     'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
 });
@@ -130,7 +141,12 @@ test('embedded module environment overrides remain independent', () => {
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'staging');
 });
 
-test('embedded dependency env preserves explicit CloudRouter overrides', () => {
+test('embedded dependency env never forwards a CloudRouter HTTP base URL', () => {
+  // APPLICATION_GATEWAY_SPEC §2.3: a collapsed gateway that embeds CloudRouter
+  // wires the image generation module through the in-process dispatch adapter,
+  // so a per-dependency base URL must neither be defaulted nor forwarded —
+  // leaving one set would describe the standalone-CloudRouter shape that this
+  // deployment explicitly does not use.
   const explicit = resolveEmbeddedDependencyEnv({
     SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ' https://cloudrouter.example.com ',
     CLOUDROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
@@ -140,10 +156,7 @@ test('embedded dependency env preserves explicit CloudRouter overrides', () => {
     SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET: 'explicit-payment-webhook-secret',
   });
 
-  assert.equal(
-    explicit.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
-    'https://cloudrouter.example.com',
-  );
+  assert.equal(explicit.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, undefined);
   assert.equal(explicit.SDKWORK_CLOUDROUTER_API_KEY_PEPPER, 'explicit-api-key-pepper');
   assert.equal(
     explicit.SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET,
@@ -158,14 +171,17 @@ test('embedded dependency env preserves explicit CloudRouter overrides', () => {
     resolveEmbeddedDependencyEnv({
       CLOUDROUTER_OPEN_API_BASE_URL: 'https://legacy.example.com',
     }).SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
-    'https://legacy.example.com',
+    undefined,
   );
 });
 
-test('embedded dependency env derives a reachable origin from a custom bind', () => {
-  assert.equal(
-    resolveEmbeddedDependencyEnv({ SDKWORK_API_CLOUD_GATEWAY_BIND: '0.0.0.0:4900' })
-      .SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
-    'http://127.0.0.1:4900',
-  );
+test('embedded dependency env ignores the gateway bind when deriving dependency origins', () => {
+  // The gateway bind describes *this* listener. Deriving a dependency base URL
+  // from it is the loopback self-forwarding that APPLICATION_GATEWAY_SPEC §2.3
+  // prohibits, so a custom bind must not leak into the dependency origin.
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_API_CLOUD_GATEWAY_BIND: '0.0.0.0:4900',
+  });
+
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, undefined);
 });

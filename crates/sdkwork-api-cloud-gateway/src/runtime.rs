@@ -26,7 +26,7 @@ use sdkwork_api_cloud_gateway_observability::{
 use sdkwork_api_cloud_gateway_registry::{
     GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget, RouteProtocol, RouteVisibility,
 };
-use sdkwork_web_bootstrap::{ApiAssemblyContribution, ComposedApiAssembly};
+use sdkwork_web_bootstrap::{ApiModuleRegistry, WebModule};
 use sdkwork_web_contract::HttpMethod;
 use sdkwork_web_core::new_request_id;
 use sdkwork_web_core::SecurityPolicy;
@@ -300,12 +300,24 @@ async fn build_embedded_router(
             &config, &pool,
         )
         .await?;
-    let registry = exact_registry_for_contributions(&config, &dependency_bootstrap.contributions)?;
-    let mut composed = ComposedApiAssembly::try_compose(
-        "SDKWork Platform API",
-        dependency_bootstrap.contributions,
-    )
-    .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
+    let registry = exact_registry_for_modules(&config, &dependency_bootstrap.modules)?;
+    // API_ASSEMBLY_SPEC §4.1.1: compose every embedded dependency contribution
+    // through the Web Framework module registry. Duplicate module
+    // registrations are ignored (first registration wins) so free composition
+    // of route modules stays idempotent; cross-owner route collisions still
+    // fail closed inside try_compose.
+    let mut module_registry = ApiModuleRegistry::new();
+    module_registry.add_modules(dependency_bootstrap.modules);
+    for duplicate in module_registry.ignored_duplicates() {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway",
+            owner = duplicate,
+            "cloud gateway ignored duplicate module registration"
+        );
+    }
+    let mut composed = module_registry
+        .try_compose("SDKWork Platform API")
+        .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
     let framework_manifest = composed.route_manifest.clone();
     let audiences = gateway_iam_allowed_audiences()?;
     let audience_refs = audiences.iter().map(String::as_str).collect::<Vec<_>>();
@@ -1242,44 +1254,49 @@ fn registry_for_config(config: &GatewayRuntimeConfig) -> GatewayRouteRegistry {
     GatewayRouteRegistry::from_dependency_surfaces(config.dependency_surfaces.as_slice())
 }
 
-fn exact_registry_for_contributions(
+/// Builds the exact gateway route registry from the installed dependency
+/// modules. Each module contributes every route of its owner, so a route is
+/// registered only when the declared dependency surface actually serves it.
+fn exact_registry_for_modules(
     config: &GatewayRuntimeConfig,
-    contributions: &[ApiAssemblyContribution],
+    modules: &[WebModule],
 ) -> Result<GatewayRouteRegistry, GatewayRuntimeError> {
     let mut descriptors = Vec::new();
-    for contribution in contributions {
-        for route in contribution.route_manifest.routes() {
-            let surface = config
-                .dependency_surfaces
-                .iter()
-                .filter(|surface| surface.workspace == contribution.owner)
-                .filter(|surface| route_path_belongs_to_prefix(route.path, &surface.api_prefix))
-                .max_by_key(|surface| surface.api_prefix.len())
-                .ok_or_else(|| GatewayRuntimeError::ApiAssemblyComposition {
-                    message: format!(
-                        "{} route {} is not declared by a matching dependency API surface",
-                        contribution.owner, route.path
-                    ),
-                })?;
-            let surface_name = normalized_surface_name(surface.surface.as_str());
-            descriptors.push(RouteDescriptor {
-                service_id: surface.service_id.clone(),
-                path_pattern: route.path.to_owned(),
-                api_prefix: surface.api_prefix.clone(),
-                surface: surface.surface.clone(),
-                methods: vec![http_method_name(route.method).to_owned()],
-                protocol: RouteProtocol::Http,
-                visibility: route_visibility(surface_name),
-                execution_target: RouteExecutionTarget::Dependency,
-                sdk_target: Some(surface.sdk_family.clone()),
-                requires_executable_dependency: true,
-            });
+    for module in modules {
+        for contribution in module.contributions() {
+            for route in contribution.route_manifest.routes() {
+                let surface = config
+                    .dependency_surfaces
+                    .iter()
+                    .filter(|surface| surface.workspace == contribution.owner)
+                    .filter(|surface| route_path_belongs_to_prefix(route.path, &surface.api_prefix))
+                    .max_by_key(|surface| surface.api_prefix.len())
+                    .ok_or_else(|| GatewayRuntimeError::ApiAssemblyComposition {
+                        message: format!(
+                            "{} route {} is not declared by a matching dependency API surface",
+                            contribution.owner, route.path
+                        ),
+                    })?;
+                let surface_name = normalized_surface_name(surface.surface.as_str());
+                descriptors.push(RouteDescriptor {
+                    service_id: surface.service_id.clone(),
+                    path_pattern: route.path.to_owned(),
+                    api_prefix: surface.api_prefix.clone(),
+                    surface: surface.surface.clone(),
+                    methods: vec![http_method_name(route.method).to_owned()],
+                    protocol: RouteProtocol::Http,
+                    visibility: route_visibility(surface_name),
+                    execution_target: RouteExecutionTarget::Dependency,
+                    sdk_target: Some(surface.sdk_family.clone()),
+                    requires_executable_dependency: true,
+                });
+            }
         }
     }
 
-    let wired_workspaces = contributions
+    let wired_workspaces = modules
         .iter()
-        .map(|contribution| contribution.owner)
+        .map(|module| module.owner())
         .collect::<std::collections::HashSet<_>>();
     for surface in config.required_dependency_surfaces() {
         // Surfaces of workspaces that are not wired into this build remain

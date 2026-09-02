@@ -1,6 +1,21 @@
 const cloudRouterDevelopmentSecret =
   'sdkwork-cloudrouter-local-dev-secret-20260507';
 
+// Local-development upstream credential key ring. Mirrors
+// docker/env/development.env (GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING)
+// so the embedded standalone dev deployment can decrypt the upstream
+// credentials that the docker dev stack already provisioned into the shared
+// sdkwork_ai_dev database; a mismatched activeKeyId is what produces
+// "credential secret key id is unavailable" when the cloudrouter router build
+// maps the catalog. Required by the cloudrouter embedded routers because
+// PostgreSQL upstream routing encrypts stored upstream credentials with it.
+const cloudRouterDevelopmentKeyRing = JSON.stringify({
+  activeKeyId: 'development-local-v1',
+  activeKey: '-H9WLZu6Ou7TZHIOSrl5axiRAK10KOkjrcFbYnWZabk',
+  fingerprintKey: 'HiYnoe11mwTzAyCWK0JVfhLahiVMRvZNi_IrxaZgh5o',
+  decryptionKeys: [],
+});
+
 export function resolveTemporaryDatabaseDriverEnv(env = process.env) {
   return {
     SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:
@@ -55,9 +70,12 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
   );
 
   return {
-    // The generated CloudRouter Rust SDK adds its own /v1 prefix.
-    SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL:
-      configuredCloudRouterBaseUrl ?? localGatewayOrigin(env.SDKWORK_API_CLOUD_GATEWAY_BIND),
+    // APPLICATION_GATEWAY_SPEC §2.3: this gateway composes the CloudRouter
+    // assembly in-process, so the image generation module reaches CloudRouter
+    // through the injected in-process dispatch adapter. A per-dependency HTTP
+    // base URL (`SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL`) describes only a
+    // separately deployed CloudRouter and must not be set for this collapsed
+    // deployment shape, so it is deliberately not defaulted or forwarded here.
     SDKWORK_CLOUDROUTER_API_KEY_PEPPER:
       env.SDKWORK_CLOUDROUTER_API_KEY_PEPPER ?? cloudRouterDevelopmentSecret,
     SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET:
@@ -66,31 +84,26 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
       env.SDKWORK_CLOUDROUTER_APP_SESSION_SECRET ?? cloudRouterDevelopmentSecret,
     SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:
       env.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET ?? cloudRouterDevelopmentSecret,
+    // Required by the CloudRouter embedded router build: app runtime gateway
+    // calls are signed/verified with this secret, so it must be present even
+    // in the collapsed standalone development deployment.
+    SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:
+      env.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET
+      ?? cloudRouterDevelopmentSecret,
+    ...(!firstNonEmpty(
+      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING,
+      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE,
+    )
+      ? {
+          SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING:
+            cloudRouterDevelopmentKeyRing,
+        }
+      : {}),
     ...(imEnvironment ? { SDKWORK_IM_ENVIRONMENT: imEnvironment } : {}),
     ...(knowledgebaseEnvironment
       ? { SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: knowledgebaseEnvironment }
       : {}),
   };
-}
-
-function localGatewayOrigin(configuredBind) {
-  const bind = firstNonEmpty(configuredBind) ?? '127.0.0.1:3900';
-  let url;
-  try {
-    url = new URL(bind.includes('://') ? bind : `http://${bind}`);
-  } catch {
-    return 'http://127.0.0.1:3900';
-  }
-
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return 'http://127.0.0.1:3900';
-  }
-  if (url.hostname === '0.0.0.0') {
-    url.hostname = '127.0.0.1';
-  } else if (url.hostname === '[::]') {
-    url.hostname = '[::1]';
-  }
-  return url.origin;
 }
 
 function firstNonEmpty(...values) {

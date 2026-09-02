@@ -113,8 +113,9 @@ x-gateway-common: &gateway-common
     SDKWORK_VAULT_TOKEN: ${GATEWAY_VAULT_TOKEN:-}
     SDKWORK_VAULT_MOUNT: ${GATEWAY_VAULT_MOUNT:-secret}
     SDKWORK_VAULT_NAMESPACE: ${GATEWAY_VAULT_NAMESPACE:-}
-    # Cloud Router runtime inputs (injected at deploy time, never baked).
-    SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
+    # APPLICATION_GATEWAY_SPEC §2.3: CloudRouter is composed in-process, so
+    # image generation uses the injected in-process dispatch adapter and no
+    # per-dependency HTTP base URL is set (see docker-compose.yml).
     # Cloud Router web environment: unset/unknown values fail closed to the
     # production posture (production assembly validation), so every env file
     # must set GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT explicitly.

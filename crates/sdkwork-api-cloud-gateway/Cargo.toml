@@ -29,11 +29,22 @@ manager-operations-suite = [
 foundation-course = [
     "dep:sdkwork-api-course-assembly",
 ]
-foundation-image = ["dep:sdkwork-api-image-assembly",
+foundation-image = [
+    "dep:sdkwork-api-image-assembly",
+    "dep:sdkwork-image-generation-provider-adapter",
+    "dep:sdkwork-image-generation-provider-spi",
 ]
 foundation-community = [
     "foundation-appbase",
     "dep:sdkwork-api-community-assembly",
+]
+# Embedded same-process community→membership commerce: wires the in-process
+# membership package publisher so the community auto-publish consumes the
+# mounted membership capability directly instead of HTTP loopback
+# (APPLICATION_GATEWAY_SPEC.md section 2.3).
+foundation-community-commerce-membership-embedded = [
+    "foundation-community",
+    "sdkwork-api-community-assembly/commerce-membership-embedded",
 ]
 foundation-cms = ["dep:sdkwork-api-cms-assembly"]
 foundation-voice = ["dep:sdkwork-api-voice-assembly"]
@@ -113,6 +124,7 @@ platform-foundation-suite-container = [
     "foundation-course",
     "foundation-image",
     "foundation-community",
+    "foundation-community-commerce-membership-embedded",
     "foundation-cms",
     "foundation-voice",
     "foundation-aiot",
@@ -204,6 +216,8 @@ sdkwork-api-promotion-assembly = { workspace = true, optional = true }
 sdkwork-api-payment-assembly = { workspace = true, optional = true }
 sdkwork-api-voice-assembly = { workspace = true, optional = true }
 sdkwork-api-image-assembly = { workspace = true, optional = true }
+sdkwork-image-generation-provider-adapter = { workspace = true, optional = true }
+sdkwork-image-generation-provider-spi = { workspace = true, optional = true }
 sdkwork-api-cms-assembly = { workspace = true, optional = true }
 sdkwork-api-forum-assembly = { workspace = true, optional = true }
 sdkwork-api-community-assembly = { workspace = true, optional = true }

@@ -41,7 +41,7 @@ pub async fn migrate_embedded_databases(
     )
     .await?;
     tracing::info!(
-        assembly_count = bootstrap.contributions.len(),
+        module_count = bootstrap.modules.len(),
         "owner API assembly database lifecycle completed"
     );
     drop(bootstrap);

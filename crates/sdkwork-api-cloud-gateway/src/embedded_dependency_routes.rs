@@ -1,15 +1,22 @@
-//! Host-neutral owner API contributions for the platform cloud gateway.
+//! Host-neutral owner API modules for the platform cloud gateway.
+//!
+//! Every embedded dependency is installed through its own `WebModule`
+//! (API_ASSEMBLY_SPEC §4.1.1): the dependency owns its complete route,
+//! manifest, and OpenAPI definition end to end, and the gateway only composes
+//! the resulting modules through `ApiModuleRegistry`. No dependency is reached
+//! over HTTP, so the composition never loops back to this gateway's listener.
 
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
-use sdkwork_web_bootstrap::ApiAssemblyContribution;
-#[cfg(any(feature = "foundation-cloudrouter", feature = "foundation-webserver"))]
-use sdkwork_web_contract::enrich_owned_openapi_document;
+use sdkwork_web_bootstrap::WebModule;
 
 use crate::GatewayRuntimeError;
 
 pub struct EmbeddedDependencyBootstrap {
-    pub contributions: Vec<ApiAssemblyContribution>,
+    /// Dependency-owned Web Modules (API_ASSEMBLY_SPEC §4.1.1). The platform
+    /// gateway installs these through `ApiModuleRegistry::add_modules`;
+    /// duplicate registrations are ignored so route composition stays free.
+    pub modules: Vec<WebModule>,
     pub runtime: EmbeddedDependencyRuntime,
 }
 
@@ -70,145 +77,196 @@ pub async fn bootstrap_embedded_dependency_contributions(
     pool: &DatabasePool,
 ) -> Result<EmbeddedDependencyBootstrap, GatewayRuntimeError> {
     #[allow(unused_mut)]
-    let mut contributions = Vec::new();
+    let mut modules: Vec<WebModule> = Vec::new();
     #[allow(unused_mut)]
     let mut runtime = EmbeddedDependencyRuntime::default();
 
     #[cfg(feature = "foundation-appbase")]
     if workspace_surface_enabled(config, "sdkwork-iam") {
-        let contribution =
-            sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-iam", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_iam_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-iam", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-order")]
     if workspace_surface_enabled(config, "sdkwork-order") {
-        let contribution = sdkwork_api_order_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_order_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-order", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-membership")]
     if workspace_surface_enabled(config, "sdkwork-membership") {
-        let contribution =
-            sdkwork_api_membership_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-membership", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_membership_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-membership", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-skills")]
     if workspace_surface_enabled(config, "sdkwork-skills") {
-        let contribution = sdkwork_api_skills_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_skills_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-skills", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-prompts")]
     if workspace_surface_enabled(config, "sdkwork-prompts") {
-        let contribution =
-            sdkwork_api_prompts_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-prompts", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_prompts_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-prompts", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-documents")]
     if workspace_surface_enabled(config, "sdkwork-documents") {
-        let contribution =
-            sdkwork_api_documents_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-documents", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_documents_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-documents", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-course")]
     if workspace_surface_enabled(config, "sdkwork-course") {
-        let contribution = sdkwork_api_course_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_course_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-course", message))?;
-        contributions.push(contribution);
+        modules.push(module);
+    }
+
+    // The capture below is only written when `foundation-image` compiles and
+    // only read when both surfaces are enabled, so cfg-reduced builds can hit
+    // unused_mut/unused_variables — suppress those on the declaration.
+    #[cfg(feature = "foundation-cloudrouter")]
+    #[allow(unused_mut, unused_variables)]
+    let mut cloudrouter_open_surface: Option<axum::Router> = None;
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    if workspace_surface_enabled(config, "sdkwork-cloudrouter") {
+        // The module owns its OpenAPI enrichment now
+        // (API_ASSEMBLY_SPEC §4.1.1): the gateway installs the dependency's
+        // complete definition instead of restamping it per host.
+        let module = sdkwork_api_cloudrouter_assembly::web_module_with_context(
+            sdkwork_api_cloudrouter_assembly::ApiAssemblyContext::cloud_gateway(),
+        )
+        .await
+        .map_err(|message| workspace_build_error(config, "sdkwork-cloudrouter", message))?;
+        // APPLICATION_GATEWAY_SPEC §2.3: the image generation module is also
+        // embedded in this process, so it must reach CloudRouter through the
+        // in-process dispatch adapter (built below) instead of an HTTP base
+        // URL that would loop back into a listener. The contribution router is
+        // CloudRouter's surface dispatcher: a dispatched open-api request runs
+        // the full edge-runtime gateway pipeline (API-key authentication and
+        // billing) exactly as an external HTTP request would.
+        #[cfg(feature = "foundation-image")]
+        if workspace_surface_enabled(config, "sdkwork-image") {
+            cloudrouter_open_surface = module
+                .contributions()
+                .first()
+                .map(|contribution| contribution.router.clone());
+        }
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-image")]
     if workspace_surface_enabled(config, "sdkwork-image") {
-        let assembly = sdkwork_api_image_assembly::assemble_api_router_with_pool(pool.clone())
+        // APPLICATION_GATEWAY_SPEC §2.3: when CloudRouter is composed
+        // in-process, inject the embedded dispatch adapter so generation never
+        // issues an HTTP request back into a listener. Without the embedded
+        // CloudRouter surface (standalone CloudRouter deployments) the factory
+        // falls back to the env-driven HTTP provider.
+        #[cfg(not(all(feature = "foundation-image", feature = "foundation-cloudrouter")))]
+        let embedded_provider: Option<
+            std::sync::Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>,
+        > = None;
+        #[cfg(all(feature = "foundation-image", feature = "foundation-cloudrouter"))]
+        let embedded_provider: Option<
+            std::sync::Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>,
+        > = cloudrouter_open_surface
+            .filter(|_| workspace_surface_enabled(config, "sdkwork-cloudrouter"))
+            .map(|router| {
+                std::sync::Arc::new(
+                    sdkwork_image_generation_provider_adapter::CloudRouterEmbeddedImageGenerationAdapter::from_env(
+                        router,
+                    ),
+                ) as std::sync::Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>
+            });
+        let (module, background_processor) =
+            sdkwork_api_image_assembly::web_module_with_pool_retaining_background_with_provider(
+                pool.clone(),
+                embedded_provider,
+            )
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-image", message))?;
-        contributions.push(assembly.contribution);
-        runtime.retain_background_task(assembly.background_processor);
+        modules.push(module);
+        runtime.retain_background_task(background_processor);
     }
 
     #[cfg(feature = "foundation-community")]
     if workspace_surface_enabled(config, "sdkwork-community") {
-        let contribution =
-            sdkwork_api_community_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-community", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_community_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-community", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-dezhou")]
     if workspace_surface_enabled(config, "sdkwork-dezhou") {
-        let contribution = sdkwork_api_dezhou_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_dezhou_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-dezhou", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-doudizhu")]
     if workspace_surface_enabled(config, "sdkwork-doudizhu") {
-        let contribution =
-            sdkwork_api_doudizhu_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-doudizhu", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_doudizhu_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-doudizhu", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-mahjong")]
     if workspace_surface_enabled(config, "sdkwork-mahjong") {
-        let contribution =
-            sdkwork_api_mahjong_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-mahjong", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_mahjong_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-mahjong", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-xiangqi")]
     if workspace_surface_enabled(config, "sdkwork-xiangqi") {
-        let contribution =
-            sdkwork_api_xiangqi_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-xiangqi", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_xiangqi_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-xiangqi", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-notary")]
     if workspace_surface_enabled(config, "sdkwork-notary") {
-        let contribution = sdkwork_api_notary_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_notary_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-notary", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-news")]
     if workspace_surface_enabled(config, "sdkwork-news") {
-        let contribution = sdkwork_api_news_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_news_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-news", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-assets")]
     if workspace_surface_enabled(config, "sdkwork-assets") {
-        let contribution = sdkwork_api_assets_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_assets_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-assets", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-drive")]
@@ -223,30 +281,30 @@ pub async fn bootstrap_embedded_dependency_contributions(
                 )
             })?
             .clone();
-        let contribution = sdkwork_api_drive_assembly::assemble_api_router(postgres_pool)
+        let module = sdkwork_api_drive_assembly::web_module_with_postgres_pool(postgres_pool)
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-drive", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-payment")]
     if workspace_surface_enabled(config, "sdkwork-payment") {
-        let contribution =
-            sdkwork_api_payment_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-payment", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_payment_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-payment", message))?;
+        modules.push(module);
     }
 
     #[cfg(all(feature = "foundation-im", not(feature = "foundation-im-realtime")))]
     if workspace_surface_enabled(config, "sdkwork-im") {
         // IM owns process-wide shared database pools (sqlx host + r2d2) installed
         // exactly once per process; the assembly reuses that singleton.
-        let contribution = sdkwork_api_im_assembly::assemble_api_router()
-            .await
-            .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
-        contributions.push(contribution.contribution);
-        runtime.retain_im_runtime(contribution.runtime);
+        let (module, im_runtime) =
+            sdkwork_api_im_assembly::web_module_with_realtime_bootstrap(None)
+                .await
+                .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+        modules.push(module);
+        runtime.retain_im_runtime(im_runtime);
     }
 
     #[cfg(all(feature = "foundation-im", feature = "foundation-im-realtime"))]
@@ -257,106 +315,73 @@ pub async fn bootstrap_embedded_dependency_contributions(
         // the session-gateway plane is embedded first so the assembly wires the
         // real plane (WebSocket upgrade + declared TCP/UDP/QUIC link binds)
         // instead of the in-memory default plane.
-        let assembly = if config.realtime.enabled {
-            let (assembly, plane) = bootstrap_im_realtime_contribution(config).await?;
+        let (module, im_runtime) = if config.realtime.enabled {
+            let (module, im_runtime, plane) = bootstrap_im_realtime_contribution(config).await?;
             runtime.retain_realtime_plane(plane);
-            assembly
+            (module, im_runtime)
         } else {
-            sdkwork_api_im_assembly::assemble_api_router()
+            sdkwork_api_im_assembly::web_module_with_realtime_bootstrap(None)
                 .await
                 .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?
         };
-        contributions.push(assembly.contribution);
-        runtime.retain_im_runtime(assembly.runtime);
+        modules.push(module);
+        runtime.retain_im_runtime(im_runtime);
     }
 
     #[cfg(feature = "foundation-deployments")]
     if workspace_surface_enabled(config, "sdkwork-deployments") {
-        let assembly =
-            sdkwork_api_deployments_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-deployments", message))?;
-        contributions.push(assembly.contribution);
-    }
-
-    #[cfg(feature = "foundation-cloudrouter")]
-    if workspace_surface_enabled(config, "sdkwork-cloudrouter") {
-        let assembly = sdkwork_api_cloudrouter_assembly::assemble_api_router(
-            sdkwork_api_cloudrouter_assembly::ApiAssemblyContext::cloud_gateway(),
-        )
-        .await
-        .map_err(|error| {
-            workspace_build_error(config, "sdkwork-cloudrouter", format!("{error:?}"))
-        })?;
-        let openapi = enrich_owned_openapi_document(
-            assembly.openapi,
-            "sdkwork-cloudrouter",
-            assembly.route_manifest.routes(),
-        )
-        .map_err(|error| {
-            workspace_build_error(config, "sdkwork-cloudrouter", format!("{error:?}"))
-        })?;
-        contributions.push(ApiAssemblyContribution {
-            owner: "sdkwork-cloudrouter",
-            router: assembly.router,
-            route_manifest: assembly.route_manifest,
-            openapi,
-            permission_catalog: assembly.permission_catalog,
-            domain_context_injectors: assembly.domain_context_injectors,
-            readiness_check: assembly.readiness_check,
-        });
+        let module = sdkwork_api_deployments_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-deployments", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-inventory")]
     if workspace_surface_enabled(config, "sdkwork-inventory") {
-        let contribution =
-            sdkwork_api_inventory_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-inventory", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_inventory_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-inventory", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-invoice")]
     if workspace_surface_enabled(config, "sdkwork-invoice") {
-        let contribution =
-            sdkwork_api_invoice_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-invoice", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_invoice_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-invoice", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-portal")]
     if workspace_surface_enabled(config, "sdkwork-portal") {
-        let contribution = sdkwork_api_portal_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_portal_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-portal", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-shop")]
     if workspace_surface_enabled(config, "sdkwork-shop") {
-        let contribution = sdkwork_api_shop_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_shop_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-shop", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-voice")]
     if workspace_surface_enabled(config, "sdkwork-voice") {
-        let contribution =
-            sdkwork_api_voice_assembly::assemble_contribution_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-voice", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_voice_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-voice", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-appstore")]
     if workspace_surface_enabled(config, "sdkwork-appstore") {
-        let contribution =
-            sdkwork_api_appstore_assembly::assemble_contribution_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-appstore", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_appstore_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-appstore", message))?;
+        modules.push(module);
     }
 
     // Container runtime never boots sdkwork-webserver: reverse proxy is host
@@ -366,300 +391,263 @@ pub async fn bootstrap_embedded_dependency_contributions(
     if workspace_surface_enabled(config, "sdkwork-webserver")
         && !container_runtime_skips_webserver()
     {
-        let assembly = sdkwork_api_webserver_assembly::assemble_api_router(
+        let module = sdkwork_api_webserver_assembly::web_module_with_context(
             sdkwork_api_webserver_assembly::ApiAssemblyContext::cloud_gateway(),
         )
         .await
-        .map_err(|message| {
-            workspace_build_error(config, "sdkwork-webserver", message.to_string())
-        })?;
-        contributions.push(assembly.into_contribution());
+        .map_err(|message| workspace_build_error(config, "sdkwork-webserver", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-rtc")]
     if workspace_surface_enabled(config, "sdkwork-rtc") {
-        let contribution = sdkwork_api_rtc_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_rtc_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-rtc", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-mail")]
     if workspace_surface_enabled(config, "sdkwork-mail") {
-        let contribution = sdkwork_api_mail_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_mail_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-mail", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-mcp")]
     if workspace_surface_enabled(config, "sdkwork-mcp") {
-        let contribution = sdkwork_api_mcp_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_mcp_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-mcp", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-browser")]
     if workspace_surface_enabled(config, "sdkwork-browser") {
-        let contribution =
-            sdkwork_api_browser_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-browser", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_browser_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-browser", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-llm")]
     if workspace_surface_enabled(config, "sdkwork-llm") {
-        let contribution = sdkwork_api_llm_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_llm_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-llm", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-agents")]
     if workspace_surface_enabled(config, "sdkwork-agents") {
-        let contribution = sdkwork_api_agents_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_agents_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-agents", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-generations")]
     if workspace_surface_enabled(config, "sdkwork-generations") {
-        let contribution =
-            sdkwork_api_generations_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-generations", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_generations_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-generations", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-aiot")]
     if workspace_surface_enabled(config, "sdkwork-aiot") {
-        let contribution = sdkwork_api_aiot_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_aiot_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-aiot", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-promotion")]
     if workspace_surface_enabled(config, "sdkwork-promotion") {
-        let contribution =
-            sdkwork_api_promotion_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-promotion", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_promotion_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-promotion", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-knowledgebase")]
     if workspace_surface_enabled(config, "sdkwork-knowledgebase") {
         let knowledgebase_environment = std::env::var("SDKWORK_KNOWLEDGEBASE_ENVIRONMENT")
             .unwrap_or_else(|_| config.service.environment.clone());
-        let contribution =
-            sdkwork_api_knowledgebase_assembly::assemble_api_router_with_pool_for_environment(
-                pool.clone(),
-                &knowledgebase_environment,
-            )
-            .await
-            .map_err(|message| workspace_build_error(config, "sdkwork-knowledgebase", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_knowledgebase_assembly::web_module_with_pool_for_environment(
+            pool.clone(),
+            &knowledgebase_environment,
+        )
+        .await
+        .map_err(|message| workspace_build_error(config, "sdkwork-knowledgebase", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-customerservice")]
     if workspace_surface_enabled(config, "sdkwork-customerservice") {
-        let contribution =
-            sdkwork_api_customerservice_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| {
-                    workspace_build_error(config, "sdkwork-customerservice", message)
-                })?;
-        contributions.push(contribution);
+        let module = sdkwork_api_customerservice_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-customerservice", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-manager")]
     if workspace_surface_enabled(config, "sdkwork-manager") {
-        let contribution =
-            sdkwork_api_manager_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-manager", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_manager_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-manager", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-cms")]
     if workspace_surface_enabled(config, "sdkwork-cms") {
-        let contribution = sdkwork_api_cms_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_cms_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-cms", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-forum")]
     if workspace_surface_enabled(config, "sdkwork-forum") {
-        let assembly = sdkwork_api_forum_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_forum_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-forum", message))?;
-        contributions.push(assembly.contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-modelkit")]
     if workspace_surface_enabled(config, "sdkwork-modelkit") {
-        let contribution =
-            sdkwork_api_modelkit_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-modelkit", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_modelkit_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-modelkit", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-account")]
     if workspace_surface_enabled(config, "sdkwork-account") {
-        let contribution =
-            sdkwork_api_account_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-account", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_account_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-account", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-catalog")]
     if workspace_surface_enabled(config, "sdkwork-catalog") {
-        let contribution =
-            sdkwork_api_catalog_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-catalog", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_catalog_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-catalog", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-gameengine")]
     if workspace_surface_enabled(config, "sdkwork-gameengine") {
-        let contribution =
-            sdkwork_api_gameengine_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-gameengine", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_gameengine_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-gameengine", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-local-router")]
     if workspace_surface_enabled(config, "sdkwork-local-router") {
         // The bundle carries the owner runtime handle; its background tasks are
-        // detached process-lifetime workers, so the gateway mounts only the
-        // contribution and never binds the local-router listener.
-        let assembly =
-            sdkwork_api_local_router_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| {
-                    workspace_build_error(config, "sdkwork-local-router", message)
-                })?;
-        contributions.push(assembly.contribution);
+        // detached process-lifetime workers, so the gateway installs only the
+        // module and never binds the local-router listener.
+        let module = sdkwork_api_local_router_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-local-router", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-appbase-data")]
     if workspace_surface_enabled(config, "sdkwork-appbase") {
-        let contribution = sdkwork_api_appbase_assembly::assemble_backend_api_contribution()
+        let module = sdkwork_api_appbase_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-appbase", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-birdcoder")]
     if workspace_surface_enabled(config, "sdkwork-birdcoder") {
-        // Birdcoder exports a typed assembly struct rather than the web-bootstrap
-        // contribution, so the gateway folds its fields into one indivisible
-        // contribution instead of projecting only the router.
-        let birdcoder_config =
-            sdkwork_api_birdcoder_assembly::bootstrap::config::BirdServerConfig::from_env()
-                .map_err(|error| {
-                    workspace_build_error(config, "sdkwork-birdcoder", format!("{error}"))
-                })?;
-        let assembly = sdkwork_api_birdcoder_assembly::assemble_api_router(&birdcoder_config)
+        let module = sdkwork_api_birdcoder_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-birdcoder", message))?;
-        contributions.push(ApiAssemblyContribution {
-            owner: "sdkwork-birdcoder",
-            router: assembly.router,
-            route_manifest: assembly.route_manifest,
-            openapi: assembly.openapi,
-            permission_catalog: assembly.permission_catalog,
-            domain_context_injectors: assembly.domain_context_injectors,
-            readiness_check: assembly.readiness_check,
-        });
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-canvas")]
     if workspace_surface_enabled(config, "sdkwork-canvas") {
-        let contribution = sdkwork_api_canvas_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_canvas_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-canvas", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-company")]
     if workspace_surface_enabled(config, "sdkwork-company") {
-        let contribution =
-            sdkwork_api_company_assembly::assemble_api_router_with_pool(pool.clone())
-                .await
-                .map_err(|message| workspace_build_error(config, "sdkwork-company", message))?;
-        contributions.push(contribution);
+        let module = sdkwork_api_company_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-company", message))?;
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-feeds")]
     if workspace_surface_enabled(config, "sdkwork-feeds") {
-        let contribution = sdkwork_api_feeds_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_feeds_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-feeds", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-github")]
     if workspace_surface_enabled(config, "sdkwork-github") {
-        let contribution = sdkwork_api_github_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_github_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-github", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-log")]
     if workspace_surface_enabled(config, "sdkwork-log") {
-        let contribution = sdkwork_api_log_assembly::assemble_api_router_with_pool(pool.clone())
+        let module = sdkwork_api_log_assembly::web_module_with_pool(pool.clone())
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-log", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-messaging")]
     if workspace_surface_enabled(config, "sdkwork-messaging") {
-        let contribution = sdkwork_api_messaging_assembly::assemble_api_router()
+        let module = sdkwork_api_messaging_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-messaging", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-notes")]
     if workspace_surface_enabled(config, "sdkwork-notes") {
-        let contribution = sdkwork_api_notes_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_notes_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-notes", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-search")]
     if workspace_surface_enabled(config, "sdkwork-search") {
-        let contribution = sdkwork_api_search_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_search_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-search", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
     #[cfg(feature = "foundation-settings")]
     if workspace_surface_enabled(config, "sdkwork-settings") {
-        let contribution = sdkwork_api_settings_assembly::assemble_api_router_from_env()
+        let module = sdkwork_api_settings_assembly::web_module()
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-settings", message))?;
-        contributions.push(contribution);
+        modules.push(module);
     }
 
-    Ok(EmbeddedDependencyBootstrap {
-        contributions,
-        runtime,
-    })
+    Ok(EmbeddedDependencyBootstrap { modules, runtime })
 }
 
 fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> bool {
@@ -669,6 +657,10 @@ fn workspace_surface_enabled(config: &GatewayRuntimeConfig, workspace: &str) -> 
         .any(|surface| surface.workspace == workspace)
 }
 
+/// Only compiled when the webserver surface is: the sole call site sits behind
+/// `#[cfg(feature = "foundation-webserver")]`, and container image profiles
+/// deliberately omit that feature (container runtime never boots sdkwork-webserver).
+#[cfg(feature = "foundation-webserver")]
 fn container_runtime_skips_webserver() -> bool {
     match std::env::var("SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET") {
         Ok(value) => value.eq_ignore_ascii_case("container"),
@@ -676,18 +668,22 @@ fn container_runtime_skips_webserver() -> bool {
     }
 }
 
-/// Bootstraps the embedded IM realtime plane and the IM API assembly wired to
-/// that plane (`ADR-20260809-platform-gateway-realtime-hosting`).
+/// Bootstraps the embedded IM realtime plane and the IM Web Module wired to that
+/// plane (`ADR-20260809-platform-gateway-realtime-hosting`).
 ///
-/// Order matters: the plane resolves membership-gated scope access from the
-/// IM process-shared pools, so those pools must be installed first (idempotent;
-/// the assembly reuses the same singleton pools).
+/// Order matters: the plane resolves membership-gated scope access from the IM
+/// process-shared pools, so those pools must be installed first (idempotent;
+/// the module reuses the same singleton pools).
+///
+/// The returned IM runtime is handed back to the host because IM background
+/// workers must be aborted on gateway shutdown.
 #[cfg(feature = "foundation-im-realtime")]
 async fn bootstrap_im_realtime_contribution(
     config: &GatewayRuntimeConfig,
 ) -> Result<
     (
-        sdkwork_api_im_assembly::ApiAssembly,
+        WebModule,
+        sdkwork_api_im_assembly::ApiAssemblyRuntime,
         session_gateway::GatewayEmbeddedRealtimePlane,
     ),
     GatewayRuntimeError,
@@ -698,12 +694,11 @@ async fn bootstrap_im_realtime_contribution(
     let plane = session_gateway::bootstrap_gateway_embedded_realtime_plane()
         .await
         .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
-    let contribution = sdkwork_api_im_assembly::assemble_api_router_with_realtime_bootstrap(Some(
-        &plane.bootstrap,
-    ))
-    .await
-    .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
-    Ok((contribution, plane))
+    let (module, im_runtime) =
+        sdkwork_api_im_assembly::web_module_with_realtime_bootstrap(Some(&plane.bootstrap))
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
+    Ok((module, im_runtime, plane))
 }
 
 fn workspace_build_error(
@@ -825,19 +820,23 @@ mod tests {
             .expect("embedded profile requires PostgreSQL");
         let bootstrap = bootstrap_embedded_dependency_contributions(&config, &pool)
             .await
-            .expect("assemble embedded IAM and Community contributions");
+            .expect("assemble embedded IAM and Community web modules");
         let community = bootstrap
-            .contributions
+            .modules
             .iter()
-            .find(|contribution| contribution.owner == "sdkwork-community")
-            .expect("Community contribution is selected");
+            .find(|module| module.owner() == "sdkwork-community")
+            .expect("Community module is selected");
+        let contribution = community
+            .contributions()
+            .first()
+            .expect("Community module carries its route contribution");
 
-        assert_eq!(community.route_manifest.routes().len(), 26);
-        community
+        assert_eq!(contribution.route_manifest.routes().len(), 26);
+        contribution
             .readiness_check
             .check()
             .await
-            .expect("Community contribution uses the healthy process pool");
+            .expect("Community module uses the healthy process pool");
 
         drop(bootstrap);
         pool.close().await;

@@ -232,10 +232,11 @@ services:
       # by this gateway composition. Public reverse proxy is configured there.
       SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: ${GATEWAY_KNOWLEDGEBASE_ENVIRONMENT:-development}
       SDKWORK_IM_ALLOW_ALL_PRINCIPALS: ${GATEWAY_IM_ALLOW_ALL_PRINCIPALS:-false}
-      # Cloud Router OpenAPI base URL: the image generation foundation module
-      # requires it to reach the cloud router's OpenAPI surface. Defaults to
-      # the sdkwork-cloudrouter container host mapping on this machine.
-      SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
+      # APPLICATION_GATEWAY_SPEC §2.3: this gateway composes the CloudRouter
+      # assembly in-process, so the image generation module is wired through
+      # the injected in-process dispatch adapter. A per-dependency HTTP base
+      # URL describes only a separately deployed CloudRouter and must not be
+      # set for this collapsed deployment shape — it stays deliberately unset.
       # Cloud Router web environment: unset/unknown values fail closed to the
       # production posture (production assembly validation), so every env file
       # must set GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT explicitly.
