@@ -427,6 +427,8 @@ jobs:
           "SDKWORK_SDK_GENERATOR_REF": "${{ github.event.inputs.sdkwork_sdk_generator_ref || vars.SDKWORK_SDK_GENERATOR_REF || 'main' }}",
           "SDKWORK_TERMINAL_REF": "${{ github.event.inputs.sdkwork_terminal_ref || vars.SDKWORK_TERMINAL_REF || 'main' }}",
           "SDKWORK_TEST_REF": "${{ github.event.inputs.sdkwork_test_ref || vars.SDKWORK_TEST_REF || 'main' }}",
+          "SDKWORK_DISCOVERY_REF": "${{ github.event.inputs.sdkwork_discovery_ref || vars.SDKWORK_DISCOVERY_REF || 'main' }}",
+          "SDKWORK_SANDBOX_REF": "${{ github.event.inputs.sdkwork_sandbox_ref || vars.SDKWORK_SANDBOX_REF || 'main' }}",
           "SDKWORK_MAIL_REF": "${{ github.event.inputs.sdkwork_mail_ref || vars.SDKWORK_MAIL_REF }}",
           "SDKWORK_MCP_REF": "${{ github.event.inputs.sdkwork_mcp_ref || vars.SDKWORK_MCP_REF }}",
           "SDKWORK_MESSAGING_REF": "${{ github.event.inputs.sdkwork_messaging_ref || vars.SDKWORK_MESSAGING_REF }}",

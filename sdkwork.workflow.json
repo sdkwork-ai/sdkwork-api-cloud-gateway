@@ -461,6 +461,18 @@
       "repository": "sdkwork-ai/sdkwork-test",
       "refInput": "SDKWORK_TEST_REF",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-discovery",
+      "repository": "sdkwork-ai/sdkwork-discovery",
+      "refInput": "SDKWORK_DISCOVERY_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-sandbox",
+      "repository": "sdkwork-ai/sdkwork-sandbox",
+      "refInput": "SDKWORK_SANDBOX_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     }
   ],
   "toolchains": {
