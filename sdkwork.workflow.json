@@ -73,6 +73,12 @@
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
+      "id": "sdkwork-kernel",
+      "repository": "sdkwork-ai/sdkwork-kernel",
+      "refInput": "SDKWORK_KERNEL_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
       "id": "sdkwork-aiot",
       "repository": "sdkwork-ai/sdkwork-aiot",
       "refInput": "SDKWORK_AIOT_REF",
@@ -406,6 +412,54 @@
       "id": "sdkwork-id",
       "repository": "sdkwork-ai/sdkwork-id",
       "refInput": "SDKWORK_ID_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-memory",
+      "repository": "sdkwork-ai/sdkwork-memory",
+      "refInput": "SDKWORK_MEMORY_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-merchandise",
+      "repository": "sdkwork-ai/sdkwork-merchandise",
+      "refInput": "SDKWORK_MERCHANDISE_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-models",
+      "repository": "sdkwork-ai/sdkwork-models",
+      "refInput": "SDKWORK_MODELS_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-partner",
+      "repository": "sdkwork-ai/sdkwork-partner",
+      "refInput": "SDKWORK_PARTNER_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-rpc-framework",
+      "repository": "sdkwork-ai/sdkwork-rpc-framework",
+      "refInput": "SDKWORK_RPC_FRAMEWORK_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-sdk-generator",
+      "repository": "sdkwork-ai/sdkwork-sdk-generator",
+      "refInput": "SDKWORK_SDK_GENERATOR_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-terminal",
+      "repository": "sdkwork-ai/sdkwork-terminal",
+      "refInput": "SDKWORK_TERMINAL_REF",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN"
+    },
+    {
+      "id": "sdkwork-test",
+      "repository": "sdkwork-ai/sdkwork-test",
+      "refInput": "SDKWORK_TEST_REF",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     }
   ],

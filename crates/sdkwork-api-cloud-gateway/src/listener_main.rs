@@ -50,6 +50,10 @@ fn main() -> anyhow::Result<()> {
         // created. The explicit lifecycle command must apply pending modules
         // even when the service runtime keeps auto-migration disabled.
         unsafe { env::set_var("SDKWORK_DATABASE_AUTO_MIGRATE", "true") };
+        // Mark the process as the explicit lifecycle command so dependency-owned
+        // production/staging guards (Cloud Router, Models, ...) admit this
+        // operator path while plain runtime processes stay fail-closed.
+        unsafe { env::set_var("SDKWORK_DATABASE_LIFECYCLE_COMMAND", "migrate") };
     }
 
     std::thread::Builder::new()
