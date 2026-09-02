@@ -1,0 +1,130 @@
+# sdkwork-api-cloud-gateway — unified install-image bundle composition,
+# EMBEDDED dependency override (built-in PostgreSQL + Redis).
+#
+# Default deployments use external PostgreSQL + Redis (docker-compose.bundle.yml
+# alone). Enable the built-in databases only when no managed instances are
+# available:
+#
+#   bash deploy.sh --environment development --embedded
+#   # repository equivalent:
+#   docker compose -p sdkwork-api-cloud-gateway-<env>-deps \
+#     --env-file env/<env>.env --profile deps \
+#     -f compose/docker-compose.bundle.yml -f compose/docker-compose.bundle.embedded.yml up -d
+#
+# What this override changes:
+#   - Adds `postgres` (pgvector/pgvector:pg18, TLS enabled, vector extension
+#     for the knowledgebase module) and `redis` (redis:8-alpine) to the deps
+#     project. Both carry `profiles: ["deps"]`, so instance projects never
+#     start their own database copies — every instance of the environment
+#     shares the single per-environment embedded pair through the shared
+#     network `sdkwork-api-cloud-gateway-<env>`.
+#   - Repoints gateway + knowledgebase-rpc database/Redis inputs at the
+#     in-compose services (`postgres:5432`, `redis:6379`). Redis runs without
+#     a password; PostgreSQL credentials come from GATEWAY_POSTGRES_* in the
+#     selected env file.
+#   - State lives in per-environment external volumes created by deploy.sh:
+#     <env network>-postgres-data / -redis-data / -postgres-tls, so
+#     `deploy.sh --down` keeps data and `--down --purge` removes it.
+#
+# POSTGRES_ASSETS_DIR must be exported by deploy.sh (absolute path of the
+# postgres entrypoint/init assets bundled at <bundle>/postgres).
+
+services:
+  postgres:
+    profiles: ["deps"]
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    entrypoint: ["/bin/sh", "/opt/sdkwork/postgres/entrypoint.sh"]
+    command:
+      - postgres
+      - -c
+      - max_connections=${PG_MAX_CONNECTIONS:-200}
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/var/lib/postgresql/server.crt
+      - -c
+      - ssl_key_file=/var/lib/postgresql/server.key
+    environment:
+      POSTGRES_DB: ${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}
+      POSTGRES_USER: ${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}
+      POSTGRES_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ${POSTGRES_ASSETS_DIR:?required}/init:/docker-entrypoint-initdb.d:ro
+      - ${POSTGRES_ASSETS_DIR:?required}/entrypoint.sh:/opt/sdkwork/postgres/entrypoint.sh:ro
+      - postgres-tls:/var/run/sdkwork-postgres-tls
+    networks:
+      - sdkwork
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev} -d ${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    profiles: ["deps"]
+    image: redis:8-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    volumes:
+      - redis-data:/data
+    networks:
+      - sdkwork
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  knowledgebase-rpc:
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+
+  gateway:
+    environment:
+      SDKWORK_DATABASE_HOST: postgres
+      SDKWORK_DATABASE_PORT: "5432"
+      SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+      SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: /run/sdkwork/postgres-tls/server.crt
+      # Merged trust bundle must NOT sit on the ro postgres-ca-bundle.crt bind
+      # mount target (docker-compose.bundle.yml): the entrypoint writes
+      # <trust>.tmp.$$ beside it and mv would fail on a read-only mount.
+      SSL_CERT_FILE: /run/sdkwork/api-gateway/postgres-ca-bundle.merged.crt
+      SDKWORK_CLOUDROUTER_REDIS_HOST: redis
+      SDKWORK_CLOUDROUTER_REDIS_PORT: "6379"
+      SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ""
+      SDKWORK_RTC_STATE_REDIS_URL: redis://redis:6379/1
+      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: redis://redis:6379/2
+    volumes:
+      - postgres-tls:/run/sdkwork/postgres-tls:ro
+
+networks:
+  sdkwork:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}
+    external: true
+
+volumes:
+  postgres-data:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}-postgres-data
+    external: true
+  redis-data:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}-redis-data
+    external: true
+  postgres-tls:
+    name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}-postgres-tls
+    external: true

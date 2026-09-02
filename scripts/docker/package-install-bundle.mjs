@@ -19,6 +19,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   copyFileSync,
+  cpSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -33,9 +34,10 @@ import { createReadStream, createWriteStream } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createGzip } from 'node:zlib';
 
+import { ENVIRONMENTS } from '../deployment-environments.mjs';
+
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const DEFAULT_OUTPUT_ROOT = path.join(REPO_ROOT, 'dist', 'docker-install');
-const ENVIRONMENTS = Object.freeze(['development', 'test', 'staging', 'demo', 'production']);
 const DEFAULT_IMAGE_REPOSITORY = 'registry.sdkwork.com/apps/sdkwork-api-cloud-gateway';
 
 function appVersion() {
@@ -158,11 +160,19 @@ async function saveImage(ref, destination) {
     stdio: ['ignore', 'pipe', 'inherit'],
     windowsHide: true,
   });
-  await pipeline(child.stdout, createGzip({ level: 1 }), createWriteStream(destination));
-  await new Promise((resolve, reject) => {
-    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`docker save exited ${code}`))));
+  // Attach the exit listener synchronously after spawn: if the child exits
+  // while pipeline() drains stdout, a late-attached listener would miss the
+  // 'exit' event, leave this promise pending forever, and make node exit 0
+  // silently with the bundle half-populated.
+  const exited = new Promise((resolve, reject) => {
+    child.on('exit', (code) => resolve(code));
     child.on('error', reject);
   });
+  await pipeline(child.stdout, createGzip({ level: 1 }), createWriteStream(destination));
+  const code = await exited;
+  if (code !== 0) {
+    throw new Error(`docker save exited ${code}`);
+  }
 }
 
 async function sha256File(filePath) {
@@ -182,16 +192,38 @@ Self-contained deployment bundle for the unified install image
 environment (development / test / staging / demo / production), N gateway
 instances per environment.
 
-Quick start on any Docker host (external PostgreSQL + Redis required):
+Two dependency modes (one image for both):
 
+  external (DEFAULT): point GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+    in env/<environment>.env at your managed PostgreSQL + Redis instances.
+
+  embedded (opt-in): the deps project starts its own PostgreSQL (pgvector)
+    + Redis. Add --embedded; no managed databases required.
+
+Quick start on any Docker host:
+
+    # 1. Prepare configuration (only keys you care about; defaults work for
+    #    a first smoke test)
+    cp env/development.env.example env/development.env
+
+    # 2. Deploy — external PostgreSQL + Redis (default)
     bash deploy.sh --environment development
+
+    # 2b. Deploy — built-in PostgreSQL + Redis instead (no external setup)
+    bash deploy.sh --environment development --embedded
+
+    # Production with 3 instances
     bash deploy.sh --environment production --replicas 3
+
+    # Day-2 operations
     bash deploy.sh --environment test --ps
+    bash deploy.sh --environment test --logs 2
     bash deploy.sh --environment test --down
     bash deploy.sh --environment test --down --purge
 
-1. Copy env/<environment>.env.example to env/<environment>.env and fill
-   secrets (PostgreSQL, Redis, Cloud Router keys) before exposing anything.
+1. deploy.sh creates env/<environment>.env from the example when missing —
+   fill secrets (PostgreSQL, Redis, Cloud Router keys) before exposing
+   anything beyond localhost.
 2. deploy.sh loads image.tar.gz when the image is missing, starts the
    per-environment knowledgebase-rpc singleton, then starts gateway
    instances 1..N. Instance 1 owns the database migration; instances 2..N
@@ -199,6 +231,8 @@ Quick start on any Docker host (external PostgreSQL + Redis required):
 3. Instance host ports: GATEWAY_HOST_PORT + (index - 1) * 10 -> container
    3900 (e.g. production base 3913: 3913, 3923, 3933, ...). Load-balance
    across them from sdkwork-webserver upstreams.
+4. Health: curl http://127.0.0.1:<instance-port>/healthz (readiness:
+   /readyz).
 
 Full guide: docs/guides/operator/docker-install.md (中文) /
 docker-install.en.md (English).
@@ -219,7 +253,8 @@ async function main() {
   console.log(`image: ${ref}`);
   if (settings.dryRun) {
     console.log(`docker save ${ref} | gzip -> ${path.join(bundleDir, 'image.tar.gz')}`);
-    console.log(`compose template: docker-compose.bundle.yml`);
+    console.log(`compose templates: docker-compose.bundle.yml + docker-compose.bundle.embedded.yml`);
+    console.log(`embedded postgres assets: docker/postgres/entrypoint.sh + docker/postgres/init/`);
     console.log(`env templates: ${ENVIRONMENTS.map((env) => `docker/env/${env}.env.example`).join(', ')}`);
     console.log(`deploy script: scripts/docker/bundle/deploy.sh`);
     return;
@@ -230,6 +265,7 @@ async function main() {
   rmSync(bundleDir, { recursive: true, force: true });
   mkdirSync(path.join(bundleDir, 'compose'), { recursive: true });
   mkdirSync(path.join(bundleDir, 'env'), { recursive: true });
+  mkdirSync(path.join(bundleDir, 'postgres'), { recursive: true });
 
   console.log(`saving image ${ref} (gzip, this can take several minutes)...`);
   const imageTgz = path.join(bundleDir, 'image.tar.gz');
@@ -245,6 +281,21 @@ async function main() {
   copyFileSync(
     path.join(REPO_ROOT, 'docker-compose.bundle.yml'),
     path.join(bundleDir, 'compose', 'docker-compose.bundle.yml'),
+  );
+  copyFileSync(
+    path.join(REPO_ROOT, 'docker-compose.bundle.embedded.yml'),
+    path.join(bundleDir, 'compose', 'docker-compose.bundle.embedded.yml'),
+  );
+  // Embedded-mode PostgreSQL assets: TLS-generating entrypoint + schema init
+  // (deploy.sh exports POSTGRES_ASSETS_DIR at deploy time).
+  copyFileSync(
+    path.join(REPO_ROOT, 'docker', 'postgres', 'entrypoint.sh'),
+    path.join(bundleDir, 'postgres', 'entrypoint.sh'),
+  );
+  cpSync(
+    path.join(REPO_ROOT, 'docker', 'postgres', 'init'),
+    path.join(bundleDir, 'postgres', 'init'),
+    { recursive: true },
   );
   for (const environment of ENVIRONMENTS) {
     const source = path.join(REPO_ROOT, 'docker', 'env', `${environment}.env.example`);
@@ -272,6 +323,7 @@ async function main() {
         imageTag: settings.tag,
         imageSha256: digest,
         environments: ENVIRONMENTS,
+        dependencyModes: ['external', 'embedded'],
         multiInstance: true,
         healthPath: '/healthz',
         createdAt: new Date().toISOString(),
@@ -286,7 +338,7 @@ async function main() {
   console.log(`packaged ${bundleDir}`);
   console.log(`  image:    ${ref}`);
   console.log(`  sha256:   ${digest}`);
-  console.log(`  deploy:   bash deploy.sh --environment <env> [--replicas N]`);
+  console.log(`  deploy:   bash deploy.sh --environment <env> [--replicas N] [--embedded]`);
 }
 
 main().catch((error) => {

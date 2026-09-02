@@ -1,207 +1,215 @@
-# Docker 安装包部署指南（docker-install）
+# Docker 傻瓜式安装指南（docker-install）
 
-> 版本：2026-08-30 · 适用：`sdkwork-api-cloud-gateway` standalone 统一安装镜像
+> 版本：2026-09-02 · 适用：`sdkwork-api-cloud-gateway` standalone 统一安装镜像
 > 规范依据：`sdkwork-specs/DEPLOYMENT_SPEC.md` §6、`sdkwork-specs/PNPM_SCRIPT_SPEC.md` §4.4
+> English version: [docker-install.en.md](./docker-install.en.md)
 
-## 1. 设计概要
+## 0. 三条命令跑起来（TL;DR）
 
-`pnpm build:container:install` 产出**一个统一安装镜像包**（self-contained install bundle）：
-
-- **一个镜像**：镜像本身与环境和实例数无关（environment-neutral），构建时**不**烘焙任何环境、域名、数据库或凭据信息；生命周期环境（development / test / staging / demo / production）与实例数全部是**部署时输入**，由容器 entrypoint 启动时解析。
-- **任意环境**：development、test、staging、demo、production 使用同一个镜像 tag，部署时通过 env 文件选择环境（`GATEWAY_ENVIRONMENT`）。demo（独立演示层）与 dev/test/staging/prod 完全隔离（独立数据库 `sdkwork_ai_demo`、独立 Redis 逻辑库 9/10）。
-- **每个环境支持多实例**：N 个网关实例共享同一网络（`sdkwork-api-cloud-gateway-<env>`）与同一份 secrets/data 卷；每个实例拥有独立 compose 项目名（`sdkwork-api-cloud-gateway-<env>-i<index>`）和独立宿主机端口；实例 1 先执行数据库迁移，实例 2..N 在其健康后才启动。
-- **依赖外部化**：bundle 不内置 PostgreSQL/Redis；`GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*` 指向外部实例。公网反向代理由独立的 `sdkwork-webserver` 部署持有，本 bundle 不安装 nginx。
-
-## 2. 打包安装包
+拿到安装包（`.bundle` 目录）后，在任意 Docker 主机上：
 
 ```bash
-# 仓库根目录（sdkwork-api-cloud-gateway）
-pnpm build:container:install                       # 构建镜像 + 打包
-pnpm build:container:install -- --skip-image-build # 复用已构建镜像
-pnpm build:container:install -- --tag 0.1.0 --out dist/docker-install --dry-run
+cp env/development.env.example env/development.env   # 1. 生成配置（默认值即可先冒烟）
+bash deploy.sh --environment development             # 2. 部署（默认外置数据库）
+curl http://127.0.0.1:3910/healthz                   # 3. 健康检查，返回 ok 即成功
 ```
 
-从 sdkwork-space 根目录（WSL / CI）也可以走 `bin` 脚本：
+没有现成 PostgreSQL / Redis？加一个 `--embedded`，内置数据库随包启动：
 
 ```bash
-bash bin/build-gateway-docker.sh                   # 默认读取 manifest 版本
-bash bin/build-gateway-docker.sh --out /opt/deploy/packages
+bash deploy.sh --environment development --embedded
+```
+
+就这么多。其余章节是细节：什么时候选哪种模式、每个环境怎么配、怎么扩容和排障。
+
+## 1. 两种依赖模式：怎么选
+
+一个镜像、两种姿态，部署时用开关选择；**默认外置**：
+
+| | 外置模式（默认） | 内置模式（`--embedded`） |
+| --- | --- | --- |
+| PostgreSQL | 自备（托管实例或自建），`GATEWAY_POSTGRES_*` 指过去 | 随包自动启动（pgvector/pgvector:pg18，含 vector 扩展，自动 TLS） |
+| Redis | 自备，`GATEWAY_CLOUDROUTER_REDIS_*` 指过去 | 随包自动启动（redis:8-alpine，无密码） |
+| 适用场景 | 测试 / 预发 / 生产，有 DBA 或托管数据库 | 快速演示、PoC、隔离冒烟测试、无外部数据库的小规模部署 |
+| 数据位置 | 在你的数据库实例里 | 在宿主机 Docker 卷 `<环境>-postgres-data` / `<环境>-redis-data` |
+| 升级 / 扩容 | 无状态，随时 `--replicas N` | 同样无状态；内置库单实例，是容量上限 |
+
+规则很简单：**有像样的 PostgreSQL 和 Redis 就用外置（默认）；没有或只想快速看效果就 `--embedded`。** 两种模式用同一个镜像、同一份 env 文件，切换只是加/去一个参数，改完重新执行 `deploy.sh` 即可。
+
+> 内置模式仍按环境隔离：每个环境一套独立网络、独立数据库卷、独立库名（`sdkwork_ai_dev/test/...`），互不影响。
+
+## 2. 第一步：打包安装包（构建机）
+
+在仓库根目录一条命令产出自包含安装包（镜像 + compose + env 模板 + 部署脚本）：
+
+```bash
+pnpm build:container:install                        # 构建镜像 + 打包
+pnpm build:container:install -- --skip-image-build  # 复用已构建镜像，只重新打包
+pnpm build:container:install -- --dry-run           # 只看计划，不实际执行
 ```
 
 产物布局：
 
 ```text
-dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
+dist/docker-install/sdkwork-api-cloud-gateway-install-<版本>.bundle/
 ├── image.tar.gz / image.sha256 / image.env   # 镜像归档 + 校验 + tag
 ├── compose/
-│   └── docker-compose.bundle.yml             # 环境中立的多实例模板
-├── env/
-│   ├── development.env.example
-│   ├── test.env.example
-│   ├── staging.env.example
-│   ├── demo.env.example
-│   └── production.env.example
-├── deploy.sh                                 # 通用部署脚本（唯一入口）
+│   ├── docker-compose.bundle.yml             # 环境中立多实例模板（外置依赖，默认）
+│   └── docker-compose.bundle.embedded.yml    # 内置 PostgreSQL/Redis 覆盖（--embedded 用）
+├── postgres/                                 # 内置模式的 postgres 初始化与 TLS 资产
+├── env/                                      # 5 个环境的配置模板
+│   ├── development.env.example  test.env.example  staging.env.example
+│   └── demo.env.example  production.env.example
+├── deploy.sh                                 # 唯一部署入口
 ├── manifest.json                             # 版本 / 镜像 / sha256 元数据
 └── README.md
 ```
 
-## 3. 部署（任意 Docker 主机）
+## 3. 第二步：拷贝到目标机
 
-前置条件：外部 PostgreSQL（建议 pgvector 扩展）与 Redis 可达（`host.docker.internal` 或托管端点），数据库与 schema 已按环境创建（`sdkwork_ai_dev/test/staging/demo/prod`，可先用 `pnpm db:postgres:provision`）。
+把整个 `.bundle` 目录拷贝到目标 Linux 主机（scp / rsync / U 盘均可），要求只有两个：
+**装好 Docker（含 compose 插件）**、**能访问镜像仓库或已随包携带 image.tar.gz**。
 
-把 bundle 目录拷贝到目标主机后，唯一入口是 `deploy.sh`：
+不想手动拷？跳到 §8 远程一键部署。
 
-```bash
-# 开发环境单实例（默认）
-bash deploy.sh --environment development
-
-# 生产环境 3 实例
-bash deploy.sh --environment production --replicas 3
-
-# 其它操作
-bash deploy.sh --environment test --ps
-bash deploy.sh --environment test --logs 2        # 跟踪实例 2 日志
-bash deploy.sh --environment test --down
-bash deploy.sh --environment test --down --purge  # 连同卷/网络一并删除
-```
-
-关键规则：
-
-- `--environment` 必填（development | test | staging | demo | production），缺失或未知**在产生任何副作用之前**报错退出；重复执行 apply 幂等（原地更新既有栈）。
-- 首次部署会从 `env/<environment>.env.example` 生成 `env/<environment>.env`，**请先填好 PostgreSQL、Redis、Cloud Router 密钥再对外暴露**。
-- 若镜像未加载，脚本自动 `docker load image.tar.gz`。
-- 启动顺序：每环境一个 `knowledgebase-rpc` 单例（deps 项目，负责预置共享 mTLS/密钥材料）→ 网关实例 1（执行 `--migrate-databases`）→ 实例 2..N（`GATEWAY_MIGRATE_ON_START=false`，避免迁移竞态）。
-
-仓库内等价命令：
+## 4. 第三步：配置（一个文件搞定）
 
 ```bash
-pnpm deploy:apply:standalone:docker -- --environment production --replicas 3
-pnpm deploy:apply:standalone:docker -- --environment development --down
+cp env/<环境>.env.example env/<环境>.env
 ```
 
-## 4. 端口计划与 sdkwork-webserver 对接
+首次执行 `deploy.sh` 时如果 env 文件不存在，也会自动从 example 生成。**必须关注的字段**（其余字段默认值即可）：
 
-实例端口公式（确定性的、跨环境无冲突）：
-
-```text
-实例 i 宿主机端口 = GATEWAY_HOST_PORT + (i - 1) * 10   ->  容器 3900
-```
-
-| 环境 | 基础端口（实例 1） | 数据库 / Schema | 实例端口示例（3 实例） |
+| 字段 | 说明 | 外置模式 | 内置模式 |
 | --- | --- | --- | --- |
-| development | 3910 | `sdkwork_ai_dev` | 3910 / 3920 / 3930 |
-| test | 3911 | `sdkwork_ai_test` | 3911 / 3921 / 3931 |
-| staging | 3912 | `sdkwork_ai_staging` | 3912 / 3922 / 3932 |
-| production | 3913 | `sdkwork_ai_prod` | 3913 / 3923 / 3933 |
-| demo | 3914 | `sdkwork_ai_demo` | 3914 / 3924 / 3934 |
+| `GATEWAY_POSTGRES_HOST/PORT/DB/USER/PASSWORD` | 外部 PostgreSQL 连接信息 | **必填** | 可忽略 |
+| `GATEWAY_CLOUDROUTER_REDIS_HOST/PORT/PASSWORD` | 外部 Redis 连接信息 | **必填** | 可忽略 |
+| `GATEWAY_POSTGRES_SSL_MODE` | 生产/预发建议 `require`（示例已预置） | 建议 | 自动启用 TLS |
+| `GATEWAY_DEPS_MODE` | `external`（默认）或 `embedded` | 不用动 | 可写 `embedded` 代替 `--embedded` |
+| `GATEWAY_CLOUDROUTER_API_KEY_PEPPER` 等 6 个密钥 | 生产环境 `<CHANGE_ME>` 占位必须替换 | 生产必填 | 生产必填 |
 
-健康检查：`curl http://127.0.0.1:<实例端口>/healthz`（就绪探针 `/readyz`）。
+**密码包含 URL 特殊字符时**：不要直接填 `GATEWAY_POSTGRES_PASSWORD`，改用百分号编码后的完整
+`SDKWORK_DATABASE_URL`（示例文件里有说明注释）。
 
-### 4.1 直接通过宿主机 IP 访问
+外置模式的数据库与 schema 需按环境预先建好（`sdkwork_ai_dev/test/staging/demo/prod`），
+仓库内可执行 `pnpm db:postgres:provision` 一键创建。
 
-容器内网关绑定 `0.0.0.0:3900`，实例端口发布在宿主机所有接口上，因此
-`http://<宿主机IP>:<实例端口>/healthz` 天然可达。Host 头校验（安全层）按
-环境有两种姿态：
+## 5. 第四步：部署与验证
 
-- development / test / demo：env 预置 `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`，
-  网关接受任意 IP 字面量 Host（`security.allowIpHosts`），任何机器直接
-  `curl http://<主机IP>:3910/healthz` 即可，无需为每台机器改 allowlist。
-- staging / production：保持精确域名 allowlist（`api…` 域名族）。如需 IP
-  直连（健康探针、运维 smoke check），二选一：把该 IP 追加进
-  `GATEWAY_ALLOWED_HOSTS`，或显式设置 `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`。
-
-`sdkwork-webserver` 是独立的 Docker 部署，负责公网反代：把每个环境域名的
-`/app/`、`/backend/` 等 API 上游指向该环境的网关实例端口列表做负载均衡
-（例如 production 域名 `api.{sdkwork,birdcoder,dtupay}.com` →
-`127.0.0.1:3913; 127.0.0.1:3923; 127.0.0.1:3933`）。网关侧的
-`GATEWAY_ALLOWED_HOSTS` / `GATEWAY_CORS_ALLOWED_ORIGINS` 需包含对应域名
-（env 文件已按环境预置）。
-
-## 5. 多实例注意事项
-
-- **迁移归属**：只有实例 1 执行迁移（entrypoint 的 `--migrate-databases` 生命周期步骤）；扩容（提高 `--replicas` 重跑 apply）新实例自动跳过迁移。
-- **共享密钥**：secrets 卷按环境共享。首启实例以 noclobber 方式生成支付主密钥 / IAM 签名主密钥 / Knowledgebase RPC mTLS 材料；多实例并发首启安全（仅一个进程创建）。合规要求更严格时，把 env 文件中 `GATEWAY_PROVISION_*` 置为 `false` 并挂载运营方/KMS 管理的密钥。
-- **无状态水平扩展**：网关实例共享 PostgreSQL 与 Redis（RTC 状态、web 会话走 Redis DB index 隔离），可随时 `--replicas N` 重建或缩容。
-- **实例级覆盖**：需要单实例差异化配置时，创建 `env/<environment>.i<index>.env`，deploy.sh 会叠加在基础 env 之上（后者 `--env-file` 优先）。
-- **唯一节点身份**：deploy.sh 按实例推导 `SDKWORK_IM_ID_NODE_ID`（实例 1 用 env 基值，实例 2..N 依次 +1），保证同环境多实例的雪花 ID 生成不冲突（DEPLOYMENT_SPEC §6）。
-- **资源限制**：每实例默认 2 CPU / 2GiB 上限，通过 `GATEWAY_CPU_LIMIT` / `GATEWAY_MEMORY_LIMIT` 调整。
-
-## 6. 运维与验证清单
+`deploy.sh` 是唯一入口，幂等可重复执行：
 
 ```bash
-bash deploy.sh --environment <env> --ps        # 各实例与 knowledgebase-rpc 状态
-bash deploy.sh --environment <env> --logs 1    # 跟踪实例日志
-bash deploy.sh --environment <env> --down      # 停止（保留卷/网络）
+bash deploy.sh --environment development                  # 开发环境，单实例，外置依赖
+bash deploy.sh --environment development --embedded       # 同上，内置 PostgreSQL + Redis
+bash deploy.sh --environment production --replicas 3      # 生产 3 实例（实例 1 负责迁移）
+
+bash deploy.sh --environment test --ps                    # 看状态
+bash deploy.sh --environment test --logs 1                # 跟踪实例 1 日志
+bash deploy.sh --environment test --down                  # 停止（保留数据卷）
+bash deploy.sh --environment test --down --purge          # 停止并删除卷/网络（内置库数据也会删除！）
+
+bash deploy.sh --help                                     # 全部参数
 ```
 
-- [ ] `docker compose -f compose/docker-compose.bundle.yml config` 无插值错误
-- [ ] 每个环境 `curl /healthz` 与 `/readyz` 通过
-- [ ] 多实例部署下仅实例 1 出现迁移日志
-- [ ] sdkwork-webserver 各环境域名经反代可达网关 API
-- [ ] `manifest.json` 中 image sha256 与 `image.sha256` 一致
+部署顺序由脚本自动编排：内置库（如启用）→ `knowledgebase-rpc` 单例（预置共享密钥/mTLS 材料）→
+实例 1（执行数据库迁移）→ 实例 2..N（跳过迁移，待实例 1 健康后启动）。
 
-完整操作手册：`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`。
-
-## 7. 远程 Ubuntu 部署（SSH 免密推送）
-
-本地打包完成后，通过 **SSH 密钥免密登录** 将 bundle 推送至远程 Ubuntu 主机并
-就地部署（数据库配置集中在远程 Ubuntu 的规范配置目录中，所有实例共用）。
+**验证**：
 
 ```bash
-# 仓库根目录
+curl http://127.0.0.1:<实例端口>/healthz    # 存活
+curl http://127.0.0.1:<实例端口>/readyz     # 就绪（首次启动需等迁移完成，最长约 4 分钟）
+```
+
+## 6. 多环境矩阵（端口 / 数据库规划）
+
+实例端口公式：`实例 i 端口 = GATEWAY_HOST_PORT + (i-1) × 10 → 容器 3900`。
+同一台机器可同时跑多个环境，端口与数据库天然隔离：
+
+| 环境 | 基础端口（实例 1） | 数据库 / Schema | Redis 逻辑库 | 示例端口（3 实例） |
+| --- | --- | --- | --- | --- |
+| development | 3910 | `sdkwork_ai_dev` | 1 / 2 | 3910 / 3920 / 3930 |
+| test | 3911 | `sdkwork_ai_test` | 3 / 4 | 3911 / 3921 / 3931 |
+| staging | 3912 | `sdkwork_ai_staging` | 5 / 6 | 3912 / 3922 / 3932 |
+| production | 3913 | `sdkwork_ai_prod` | 7 / 8 | 3913 / 3923 / 3933 |
+| demo | 3914 | `sdkwork_ai_demo` | 9 / 10 | 3914 / 3924 / 3934 |
+
+每个环境的配置集中在一份 env 文件（所有实例共用）：bundle 内 `env/<环境>.env`，或
+远程 Ubuntu 的 `/etc/sdkwork/api-gateway/docker/<环境>.env`。需要单实例差异化时，
+创建 `env/<环境>.i<序号>.env` 会自动叠加。
+
+公网反向代理由独立的 `sdkwork-webserver` 部署持有：把各环境域名上游指向该环境的实例端口列表
+即可（如生产 `api.{sdkwork,birdcoder,dtupay}.com` → `127.0.0.1:3913; 3923; 3933`）。
+网关侧域名 allowlist / CORS 已在 env 示例中按环境预置。
+
+## 7. 内置模式细节
+
+- **启动内容**：deps 项目里多两个容器——`postgres`（pgvector 镜像，`ssl=on`，证书自动生成，
+  schema 自动创建）与 `redis`（无密码）。网关与 knowledgebase-rpc 自动指向它们，无需改任何
+  `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*`。
+- **数据持久化**：数据在 Docker 卷 `<环境>-postgres-data` / `<环境>-redis-data`，
+  `--down` 保留、`--down --purge` 删除。备份：`docker run --rm -v <环境>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`。
+- **迁回外置**：先用 pg_dump 从内置库导出，再在外部 PostgreSQL 导入，最后去掉
+  `--embedded` 重新执行 `deploy.sh` 并把 `GATEWAY_POSTGRES_*` 指向新实例。
+- **限制**：内置库是单实例（无主从/集群），不承担生产级容量与高可用；生产环境请用外置。
+- 若 env 文件里显式设置了 `SDKWORK_DATABASE_URL`，它优先生效——内置模式下请删除该行或改为
+  指向 `postgres:5432`。
+
+## 8. 远程 Ubuntu 一键部署（SSH 推送）
+
+本地打包后直接推到远程主机部署，配置以远程为准、重复执行不覆盖：
+
+```bash
+# 前置：ssh-copy-id deploy@1.2.3.4 一次（免密登录）
 pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
     --environment production --replicas 3
 
-# 复用已有 bundle / 指定密钥
+# 内置依赖的远程部署
+pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+    --environment development --embedded
+
+# 常用：复用已有 bundle / 指定密钥 / 预演
 pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.0.bundle \
-    --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2
-
-# 其它操作（透传远程动作）
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
-    --environment test --down
+    --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```
 
-从 sdkwork-space 根目录（WSL / CI）：
+远程配置文件：`/etc/sdkwork/api-gateway/docker/<环境>.env`（权限 0600，首推自动生成）。
+改密码 / 改数据库 → 编辑该文件 → 重新执行同命令即生效。需要远程 sudo 免密（`sudo -n`），
+否则用 `--config-root` 指向用户可写目录。
 
-```bash
-bash bin/remote-deploy-gateway.sh --host deploy@1.2.3.4 \
-    --environment production --replicas 3
-```
+## 9. 常见问题（FAQ）
 
-### 7.1 前置条件
+**Q：`curl /healthz` 不通？**
+按顺序查：`bash deploy.sh --environment <env> --ps` 看容器是否 healthy →
+`--logs 1` 看启动日志 → 外置模式先确认 `GATEWAY_POSTGRES_HOST` 从容器内可达
+（宿主机上跑的库用 `host.docker.internal`，env 示例默认值即是）→ 首次启动迁移耗时较长，
+`/readyz` 最长等 4 分钟。
 
-- **SSH 免密**：一次性执行 `ssh-copy-id deploy@1.2.3.4`（默认使用
-  `~/.ssh/id_ed25519`，可用 `--ssh-key` 指定）。
-- **远程 sudo**：默认配置目录在 `/etc/sdkwork/api-gateway/docker`（规范配置根，
-  `APPLICATION_DEPLOY_LAYOUT_SPEC` §3），远程用户需要免密 sudo（`sudo -n`）；
-  否则用 `--config-root` 指向用户可写目录。
+**Q：数据库密码怎么改？**
+改 env 文件里的 `GATEWAY_POSTGRES_PASSWORD`（或整条 `SDKWORK_DATABASE_URL`）→
+重新执行 `deploy.sh --environment <env>`。注意数据库侧的密码要同步修改。
 
-### 7.2 配置目录与自定义数据库密码
+**Q：怎么扩容 / 缩容？**
+提高或降低 `--replicas N` 重新执行即可（幂等）。新实例自动跳过迁移；缩容只是停掉多余实例项目。
 
-推送后，环境配置写入远程 Ubuntu：
+**Q：`--down --purge` 删了什么？**
+环境的网络 + secrets/data 卷；内置模式下还会删除内置库数据卷（**不可恢复**）。外置模式不碰你的数据库。
 
-```text
-/etc/sdkwork/api-gateway/docker/<environment>.env   # 唯一配置文件，所有实例共用
-```
+**Q：多个环境能装在同一台机器上吗？**
+可以。端口、网络、卷、数据库名全部按环境隔离，参考 §6 矩阵表。
 
-- 该文件**以远程为准**：重复部署不会覆盖（除非加 `--sync-env` 用本地文件强制覆盖）。
-- **自定义数据库密码**：在远程主机编辑该文件中的 `GATEWAY_POSTGRES_PASSWORD`、
-  `GATEWAY_POSTGRES_USER`、`GATEWAY_POSTGRES_DB` 等，然后重新执行
-  `deploy:apply:standalone:docker:remote --environment <env>` 即生效；同一环境的
-  N 个实例自动读取同一份配置。
-- 首推若远程文件不存在，自动从本地 `docker/env/<env>.env`（无则 `.env.example`）
-  推送生成；权限 `0600`。
+**Q：镜像没有仓库可推？**
+`image.tar.gz` 就是镜像本体，deploy.sh 检测到镜像缺失会自动 `docker load`，完全离线可用。
 
-### 7.3 执行流程
+## 10. 运维检查清单
 
-1. SSH 免密探测（`BatchMode=yes`，失败即提示 `ssh-copy-id`）；
-2. 本地打包（可 `--bundle` 复用已有安装包）；
-3. 远程创建 `install root` 与 `config root` 目录；
-4. 推送/保留远程 env 配置；
-5. `rsync -az`（无 rsync 时退化为 `scp -r`）推送 bundle；
-6. 远程执行 `deploy.sh --environment <env> --replicas N --env-file <config-root>/<env>.env`；
-7. 健康检查实例 1 的 `/healthz`。
+- [ ] `manifest.json` 中 image sha256 与 `image.sha256` 一致
+- [ ] 每个环境 `/healthz` 与 `/readyz` 通过
+- [ ] 多实例部署下仅实例 1 出现迁移日志
+- [ ] 生产 / 预发 env 中所有 `<CHANGE_ME>` 占位已替换（含 6 个 Cloud Router 密钥）
+- [ ] 生产 / 预发 `GATEWAY_POSTGRES_SSL_MODE=require`（外置模式）
+- [ ] sdkwork-webserver 各环境域名经反代可达网关 API
 
-支持 `--dry-run` 预演全部命令；`--logs [N]` / `--ps` / `--down` 透传远程动作。
+完整操作手册：`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`；
+Ubuntu 裸机（systemd）安装见 `docs/guides/operator/INSTALLATION_STANDARDS.md`。

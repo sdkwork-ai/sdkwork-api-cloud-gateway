@@ -14,6 +14,12 @@
 #   deploy.sh --environment <development|test|staging|demo|production> [options]
 #     --replicas <N>     gateway instances to run (default 1; every env
 #                        supports N; read from GATEWAY_REPLICAS when omitted)
+#     --embedded         use the BUILT-IN PostgreSQL + Redis started in the
+#                        per-environment deps project (opt-in; no managed
+#                        databases required). Data survives --down in
+#                        per-environment volumes; --down --purge removes it.
+#     --external         use external PostgreSQL + Redis (the DEFAULT; also
+#                        selectable with GATEWAY_DEPS_MODE=external)
 #     --image-tag <tag>  override GATEWAY_IMAGE tag
 #     --env-file <path>  absolute path of an external env file shared by all
 #                        instances (see remote-deploy.sh; the Ubuntu config
@@ -52,14 +58,17 @@ if [ -f "${SCRIPT_DIR}/compose/docker-compose.bundle.yml" ]; then
   ENV_DIR="${SCRIPT_DIR}/env"
   BUNDLE_IMAGE_TGZ="${SCRIPT_DIR}/image.tar.gz"
   BUNDLE_IMAGE_ENV="${SCRIPT_DIR}/image.env"
+  POSTGRES_ASSETS_DIR="${SCRIPT_DIR}/postgres"
 else
   # Repository layout: deploy.sh sits in scripts/docker/bundle/.
   COMPOSE_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
   ENV_DIR="${COMPOSE_DIR}/docker/env"
   BUNDLE_IMAGE_TGZ=""
   BUNDLE_IMAGE_ENV=""
+  POSTGRES_ASSETS_DIR="${COMPOSE_DIR}/docker/postgres"
 fi
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.bundle.yml"
+EMBEDDED_COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.bundle.embedded.yml"
 
 # --- defaults --------------------------------------------------------------------
 ENVIRONMENT=""
@@ -70,11 +79,14 @@ IMAGE_TAG=""
 OPT_ENV_FILE=""
 DRY_RUN="0"
 LOG_INSTANCE="1"
+DEPS_MODE_FLAG=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --environment) ENVIRONMENT="$2"; shift 2 ;;
     --replicas)    REPLICAS="$2"; shift 2 ;;
+    --embedded)    DEPS_MODE_FLAG="embedded"; shift ;;
+    --external)    DEPS_MODE_FLAG="external"; shift ;;
     --image-tag)   IMAGE_TAG="$2"; shift 2 ;;
     --env-file)    OPT_ENV_FILE="$2"; shift 2 ;;
     --down)        ACTION="down"; shift ;;
@@ -123,6 +135,27 @@ fi
 env_key() {
   sed -n "s/^${1}=//p" "${ENV_FILE}" | tail -1 | tr -d '\r'
 }
+
+# --- dependency mode -----------------------------------------------------------------
+# External PostgreSQL + Redis is the default posture; --embedded opts into the
+# built-in databases started in the per-environment deps project. Priority:
+# --embedded / --external flag > GATEWAY_DEPS_MODE in the env file > external.
+DEPS_MODE="${DEPS_MODE_FLAG:-$(env_key GATEWAY_DEPS_MODE)}"
+DEPS_MODE="${DEPS_MODE:-external}"
+case "${DEPS_MODE}" in
+  embedded|external) ;;
+  *) die "unsupported GATEWAY_DEPS_MODE: ${DEPS_MODE} (external|embedded)" ;;
+esac
+COMPOSE_FILES=(-f "${COMPOSE_FILE}")
+if [ "${DEPS_MODE}" = "embedded" ]; then
+  [ -f "${EMBEDDED_COMPOSE_FILE}" ] || die "embedded compose override missing: ${EMBEDDED_COMPOSE_FILE}"
+  [ -f "${POSTGRES_ASSETS_DIR}/entrypoint.sh" ] || die "embedded postgres assets missing: ${POSTGRES_ASSETS_DIR}/entrypoint.sh"
+  COMPOSE_FILES+=(-f "${EMBEDDED_COMPOSE_FILE}")
+  export POSTGRES_ASSETS_DIR
+  info "dependency mode: embedded (built-in PostgreSQL + Redis in the deps project)"
+else
+  info "dependency mode: external (default; configure GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*)"
+fi
 
 # --- image resolution ----------------------------------------------------------------
 # Priority: --image-tag > bundle image.env > env-file GATEWAY_IMAGE tag > 0.1.0.
@@ -179,6 +212,12 @@ ensure_shared_resources() {
     run docker volume create "${NETWORK}-${suffix}" 2>/dev/null \
       || info "volume ${NETWORK}-${suffix} already present"
   done
+  if [ "${DEPS_MODE}" = "embedded" ]; then
+    for suffix in postgres-data redis-data postgres-tls; do
+      run docker volume create "${NETWORK}-${suffix}" 2>/dev/null \
+        || info "volume ${NETWORK}-${suffix} already present"
+    done
+  fi
 }
 
 # --- image -------------------------------------------------------------------------
@@ -234,8 +273,8 @@ instance_env_args() {
 
 start_deps() {
   export_instance_env 1
-  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" \
-    --profile deps up -d
+  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps up -d
   wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
 }
 
@@ -245,7 +284,7 @@ start_instance() {
   # Shell env wins over the --env-file in compose; these are per-instance inputs.
   export_instance_env "${index}"
   run docker compose -p "${project}" $(instance_env_args "${index}") \
-    -f "${COMPOSE_FILE}" --profile instance up -d
+    "${COMPOSE_FILES[@]}" --profile instance up -d
   wait_container_healthy "${project}" gateway "${HEALTH_TIMEOUT}"
 }
 
@@ -288,20 +327,52 @@ apply() {
   info "health: curl http://127.0.0.1:${HOST_PORT_BASE}/healthz"
 }
 
+# --- instance project discovery -------------------------------------------------------
+# Compose project names follow <environment>-i<index>; discovery reads the
+# com.docker.compose.project label so teardown never depends on the replica
+# count recorded in the env file (an apply with --replicas N does not write it
+# back). This keeps `--down --purge` instance-count agnostic.
+discover_instance_projects() {
+  [ "${DRY_RUN}" = "1" ] && return 0
+  docker ps -a --filter "label=com.docker.compose.project" \
+    --format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | sort -u \
+    | grep -E "^${NETWORK}-i[0-9]+$" || true
+}
+
 down() {
   local index
   for index in $(seq 1 "${REPLICAS}"); do
     export_instance_env "${index}"
     run docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
-      -f "${COMPOSE_FILE}" --profile instance down
+      "${COMPOSE_FILES[@]}" --profile instance down
+  done
+  # Safety net: tear down instance projects beyond --replicas (e.g. left by an
+  # earlier apply with a larger --replicas value or GATEWAY_REPLICAS).
+  local extra extra_index
+  for extra in $(discover_instance_projects); do
+    extra_index="${extra##*-i}"
+    case "${extra_index}" in
+      ''|*[!0-9]*) continue ;;
+    esac
+    if [ "${extra_index}" -le "${REPLICAS}" ]; then continue; fi
+    info "discovered extra instance project beyond replicas ${REPLICAS}: ${extra}"
+    run docker compose -p "${extra}" --env-file "${ENV_FILE}" \
+      "${COMPOSE_FILES[@]}" --profile instance down
   done
   export_instance_env 1
-  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" --profile deps down
+  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps down
   if [ "${PURGE}" = "1" ]; then
     info "purging per-environment network and volumes (${ENVIRONMENT})"
     run docker network rm "${NETWORK}" 2>/dev/null || true
-    run docker volume rm "${NETWORK}-secrets" 2>/dev/null || true
-    run docker volume rm "${NETWORK}-data" 2>/dev/null || true
+    for suffix in secrets data; do
+      run docker volume rm "${NETWORK}-${suffix}" 2>/dev/null || true
+    done
+    if [ "${DEPS_MODE}" = "embedded" ]; then
+      for suffix in postgres-data redis-data postgres-tls; do
+        run docker volume rm "${NETWORK}-${suffix}" 2>/dev/null || true
+      done
+    fi
   fi
   info "environment ${ENVIRONMENT} down"
 }
@@ -312,11 +383,12 @@ ps() {
     export_instance_env "${index}"
     info "instance ${index}:"
     docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
-      -f "${COMPOSE_FILE}" --profile instance ps
+      "${COMPOSE_FILES[@]}" --profile instance ps
   done
   export_instance_env 1
   info "knowledgebase-rpc singleton:"
-  docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" --profile deps ps
+  docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps ps
 }
 
 logs() {
@@ -324,7 +396,7 @@ logs() {
   case "${index}" in ''|*[!0-9]*) die "--logs expects an instance number" ;; esac
   export_instance_env "${index}"
   docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
-    -f "${COMPOSE_FILE}" --profile instance logs -f --tail 200 gateway
+    "${COMPOSE_FILES[@]}" --profile instance logs -f --tail 200 gateway
 }
 
 case "${ACTION}" in

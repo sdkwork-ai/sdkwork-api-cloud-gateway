@@ -8,6 +8,19 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
 import { parseDotEnv } from '../../sdkwork-specs/tools/postgres/postgres-config.mjs';
+import {
+  DATABASE_IDENTITIES,
+  ENVIRONMENTS,
+  ENVIRONMENT_SUFFIX,
+} from './deployment-environments.mjs';
+
+// Re-exported so downstream consumers (contract tests, packagers) keep a
+// single import surface while the canonical list lives in the shared registry.
+export {
+  DATABASE_IDENTITIES,
+  ENVIRONMENTS,
+  ENVIRONMENT_SUFFIX,
+};
 
 const BASE_DOMAINS = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
 const DESKTOP_CORS_ORIGINS = [
@@ -18,22 +31,7 @@ const DESKTOP_CORS_ORIGINS = [
   'tauri://localhost',
 ];
 const MINI_PROGRAM_CORS_ORIGINS = ['https://servicewechat.com'];
-const ENVIRONMENTS = ['development', 'test', 'staging', 'demo', 'production'];
 const DEPENDENCY_MODES = ['embedded', 'external'];
-const DATABASE_IDENTITIES = {
-  development: 'sdkwork_ai_dev',
-  test: 'sdkwork_ai_test',
-  staging: 'sdkwork_ai_staging',
-  demo: 'sdkwork_ai_demo',
-  production: 'sdkwork_ai_prod',
-};
-const ENVIRONMENT_SUFFIX = {
-  development: 'dev',
-  test: 'test',
-  staging: 'staging',
-  demo: 'demo',
-  production: '',
-};
 const PRODUCTION_SECRET_KEYS = [
   'GATEWAY_CLOUDROUTER_API_KEY_PEPPER',
   'GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING',

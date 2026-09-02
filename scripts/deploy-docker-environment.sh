@@ -32,6 +32,10 @@ down=false
 validate=false
 target=${1:-}
 
+# Canonical environment set from the shared deployment registry
+# (scripts/deployment-environments.mjs) — never re-declared here.
+canonical_environments=$(cd "$repo_root" && node scripts/deployment-environments.mjs list)
+
 shift || true
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -45,6 +49,11 @@ done
 
 if [ -z "$target" ]; then
   usage >&2
+  exit 2
+fi
+
+if [ "$target" != "all" ] && ! printf '%s\n' $canonical_environments | grep -qx "$target"; then
+  echo "unsupported environment: $target (expected one of: $canonical_environments, all)" >&2
   exit 2
 fi
 
@@ -85,17 +94,12 @@ deploy_one() {
 }
 
 case "$target" in
-  development|test|staging|demo|production)
-    deploy_one "$target"
-    ;;
   all)
-    for env_name in development test staging demo production; do
+    for env_name in $canonical_environments; do
       deploy_one "$env_name"
     done
     ;;
   *)
-    echo "unsupported environment: $target" >&2
-    usage >&2
-    exit 2
+    deploy_one "$target"
     ;;
 esac

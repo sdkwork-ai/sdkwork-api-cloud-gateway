@@ -82,6 +82,7 @@ collision-free across environments). See
 | --- | --- | --- |
 | `pnpm build:container` | `scripts/build-api-cloud-gateway-container.mjs` | Build the unified environment-neutral image |
 | `pnpm build:container:install` | `scripts/docker/package-install-bundle.mjs` | Build image + package the self-contained install bundle (`dist/docker-install/*.bundle/`) |
+| `pnpm build:container:environments` | `scripts/docker/package-environment-bundles.mjs` | Package one deployment bundle per environment from the committed `.env.example` templates (`dist/docker-packages/<environment>/`; `scripts/package-docker-environments.sh` is the shell entry onto the same implementation) |
 | `pnpm deploy:apply:standalone:docker -- --environment <env> [--replicas N]` | `scripts/docker/bundle/deploy.sh` | Deploy the unified bundle: any environment, N instances per environment |
 | `pnpm deploy:apply:standalone:docker:remote -- --host <user@host> --environment <env> [--replicas N]` | `scripts/docker/remote-deploy.sh` | Package locally, push to a remote Ubuntu host over SSH key auth, deploy with env config centralized at `/etc/sdkwork/api-gateway/docker/<env>.env` |
 | `pnpm deploy:apply:standalone -- <env\|all>` | `scripts/deploy-docker-environment.sh` | Start/stop per-environment stacks from the repository compose (external mode) |

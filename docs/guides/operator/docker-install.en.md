@@ -1,48 +1,58 @@
-# Docker Install Bundle Deployment Guide (docker-install)
+# Docker Foolproof Install Guide (docker-install)
 
-> Version: 2026-08-30 · Applies to: `sdkwork-api-cloud-gateway` standalone unified install image
+> Version: 2026-09-02 · Applies to: `sdkwork-api-cloud-gateway` standalone unified install image
 > Spec basis: `sdkwork-specs/DEPLOYMENT_SPEC.md` §6, `sdkwork-specs/PNPM_SCRIPT_SPEC.md` §4.4
+> 中文版：[docker-install.md](./docker-install.md)
 
-## 1. Design Summary
+## 0. Three Commands to a Running Gateway (TL;DR)
 
-`pnpm build:container:install` produces **one unified install bundle**
-(self-contained install bundle):
-
-- **One image**: the image is environment- and instance-count-neutral. Builds
-  **never** bake environment, domain, database, or credential values; the
-  lifecycle environment (development / test / staging / production) and the
-  instance count are **deployment-time inputs** resolved by the container
-  entrypoint at start.
-- **Any environment**: development, test, staging, demo, and production share
-  the same image tag; the env file selects the environment
-  (`GATEWAY_ENVIRONMENT`). demo (the independent showcase tier) stays fully
-  isolated from dev/test/staging/prod (dedicated `sdkwork_ai_demo` database,
-  dedicated Redis logical DB indexes 9/10).
-- **Every environment supports N instances**: N gateway instances share one
-  network (`sdkwork-api-cloud-gateway-<env>`) and one secrets/data volume pair;
-  each instance owns its own compose project
-  (`sdkwork-api-cloud-gateway-<env>-i<index>`) and its own host port. Instance 1
-  runs the database migration first; instances 2..N start only after it is
-  healthy.
-- **Externalized dependencies**: the bundle ships no embedded PostgreSQL/Redis;
-  `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*` point at external
-  instances. The public reverse proxy is owned by the independent
-  `sdkwork-webserver` deployment — this bundle installs no nginx.
-
-## 2. Packaging the Bundle
+With the install bundle (the `.bundle` directory) on any Docker host:
 
 ```bash
-# Repository root (sdkwork-api-cloud-gateway)
-pnpm build:container:install                       # build image + package
-pnpm build:container:install -- --skip-image-build # reuse an existing image
-pnpm build:container:install -- --tag 0.1.0 --out dist/docker-install --dry-run
+cp env/development.env.example env/development.env   # 1. Create config (defaults are fine for a smoke test)
+bash deploy.sh --environment development             # 2. Deploy (external databases, the default)
+curl http://127.0.0.1:3910/healthz                   # 3. Health check — ok means done
 ```
 
-From the sdkwork-space root (WSL / CI) use the `bin` script:
+No PostgreSQL / Redis handy? Add `--embedded` and the built-in databases start with the bundle:
 
 ```bash
-bash bin/build-gateway-docker.sh                   # reads the manifest version
-bash bin/build-gateway-docker.sh --out /opt/deploy/packages
+bash deploy.sh --environment development --embedded
+```
+
+That's it. The rest of this guide covers which mode to pick, per-environment
+configuration, scaling, and troubleshooting.
+
+## 1. Two Dependency Modes: How to Choose
+
+One image, two postures, selected at deploy time. **External is the default**:
+
+| | External mode (default) | Embedded mode (`--embedded`) |
+| --- | --- | --- |
+| PostgreSQL | Bring your own (managed or self-hosted) via `GATEWAY_POSTGRES_*` | Started automatically with the bundle (pgvector/pgvector:pg18, `vector` extension included, TLS auto-enabled) |
+| Redis | Bring your own via `GATEWAY_CLOUDROUTER_REDIS_*` | Started automatically (redis:8-alpine, no password) |
+| Best for | test / staging / production with a DBA or managed databases | demos, PoCs, isolated smoke tests, small deployments without external databases |
+| Data lives in | Your database instance | Docker volumes `<env>-postgres-data` / `<env>-redis-data` on the host |
+| Upgrades / scaling | Stateless, `--replicas N` anytime | Also stateless; the built-in pair is single-instance and the capacity ceiling |
+
+The rule is simple: **if you have decent PostgreSQL and Redis, use external
+(the default); otherwise, or just for a quick look, use `--embedded`.** Both
+modes share the same image and the same env file — switching modes is just
+adding/removing one flag and re-running `deploy.sh`.
+
+> Embedded mode is still isolated per environment: each environment gets its
+> own network, database volumes, and database name
+> (`sdkwork_ai_dev/test/...`), with no cross-talk.
+
+## 2. Step 1: Package the Bundle (build machine)
+
+One command at the repository root produces a self-contained install bundle
+(image + compose + env templates + deploy script):
+
+```bash
+pnpm build:container:install                        # build image + package
+pnpm build:container:install -- --skip-image-build  # reuse a built image, repackage only
+pnpm build:container:install -- --dry-run           # print the plan only
 ```
 
 Bundle layout:
@@ -51,205 +61,192 @@ Bundle layout:
 dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
 ├── image.tar.gz / image.sha256 / image.env   # image archive + checksum + tag
 ├── compose/
-│   └── docker-compose.bundle.yml             # environment-neutral multi-instance template
-├── env/
-│   ├── development.env.example
-│   ├── test.env.example
-│   ├── staging.env.example
-│   ├── demo.env.example
-│   └── production.env.example
-├── deploy.sh                                 # single generic entrypoint
+│   ├── docker-compose.bundle.yml             # environment-neutral multi-instance template (external deps, default)
+│   └── docker-compose.bundle.embedded.yml    # built-in PostgreSQL/Redis override (used by --embedded)
+├── postgres/                                 # embedded-mode postgres init + TLS assets
+├── env/                                      # 5 per-environment config templates
+│   ├── development.env.example  test.env.example  staging.env.example
+│   └── demo.env.example  production.env.example
+├── deploy.sh                                 # the single deploy entrypoint
 ├── manifest.json                             # version / image / sha256 metadata
 └── README.md
 ```
 
-## 3. Deploying (any Docker host)
+## 3. Step 2: Copy to the Target Host
 
-Prerequisites: an external PostgreSQL (pgvector extension recommended) and
-Redis reachable from the containers (`host.docker.internal` or a managed
-endpoint), with per-environment databases and schemas created
-(`sdkwork_ai_dev/test/staging/prod`; `pnpm db:postgres:provision` can do this).
+Copy the whole `.bundle` directory to the target Linux host (scp / rsync /
+USB — anything works). The only requirements: **Docker installed (with the
+compose plugin)** and **access to an image registry or the bundled
+image.tar.gz**.
 
-After copying the bundle directory to the target host, `deploy.sh` is the only
-entrypoint:
+Want to skip the manual copy? Jump to §8 one-command remote deploy.
 
-```bash
-# Development, single instance (default)
-bash deploy.sh --environment development
-
-# Production with 3 instances
-bash deploy.sh --environment production --replicas 3
-
-# Other operations
-bash deploy.sh --environment test --ps
-bash deploy.sh --environment test --logs 2        # follow instance 2 logs
-bash deploy.sh --environment test --down
-bash deploy.sh --environment test --down --purge  # also delete volumes/network
-```
-
-Key rules:
-
-- `--environment` is required (development | test | staging | demo | production); a
-  missing or unknown value fails **before any side effect**. Re-running apply
-  is idempotent (updates the existing stack in place).
-- First deployment creates `env/<environment>.env` from the example — **fill
-  PostgreSQL, Redis, and Cloud Router secrets before exposing anything**.
-- If the image is missing, the script runs `docker load image.tar.gz`.
-- Start order: one `knowledgebase-rpc` singleton per environment (the deps
-  project, provisions shared mTLS/secret material) → gateway instance 1 (runs
-  `--migrate-databases`) → instances 2..N (`GATEWAY_MIGRATE_ON_START=false`,
-  avoiding migration races).
-
-Repository-root equivalent:
+## 4. Step 3: Configure (one file)
 
 ```bash
-pnpm deploy:apply:standalone:docker -- --environment production --replicas 3
-pnpm deploy:apply:standalone:docker -- --environment development --down
+cp env/<environment>.env.example env/<environment>.env
 ```
 
-## 4. Port Plan and sdkwork-webserver Integration
+If the env file is missing on first `deploy.sh` run, it is generated from the
+example automatically. **Fields that actually matter** (defaults are fine for
+everything else):
 
-Instance port formula (deterministic, collision-free across environments):
-
-```text
-instance i host port = GATEWAY_HOST_PORT + (i - 1) * 10   ->  container 3900
-```
-
-| Environment | Base port (instance 1) | Database / Schema | Example ports (3 instances) |
+| Field | Meaning | External mode | Embedded mode |
 | --- | --- | --- | --- |
-| development | 3910 | `sdkwork_ai_dev` | 3910 / 3920 / 3930 |
-| test | 3911 | `sdkwork_ai_test` | 3911 / 3921 / 3931 |
-| staging | 3912 | `sdkwork_ai_staging` | 3912 / 3922 / 3932 |
-| production | 3913 | `sdkwork_ai_prod` | 3913 / 3923 / 3933 |
-| demo | 3914 | `sdkwork_ai_demo` | 3914 / 3924 / 3934 |
+| `GATEWAY_POSTGRES_HOST/PORT/DB/USER/PASSWORD` | External PostgreSQL connection | **required** | can be ignored |
+| `GATEWAY_CLOUDROUTER_REDIS_HOST/PORT/PASSWORD` | External Redis connection | **required** | can be ignored |
+| `GATEWAY_POSTGRES_SSL_MODE` | `require` recommended for staging/production (preset in the examples) | recommended | TLS enabled automatically |
+| `GATEWAY_DEPS_MODE` | `external` (default) or `embedded` | leave alone | may set `embedded` instead of `--embedded` |
+| `GATEWAY_CLOUDROUTER_API_KEY_PEPPER` + 5 more secrets | production `<CHANGE_ME>` placeholders MUST be replaced | required in production | required in production |
 
-Health: `curl http://127.0.0.1:<instance-port>/healthz` (readiness: `/readyz`).
+**Password contains URL-reserved characters?** Do not put it in
+`GATEWAY_POSTGRES_PASSWORD` directly; set a percent-encoded
+`SDKWORK_DATABASE_URL` instead (the example files explain this).
 
-### Direct host-IP access
+For external mode, create the per-environment database and schema ahead of
+time (`sdkwork_ai_dev/test/staging/demo/prod`); from the repository,
+`pnpm db:postgres:provision` does it in one shot.
 
-The gateway binds `0.0.0.0:3900` inside the container and the instance port is
-published on every host interface, so `http://<host-ip>:<instance-port>/healthz`
-is reachable out of the box. Host-header validation (security layer) has two
-postures:
+## 5. Step 4: Deploy and Verify
 
-- development / test / demo: the env files preset
-  `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true` (`security.allowIpHosts`), so the
-  gateway accepts raw IP-literal Host headers from any machine without editing
-  the allowlist per host.
-- staging / production: exact domain allowlist (`api...` host family). For IP
-  access (health probes, operator smoke checks) either append the IP to
-  `GATEWAY_ALLOWED_HOSTS` or set `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true`.
-
-`sdkwork-webserver` is an independent Docker deployment owning the public
-reverse proxy: point each environment's API upstreams (`/app/`, `/backend/`,
-...) at that environment's gateway instance ports for load balancing (for
-production domains `api.{sdkwork,birdcoder,dtupay}.com` →
-`127.0.0.1:3913; 127.0.0.1:3923; 127.0.0.1:3933`). The gateway-side
-`GATEWAY_ALLOWED_HOSTS` / `GATEWAY_CORS_ALLOWED_ORIGINS` must include the
-corresponding domains (pre-populated per environment in the env files).
-
-## 5. Multi-Instance Notes
-
-- **Migration ownership**: only instance 1 migrates (the entrypoint's
-  `--migrate-databases` lifecycle step). Scaling out (re-running apply with a
-  higher `--replicas`) starts new instances with migration skipped.
-- **Shared secrets**: the secrets volume is shared per environment. The first
-  boot provisions the payment master key / IAM signing master key /
-  Knowledgebase RPC mTLS material with noclobber semantics, so concurrent
-  first boots are safe (exactly one process creates each key). For stricter
-  compliance, set `GATEWAY_PROVISION_*` to `false` in the env file and mount
-  operator/KMS-managed keys.
-- **Stateless horizontal scaling**: instances share PostgreSQL and Redis (RTC
-  state and web sessions use Redis DB indexes), so `--replicas N` can rebuild
-  or shrink at any time.
-- **Per-instance overrides**: create `env/<environment>.i<index>.env` for
-  instance-specific values; deploy.sh layers it on top of the base env file
-  (the later `--env-file` wins).
-- **Resource limits**: each instance defaults to 2 CPUs / 2 GiB; tune via
-  `GATEWAY_CPU_LIMIT` / `GATEWAY_MEMORY_LIMIT`.
-
-## 6. Operations and Verification Checklist
+`deploy.sh` is the only entrypoint and is idempotent:
 
 ```bash
-bash deploy.sh --environment <env> --ps        # instance + knowledgebase-rpc status
-bash deploy.sh --environment <env> --logs 1    # follow instance logs
-bash deploy.sh --environment <env> --down      # stop (keeps volumes/network)
+bash deploy.sh --environment development                  # dev, single instance, external deps
+bash deploy.sh --environment development --embedded       # same, built-in PostgreSQL + Redis
+bash deploy.sh --environment production --replicas 3      # production, 3 instances (instance 1 migrates)
+
+bash deploy.sh --environment test --ps                    # status
+bash deploy.sh --environment test --logs 1                # follow instance 1 logs
+bash deploy.sh --environment test --down                  # stop (keeps volumes)
+bash deploy.sh --environment test --down --purge          # stop + delete volumes/network (embedded DB data is deleted too!)
+
+bash deploy.sh --help                                     # all options
 ```
 
-- [ ] `docker compose -f compose/docker-compose.bundle.yml config` has no interpolation errors
-- [ ] `/healthz` and `/readyz` pass for every environment
-- [ ] Under multi-instance deployment only instance 1 shows migration logs
-- [ ] Every environment domain reaches the gateway API through sdkwork-webserver
-- [ ] `manifest.json` image sha256 matches `image.sha256`
+The script orchestrates the start order: built-in databases (if enabled) →
+the `knowledgebase-rpc` singleton (provisions shared secrets/mTLS material) →
+instance 1 (runs database migrations) → instances 2..N (migration skipped,
+start only after instance 1 is healthy).
 
-Full operator manual: `docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`.
-
-## 7. Remote Ubuntu Deployment (Passwordless SSH Push)
-
-After packaging locally, push the bundle to a remote Ubuntu host over
-**SSH key-based authentication** and deploy there. Per-environment database
-configuration lives centrally in the Ubuntu config root and is shared by all
-instances.
+**Verify**:
 
 ```bash
-# Repository root
+curl http://127.0.0.1:<instance-port>/healthz    # liveness
+curl http://127.0.0.1:<instance-port>/readyz     # readiness (first start waits for migrations, up to ~4 min)
+```
+
+## 6. Multi-Environment Matrix (ports / databases)
+
+Instance port formula: `instance i port = GATEWAY_HOST_PORT + (i-1) × 10 →
+container 3900`. Multiple environments can share one machine — ports and
+databases are isolated by design:
+
+| Environment | Base port (instance 1) | Database / Schema | Redis logical DBs | Example ports (3 instances) |
+| --- | --- | --- | --- | --- |
+| development | 3910 | `sdkwork_ai_dev` | 1 / 2 | 3910 / 3920 / 3930 |
+| test | 3911 | `sdkwork_ai_test` | 3 / 4 | 3911 / 3921 / 3931 |
+| staging | 3912 | `sdkwork_ai_staging` | 5 / 6 | 3912 / 3922 / 3932 |
+| production | 3913 | `sdkwork_ai_prod` | 7 / 8 | 3913 / 3923 / 3933 |
+| demo | 3914 | `sdkwork_ai_demo` | 9 / 10 | 3914 / 3924 / 3934 |
+
+Each environment's configuration lives in one env file shared by all its
+instances: `env/<environment>.env` inside the bundle, or
+`/etc/sdkwork/api-gateway/docker/<environment>.env` on remote Ubuntu. For
+per-instance overrides, create `env/<environment>.i<index>.env` and it is
+layered on automatically.
+
+The public reverse proxy is owned by the independent `sdkwork-webserver`
+deployment: point each environment's domain upstreams at that environment's
+instance port list (e.g. production `api.{sdkwork,birdcoder,dtupay}.com` →
+`127.0.0.1:3913; 3923; 3933`). Gateway-side host allowlist / CORS values are
+pre-populated per environment in the env examples.
+
+## 7. Embedded Mode Details
+
+- **What starts**: two extra containers in the deps project — `postgres`
+  (pgvector image, `ssl=on`, certificates generated automatically, schema
+  created automatically) and `redis` (no password). The gateway and
+  knowledgebase-rpc are repointed at them automatically; no
+  `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*` edits needed.
+- **Data persistence**: data lives in Docker volumes
+  `<env>-postgres-data` / `<env>-redis-data`; `--down` keeps them,
+  `--down --purge` deletes them. Backup:
+  `docker run --rm -v <env>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`.
+- **Migrating back to external**: pg_dump out of the built-in database,
+  restore into your external PostgreSQL, then drop `--embedded`, point
+  `GATEWAY_POSTGRES_*` at the new instance, and re-run `deploy.sh`.
+- **Limits**: the built-in pair is single-instance (no replication/clustering)
+  and not meant for production-scale capacity or HA; production should use
+  external mode.
+- If `SDKWORK_DATABASE_URL` is set explicitly in the env file it wins — in
+  embedded mode remove that line or point it at `postgres:5432`.
+
+## 8. One-Command Remote Ubuntu Deploy (SSH push)
+
+Package locally, then push and deploy on the remote host. Remote
+configuration wins and is never overwritten by re-deploys:
+
+```bash
+# Prerequisite: run `ssh-copy-id deploy@1.2.3.4` once (passwordless login)
 pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
     --environment production --replicas 3
 
-# Reuse an existing bundle / explicit key
+# Remote deploy with built-in dependencies
+pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+    --environment development --embedded
+
+# Common options: reuse an existing bundle / explicit key / dry-run
 pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.0.bundle \
-    --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2
-
-# Other operations (forwarded to the remote deploy.sh)
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
-    --environment test --down
+    --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```
 
-From the sdkwork-space root (WSL / CI):
+Remote config file: `/etc/sdkwork/api-gateway/docker/<environment>.env`
+(mode 0600, generated on first push). Change passwords / databases by editing
+that file and re-running the same command. Remote passwordless sudo
+(`sudo -n`) is required; otherwise pass `--config-root` pointing at a
+user-writable directory.
 
-```bash
-bash bin/remote-deploy-gateway.sh --host deploy@1.2.3.4 \
-    --environment production --replicas 3
-```
+## 9. FAQ
 
-### 7.1 Prerequisites
+**Q: `curl /healthz` fails?**
+In order: `bash deploy.sh --environment <env> --ps` — are containers healthy?
+→ `--logs 1` for startup logs → external mode: is `GATEWAY_POSTGRES_HOST`
+reachable from inside the container (a database on the host uses
+`host.docker.internal`, which is the env example default) → first start runs
+migrations; `/readyz` may take up to 4 minutes.
 
-- **Passwordless SSH**: run `ssh-copy-id deploy@1.2.3.4` once (defaults to
-  `~/.ssh/id_ed25519`; use `--ssh-key` to override).
-- **Remote sudo**: the default config root is
-  `/etc/sdkwork/api-gateway/docker` (the standard config root,
-  `APPLICATION_DEPLOY_LAYOUT_SPEC` §3), so the remote user needs passwordless
-  sudo (`sudo -n`); otherwise pass `--config-root` pointing at a
-  user-writable directory.
+**Q: How do I change the database password?**
+Update `GATEWAY_POSTGRES_PASSWORD` (or the whole `SDKWORK_DATABASE_URL`) in
+the env file → re-run `deploy.sh --environment <env>`. Remember to change the
+password on the database side too.
 
-### 7.2 Config Root and Custom Database Password
+**Q: Scaling out / in?**
+Re-run with a different `--replicas N` (idempotent). New instances skip
+migration automatically; scaling in just stops the surplus instance projects.
 
-After the push, the environment configuration lives on the remote Ubuntu:
+**Q: What does `--down --purge` delete?**
+The environment's network + secrets/data volumes; in embedded mode it also
+deletes the built-in database volumes (**unrecoverable**). External mode never
+touches your databases.
 
-```text
-/etc/sdkwork/api-gateway/docker/<environment>.env   # single file, shared by all instances
-```
+**Q: Can multiple environments share one machine?**
+Yes. Ports, networks, volumes, and database names are all isolated per
+environment — see the matrix in §6.
 
-- The remote file **wins**: re-deploys never overwrite it (unless `--sync-env`
-  forces it from the local file).
-- **Custom database password**: edit `GATEWAY_POSTGRES_PASSWORD`,
-  `GATEWAY_POSTGRES_USER`, `GATEWAY_POSTGRES_DB`, ... in that file on the
-  remote host, then re-run
-  `deploy:apply:standalone:docker:remote --environment <env>`; all N
-  instances of the environment read the same file automatically.
-- First push generates it from the local `docker/env/<env>.env` (falling back
-  to `.env.example`) when the remote file does not exist; mode `0600`.
+**Q: No image registry available?**
+`image.tar.gz` is the image itself; deploy.sh runs `docker load`
+automatically when the image is missing — fully offline capable.
 
-### 7.3 Pipeline
+## 10. Operations Checklist
 
-1. Passwordless SSH probe (`BatchMode=yes`; on failure, hint `ssh-copy-id`);
-2. Local packaging (or reuse `--bundle`);
-3. Remote mkdir for the install root and config root;
-4. Push/keep the remote env config;
-5. `rsync -az` (falls back to `scp -r` when rsync is absent) pushes the bundle;
-6. Remote `deploy.sh --environment <env> --replicas N --env-file <config-root>/<env>.env`;
-7. Health-check instance 1's `/healthz`.
+- [ ] `manifest.json` image sha256 matches `image.sha256`
+- [ ] `/healthz` and `/readyz` pass for every environment
+- [ ] Under multi-instance deployment only instance 1 shows migration logs
+- [ ] All `<CHANGE_ME>` placeholders replaced in staging/production env files (including the 6 Cloud Router secrets)
+- [ ] `GATEWAY_POSTGRES_SSL_MODE=require` for staging/production (external mode)
+- [ ] Every environment domain reaches the gateway API through sdkwork-webserver
 
-`--dry-run` previews every command; `--logs [N]` / `--ps` / `--down` forward
-the action to the remote deploy.sh.
+Full operator manual: `docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`;
+bare-metal Ubuntu (systemd) install: `docs/guides/operator/INSTALLATION_STANDARDS.md`.

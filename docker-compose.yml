@@ -27,6 +27,12 @@ services:
     # `vector` extension, which the stock postgres image does not ship.
     image: pgvector/pgvector:pg18
     restart: unless-stopped
+    # Bounded log rotation (DEPLOYMENT_SPEC §6 runtime hardening, normative).
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     entrypoint: ["/bin/sh", "/opt/sdkwork/postgres/entrypoint.sh"]
     command:
       - postgres
@@ -58,6 +64,11 @@ services:
     # Opt-in only. Default deployments use external Redis with no password.
     image: redis:8-alpine
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -69,6 +80,11 @@ services:
   knowledgebase-rpc:
     image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
     entrypoint: ["/opt/sdkwork/api-gateway/container/knowledgebase-rpc-entrypoint"]
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -168,12 +184,20 @@ services:
       # router construction fails ("IM r2d2 capacity was not reserved").
       SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
       SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
+      # Client-local SQLite store (ENVIRONMENT_SPEC §7.2): SQLite-only embedded
+      # apps (canvas pages) persist here while every other module uses PostgreSQL.
+      # mode=rwc creates the file on first start inside the gateway-data volume.
+      SDKWORK_DATABASE_SQLITE_URL: ${GATEWAY_DATABASE_SQLITE_URL:-sqlite:///var/lib/sdkwork/api-gateway/canvas-pages.db?mode=rwc}
       # IM principal directory: all container profiles use the dynamic
       # PostgreSQL directory. This admits IAM-authenticated principals on
       # first sight and persists the decision for audit.
       SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
       SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
       SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
+      # BirdCoder embedded app: fail-closed config requires all three explicitly.
+      SDKWORK_BIRDCODER_ENVIRONMENT: ${GATEWAY_BIRDCODER_ENVIRONMENT:-development}
+      SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE: ${GATEWAY_BIRDCODER_DEPLOYMENT_PROFILE:-standalone}
+      SDKWORK_BIRDCODER_RUNTIME_TARGET: ${GATEWAY_BIRDCODER_RUNTIME_TARGET:-container}
       SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
       SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
@@ -212,6 +236,10 @@ services:
       # requires it to reach the cloud router's OpenAPI surface. Defaults to
       # the sdkwork-cloudrouter container host mapping on this machine.
       SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
+      # Cloud Router web environment: unset/unknown values fail closed to the
+      # production posture (production assembly validation), so every env file
+      # must set GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT explicitly.
+      SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT: ${GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT:-}
       # Cloud Router API key pepper: required by the cloudrouter foundation
       # module's OpenAI runtime routes; injected at runtime, never baked into
       # the image. Override via .env for anything beyond local testing.
@@ -274,12 +302,21 @@ services:
       - ./docker/config/config.toml:/etc/sdkwork/api-gateway/config.toml:ro
       - gateway-data:/var/lib/sdkwork/api-gateway
       - gateway-secrets:/run/secrets/sdkwork/api-gateway
-      # Optional private PostgreSQL CA for external TLS (empty file is fine).
-      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
+      # Optional private PostgreSQL CA for external TLS. Default /dev/null
+      # keeps the ro bind mount harmless when no CA is configured: an absent
+      # host source would make docker create a stray directory on the host,
+      # and a real file mount here would collide with the entrypoint's merged
+      # trust-bundle write target when SSL_CERT_FILE points at the same path.
+      - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-/dev/null}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
     depends_on:
       knowledgebase-rpc:
         condition: service_healthy
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
     # Gateway readiness probe: compose can restart/replace the gateway when it
     # stops answering. The start_period covers the foundation suite module
     # migrations that run on first start.

@@ -788,7 +788,7 @@
       "surface": "internal",
       "prefix": "/internal/v3/api/web",
       "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-web-internal-api",
+      "dependencyServiceId": "sdkwork-webserver-internal-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -3059,14 +3059,14 @@
       "executableExport": "sdkwork_api_deployments_assembly::assemble_api_router_with_pool"
     },
     {
-      "serviceId": "sdkwork-web-internal-api",
+      "serviceId": "sdkwork-webserver-internal-api",
       "workspace": "sdkwork-webserver",
-      "apiAuthority": "sdkwork-web-internal-api",
-      "sdkFamily": "sdkwork-web-internal-sdk",
+      "apiAuthority": "sdkwork-webserver-internal-api",
+      "sdkFamily": "sdkwork-webserver-internal-sdk",
       "apiPrefixes": [
         "/internal/v3/api/web"
       ],
-      "coverage": "sdkwork-web-internal-api-cloud-gateway-assembly-routes",
+      "coverage": "sdkwork-webserver-internal-api-cloud-gateway-assembly-routes",
       "cargoFeature": "foundation-webserver",
       "cargoDependency": "sdkwork-api-webserver-assembly",
       "runtimeModes": [

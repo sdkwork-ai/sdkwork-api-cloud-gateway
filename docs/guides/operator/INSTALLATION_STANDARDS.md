@@ -160,7 +160,7 @@ ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
    （`/etc/ssl/sdkwork/api-gateway/fullchain.pem`、`privkey.pem`）。
 2. 网关 Host 白名单与 CORS 必须包含三个生产域名——生产 TOML 模板
    （`etc/sdkwork-api-cloud-gateway.production.toml`）与容器挂载默认
-   （`docker/config/sdkwork-api-cloud-gateway.toml`）的
+   （`docker/config/config.toml`）的
    `[security].allowedHosts` 与 `[cors].allowedOrigins` 已内置
    `api.sdkwork.com` / `api.birdcoder.com` / `api.dtupay.com`；容器部署时再经
    `GATEWAY_ALLOWED_HOSTS` / `GATEWAY_CORS_ALLOWED_ORIGINS`（`.env.example`
@@ -234,7 +234,7 @@ ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 | `[observability]` | 日志/指标/追踪/OTLP | `RUST_LOG` |
 
 生产模板：`etc/sdkwork-api-cloud-gateway.production.toml`；容器宿主可编辑副本：
-`docker/config/sdkwork-api-cloud-gateway.toml`（挂载到 `/etc/sdkwork/api-gateway/`）。
+`docker/config/config.toml`（挂载到 `/etc/sdkwork/api-gateway/config.toml`）。
 
 ### 6.2 数据库（`ENVIRONMENT_SPEC.md` §7.3、§9 `[database]`）
 

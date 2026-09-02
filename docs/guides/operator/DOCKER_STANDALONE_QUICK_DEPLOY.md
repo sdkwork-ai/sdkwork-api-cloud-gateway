@@ -185,9 +185,10 @@ curl http://api-dev.dtupay.com/healthz
 - **配置格式**：TOML（ENVIRONMENT_SPEC §2/§9："TOML is preferred for SDKWork Rust
   services"）。配置优先级：内置默认 → TOML → 环境变量 → CLI → 密钥
   （ENVIRONMENT_SPEC §3）。
-- **配置位置**：`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml`（§4.5
-  config mount）。镜像内置 production 模板为该路径的默认内容；`docker-compose.yml`
-  将宿主文件 `docker/config/sdkwork-api-cloud-gateway.toml` 只读挂载覆盖之，
+- **配置位置**：`/etc/sdkwork/api-gateway/config.toml`（§4.5
+  config mount，RUNTIME_DIRECTORY_SPEC：新应用统一 `config.toml` 命名）。
+  镜像内置 production 模板为该路径的默认内容；`docker-compose.yml`
+  将宿主文件 `docker/config/config.toml` 只读挂载覆盖之，
   修改限流/请求体/策略等环境变量未覆盖的字段无需重建镜像。
 - **密钥**：`/run/secrets/sdkwork/api-gateway/<secret-name>`（§4.5 secret mount、
   §11 Secrets Standard）。本仓库不放置真实密钥；部署时把平台 secret 挂载到该目录

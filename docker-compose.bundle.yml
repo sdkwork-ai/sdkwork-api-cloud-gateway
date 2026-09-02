@@ -26,6 +26,12 @@
 x-gateway-common: &gateway-common
   image: ${GATEWAY_IMAGE:?required}
   restart: unless-stopped
+  # Bounded log rotation (DEPLOYMENT_SPEC §6 runtime hardening, normative).
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
   extra_hosts:
     - "host.docker.internal:host-gateway"
   networks:
@@ -66,10 +72,18 @@ x-gateway-common: &gateway-common
     SDKWORK_DATABASE_MAX_LIFETIME: ${SDKWORK_DATABASE_MAX_LIFETIME:-1800}
     SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT: ${SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT:-2}
     SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION: ${SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION:-true}
+    # Client-local SQLite store (ENVIRONMENT_SPEC §7.2): SQLite-only embedded
+    # apps (canvas pages) persist here while every other module uses PostgreSQL.
+    # mode=rwc creates the file on first start inside the gateway-data volume.
+    SDKWORK_DATABASE_SQLITE_URL: ${GATEWAY_DATABASE_SQLITE_URL:-sqlite:///var/lib/sdkwork/api-gateway/canvas-pages.db?mode=rwc}
     # IM principal directory (dynamic PostgreSQL directory in containers).
     SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
     SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
     SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
+    # BirdCoder embedded app: fail-closed config requires all three explicitly.
+    SDKWORK_BIRDCODER_ENVIRONMENT: ${GATEWAY_BIRDCODER_ENVIRONMENT:-development}
+    SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE: ${GATEWAY_BIRDCODER_DEPLOYMENT_PROFILE:-standalone}
+    SDKWORK_BIRDCODER_RUNTIME_TARGET: ${GATEWAY_BIRDCODER_RUNTIME_TARGET:-container}
     SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
     SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
     SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
@@ -101,6 +115,10 @@ x-gateway-common: &gateway-common
     SDKWORK_VAULT_NAMESPACE: ${GATEWAY_VAULT_NAMESPACE:-}
     # Cloud Router runtime inputs (injected at deploy time, never baked).
     SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL: ${GATEWAY_CLOUDROUTER_OPEN_API_BASE_URL:-http://127.0.0.1:3900}
+    # Cloud Router web environment: unset/unknown values fail closed to the
+    # production posture (production assembly validation), so every env file
+    # must set GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT explicitly.
+    SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT: ${GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT:-}
     SDKWORK_CLOUDROUTER_API_KEY_PEPPER: ${GATEWAY_CLOUDROUTER_API_KEY_PEPPER:-}
     SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING: ${GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING:-}
     SDKWORK_CLOUDROUTER_TRUSTED_SUBJECT_SECRET: ${GATEWAY_CLOUDROUTER_TRUSTED_SUBJECT_SECRET:-}
@@ -134,11 +152,12 @@ x-gateway-common: &gateway-common
     # Per-environment shared state: every instance mounts the same volumes.
     - gateway-secrets:/run/secrets/sdkwork/api-gateway
     - gateway-data:/var/lib/sdkwork/api-gateway
-    # Optional private PostgreSQL CA for external TLS (empty file is fine).
-    # Mirrors docker-compose.yml: when GATEWAY_POSTGRES_SSL_CERT_FILE points
-    # here, the mounted bundle (system CA + server leaf, see docker/ca/README.md)
-    # becomes the IM r2d2 pool trust anchor.
-    - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-./docker/ca/postgres-ca-bundle.crt}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
+    # Optional private PostgreSQL CA for external TLS. Default /dev/null keeps
+    # the ro bind mount harmless when no CA is configured: the bundle carries
+    # no docker/ca/ tree, so an absent host source would make docker create a
+    # stray directory, and a real file mount would collide with the merged
+    # trust-bundle write when SSL_CERT_FILE points at the same path.
+    - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-/dev/null}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
   # Deployment guardrails (tune via the env file).
   deploy:
     resources:

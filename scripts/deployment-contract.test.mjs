@@ -2,8 +2,13 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
+import { parse } from 'yaml';
 
 import { parseDotEnv } from '../../sdkwork-specs/tools/postgres/postgres-config.mjs';
+import {
+  ENVIRONMENTS,
+  ENVIRONMENT_HOST_PORTS,
+} from './deployment-environments.mjs';
 import {
   resolveExampleEnvironment,
   validateDeploymentEnvironment,
@@ -11,7 +16,7 @@ import {
 } from './validate-docker-deployment.mjs';
 
 const appRoot = path.resolve('.');
-const environments = ['development', 'test', 'staging', 'demo', 'production'];
+const environments = ENVIRONMENTS;
 const profiles = ['standalone', 'cloud'];
 const baseDomains = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
 const suffixes = {
@@ -229,7 +234,7 @@ test('ubuntu and container share api-gateway config layout; gateway does not own
   const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const apply = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'apply.sh'), 'utf8');
-  const ports = { development: 3910, test: 3911, staging: 3912, demo: 3914, production: 3913 };
+  const ports = ENVIRONMENT_HOST_PORTS;
 
   assert.match(installer, /config_root=\$destdir\/etc\/sdkwork\/api-gateway/u);
   assert.match(installer, /config_target=\$config_root\/config\.toml/u);
@@ -393,9 +398,12 @@ test('production-like embedded PostgreSQL enables transport encryption', () => {
     embedded,
     /POSTGRES_CA_FILE: \/run\/sdkwork\/postgres-tls\/server\.crt/u,
   );
+  // The merged trust bundle must live OFF the ro postgres-ca-bundle.crt bind
+  // mount target: the entrypoint writes <trust>.tmp.$$ beside it and mv would
+  // fail on a read-only mount (startup crash loop).
   assert.match(
     embedded,
-    /SSL_CERT_FILE: \/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.crt/u,
+    /SSL_CERT_FILE: \/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.merged\.crt/u,
   );
   assert.match(embedded, /postgres-tls:\/run\/sdkwork\/postgres-tls:ro/u);
   assert.match(postgresEntrypoint, /openssl req -new -x509 -nodes/u);
@@ -425,15 +433,197 @@ test('server install manifest declares its self-referential checksum exclusions'
 
 test('bundle compose mounts the PostgreSQL CA trust bundle like the repo layout', () => {
   const bundle = readFileSync(path.join(appRoot, 'docker-compose.bundle.yml'), 'utf8');
+  const repo = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   // The bundle distribution must provide the same external-TLS trust anchor as
   // docker-compose.yml: GATEWAY_POSTGRES_SSL_CERT_FILE points at the mounted
   // bundle path, so dropping the mount silently breaks sslmode=require pools.
+  // The default mount source is /dev/null in BOTH layouts: an absent host
+  // source would make docker create a stray directory, and a real default file
+  // mount collides with the entrypoint's merged trust-bundle write target.
+  for (const compose of [bundle, repo]) {
+    assert.match(
+      compose,
+      /SSL_CERT_FILE: \$\{GATEWAY_POSTGRES_SSL_CERT_FILE:-\/etc\/ssl\/certs\/ca-certificates\.crt\}/u,
+    );
+    assert.match(
+      compose,
+      /\$\{GATEWAY_POSTGRES_CA_FILE_MOUNT:-\/dev\/null\}:\/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.crt:ro/u,
+    );
+  }
+});
+
+test('install bundle supports external (default) and embedded dependency modes', () => {
+  // The environment-neutral bundle template ships no database services:
+  // external PostgreSQL + Redis is the only posture of the base file.
+  const bundle = readFileSync(path.join(appRoot, 'docker-compose.bundle.yml'), 'utf8');
+  assert.doesNotMatch(bundle, /pgvector/u);
+  assert.doesNotMatch(bundle, /redis:8-alpine/u);
+  assert.match(bundle, /GATEWAY_POSTGRES_HOST:-host\.docker\.internal/u);
+
+  // The embedded override adds the built-in PostgreSQL (pgvector, TLS) and
+  // Redis pair to the per-environment deps project and repoints the gateway
+  // and knowledgebase-rpc at them; instance projects never start their own
+  // database copies (profiles: ["deps"]).
+  const embedded = readFileSync(
+    path.join(appRoot, 'docker-compose.bundle.embedded.yml'),
+    'utf8',
+  );
+  assert.match(embedded, /pgvector\/pgvector:pg18/u);
+  assert.match(embedded, /redis:8-alpine/u);
+  assert.match(embedded, /ssl=on/u);
+  assert.match(embedded, /profiles: \["deps"\]/u);
+  assert.match(embedded, /SDKWORK_DATABASE_HOST: postgres/u);
+  assert.match(embedded, /SDKWORK_CLOUDROUTER_REDIS_HOST: redis/u);
+  assert.match(embedded, /SDKWORK_RTC_STATE_REDIS_URL: redis:\/\/redis:6379\/1/u);
+  assert.match(embedded, /postgres-tls:\/run\/sdkwork\/postgres-tls:ro/u);
+  assert.match(embedded, /POSTGRES_ASSETS_DIR:\?required/u);
   assert.match(
-    bundle,
-    /SSL_CERT_FILE: \$\{GATEWAY_POSTGRES_SSL_CERT_FILE:-\/etc\/ssl\/certs\/ca-certificates\.crt\}/u,
+    embedded,
+    /name: sdkwork-api-cloud-gateway-\$\{GATEWAY_ENVIRONMENT:\?required\}-postgres-data/u,
+  );
+
+  // deploy.sh: external is the default; --embedded is the explicit opt-in and
+  // GATEWAY_DEPS_MODE=embedded in the env file is equivalent.
+  const deploy = readFileSync(path.join(appRoot, 'scripts', 'docker', 'bundle', 'deploy.sh'), 'utf8');
+  assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE_FLAG:-\$\(env_key GATEWAY_DEPS_MODE\)\}"/u);
+  assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE:-external\}"/u);
+  assert.match(deploy, /--embedded\)\s+DEPS_MODE_FLAG="embedded"/u);
+  assert.match(deploy, /docker-compose\.bundle\.embedded\.yml/u);
+  assert.match(deploy, /POSTGRES_ASSETS_DIR/u);
+  assert.match(deploy, /postgres-data redis-data postgres-tls/u);
+
+  // The packager ships the override plus the embedded postgres assets.
+  const packager = readFileSync(path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'), 'utf8');
+  assert.match(packager, /docker-compose\.bundle\.embedded\.yml/u);
+  assert.match(packager, /postgres/, 'packager must ship the embedded postgres assets');
+  assert.match(packager, /dependencyModes: \['external', 'embedded'\]/u);
+});
+
+test('compose passes the cloudrouter web environment through to the container', () => {
+  const repo = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
+  const bundle = readFileSync(path.join(appRoot, 'docker-compose.bundle.yml'), 'utf8');
+  const expected = /SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT: \$\{GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT:-\}/u;
+  assert.match(repo, expected);
+  assert.match(bundle, expected);
+  // Every env file (and example) declares its router environment explicitly:
+  // unset or unknown values fail closed to the production posture inside
+  // cloudrouter's web_security parse_environment.
+  const envDir = path.join(appRoot, 'docker', 'env');
+  for (const name of ['development', 'test', 'staging', 'demo', 'production']) {
+    for (const suffix of ['.env', '.env.example']) {
+      const file = readFileSync(path.join(envDir, `${name}${suffix}`), 'utf8');
+      assert.match(
+        file,
+        new RegExp(`^GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT=${name}$`, 'mu'),
+        `${name}${suffix} must declare GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT=${name}`,
+      );
+    }
+  }
+});
+
+test('shipped compose files bound container logs (DEPLOYMENT_SPEC §6 runtime hardening)', () => {
+  // Normative: every service in every compose file shipped for deployment MUST
+  // declare bounded json-file log rotation (reference 50m/3) plus a restart
+  // policy and a healthcheck. Overlays (docker-compose.embedded.yml,
+  // docker-compose.external.yml) merge into the base file and are covered by
+  // it. Override files only need explicit logging for services they ADD;
+  // services shared with the base file inherit it through compose merge.
+  const shipped = [
+    { file: 'docker-compose.yml' },
+    { file: 'docker-compose.bundle.yml' },
+    {
+      file: 'docker-compose.bundle.embedded.yml',
+      baseFile: 'docker-compose.bundle.yml',
+    },
+  ];
+  for (const { file, baseFile } of shipped) {
+    // merge: true expands YAML `<<` anchors (the bundle composition shares
+    // logging through the x-gateway-common anchor).
+    const compose = parse(readFileSync(path.join(appRoot, file), 'utf8'), { merge: true });
+    const baseServices = baseFile
+      ? Object.keys(parse(readFileSync(path.join(appRoot, baseFile), 'utf8'), { merge: true }).services ?? {})
+      : [];
+    const services = Object.keys(compose.services ?? {});
+    assert.ok(services.length > 0, `${file} must declare services`);
+    for (const [service, definition] of Object.entries(compose.services)) {
+      if (baseServices.includes(service)) {
+        continue;
+      }
+      assert.equal(
+        definition.logging?.driver,
+        'json-file',
+        `${file}/${service} must use the json-file log driver`,
+      );
+      assert.equal(
+        definition.logging?.options?.['max-size'],
+        '50m',
+        `${file}/${service} must cap log size at 50m`,
+      );
+      assert.equal(
+        definition.logging?.options?.['max-file'],
+        '3',
+        `${file}/${service} must rotate at most 3 log files`,
+      );
+      assert.ok(definition.restart, `${file}/${service} must declare a restart policy`);
+      assert.ok(definition.healthcheck, `${file}/${service} must declare a healthcheck`);
+    }
+  }
+});
+
+test('deployment environment registry is the single source of truth for packaging and deploy scripts', () => {
+  // The shell deploy script and the per-environment packager must both derive
+  // their environment set from scripts/deployment-environments.mjs instead of
+  // re-declaring it.
+  const deployScript = readFileSync(
+    path.join(appRoot, 'scripts', 'deploy-docker-environment.sh'),
+    'utf8',
   );
   assert.match(
-    bundle,
-    /\$\{GATEWAY_POSTGRES_CA_FILE_MOUNT:-\.\/docker\/ca\/postgres-ca-bundle\.crt\}:\/run\/sdkwork\/api-gateway\/postgres-ca-bundle\.crt:ro/u,
+    deployScript,
+    /deployment-environments\.mjs list/u,
+    'deploy-docker-environment.sh must read the canonical environment list',
+  );
+  assert.doesNotMatch(
+    deployScript,
+    /development\|test\|staging\|demo\|production\)\s*;;/u,
+    'deploy-docker-environment.sh must not hardcode the environment case list',
+  );
+
+  const shim = readFileSync(
+    path.join(appRoot, 'scripts', 'package-docker-environments.sh'),
+    'utf8',
+  );
+  assert.match(
+    shim,
+    /package-environment-bundles\.mjs/u,
+    'the shell packaging shim must delegate to the shared mjs encapsulation',
+  );
+
+  const packager = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'package-environment-bundles.mjs'),
+    'utf8',
+  );
+  assert.match(packager, /from '\.\.\/deployment-environments\.mjs'/u);
+  // Deliverable bundles must be built from the committed example templates;
+  // requiring the operator's local secret .env would leak secrets into a
+  // distributable package (SUPPLY_CHAIN_SECURITY_SPEC).
+  assert.match(
+    packager,
+    /docker', 'env', `\$\{environment\}\.env\.example`/u,
+    'the per-environment packager must read the committed .env.example templates',
+  );
+  assert.doesNotMatch(
+    packager,
+    /requireRepoFile\(path\.join\('docker', 'env', `\$\{environment\}\.env`\)\)/u,
+  );
+
+  const unifiedPackager = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'),
+    'utf8',
+  );
+  assert.match(
+    unifiedPackager,
+    /from '\.\.\/deployment-environments\.mjs'/u,
+    'the unified bundle packager must import the shared environment registry',
   );
 });
