@@ -18,24 +18,6 @@ on:
         description: Package version used in artifact names and manifests.
         required: true
         default: 0.1.0
-      deployment_profile:
-        description: Deployment profile filter.
-        required: true
-        default: all
-        type: choice
-        options:
-          - all
-          - standalone
-          - cloud
-      runtime_target:
-        description: Runtime target filter.
-        required: true
-        default: all
-        type: choice
-        options:
-          - all
-          - server
-          - container
       platform:
         description: Platform filter.
         required: true
@@ -81,10 +63,6 @@ on:
           - web
           - worker
           - library
-      variant:
-        description: Package variant filter.
-        required: true
-        default: all
       format:
         description: Package format filter.
         required: true
@@ -369,12 +347,9 @@ jobs:
       config_path: sdkwork.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
       package_version: ${{ github.event.inputs.package_version || '' }}
-      deployment_profile: ${{ github.event.inputs.deployment_profile || 'all' }}
-      runtime_target: ${{ github.event.inputs.runtime_target || 'all' }}
       platform: ${{ github.event.inputs.platform || 'all' }}
       architecture: ${{ github.event.inputs.architecture || 'all' }}
       profile: ${{ github.event.inputs.profile || 'all' }}
-      variant: ${{ github.event.inputs.variant || 'all' }}
       format: ${{ github.event.inputs.format || 'all' }}
       publish_release: true
       upload_artifact: true
