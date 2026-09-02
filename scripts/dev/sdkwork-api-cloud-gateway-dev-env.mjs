@@ -90,6 +90,13 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:
       env.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET
       ?? cloudRouterDevelopmentSecret,
+    // RTC assembly startup hydrates runtime state from persistence using this
+    // tenant/organization scope; without it the assembly falls back to the
+    // "default" placeholder, which fails to parse as a tenant id. Mirrors the
+    // docker-compose development defaults (GATEWAY_RTC_HYDRATE_*).
+    SDKWORK_RTC_HYDRATE_TENANT_ID: env.SDKWORK_RTC_HYDRATE_TENANT_ID ?? '100001',
+    SDKWORK_RTC_HYDRATE_ORGANIZATION_ID:
+      env.SDKWORK_RTC_HYDRATE_ORGANIZATION_ID ?? '0',
     ...(!firstNonEmpty(
       env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING,
       env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE,

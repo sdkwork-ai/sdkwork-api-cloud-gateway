@@ -118,6 +118,8 @@ test('embedded dependencies never default a dependency base URL to the gateway o
     resolved.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET,
     'sdkwork-cloudrouter-local-dev-secret-20260507',
   );
+  assert.equal(resolved.SDKWORK_RTC_HYDRATE_TENANT_ID, '100001');
+  assert.equal(resolved.SDKWORK_RTC_HYDRATE_ORGANIZATION_ID, '0');
 });
 
 test('embedded modules receive the selected lifecycle environment', () => {
