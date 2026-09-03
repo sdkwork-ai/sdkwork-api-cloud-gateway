@@ -12,19 +12,33 @@
 #>
 $ErrorActionPreference = 'Stop'
 
+# Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1).
+# MUST stay aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS
+# and etc/sdkwork.deployment.config.json cloudApiBaseUrl.
+$baseDomains = @(
+    'sdkwork.com', 'birdcoder.com', 'dtupay.com',
+    'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
+    'skubc.com', 'skubc.cn',
+    'zowalk.com', 'zowalk.cn',
+    'offer86.com', 'offer86.cn',
+    '86offer.com', '86offer.cn'
+)
+
 $hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
 $markerBegin = '# === SDKWORK API GATEWAY DOMAINS BEGIN ==='
 $markerEnd = '# === SDKWORK API GATEWAY DOMAINS END ==='
 
-$domainBlock = @(
-    $markerBegin
-    '# SDKWork API Cloud Gateway (WSL nginx :80 -> container 391x)'
-    '127.0.0.1 api-dev.sdkwork.com api-dev.birdcoder.com api-dev.dtupay.com'
-    '127.0.0.1 api-test.sdkwork.com api-test.birdcoder.com api-test.dtupay.com'
-    '127.0.0.1 api-staging.sdkwork.com api-staging.birdcoder.com api-staging.dtupay.com'
-    '127.0.0.1 api.sdkwork.com api.birdcoder.com api.dtupay.com'
-    $markerEnd
-) -join "`r`n"
+# api-<suffix>.<base-domain> per environment; production uses the bare "api".
+$envSuffixes = @('api-dev', 'api-test', 'api-staging', 'api-demo', 'api')
+
+$domainBlock = @( $markerBegin )
+$domainBlock += '# SDKWork API Cloud Gateway (WSL nginx :80 -> container 391x)'
+foreach ($suffix in $envSuffixes) {
+    $names = foreach ($d in $baseDomains) { "$suffix.$d" }
+    $domainBlock += "127.0.0.1 $names"
+}
+$domainBlock += $markerEnd
+$domainBlock = $domainBlock -join "`r`n"
 
 $content = Get-Content -Path $hostsPath -Raw -Encoding UTF8
 if ($content -match [regex]::Escape($markerBegin)) {
@@ -35,7 +49,7 @@ if ($content -match [regex]::Escape($markerBegin)) {
 }
 
 Set-Content -Path $hostsPath -Value $content -Encoding UTF8 -NoNewline
-Write-Host "Updated Windows hosts: api-dev/test/staging/prod for sdkwork.com, birdcoder.com, dtupay.com"
+Write-Host "Updated Windows hosts: api-dev/test/staging/demo/prod for $($baseDomains.Count) registered base domains"
 
 $checks = @(
     'http://api-dev.sdkwork.com/healthz',

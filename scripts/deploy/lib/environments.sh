@@ -9,7 +9,7 @@
 #   - one host port per environment (no conflicts): dev 3910, test 3911, staging 3912, prod 3913
 #   - one database identity per environment (db == schema == role)
 #   - subdomain pattern:  api-dev / api-test / api-staging / api  (prod is the bare "api")
-#   - every environment is served on all three public domains (aliases in nginx)
+#   - every environment is served on all registered public domains (aliases in nginx)
 #
 # Edit ONLY this file when the matrix must change.
 
@@ -23,7 +23,13 @@ source "$(dirname -- "${BASH_SOURCE[0]}")/common.sh"
 SDKWORK_DEPLOY_ENVS="development test staging production"
 
 # Public top-level domains the gateway is served on.
-SDKWORK_DEPLOY_DOMAINS="sdkwork.com birdcoder.com dtupay.com"
+# MUST stay aligned with the registered base-domain family:
+#   - deployments/webserver/server.<env>.toml (gateway nginx edge serverName)
+#   - etc/sdkwork.deployment.config.json (cloudApiBaseUrl / publicHosts)
+#   - specs/topology.spec.json (cloudPublicHosts)
+#   - sdkwork-webserver deployments/webserver/server.<env>.toml (client edge)
+# (ENVIRONMENT_SPEC §5.1.0.1: every environment serves every registered domain.)
+SDKWORK_DEPLOY_DOMAINS="sdkwork.com birdcoder.com dtupay.com sdkwork.cn birdcoder.cn dtupay.cn skubc.com skubc.cn zowalk.com zowalk.cn offer86.com offer86.cn 86offer.com 86offer.cn"
 
 # env_prefix <env> -> subdomain prefix (empty for production)
 env_prefix() {

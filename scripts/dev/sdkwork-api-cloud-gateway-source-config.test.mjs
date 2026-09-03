@@ -45,7 +45,9 @@ test('source configuration declares the complete deployment profile matrix', () 
     for (const environment of ['development', 'test', 'staging', 'production']) {
       const profile = resolveGatewaySourceProfile({ appRoot, deploymentProfile, environment });
       assert.equal(profile.profileId, `${deploymentProfile}.${environment}`);
-      assert.ok(profile.environmentConfig.publicHosts.length === 3);
+      // Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1):
+      // api[-<suffix>].<base-domain> for all 14 registered base domains.
+      assert.equal(profile.environmentConfig.publicHosts.length, 14);
       assert.doesNotThrow(() => assertCloudPublicProfile(profile));
     }
   }

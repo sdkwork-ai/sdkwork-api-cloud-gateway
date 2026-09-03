@@ -22,7 +22,17 @@ export {
   ENVIRONMENT_SUFFIX,
 };
 
-const BASE_DOMAINS = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
+// Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1): the edge
+// serves api-<suffix>.<base-domain> for every entry. Keep aligned with
+// scripts/deploy/lib/environments.sh and etc/sdkwork.deployment.config.json.
+const BASE_DOMAINS = [
+  'sdkwork.com', 'birdcoder.com', 'dtupay.com',
+  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
+  'skubc.com', 'skubc.cn',
+  'zowalk.com', 'zowalk.cn',
+  'offer86.com', 'offer86.cn',
+  '86offer.com', '86offer.cn',
+];
 const DESKTOP_CORS_ORIGINS = [
   'app://dsh',
   'app://birdcoder',

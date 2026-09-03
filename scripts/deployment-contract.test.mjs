@@ -18,7 +18,16 @@ import {
 const appRoot = path.resolve('.');
 const environments = ENVIRONMENTS;
 const profiles = ['standalone', 'cloud'];
-const baseDomains = ['sdkwork.com', 'birdcoder.com', 'dtupay.com'];
+// Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1). Keep
+// aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS.
+const baseDomains = [
+  'sdkwork.com', 'birdcoder.com', 'dtupay.com',
+  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
+  'skubc.com', 'skubc.cn',
+  'zowalk.com', 'zowalk.cn',
+  'offer86.com', 'offer86.cn',
+  '86offer.com', '86offer.cn',
+];
 const suffixes = {
   development: 'dev',
   test: 'test',

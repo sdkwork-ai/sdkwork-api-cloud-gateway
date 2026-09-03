@@ -26,7 +26,7 @@ bind = "127.0.0.1:3906"
 
 [cors]
 allowAnyOrigin = false
-allowedOrigins = ["https://api-test.sdkwork.com", "https://api-test.birdcoder.com", "https://api-test.dtupay.com", "http://127.0.0.1:3906", "http://localhost:3906", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay", "tauri://localhost", "https://servicewechat.com"]
+allowedOrigins = ["https://api-test.sdkwork.com", "https://api-test.birdcoder.com", "https://api-test.dtupay.com", "https://api-test.sdkwork.cn", "https://api-test.birdcoder.cn", "https://api-test.dtupay.cn", "https://api-test.skubc.com", "https://api-test.skubc.cn", "https://api-test.zowalk.com", "https://api-test.zowalk.cn", "https://api-test.offer86.com", "https://api-test.offer86.cn", "https://api-test.86offer.com", "https://api-test.86offer.cn", "http://127.0.0.1:3906", "http://localhost:3906", "app://dsh", "app://birdcoder", "app://sdkwork", "app://dtupay", "tauri://localhost", "https://servicewechat.com"]
 
 [request]
 maxBodyBytes = 33554432
@@ -46,7 +46,7 @@ includePolicyInventory = true
 includeRouteInventory = true
 
 [security]
-allowedHosts = ["api-test.sdkwork.com", "api-test.birdcoder.com", "api-test.dtupay.com", "127.0.0.1:3906", "localhost:3906"]
+allowedHosts = ["api-test.sdkwork.com", "api-test.birdcoder.com", "api-test.dtupay.com", "api-test.sdkwork.cn", "api-test.birdcoder.cn", "api-test.dtupay.cn", "api-test.skubc.com", "api-test.skubc.cn", "api-test.zowalk.com", "api-test.zowalk.cn", "api-test.offer86.com", "api-test.offer86.cn", "api-test.86offer.com", "api-test.86offer.cn", "127.0.0.1:3906", "localhost:3906"]
 trustedProxyCidrs = []
 secureHeadersEnabled = true
 maxHeaderBytes = 65536
