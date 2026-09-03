@@ -289,10 +289,23 @@ psql -h <PG主机> -U postgres -d sdkwork_ai_prod -c \
   "GRANT ALL PRIVILEGES ON DATABASE sdkwork_ai_prod TO sdkwork_ai_prod;"
 ```
 
-**第 3 步：准备 Redis**（已有可跳过）：
+**第 3 步：准备 Redis**（已有可跳过）。**默认方案是无密码**（env 模板默认值
+`GATEWAY_CLOUDROUTER_REDIS_PASSWORD=` 留空即对应免密）：
 
 ```bash
-# Docker 示例：端口映射到宿主 6380（env 模板默认值），带密码 + AOF 持久化
+# 默认方案：无密码（内网 / 受信网络），仅 AOF 持久化
+docker run -d --name sdkwork-redis --restart unless-stopped \
+  -p 6380:6379 -v sdkwork-redis-data:/data \
+  redis:8-alpine redis-server --appendonly yes
+
+# 验证连通（返回 PONG）
+redis-cli -h <REDIS主机> -p 6380 ping
+```
+
+可选加固（公网 / 跨信任域才需要）——带密码版本：
+
+```bash
+# 加密方案：requirepass + AOF 持久化
 docker run -d --name sdkwork-redis --restart unless-stopped \
   -p 6380:6379 -v sdkwork-redis-data:/data \
   redis:8-alpine redis-server --requirepass '<Redis密码>' --appendonly yes
@@ -301,8 +314,9 @@ docker run -d --name sdkwork-redis --restart unless-stopped \
 redis-cli -h <REDIS主机> -p 6380 -a '<Redis密码>' ping
 ```
 
-自建/托管 Redis 均可，只要网络可达、密码已知。同一 Redis 服务多环境共用时，
-靠 env 里的逻辑库编号隔离（见上表）；也可每环境独立 Redis 实例。
+自建/托管 Redis 均可，只要网络可达（带密码方案还需密码已知）。同一 Redis
+服务多环境共用时，靠 env 里的逻辑库编号隔离（见上表）；也可每环境独立
+Redis 实例。
 
 **第 4 步：把连接信息填进 `env/<环境>.env`**（以 production 为例）：
 
@@ -316,19 +330,26 @@ GATEWAY_POSTGRES_USER=sdkwork_ai_prod
 GATEWAY_POSTGRES_PASSWORD=<第 2 步设置的角色密码>
 GATEWAY_POSTGRES_SSL_MODE=require         # production/staging 强制；内网 dev/test 可 disable
 
-# --- Redis（对应第 3 步产物）---
+# --- Redis 方案一（默认，无密码）：密码行留空，URL 不带密码段 ---
 GATEWAY_CLOUDROUTER_REDIS_HOST=<REDIS主机>
 GATEWAY_CLOUDROUTER_REDIS_PORT=6380
-GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<Redis密码>
-GATEWAY_RTC_STATE_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/7
-GATEWAY_WEB_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/8
+GATEWAY_CLOUDROUTER_REDIS_PASSWORD=
+GATEWAY_RTC_STATE_REDIS_URL=redis://<REDIS主机>:6380/7
+GATEWAY_WEB_REDIS_URL=redis://<REDIS主机>:6380/8
+
+# --- Redis 方案二（可选加固，带密码）：三行同步填，URL 密码须百分号编码 ---
+# GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<Redis密码>
+# GATEWAY_RTC_STATE_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/7
+# GATEWAY_WEB_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/8
 ```
 
-> 注意两点：
-> ① `GATEWAY_RTC_STATE_REDIS_URL` / `GATEWAY_WEB_REDIS_URL` 是完整 URL，
-> 密码里的 `@ : / # ?` 等字符必须百分号编码（python3
-> `urllib.parse.quote` 一行转换）；逻辑库编号按上表按环境区分。
-> ② env 模板默认 `host.docker.internal`（容器内访问宿主机服务）；Linux 宿主上
+> 注意三点：
+> ① **两套方案切换时要三处同步**：`GATEWAY_CLOUDROUTER_REDIS_PASSWORD`、
+> `GATEWAY_RTC_STATE_REDIS_URL`、`GATEWAY_WEB_REDIS_URL` 的密码状态必须一致
+> （免密 = 密码行留空 + URL 无密码段；带密 = 三处都填）。
+> ② 带密方案里 URL 是完整 URL，密码中的 `@ : / # ?` 等字符必须百分号编码
+> （python3 `urllib.parse.quote` 一行转换）；逻辑库编号按上表按环境区分。
+> ③ env 模板默认 `host.docker.internal`（容器内访问宿主机服务）；Linux 宿主上
 > compose 模板已自动加 `host-gateway` 映射，直接填外部主机名/IP 也可。
 
 **第 5 步：部署前连通性验证**（两条都过再 `deploy.sh`）：
@@ -338,7 +359,8 @@ psql "host=<PG主机> port=5432 dbname=sdkwork_ai_prod user=sdkwork_ai_prod \
   password=<角色密码> sslmode=require" -c "SELECT extname FROM pg_extension WHERE extname='vector';"
 # 预期输出一行 vector
 
-redis-cli -h <REDIS主机> -p 6380 -a '<Redis密码>' ping   # 预期 PONG
+redis-cli -h <REDIS主机> -p 6380 ping                     # 无密码方案，预期 PONG
+redis-cli -h <REDIS主机> -p 6380 -a '<Redis密码>' ping    # 带密码方案，预期 PONG
 ```
 
 ## 5. 第四步：部署与验证

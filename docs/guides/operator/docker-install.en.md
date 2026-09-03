@@ -331,8 +331,21 @@ psql -h <pg-host> -U postgres -d sdkwork_ai_prod -c \
 **Step 3: provision Redis** (skip if you already have one):
 
 ```bash
-# Docker example: publish on host port 6380 (the env template default),
-# password-protected, AOF persistence enabled
+# DEFAULT: no password (intranet / trusted network), AOF persistence only —
+# this matches the env template default (GATEWAY_CLOUDROUTER_REDIS_PASSWORD= empty)
+docker run -d --name sdkwork-redis --restart unless-stopped \
+  -p 6380:6379 -v sdkwork-redis-data:/data \
+  redis:8-alpine redis-server --appendonly yes
+
+# Verify connectivity (expect PONG)
+redis-cli -h <redis-host> -p 6380 ping
+```
+
+Optional hardening (only for public / cross-trust-boundary exposure) —
+password-protected variant:
+
+```bash
+# Hardened: requirepass + AOF persistence
 docker run -d --name sdkwork-redis --restart unless-stopped \
   -p 6380:6379 -v sdkwork-redis-data:/data \
   redis:8-alpine redis-server --requirepass '<redis-password>' --appendonly yes
@@ -341,10 +354,10 @@ docker run -d --name sdkwork-redis --restart unless-stopped \
 redis-cli -h <redis-host> -p 6380 -a '<redis-password>' ping
 ```
 
-Self-hosted or managed Redis both work as long as it is reachable and the
-password is known. When multiple environments share one Redis service, they
-are isolated by the logical DB numbers in the table above; separate Redis
-instances per environment also work.
+Self-hosted or managed Redis both work as long as it is reachable (and the
+password is known for the hardened variant). When multiple environments share
+one Redis service, they are isolated by the logical DB numbers in the table
+above; separate Redis instances per environment also work.
 
 **Step 4: fill the connection settings into `env/<environment>.env`**
 (production example):
@@ -359,20 +372,30 @@ GATEWAY_POSTGRES_USER=sdkwork_ai_prod
 GATEWAY_POSTGRES_PASSWORD=<role password from Step 2>
 GATEWAY_POSTGRES_SSL_MODE=require         # forced for production/staging; dev/test on an intranet may use disable
 
-# --- Redis (matches Step 3) ---
+# --- Redis variant 1 (default, no password): leave the password empty, URLs carry no password segment ---
 GATEWAY_CLOUDROUTER_REDIS_HOST=<redis-host>
 GATEWAY_CLOUDROUTER_REDIS_PORT=6380
-GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<redis-password>
-GATEWAY_RTC_STATE_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/7
-GATEWAY_WEB_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/8
+GATEWAY_CLOUDROUTER_REDIS_PASSWORD=
+GATEWAY_RTC_STATE_REDIS_URL=redis://<redis-host>:6380/7
+GATEWAY_WEB_REDIS_URL=redis://<redis-host>:6380/8
+
+# --- Redis variant 2 (optional hardening, with password): fill all three,
+#     the password inside the URLs must be percent-encoded ---
+# GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<redis-password>
+# GATEWAY_RTC_STATE_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/7
+# GATEWAY_WEB_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/8
 ```
 
-> Two things to watch:
-> ① `GATEWAY_RTC_STATE_REDIS_URL` / `GATEWAY_WEB_REDIS_URL` are full URLs:
-> special characters in the password (`@ : / # ?`) must be percent-encoded
-> (one line with python3 `urllib.parse.quote`); the logical DB numbers follow
-> the table per environment.
-> ② The env templates default to `host.docker.internal` (reaching host-side
+> Three things to watch:
+> ① **When switching between the two variants, all three keys move together**:
+> `GATEWAY_CLOUDROUTER_REDIS_PASSWORD`, `GATEWAY_RTC_STATE_REDIS_URL`, and
+> `GATEWAY_WEB_REDIS_URL` must agree (no-password = empty password line +
+> password-less URLs; with-password = all three filled).
+> ② In the hardened variant the URLs are full URLs: special characters in the
+> password (`@ : / # ?`) must be percent-encoded (one line with python3
+> `urllib.parse.quote`); the logical DB numbers follow the table per
+> environment.
+> ③ The env templates default to `host.docker.internal` (reaching host-side
 > services from inside the container); the compose templates add the
 > `host-gateway` mapping automatically on Linux hosts, and a plain external
 > hostname/IP works too.
@@ -384,7 +407,8 @@ psql "host=<pg-host> port=5432 dbname=sdkwork_ai_prod user=sdkwork_ai_prod \
   password=<role-password> sslmode=require" -c "SELECT extname FROM pg_extension WHERE extname='vector';"
 # expect one row: vector
 
-redis-cli -h <redis-host> -p 6380 -a '<redis-password>' ping   # expect PONG
+redis-cli -h <redis-host> -p 6380 ping                        # no-password variant, expect PONG
+redis-cli -h <redis-host> -p 6380 -a '<redis-password>' ping  # hardened variant, expect PONG
 ```
 
 ## 5. Step 4: Deploy and Verify
