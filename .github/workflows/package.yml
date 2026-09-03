@@ -244,6 +244,10 @@ on:
         description: sdkwork-customerservice commit/ref.
         required: false
         default: main
+      sdkwork_discovery_ref:
+        description: sdkwork-discovery commit/ref.
+        required: false
+        default: main
       sdkwork_doudizhu_ref:
         description: sdkwork-doudizhu commit/ref.
         required: false
@@ -358,6 +362,10 @@ on:
         default: main
       sdkwork_sdk_generator_ref:
         description: sdkwork-sdk-generator commit/ref.
+        required: false
+        default: main
+      sdkwork_sandbox_ref:
+        description: sdkwork-sandbox commit/ref.
         required: false
         default: main
       sdkwork_terminal_ref:
