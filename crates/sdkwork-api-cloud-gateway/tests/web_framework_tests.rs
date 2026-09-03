@@ -34,7 +34,9 @@ async fn embedded_outer_router_assigns_request_identity() {
 fn embedded_iam_uses_owner_api_surface_assembly() {
     let source = include_str!("../src/embedded_dependency_routes.rs");
 
-    assert!(source.contains("sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool"));
+    // Embedded IAM routes consume the IAM assembly's module-based owner API
+    // surface (`web_module_with_pool`); the legacy bootstrap entrypoint is gone.
+    assert!(source.contains("sdkwork_api_iam_assembly::web_module_with_pool"));
     assert!(source.contains("workspace_surface_enabled(config, \"sdkwork-iam\")"));
     assert!(!source.contains("bootstrap_iam_for_application"));
     assert!(!source.contains("wrap_router_with_iam_owner_web_framework"));

@@ -153,15 +153,17 @@ fn surface_from_component_contract(path: &str) -> &'static str {
 
 fn inventory_from_bootstrap(bootstrap: &EmbeddedDependencyBootstrap) -> Vec<serde_json::Value> {
     let mut entries = Vec::new();
-    for contribution in &bootstrap.contributions {
-        for route in contribution.route_manifest.routes() {
-            entries.push(json!({
-                "surface": surface_of(route.path),
-                "method": method_name(route.method),
-                "normalizedPath": normalize_path(route.path),
-                "operationId": route.operation_id,
-                "authProfile": auth_profile(route.auth),
-            }));
+    for module in &bootstrap.modules {
+        for contribution in module.contributions() {
+            for route in contribution.route_manifest.routes() {
+                entries.push(json!({
+                    "surface": surface_of(route.path),
+                    "method": method_name(route.method),
+                    "normalizedPath": normalize_path(route.path),
+                    "operationId": route.operation_id,
+                    "authProfile": auth_profile(route.auth),
+                }));
+            }
         }
     }
     for (method, path, operation_id) in GATEWAY_SELF_ROUTES {
