@@ -471,6 +471,10 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(embedded, /pgvector\/pgvector:pg18/u);
   assert.match(embedded, /redis:8-alpine/u);
   assert.match(embedded, /ssl=on/u);
+  // The embedded default connection string must honor GATEWAY_POSTGRES_SSL_MODE
+  // (P0-12 production fail-closed requires sslmode=require/verify-full pools);
+  // the literal "disable" default keeps dev/test/demo postures unchanged.
+  assert.match(embedded, /sslmode=\$\{GATEWAY_POSTGRES_SSL_MODE:-disable\}/u);
   assert.match(embedded, /profiles: \["deps"\]/u);
   assert.match(embedded, /SDKWORK_DATABASE_HOST: postgres/u);
   assert.match(embedded, /SDKWORK_CLOUDROUTER_REDIS_HOST: redis/u);
