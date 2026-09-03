@@ -7,7 +7,8 @@
 ## 0. Three Commands to a Running Gateway (TL;DR)
 
 With the install bundle (the `.bundle` directory) on any Docker host.
-**External dependencies are the default**: the gateway uses YOUR PostgreSQL
+**No bundle yet? Packaging is always step one — see §2 (repackaging scenarios
+in §2.1)**. **External dependencies are the default**: the gateway uses YOUR PostgreSQL
 and Redis instances via `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*`
 in the env file:
 
@@ -108,8 +109,9 @@ adding/removing one flag and re-running `deploy.sh`.
 
 ## 2. Step 1: Package the Bundle (build machine)
 
-The whole pipeline is shell-only. One command at the repository root produces
-a self-contained install bundle (image + compose + env templates + deploy
+**Everything starts with packaging**: no bundle, no deployment. The whole
+pipeline is shell-only. One command at the repository root produces a
+self-contained install bundle (image + compose + env templates + deploy
 script):
 
 ```bash
@@ -126,6 +128,29 @@ image → registry tag from `release.currentVersion` in
 Build-machine prerequisites: Docker (with the compose plugin), Node.js, and
 the Rust toolchain (cargo) — the packaging command itself is the single bash
 line above.
+
+### 2.1 Repackaging (picking skips for daily iteration)
+
+Pick the skip flags by what actually changed this time:
+
+| What changed | Command | Relative cost |
+| --- | --- | --- |
+| Rust code / Cargo dependencies | `bash scripts/build-install-bundle.sh` (full) | longest (compile + image) |
+| Only packaging scripts / compose / env templates / docs | `bash scripts/build-install-bundle.sh --skip-server-package` | medium (image + bundle) |
+| Only bundle assembly (deploy.sh / prepare-envs.sh / README) | `bash scripts/build-install-bundle.sh --skip-server-package --skip-image-build` | fastest (seconds) |
+| Just want to see the plan | add `--dry-run` | seconds |
+
+**Versioning**: before a release, bump `release.currentVersion` in
+`sdkwork.app.config.json` (e.g. `0.1.2`), or override ad hoc with
+`--version 0.1.2` — the version drives the image tag
+(`registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<version>`) and the
+bundle directory name. **Each release keeps its own bundle directory, never
+overwritten**; keep the previous one for rollback (§5.2).
+
+**Pre-shipping checks**: the new bundle's `image.sha256` and
+`manifest.json` record the image fingerprint — verify with `sha256sum -c`
+after copying (§3). `prepare-envs.sh` never overwrites existing env files,
+so repackaging never destroys server-side configuration.
 
 Bundle layout (version comes from `sdkwork.app.config.json`; currently 0.1.1):
 
@@ -454,6 +479,82 @@ docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # single ins
 | Data volumes | `<env>-postgres-data` / `<env>-redis-data` (embedded mode) | same names |
 | Compose project names | instances `sdkwork-api-cloud-gateway-<env>-i<N>`; deps `sdkwork-api-cloud-gateway-<env>-deps` | same names |
 
+### 5.2 Rollback Flow (app version / config / data)
+
+**Do three things BEFORE every upgrade, or there is no way back**:
+
+```bash
+# ① Back up the current env config
+cp /etc/sdkwork/api-gateway/docker/<env>.env \
+   /etc/sdkwork/api-gateway/docker/<env>.env.bak.$(date +%F-%H%M)
+# ② Keep the previous bundle (before rsyncing the new one over, copy the old
+#    directory aside with a version suffix)
+cp -r /opt/sdkwork/deploy/sdkwork-api-cloud-gateway \
+      /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-v0.1.1
+# ③ Database backup: external mode — follow your own database procedure;
+#    embedded mode — use the pg_dump command in "Data rollback" below
+```
+
+**① App version rollback (most common)**: every bundle ships its own
+versioned `image.tar.gz`, so rollback = re-apply with the OLD bundle (same
+compose project names, containers rebuilt idempotently):
+
+```bash
+cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-v0.1.1     # previous-version bundle
+bash deploy.sh --environment production \
+  --env-file /etc/sdkwork/api-gateway/docker/production.env --replicas 3
+curl --noproxy '*' http://127.0.0.1:3913/healthz            # 200 = rollback done
+```
+
+If both the old and new images are already on the machine (visible in
+`docker images | grep sdkwork-api-cloud-gateway`), it is faster to point the
+CURRENT bundle at the old tag — image resolution order: `--image-tag` >
+bundle `image.env` > env `GATEWAY_IMAGE` > default version:
+
+```bash
+bash deploy.sh --environment production --image-tag 0.1.0 \
+  --env-file /etc/sdkwork/api-gateway/docker/production.env --replicas 3
+```
+
+**② Config rollback**: restore the env backup, then re-run apply (idempotent,
+config takes effect):
+
+```bash
+cp /etc/sdkwork/api-gateway/docker/<env>.env.bak.2026-09-03-1500 \
+   /etc/sdkwork/api-gateway/docker/<env>.env
+bash deploy.sh --environment <env> \
+  --env-file /etc/sdkwork/api-gateway/docker/<env>.env --replicas N
+```
+
+**③ Data rollback (only for destructive migrations / corrupted data)**:
+database migrations run **forward-only** — rolling the app version back does
+NOT roll back the schema (the old version works against the newer schema), so
+a normal rollback is just step ①. Restore the database only when a release
+contained destructive migrations or data got corrupted:
+
+```bash
+# Backup (embedded mode; external mode is done on the database side, no
+# gateway change needed)
+docker exec sdkwork-api-cloud-gateway-<env>-deps-postgres-1 \
+  pg_dump -U <user-same-as-db-name> -d <database-name> -Fc > pg-<env>-$(date +%F).dump
+
+# Restore: stop first, restore, then start
+bash deploy.sh --environment <env> --stop
+cat pg-<env>-2026-09-03.dump | docker exec -i \
+  sdkwork-api-cloud-gateway-<env>-deps-postgres-1 \
+  pg_restore -U <user-same-as-db-name> -d <database-name> --clean --if-exists
+bash deploy.sh --environment <env> --start
+```
+
+**④ Post-rollback verification checklist**:
+
+```bash
+bash deploy.sh --environment <env> --ps                    # instances + deps all healthy
+curl --noproxy '*' http://127.0.0.1:<port>/healthz         # 200
+curl --noproxy '*' http://127.0.0.1:<port>/readyz          # 200
+docker logs --tail 100 sdkwork-api-cloud-gateway-<env>-i1-gateway-1   # no ERROR / crash loop
+```
+
 ## 6. Multi-Environment Matrix (ports / node ids / databases)
 
 Instance port formula: `instance i port = GATEWAY_HOST_PORT + (i-1) × 10 →
@@ -609,6 +710,13 @@ in `image.env` automatically.
 - [ ] `GATEWAY_POSTGRES_SSL_MODE=require` for staging/production (both external and embedded modes, P0-12)
 - [ ] Explicit `SDKWORK_DATABASE_URL` overrides match the dependency mode (embedded: `postgres:5432` or removed)
 - [ ] Every environment domain reaches the gateway API through sdkwork-webserver
+
+**Upgrade / rollback readiness** (run through before every upgrade, see §5.2):
+
+- [ ] env config backed up (`<env>.env.bak.<timestamp>`)
+- [ ] Previous-version bundle kept (version-suffixed directory) with its `image.tar.gz` intact
+- [ ] Database backed up as of now (external: own procedure; embedded: §5.2 pg_dump)
+- [ ] Rollback drilled once via `--image-tag <old-version>` or old-bundle apply
 
 Full operator manual: `docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`;
 bare-metal Ubuntu (systemd) install: `docs/guides/operator/INSTALLATION_STANDARDS.md`.

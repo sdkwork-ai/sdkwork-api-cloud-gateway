@@ -6,7 +6,8 @@
 
 ## 0. 三条命令跑起来（TL;DR）
 
-拿到安装包（`.bundle` 目录）后，在任意 Docker 主机上。**默认外置依赖**：
+拿到安装包（`.bundle` 目录）后，在任意 Docker 主机上。**还没有安装包？第一步永远是
+打包——见 §2（含重新打包的场景选择 §2.1）**。**默认外置依赖**：
 数据库和 Redis 用你自己的实例，网关通过 env 里的 `GATEWAY_POSTGRES_*` /
 `GATEWAY_CLOUDROUTER_REDIS_*` 连过去：
 
@@ -95,8 +96,8 @@ curl http://127.0.0.1:3913/healthz
 
 ## 2. 第一步：打包安装包（构建机）
 
-全流程只用 shell 脚本，在仓库根目录一条命令产出自包含安装包
-（镜像 + compose + env 模板 + 部署脚本）：
+**一切从打包开始**：拿到安装包才有后面的一切。全流程只用 shell 脚本，在仓库根目录
+一条命令产出自包含安装包（镜像 + compose + env 模板 + 部署脚本）：
 
 ```bash
 bash scripts/build-install-bundle.sh                      # 全量打包：编译 → 镜像 → bundle
@@ -109,6 +110,26 @@ bash scripts/build-install-bundle.sh --dry-run            # bundle 步骤只看�
 `sdkwork.app.config.json` 的 `release.currentVersion`（当前 0.1.1）打 registry tag →
 打出 `dist/docker-install/sdkwork-api-cloud-gateway-install-<版本>.bundle/`。
 构建机需要：Docker（含 compose 插件）、Node.js、Rust 工具链（cargo）——包装命令只有上面这一条 bash。
+
+### 2.1 重新打包（日常迭代怎么选）
+
+按「这次到底改了什么」选跳过项，能省大量时间：
+
+| 这次改了什么 | 命令 | 耗时感受 |
+| --- | --- | --- |
+| Rust 代码 / Cargo 依赖 | `bash scripts/build-install-bundle.sh`（全量） | 最长（编译 + 镜像） |
+| 只改了打包脚本 / compose / env 模板 / 文档 | `bash scripts/build-install-bundle.sh --skip-server-package` | 中（只重做镜像与 bundle） |
+| 只改了 bundle 装配（deploy.sh / prepare-envs.sh / README） | `bash scripts/build-install-bundle.sh --skip-server-package --skip-image-build` | 最快（秒级重装 bundle） |
+| 只想看会执行什么 | 加 `--dry-run` | 秒级 |
+
+**版本号**：新版本发布前把 `sdkwork.app.config.json` 的 `release.currentVersion`
+改为新版本号（如 `0.1.2`），或临时用 `--version 0.1.2` 覆盖——版本号决定镜像 tag
+（`registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<版本>`）与 bundle 目录名。
+**每次发布的 bundle 目录独立存在、互不覆盖**，旧版本目录保留即可用于回滚（§5.2）。
+
+**分发前自检**：新 bundle 的 `image.sha256` 与 `manifest.json` 记录了镜像指纹，
+拷贝到远程后用 `sha256sum -c` 校验（§3）；`prepare-envs.sh` 不会覆盖已有 env，
+重复打包不会弄丢服务器上的配置。
 
 产物布局（版本号取自 `sdkwork.app.config.json`，当前为 0.1.1）：
 
@@ -404,6 +425,75 @@ docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # 单实例�
 | 数据卷 | `<环境>-postgres-data` / `<环境>-redis-data`（内置模式） | 同名 |
 | 容器项目名 | 实例 `sdkwork-api-cloud-gateway-<env>-i<N>`；依赖 `sdkwork-api-cloud-gateway-<env>-deps` | 同名 |
 
+### 5.2 回滚流程（版本回退 / 配置回退 / 数据回退）
+
+**升级前先做三件事，回滚才有退路**（每次升级都执行）：
+
+```bash
+# ① 备份当前 env 配置
+cp /etc/sdkwork/api-gateway/docker/<环境>.env \
+   /etc/sdkwork/api-gateway/docker/<环境>.env.bak.$(date +%F-%H%M)
+# ② 保留旧版本 bundle（远程 rsync 安装新版本前，把旧目录拷一份带版本号）
+cp -r /opt/sdkwork/deploy/sdkwork-api-cloud-gateway \
+      /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-v0.1.1
+# ③ 数据库备份：外置模式按你自己的数据库流程备份；
+#    内置模式用下面「数据回退」里的 pg_dump 命令
+```
+
+**① 应用版本回退（最常用）**：每个 bundle 自带对应版本的 `image.tar.gz`，
+回滚 = 用旧 bundle 重新 apply（同一 compose 项目名，幂等重建容器）：
+
+```bash
+cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-v0.1.1     # 上一版本的 bundle
+bash deploy.sh --environment production \
+  --env-file /etc/sdkwork/api-gateway/docker/production.env --replicas 3
+curl --noproxy '*' http://127.0.0.1:3913/healthz            # 200 即回滚完成
+```
+
+如果新旧镜像都已经在本机（`docker images | grep sdkwork-api-cloud-gateway` 可见），
+在**当前** bundle 里指定旧 tag 更快——镜像解析优先级：`--image-tag` > bundle `image.env`
+> env 的 `GATEWAY_IMAGE` > 默认版本：
+
+```bash
+bash deploy.sh --environment production --image-tag 0.1.0 \
+  --env-file /etc/sdkwork/api-gateway/docker/production.env --replicas 3
+```
+
+**② 配置回退**：恢复 env 备份后重跑 apply（幂等，配置即生效）：
+
+```bash
+cp /etc/sdkwork/api-gateway/docker/<环境>.env.bak.2026-09-03-1500 \
+   /etc/sdkwork/api-gateway/docker/<环境>.env
+bash deploy.sh --environment <环境> \
+  --env-file /etc/sdkwork/api-gateway/docker/<环境>.env --replicas N
+```
+
+**③ 数据回退（仅破坏性迁移 / 数据损坏时）**：数据库迁移是**正向执行**的——
+应用版本回退不会回滚 schema（旧版本兼容新 schema），所以一般回滚只做①。
+只有新版本含破坏性迁移或数据被写坏时才恢复数据库：
+
+```bash
+# 备份（内置模式；外置模式在数据库侧做，网关无需变更）
+docker exec sdkwork-api-cloud-gateway-<env>-deps-postgres-1 \
+  pg_dump -U <库名同名用户> -d <数据库名> -Fc > pg-<env>-$(date +%F).dump
+
+# 恢复：先停后恢复再启动
+bash deploy.sh --environment <env> --stop
+cat pg-<env>-2026-09-03.dump | docker exec -i \
+  sdkwork-api-cloud-gateway-<env>-deps-postgres-1 \
+  pg_restore -U <库名同名用户> -d <数据库名> --clean --if-exists
+bash deploy.sh --environment <env> --start
+```
+
+**④ 回滚后验证清单**：
+
+```bash
+bash deploy.sh --environment <env> --ps                    # 实例与 deps 全部 healthy
+curl --noproxy '*' http://127.0.0.1:<端口>/healthz         # 200
+curl --noproxy '*' http://127.0.0.1:<端口>/readyz          # 200
+docker logs --tail 100 sdkwork-api-cloud-gateway-<env>-i1-gateway-1   # 无 ERROR / 崩溃循环
+```
+
 ## 6. 多环境矩阵（端口 / 节点 ID / 数据库规划）
 
 实例端口公式：`实例 i 端口 = GATEWAY_HOST_PORT + (i-1) × 10 → 容器 3900`。
@@ -530,6 +620,13 @@ bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
 - [ ] 生产 / 预发 `GATEWAY_POSTGRES_SSL_MODE=require`（外置与内置模式都要求，P0-12）
 - [ ] `SDKWORK_DATABASE_URL` 显式覆盖与当前依赖模式一致（内置模式应为 `postgres:5432` 或删除）
 - [ ] sdkwork-webserver 各环境域名经反代可达网关 API
+
+**升级 / 回滚准备**（每次升级前过一遍，详见 §5.2）：
+
+- [ ] env 配置已备份（`<环境>.env.bak.<时间戳>`）
+- [ ] 上一版本 bundle 已保留（带版本号目录），`image.tar.gz` 完整
+- [ ] 数据库已有当前时点备份（外置按自有流程；内置用 §5.2 pg_dump）
+- [ ] 回滚演练过一次 `--image-tag <旧版本>` 或旧 bundle apply
 
 完整操作手册：`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`；
 Ubuntu 裸机（systemd）安装见 `docs/guides/operator/INSTALLATION_STANDARDS.md`。
