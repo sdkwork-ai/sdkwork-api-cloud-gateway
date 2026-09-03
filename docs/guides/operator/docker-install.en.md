@@ -181,18 +181,18 @@ Manual copy (scp or rsync — mind the trailing-slash semantics):
 ```bash
 # scp (simplest)
 scp -r dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
-    deploy@1.2.3.4:/opt/sdkwork/deploy/
+    deploy@api.sdkwork.com:/opt/sdkwork/deploy/
 
 # rsync (resumable, re-runs transfer only the diff; recommended for large bundles)
 rsync -avP dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
-    deploy@1.2.3.4:/opt/sdkwork/deploy/
+    deploy@api.sdkwork.com:/opt/sdkwork/deploy/
 ```
 
 Verify integrity on the remote host after copying (mandatory for offline
 hosts):
 
 ```bash
-ssh deploy@1.2.3.4 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+ssh deploy@api.sdkwork.com 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     && sha256sum -c image.sha256'   # must print image.tar.gz: OK
 ```
 
@@ -625,16 +625,16 @@ remote config → run the remote deploy.sh → health check. Remote
 configuration wins and is never overwritten by re-deploys:
 
 ```bash
-# Prerequisite: run `ssh-copy-id deploy@1.2.3.4` once (passwordless login)
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+# Prerequisite: run `ssh-copy-id deploy@api.sdkwork.com` once (passwordless login)
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --environment production --replicas 3
 
 # Remote deploy with built-in dependencies (no external PostgreSQL/Redis needed)
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --environment development --embedded
 
 # Common options: reuse an existing bundle / explicit key / dry-run (prints the commands only)
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```

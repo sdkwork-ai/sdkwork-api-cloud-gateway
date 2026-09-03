@@ -16,7 +16,7 @@
 #   6. health-check instance 1
 #
 # Usage:
-#   bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+#   bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
 #       --environment production --replicas 3
 #
 # Options:

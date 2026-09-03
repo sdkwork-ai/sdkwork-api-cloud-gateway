@@ -159,17 +159,17 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<版本>.bundle/
 ```bash
 # scp（最简单）
 scp -r dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
-    deploy@1.2.3.4:/opt/sdkwork/deploy/
+    deploy@api.sdkwork.com:/opt/sdkwork/deploy/
 
 # rsync（断点续传，重跑只传差异；推荐大包使用）
 rsync -avP dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
-    deploy@1.2.3.4:/opt/sdkwork/deploy/
+    deploy@api.sdkwork.com:/opt/sdkwork/deploy/
 ```
 
 拷完在远程主机上校验完整性（离线主机必做）：
 
 ```bash
-ssh deploy@1.2.3.4 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+ssh deploy@api.sdkwork.com 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     && sha256sum -c image.sha256'   # 必须输出 image.tar.gz: OK
 ```
 
@@ -547,16 +547,16 @@ bundle）→ SSH 推送到远程主机 → 物化远程配置 → 远程执行 d
 配置以远程为准、重复执行不覆盖：
 
 ```bash
-# 前置：ssh-copy-id deploy@1.2.3.4 一次（免密登录）
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+# 前置：ssh-copy-id deploy@api.sdkwork.com 一次（免密登录）
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --environment production --replicas 3
 
 # 内置依赖的远程部署（远程机无需自备 PostgreSQL/Redis）
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --environment development --embedded
 
 # 常用：复用已有 bundle / 指定密钥 / 预演（只打印将执行的命令）
-bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```
