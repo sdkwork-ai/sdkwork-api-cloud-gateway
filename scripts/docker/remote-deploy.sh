@@ -35,7 +35,8 @@
 #   --sync-env              overwrite the remote env file with the local one
 #                           (default: keep the remote file — remote edits such
 #                           as the database password win)
-#   --down | --ps | --logs [N]   forward the action to the remote deploy.sh
+#   --down | --stop | --start | --restart | --ps | --logs [N]
+#                           forward the action to the remote deploy.sh
 #   --dry-run               print the resolved commands only
 #   -h, --help              show this help
 #
@@ -83,6 +84,9 @@ while [ $# -gt 0 ]; do
     --config-root) CONFIG_ROOT="$2"; shift 2 ;;
     --sync-env)    SYNC_ENV="1"; shift ;;
     --down)        ACTION="down"; shift ;;
+    --stop)        ACTION="stop"; shift ;;
+    --start)       ACTION="start"; shift ;;
+    --restart)     ACTION="restart"; shift ;;
     --ps)          ACTION="ps"; shift ;;
     --logs)        ACTION="logs"; LOG_INSTANCE="${2:-1}"; case "${2:-}" in ''|*[!0-9]*) shift ;; *) shift 2 ;; esac ;;
     --dry-run)     DRY_RUN="1"; shift ;;
@@ -184,8 +188,12 @@ fi
 DEPLOY_ARGS=(--environment "${ENVIRONMENT}" --env-file "${REMOTE_ENV}")
 if [ "${ACTION}" = "apply" ]; then
   DEPLOY_ARGS+=(--replicas "${REPLICAS}")
-elif [ "${ACTION}" = "logs" ]; then
-  DEPLOY_ARGS+=(--logs "${LOG_INSTANCE}")
+else
+  # forward the requested action to the remote deploy.sh (--down/--ps/--logs/--stop/...)
+  DEPLOY_ARGS+=("--${ACTION}")
+  if [ "${ACTION}" = "logs" ]; then
+    DEPLOY_ARGS+=("${LOG_INSTANCE}")
+  fi
 fi
 if [ "${DRY_RUN}" = "1" ]; then
   info "dry-run: remote: cd ${REMOTE_ROOT} && bash deploy.sh ${DEPLOY_ARGS[*]}"

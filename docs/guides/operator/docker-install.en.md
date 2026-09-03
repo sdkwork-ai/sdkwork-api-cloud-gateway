@@ -92,14 +92,24 @@ adding/removing one flag and re-running `deploy.sh`.
 
 ## 2. Step 1: Package the Bundle (build machine)
 
-One command at the repository root produces a self-contained install bundle
-(image + compose + env templates + deploy script):
+The whole pipeline is shell-only. One command at the repository root produces
+a self-contained install bundle (image + compose + env templates + deploy
+script):
 
 ```bash
-pnpm build:container:install                        # build image + package
-pnpm build:container:install -- --skip-image-build  # reuse a built image, repackage only
-pnpm build:container:install -- --dry-run           # print the plan only
+bash scripts/build-install-bundle.sh                       # full pipeline: compile → image → bundle
+bash scripts/build-install-bundle.sh --skip-server-package # Rust unchanged: reuse the server tarball
+bash scripts/build-install-bundle.sh --skip-image-build    # image unchanged: repackage the bundle only
+bash scripts/build-install-bundle.sh --dry-run             # bundle step prints its plan only
 ```
+
+The script performs four steps: cargo release build + server tarball → OCI
+image → registry tag from `release.currentVersion` in
+`sdkwork.app.config.json` (currently 0.1.1) →
+`dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/`.
+Build-machine prerequisites: Docker (with the compose plugin), Node.js, and
+the Rust toolchain (cargo) — the packaging command itself is the single bash
+line above.
 
 Bundle layout (version comes from `sdkwork.app.config.json`; currently 0.1.1):
 
@@ -119,20 +129,34 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<version>.bundle/
 └── README.md
 ```
 
-## 3. Step 2: Copy to the Target Host
+## 3. Step 2: Copy to the Remote Server
 
-Copy the whole `.bundle` directory to the target Linux host (scp / rsync /
-USB — anything works). The only requirements: **Docker installed (with the
-compose plugin)** and **access to an image registry or the bundled
-image.tar.gz**.
+Copy the whole `.bundle` directory to the target Linux host. The only
+requirements there: **Docker installed (with the compose plugin)** and
+**access to an image registry or the bundled image.tar.gz**.
 
-Fully offline install (no network at all): verify before deploying —
+Manual copy (scp or rsync — mind the trailing-slash semantics):
 
 ```bash
-sha256sum -c image.sha256    # must print image.tar.gz: OK
+# scp (simplest)
+scp -r dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    deploy@1.2.3.4:/opt/sdkwork/deploy/
+
+# rsync (resumable, re-runs transfer only the diff; recommended for large bundles)
+rsync -avP dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    deploy@1.2.3.4:/opt/sdkwork/deploy/
 ```
 
-Want to skip the manual copy? Jump to §8 one-command remote deploy.
+Verify integrity on the remote host after copying (mandatory for offline
+hosts):
+
+```bash
+ssh deploy@1.2.3.4 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    && sha256sum -c image.sha256'   # must print image.tar.gz: OK
+```
+
+Want to skip the manual copy? §8's one-command remote deploy runs the whole
+"package → push → install → health check" chain for you.
 
 ## 4. Step 3: Configure (one file)
 
@@ -164,8 +188,12 @@ embedded mode remove that line or point it at `postgres:5432`.
 > tests; always replace in production (§4.1).
 
 For external mode, create the per-environment database and schema ahead of
-time (`sdkwork_ai_dev/test/staging/demo/prod`); from the repository,
-`pnpm db:postgres:provision` does it in one shot.
+time (`sdkwork_ai_dev/test/staging/demo/prod`) with one shell command from
+the repository:
+
+```bash
+bash scripts/provision-external-databases.sh
+```
 
 ### 4.1 One-Liner Generators for the Production Secrets
 
@@ -212,8 +240,11 @@ bash deploy.sh --environment production --replicas 3      # production, 3 instan
 
 bash deploy.sh --environment test --ps                    # status
 bash deploy.sh --environment test --logs 1                # follow instance 1 logs
-bash deploy.sh --environment test --down                  # stop (keeps volumes)
-bash deploy.sh --environment test --down --purge          # stop + delete volumes/network (embedded DB data is deleted too!)
+bash deploy.sh --environment test --restart               # restart (deps → instances, waits for health)
+bash deploy.sh --environment test --stop                  # stop (keeps containers and volumes)
+bash deploy.sh --environment test --start                 # start after stop (waits for health)
+bash deploy.sh --environment test --down                  # remove containers (keeps volumes)
+bash deploy.sh --environment test --down --purge          # remove containers + volumes/network (embedded DB data is deleted too!)
 
 bash deploy.sh --help                                     # all options
 ```
@@ -236,6 +267,59 @@ Deploying inside WSL / Docker Desktop on Windows? The Windows browser can
 open `http://localhost:<instance-port>/healthz` directly (verified working).
 If the host has an HTTP proxy configured, always verify with
 `curl --noproxy '*'` — otherwise results may be poisoned by the proxy.
+
+### 5.1 Day-2 Operations (restart / stop / logs / file locations)
+
+Every operations action also goes through `deploy.sh`, executed from the bundle
+directory (on the remote host: `/opt/sdkwork/deploy/sdkwork-api-cloud-gateway`):
+
+| Action | Command | Notes |
+| --- | --- | --- |
+| Status | `bash deploy.sh --environment <env> --ps` | Instance + deps container status and health |
+| Logs | `bash deploy.sh --environment <env> --logs 1` | Follow instance 1 logs (`--logs 2` for instance 2, etc.) |
+| Restart | `bash deploy.sh --environment <env> --restart` | Restarts deps → instances in order, **returns only after healthy** (non-zero exit on failure) |
+| Stop | `bash deploy.sh --environment <env> --stop` | Stops all containers, **keeps containers and volumes**; `--start` recovers in seconds |
+| Start | `bash deploy.sh --environment <env> --start` | Starts after a stop (deps → instances, waits for health); first deploy should use apply |
+| Remove | `bash deploy.sh --environment <env> --down` | Removes containers/network, **keeps volumes** |
+| Remove + wipe | `bash deploy.sh --environment <env> --down --purge` | Deletes volumes too (embedded database data is deleted!) |
+
+> Difference between `--stop/--start/--restart` and `--down`: the former keeps
+> containers (`docker stop/start/restart` semantics, instant restart), the
+> latter removes containers and re-creates them on the next apply. Both keep
+> volumes unless `--purge`.
+> **Env file changes do NOT take effect via `--restart`** (restart only
+> restarts processes, it does not re-create containers) — re-run apply once
+> (idempotent): `bash deploy.sh --environment <env> --replicas N`.
+
+**Same actions on the remote server** (run locally; the action is forwarded
+to the remote deploy.sh):
+
+```bash
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --restart
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --stop
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --ps
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --logs 1
+```
+
+**Native docker commands for logs and status** (equivalent, no deploy.sh needed):
+
+```bash
+docker ps --filter name=sdkwork-api-cloud-gateway                   # all related containers
+docker logs -f --tail 200 sdkwork-api-cloud-gateway-<env>-i1-gateway-1              # instance 1 gateway logs
+docker logs -f --tail 200 sdkwork-api-cloud-gateway-<env>-deps-knowledgebase-rpc-1  # deps singleton logs
+docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # single instance project status
+```
+
+**Deployment files and configuration locations**:
+
+| Item | Local (bundle directory) | Remote Ubuntu |
+| --- | --- | --- |
+| Deploy script | `<bundle>/deploy.sh` | `/opt/sdkwork/deploy/sdkwork-api-cloud-gateway/deploy.sh` |
+| Environment config (the only file to edit) | `<bundle>/env/<env>.env` | `/etc/sdkwork/api-gateway/docker/<env>.env` |
+| Per-instance overrides (optional) | `<bundle>/env/<env>.i<N>.env` | same directory `<env>.i<N>.env` |
+| Compose templates | `<bundle>/compose/docker-compose.bundle.yml` (embedded mode: `docker-compose.bundle.embedded.yml`) | same bundle directory |
+| Data volumes | `<env>-postgres-data` / `<env>-redis-data` (embedded mode) | same names |
+| Compose project names | instances `sdkwork-api-cloud-gateway-<env>-i<N>`; deps `sdkwork-api-cloud-gateway-<env>-deps` | same names |
 
 ## 6. Multi-Environment Matrix (ports / node ids / databases)
 
@@ -299,22 +383,24 @@ bash prepare-envs.sh --force                       # reset to example values (di
 - If `SDKWORK_DATABASE_URL` is set explicitly in the env file it wins — in
   embedded mode remove that line or point it at `postgres:5432`.
 
-## 8. One-Command Remote Ubuntu Deploy (SSH push)
+## 8. One-Command Remote Deploy (package → push → install → health check)
 
-Package locally, then push and deploy on the remote host. Remote
+`scripts/docker/remote-deploy.sh` chains §2–§5 into a single command: package
+locally (or reuse an existing bundle) → push over SSH → materialize the
+remote config → run the remote deploy.sh → health check. Remote
 configuration wins and is never overwritten by re-deploys:
 
 ```bash
 # Prerequisite: run `ssh-copy-id deploy@1.2.3.4` once (passwordless login)
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --environment production --replicas 3
 
-# Remote deploy with built-in dependencies
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+# Remote deploy with built-in dependencies (no external PostgreSQL/Redis needed)
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --environment development --embedded
 
-# Common options: reuse an existing bundle / explicit key / dry-run
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+# Common options: reuse an existing bundle / explicit key / dry-run (prints the commands only)
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```
@@ -323,7 +409,9 @@ Remote config file: `/etc/sdkwork/api-gateway/docker/<environment>.env`
 (mode 0600, generated on first push). Change passwords / databases by editing
 that file and re-running the same command. Remote passwordless sudo
 (`sudo -n`) is required; otherwise pass `--config-root` pointing at a
-user-writable directory.
+user-writable directory. Day-2 operations go through the same script:
+`--ps` / `--logs N` / `--restart` / `--stop` / `--start` / `--down` /
+`--down --purge` are forwarded to the remote deploy.sh (see §5.1).
 
 ## 9. Troubleshooting Quick Table + FAQ
 

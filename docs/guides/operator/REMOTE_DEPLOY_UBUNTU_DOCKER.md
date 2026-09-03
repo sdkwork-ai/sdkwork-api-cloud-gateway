@@ -83,8 +83,8 @@ cp docker/env/production.env.example docker/env/production.env
 ## 4. 构建并部署（默认外部依赖，无 nginx）
 
 ```bash
-pnpm build:container
-pnpm deploy:apply -- --env development test production
+node scripts/build-api-cloud-gateway-container.mjs   # 或: bash scripts/build-install-bundle.sh（一键全链路）
+bash scripts/deploy/apply.sh --env development test production
 # 或: scripts/deploy-docker-environment.sh all --validate
 ```
 

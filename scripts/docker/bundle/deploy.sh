@@ -29,6 +29,10 @@
 #     --purge            with --down: also delete volumes and network
 #     --ps               show instance status
 #     --logs [N]         follow gateway instance N logs (default 1)
+#     --stop             stop instances + the deps singleton (containers kept)
+#     --start            start a previously --stop-ed environment again
+#     --restart          restart the deps singleton + gateway instances
+#                        (env/config changes need a full apply instead)
 #     --dry-run          print the resolved commands only
 #
 # Instance port plan (deterministic, collision-free across environments):
@@ -93,6 +97,9 @@ while [ $# -gt 0 ]; do
     --purge)       PURGE="1"; shift ;;
     --ps)          ACTION="ps"; shift ;;
     --logs)        ACTION="logs"; LOG_INSTANCE="${2:-1}"; case "${2:-}" in ''|*[!0-9]*) shift ;; *) shift 2 ;; esac ;;
+    --stop)        ACTION="stop"; shift ;;
+    --start)       ACTION="start"; shift ;;
+    --restart)     ACTION="restart"; shift ;;
     --dry-run)     DRY_RUN="1"; shift ;;
     -h|--help)     usage ;;
     *)             die "unsupported option: $1 (see --help)" ;;
@@ -391,6 +398,64 @@ ps() {
     "${COMPOSE_FILES[@]}" --profile deps ps
 }
 
+# --- stop / start / restart ----------------------------------------------------
+# `--stop` keeps the containers (fast `--start` later); `--down` removes them.
+# `--restart` bounces the processes only — after env/config edits run a full
+# apply so compose recreates the containers with the new values.
+stop_fleet() {
+  local index extra extra_index
+  for index in $(seq 1 "${REPLICAS}"); do
+    export_instance_env "${index}"
+    run docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
+      "${COMPOSE_FILES[@]}" --profile instance stop
+  done
+  for extra in $(discover_instance_projects); do
+    extra_index="${extra##*-i}"
+    case "${extra_index}" in
+      ''|*[!0-9]*) continue ;;
+    esac
+    if [ "${extra_index}" -le "${REPLICAS}" ]; then continue; fi
+    info "discovered extra instance project beyond replicas ${REPLICAS}: ${extra}"
+    run docker compose -p "${extra}" --env-file "${ENV_FILE}" \
+      "${COMPOSE_FILES[@]}" --profile instance stop
+  done
+  export_instance_env 1
+  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps stop
+  info "environment ${ENVIRONMENT} stopped (containers kept; start again with --start)"
+}
+
+start_fleet() {
+  export_instance_env 1
+  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps start
+  wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
+  local index
+  for index in $(seq 1 "${REPLICAS}"); do
+    export_instance_env "${index}"
+    run docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
+      "${COMPOSE_FILES[@]}" --profile instance start
+    wait_container_healthy "${NETWORK}-i${index}" gateway "${HEALTH_TIMEOUT}"
+  done
+  info "environment ${ENVIRONMENT} started"
+}
+
+restart_fleet() {
+  export_instance_env 1
+  info "restarting the deps singleton (knowledgebase-rpc + built-in databases if any)"
+  run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
+    "${COMPOSE_FILES[@]}" --profile deps restart
+  wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
+  local index
+  for index in $(seq 1 "${REPLICAS}"); do
+    export_instance_env "${index}"
+    run docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
+      "${COMPOSE_FILES[@]}" --profile instance restart gateway
+    wait_container_healthy "${NETWORK}-i${index}" gateway "${HEALTH_TIMEOUT}"
+  done
+  info "environment ${ENVIRONMENT} restarted"
+}
+
 logs() {
   local index="${LOG_INSTANCE}"
   case "${index}" in ''|*[!0-9]*) die "--logs expects an instance number" ;; esac
@@ -400,8 +465,12 @@ logs() {
 }
 
 case "${ACTION}" in
-  apply) apply ;;
-  down)  down ;;
-  ps)    ps ;;
-  logs)  logs ;;
+  apply)   apply ;;
+  down)    down ;;
+  ps)      ps ;;
+  logs)    logs ;;
+  stop)    stop_fleet ;;
+  start)   start_fleet ;;
+  restart) restart_fleet ;;
+  *) die "unsupported action: ${ACTION}" ;;
 esac

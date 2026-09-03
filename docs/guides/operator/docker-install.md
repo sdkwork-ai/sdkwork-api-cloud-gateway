@@ -82,13 +82,20 @@ curl http://127.0.0.1:3913/healthz
 
 ## 2. 第一步：打包安装包（构建机）
 
-在仓库根目录一条命令产出自包含安装包（镜像 + compose + env 模板 + 部署脚本）：
+全流程只用 shell 脚本，在仓库根目录一条命令产出自包含安装包
+（镜像 + compose + env 模板 + 部署脚本）：
 
 ```bash
-pnpm build:container:install                        # 构建镜像 + 打包
-pnpm build:container:install -- --skip-image-build  # 复用已构建镜像，只重新打包
-pnpm build:container:install -- --dry-run           # 只看计划，不实际执行
+bash scripts/build-install-bundle.sh                      # 全量打包：编译 → 镜像 → bundle
+bash scripts/build-install-bundle.sh --skip-server-package # Rust 没改过：跳过编译，复用 server 包
+bash scripts/build-install-bundle.sh --skip-image-build    # 镜像没改过：跳过镜像构建，只重打 bundle
+bash scripts/build-install-bundle.sh --dry-run            # bundle 步骤只看计划
 ```
+
+脚本自动完成四步：cargo release 编译出服务包 → 构建 OCI 镜像 → 按
+`sdkwork.app.config.json` 的 `release.currentVersion`（当前 0.1.1）打 registry tag →
+打出 `dist/docker-install/sdkwork-api-cloud-gateway-install-<版本>.bundle/`。
+构建机需要：Docker（含 compose 插件）、Node.js、Rust 工具链（cargo）——包装命令只有上面这一条 bash。
 
 产物布局（版本号取自 `sdkwork.app.config.json`，当前为 0.1.1）：
 
@@ -108,18 +115,31 @@ dist/docker-install/sdkwork-api-cloud-gateway-install-<版本>.bundle/
 └── README.md
 ```
 
-## 3. 第二步：拷贝到目标机
+## 3. 第二步：拷贝到远程服务器
 
-把整个 `.bundle` 目录拷贝到目标 Linux 主机（scp / rsync / U 盘均可），要求只有两个：
+把整个 `.bundle` 目录拷到目标 Linux 主机。目标机要求只有两个：
 **装好 Docker（含 compose 插件）**、**能访问镜像仓库或已随包携带 image.tar.gz**。
 
-离线安装（无任何外网）：先校验再部署——
+手动拷贝（scp / rsync 任选，注意结尾的 `/` 语义）：
 
 ```bash
-sha256sum -c image.sha256    # 必须输出 image.tar.gz: OK
+# scp（最简单）
+scp -r dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    deploy@1.2.3.4:/opt/sdkwork/deploy/
+
+# rsync（断点续传，重跑只传差异；推荐大包使用）
+rsync -avP dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    deploy@1.2.3.4:/opt/sdkwork/deploy/
 ```
 
-不想手动拷？跳到 §8 远程一键部署。
+拷完在远程主机上校验完整性（离线主机必做）：
+
+```bash
+ssh deploy@1.2.3.4 'cd /opt/sdkwork/deploy/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
+    && sha256sum -c image.sha256'   # 必须输出 image.tar.gz: OK
+```
+
+不想手动拷？§8 的远程一键部署脚本会自动完成「打包 → 推送 → 安装 → 健康检查」全链路。
 
 ## 4. 第三步：配置（一个文件搞定）
 
@@ -146,7 +166,11 @@ cp env/<环境>.env.example env/<环境>.env
 > （功能上能跑通，但等同于弱凭据）。冒烟无所谓，production 一定要替换（§4.1）。
 
 外置模式的数据库与 schema 需按环境预先建好（`sdkwork_ai_dev/test/staging/demo/prod`），
-仓库内可执行 `pnpm db:postgres:provision` 一键创建。
+在仓库内一条 shell 命令一键创建：
+
+```bash
+bash scripts/provision-external-databases.sh
+```
 
 ### 4.1 production 密钥一键生成（傻瓜式）
 
@@ -189,8 +213,11 @@ bash deploy.sh --environment production --replicas 3      # 生产 3 实例（�
 
 bash deploy.sh --environment test --ps                    # 看状态
 bash deploy.sh --environment test --logs 1                # 跟踪实例 1 日志
-bash deploy.sh --environment test --down                  # 停止（保留数据卷）
-bash deploy.sh --environment test --down --purge          # 停止并删除卷/网络（内置库数据也会删除！）
+bash deploy.sh --environment test --restart               # 重启（deps → 实例依次重启并等健康）
+bash deploy.sh --environment test --stop                  # 停止（保留容器与数据卷）
+bash deploy.sh --environment test --start                 # 停止后的成套启动（含健康等待）
+bash deploy.sh --environment test --down                  # 摘除（删除容器，保留数据卷）
+bash deploy.sh --environment test --down --purge          # 摘除并删除卷/网络（内置库数据也会删除！）
 
 bash deploy.sh --help                                     # 全部参数
 ```
@@ -209,6 +236,55 @@ curl http://127.0.0.1:<实例端口>/readyz     # 就绪（首次启动需等迁
 在 Windows 上通过 WSL/ Docker Desktop 部署时，Windows 浏览器直接访问
 `http://localhost:<实例端口>/healthz` 即可（已验证互通）。注意本机配置了 HTTP 代理时，
 curl 验证请加 `--noproxy '*'`，否则结果可能被代理污染。
+
+### 5.1 Day-2 日常运维（重启 / 停止 / 日志 / 文件位置）
+
+所有运维动作同样走 `deploy.sh`，在 bundle 目录执行（远程机为
+`/opt/sdkwork/deploy/sdkwork-api-cloud-gateway`）：
+
+| 动作 | 命令 | 说明 |
+| --- | --- | --- |
+| 看状态 | `bash deploy.sh --environment <env> --ps` | 实例 + deps 容器状态与健康检查 |
+| 看日志 | `bash deploy.sh --environment <env> --logs 1` | 跟踪实例 1 日志（`--logs 2` 为实例 2，以此类推） |
+| 重启 | `bash deploy.sh --environment <env> --restart` | deps → 实例依次重启，**等健康后才返回**（失败即退出非 0） |
+| 停止 | `bash deploy.sh --environment <env> --stop` | 全部容器 stop，**保留容器与数据卷**，`--start` 秒级恢复 |
+| 启动 | `bash deploy.sh --environment <env> --start` | 停止后的成套启动（deps → 实例，含健康等待）；首次部署请用 apply |
+| 摘除 | `bash deploy.sh --environment <env> --down` | 删除容器/网络，**保留数据卷** |
+| 连卷删除 | `bash deploy.sh --environment <env> --down --purge` | 数据卷一并删除（内置库数据也会删除！） |
+
+> `--stop/--start/--restart` 与 `--down` 的区别：前者保留容器（`docker stop/start/restart` 语义，
+> 启动快），后者删除容器后需重新 up；两者都保留数据卷（除非 `--purge`）。
+> **改了 env 配置后 `--restart` 不会生效**（restart 只重启进程，不重建容器）——重跑一次
+> apply（幂等）即可让新配置生效：`bash deploy.sh --environment <env> --replicas N`。
+
+**远程服务器上做同样的事**（在本机执行，动作转发到远程 deploy.sh）：
+
+```bash
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --restart
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --stop
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --ps
+bash scripts/docker/remote-deploy.sh --host <user@host> --environment production --logs 1
+```
+
+**日志与状态的原生命令**（deploy.sh 之外，直接用 docker 等价可用）：
+
+```bash
+docker ps --filter name=sdkwork-api-cloud-gateway                   # 全部相关容器
+docker logs -f --tail 200 sdkwork-api-cloud-gateway-<env>-i1-gateway-1              # 实例 1 网关日志
+docker logs -f --tail 200 sdkwork-api-cloud-gateway-<env>-deps-knowledgebase-rpc-1  # deps 单例日志
+docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # 单实例项目状态
+```
+
+**部署文件与配置位置**：
+
+| 内容 | 本机（bundle 目录） | 远程 Ubuntu |
+| --- | --- | --- |
+| 部署脚本 | `<bundle>/deploy.sh` | `/opt/sdkwork/deploy/sdkwork-api-cloud-gateway/deploy.sh` |
+| 环境配置（唯一需要编辑的文件） | `<bundle>/env/<环境>.env` | `/etc/sdkwork/api-gateway/docker/<环境>.env` |
+| 单实例差异配置（可选） | `<bundle>/env/<环境>.i<序号>.env` | 同目录 `<环境>.i<序号>.env` |
+| Compose 模板 | `<bundle>/compose/docker-compose.bundle.yml`（内置模式为 `docker-compose.bundle.embedded.yml`） | 同 bundle 目录 |
+| 数据卷 | `<环境>-postgres-data` / `<环境>-redis-data`（内置模式） | 同名 |
+| 容器项目名 | 实例 `sdkwork-api-cloud-gateway-<env>-i<N>`；依赖 `sdkwork-api-cloud-gateway-<env>-deps` | 同名 |
 
 ## 6. 多环境矩阵（端口 / 节点 ID / 数据库规划）
 
@@ -256,28 +332,31 @@ bash prepare-envs.sh --force                       # 重置为示例值（丢弃
 - 若 env 文件里显式设置了 `SDKWORK_DATABASE_URL`，它优先生效——内置模式下请删除该行或改为
   指向 `postgres:5432`。
 
-## 8. 远程 Ubuntu 一键部署（SSH 推送）
+## 8. 远程一键部署（打包 → 推送 → 安装 → 健康检查）
 
-本地打包后直接推到远程主机部署，配置以远程为准、重复执行不覆盖：
+`scripts/docker/remote-deploy.sh` 把 §2–§5 串成一条命令：本地打包（或复用已有
+bundle）→ SSH 推送到远程主机 → 物化远程配置 → 远程执行 deploy.sh → 健康检查。
+配置以远程为准、重复执行不覆盖：
 
 ```bash
 # 前置：ssh-copy-id deploy@1.2.3.4 一次（免密登录）
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --environment production --replicas 3
 
-# 内置依赖的远程部署
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+# 内置依赖的远程部署（远程机无需自备 PostgreSQL/Redis）
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --environment development --embedded
 
-# 常用：复用已有 bundle / 指定密钥 / 预演
-pnpm deploy:apply:standalone:docker:remote -- --host deploy@1.2.3.4 \
+# 常用：复用已有 bundle / 指定密钥 / 预演（只打印将执行的命令）
+bash scripts/docker/remote-deploy.sh --host deploy@1.2.3.4 \
     --bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.1.bundle \
     --ssh-key ~/.ssh/prod_ed25519 --environment test --replicas 2 --dry-run
 ```
 
 远程配置文件：`/etc/sdkwork/api-gateway/docker/<环境>.env`（权限 0600，首推自动生成）。
 改密码 / 改数据库 → 编辑该文件 → 重新执行同命令即生效。需要远程 sudo 免密（`sudo -n`），
-否则用 `--config-root` 指向用户可写目录。
+否则用 `--config-root` 指向用户可写目录。Day-2 操作同样直连远程：`--ps` / `--logs N` /
+`--restart` / `--stop` / `--start` / `--down` / `--down --purge` 会转发给远程的 deploy.sh（详见 §5.1）。
 
 ## 9. 排障速查表 + FAQ
 

@@ -513,12 +513,38 @@ test('install bundle supports external (default) and embedded dependency modes',
     'utf8',
   );
   assert.match(bundlePackager, /prepare-envs\.sh/u);
+
+  // The shell packaging wrapper must drive the real chain (server package →
+  // container image → registry tag → bundle) so operators never need pnpm.
+  const buildWrapper = readFileSync(
+    path.join(appRoot, 'scripts', 'build-install-bundle.sh'),
+    'utf8',
+  );
+  assert.match(buildWrapper, /package-server\.mjs/u);
+  assert.match(buildWrapper, /build-api-cloud-gateway-container\.mjs/u);
+  assert.match(buildWrapper, /package-install-bundle\.mjs/u);
+  assert.match(buildWrapper, /currentVersion/u);
   const prepareEnvs = readFileSync(
     path.join(appRoot, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
     'utf8',
   );
   assert.match(prepareEnvs, /GATEWAY_IM_ID_NODE_ID/u);
   assert.match(prepareEnvs, /--dev-secrets-for-production/u);
+
+  // remote-deploy.sh forwards every Day-2 action flag to the remote deploy.sh;
+  // the action flag must be appended for all non-apply actions (a previous bug
+  // silently ran a full apply when --down/--ps/--restart was requested).
+  const remoteDeploy = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'remote-deploy.sh'),
+    'utf8',
+  );
+  for (const day2Action of ['down', 'stop', 'start', 'restart', 'ps']) {
+    assert.match(
+      remoteDeploy,
+      new RegExp(`--${day2Action}\\)\\s+ACTION="${day2Action}"`, 'u'),
+    );
+  }
+  assert.match(remoteDeploy, /DEPLOY_ARGS\+=\("--\$\{ACTION\}"\)/u);
 
   // The packager ships the override plus the embedded postgres assets.
   const packager = readFileSync(path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'), 'utf8');

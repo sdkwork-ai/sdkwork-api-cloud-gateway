@@ -22,7 +22,7 @@
 
 - Docker Engine（daemon 运行中）：`docker version`
 - nginx：`nginx -v`
-- Node.js 22+ / pnpm 10（与 Windows 侧一致）
+- Node.js 22+（打包脚本直调 `node scripts/...`，无需 pnpm）
 - Rust stable + cargo（构建 release 二进制）
 
 ## 1. 构建 release 二进制（WSL 内）
@@ -42,8 +42,9 @@ CARGO_TARGET_DIR=/home/sdkwork/api-gateway-release-target \
 ## 2. 构建容器镜像
 
 ```bash
-pnpm build:container          # 组装 dist/container-image-build 并 docker build
-pnpm build:container:check    # 只校验构建计划（--check --dry-run）
+node scripts/build-api-cloud-gateway-container.mjs          # 组装 dist/container-image-build 并 docker build
+node scripts/build-api-cloud-gateway-container.mjs --check --dry-run  # 只校验构建计划
+# 或一键全链路（编译 + 镜像 + 安装 bundle）: bash scripts/build-install-bundle.sh
 ```
 
 产物：
@@ -76,7 +77,7 @@ secret 注入。
 ```bash
 cp docker/env/development.env.example .env
 # 替换所有 <CHANGE_ME> 后先执行部署预检
-pnpm check:container-deployment -- --env-file .env --mode embedded --compose
+node scripts/validate-docker-deployment.mjs --env-file .env --mode embedded --compose
 docker compose --env-file .env up -d
 docker compose --env-file .env ps
 ```
