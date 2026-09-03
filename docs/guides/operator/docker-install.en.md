@@ -112,14 +112,50 @@ adding/removing one flag and re-running `deploy.sh`.
 **Everything starts with packaging**: no bundle, no deployment. The whole
 pipeline is shell-only. One command at the repository root produces a
 self-contained install bundle (image + compose + env templates + deploy
-script):
+script). Four packaging actions — pick by what changed (detailed mapping in
+the §2.1 table):
 
 ```bash
-bash scripts/build-install-bundle.sh                       # full pipeline: compile → image → bundle
-bash scripts/build-install-bundle.sh --skip-server-package # Rust unchanged: reuse the server tarball
-bash scripts/build-install-bundle.sh --skip-image-build    # image unchanged: repackage the bundle only
-bash scripts/build-install-bundle.sh --dry-run             # bundle step prints its plan only
+# ① Full pipeline: cargo build → OCI image → bundle assembly (all four steps)
+#    Use when: anything that ends up inside the binary changed — Rust sources
+#    (src/**), Cargo.toml dependencies, build.rs, embedded assets/migrations.
+#    cargo is incremental (only changed sources recompile), far faster than a
+#    cold build (~10–18 min cold).
+bash scripts/build-install-bundle.sh
+
+# ② Skip the compile: reuse the existing dist/server/ tarball (Rust artifacts
+#    unchanged), still rebuild the image and repackage the bundle
+#    Use when: Rust code and dependencies untouched, only image-level things
+#    changed — Dockerfile / container build script
+#    (build-api-cloud-gateway-container.mjs), base image choice, compose
+#    templates, env templates, docs — anything that does not go into the binary.
+bash scripts/build-install-bundle.sh --skip-server-package
+
+# ③ Reassemble the bundle only: skip compile AND image build, done in seconds;
+#    just re-assembles the bundle directory (deploy.sh / prepare-envs.sh /
+#    compose / env templates / README / manifest copies + chmod; image.tar.gz
+#    reused verbatim)
+#    Use when: only the packaging/assembly layer changed —
+#    scripts/docker/bundle/**, package-install-bundle.mjs,
+#    build-install-bundle.sh itself, README.
+#    Prerequisite: the <registry>:<version> image exists locally (the script
+#    errors out rather than silently tagging something wrong).
+bash scripts/build-install-bundle.sh --skip-server-package --skip-image-build
+
+# ④ Dry run: combinable with ①②③; the bundle assembly step only prints the
+#    commands it would run, writes nothing
+#    Use when: verifying version / image ref / artifact paths before a release,
+#    or debugging packaging configuration.
+bash scripts/build-install-bundle.sh --dry-run
 ```
+
+> **Two red lines for the reuse/skip flags**:
+> ① `--skip-server-package` reuses the MOST RECENT tarball under dist/server/ —
+> if the Rust code changed but you skipped the build, the stale binary goes
+> into the image with no warning; when in doubt, run the full pipeline.
+> ② Never use `--skip-image-build` after a Rust change (the new code would
+> never reach the image — the bundle keeps shipping the old one);
+> `--skip-image-build` should only be combined with `--skip-server-package`.
 
 The script performs four steps: cargo release build + server tarball → OCI
 image → registry tag from `release.currentVersion` in

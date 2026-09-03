@@ -97,14 +97,40 @@ curl http://127.0.0.1:3913/healthz
 ## 2. 第一步：打包安装包（构建机）
 
 **一切从打包开始**：拿到安装包才有后面的一切。全流程只用 shell 脚本，在仓库根目录
-一条命令产出自包含安装包（镜像 + compose + env 模板 + 部署脚本）：
+一条命令产出自包含安装包（镜像 + compose + env 模板 + 部署脚本）。四个打包动作，
+按「这次改了什么」选（详细对照见 §2.1 表）：
 
 ```bash
-bash scripts/build-install-bundle.sh                      # 全量打包：编译 → 镜像 → bundle
-bash scripts/build-install-bundle.sh --skip-server-package # Rust 没改过：跳过编译，复用 server 包
-bash scripts/build-install-bundle.sh --skip-image-build    # 镜像没改过：跳过镜像构建，只重打 bundle
-bash scripts/build-install-bundle.sh --dry-run            # bundle 步骤只看计划
+# ① 全量打包：cargo 编译 → OCI 镜像 → bundle 装配（四步全跑）
+#    适用：改了任何会进二进制的内容 —— Rust 源码（src/**）、Cargo.toml 依赖、
+#    build.rs、内嵌资源/迁移文件等。cargo 是增量编译，
+#    只重编改动部分，远快于冷构建（冷构建约 10–18 分钟）。
+bash scripts/build-install-bundle.sh
+
+# ② 跳过编译：复用 dist/server/ 里现成的 server 包（Rust 产物不变），仍重建镜像并重打 bundle
+#    适用：Rust 代码与依赖完全没动，只改了镜像层 —— Dockerfile/容器构建脚本
+#    （build-api-cloud-gateway-container.mjs）、基础镜像选择、compose 模板、
+#    env 模板、docs 等不进二进制的内容。
+bash scripts/build-install-bundle.sh --skip-server-package
+
+# ③ 只重装 bundle：编译与镜像全跳过，秒级完成；仅重新装配 bundle 目录
+#    （deploy.sh / prepare-envs.sh / compose / env 模板 / README / manifest 的拷贝与 chmod，
+#    image.tar.gz 原样复用）
+#    适用：只改了打包装配层 —— scripts/docker/bundle/**、
+#    package-install-bundle.mjs、打包脚本 build-install-bundle.sh 本身、README。
+#    前提：本机已有 <registry>:<版本> 镜像（脚本找不到会报错而不是瞎打）。
+bash scripts/build-install-bundle.sh --skip-server-package --skip-image-build
+
+# ④ 预演：可与①②③任意组合，bundle 装配步骤只打印将执行的命令不落盘
+#    适用：上线前核对版本号/镜像 ref/产物路径，或排查打包配置。
+bash scripts/build-install-bundle.sh --dry-run
 ```
+
+> **复用跳过项的两条红线**：
+> ① `--skip-server-package` 复用的是 dist/server/ 里**最近一次**的 server 包——
+> 如果 Rust 变了却跳过编译，旧二进制会被打进镜像且无任何告警；拿不准就跑全量。
+> ② Rust 变了**绝不能** `--skip-image-build`（否则新代码进不了镜像，bundle 打的
+> 还是旧镜像）；`--skip-image-build` 只应与 `--skip-server-package` 搭配使用。
 
 脚本自动完成四步：cargo release 编译出服务包 → 构建 OCI 镜像 → 按
 `sdkwork.app.config.json` 的 `release.currentVersion`（当前 0.1.1）打 registry tag →
