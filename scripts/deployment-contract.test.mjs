@@ -496,6 +496,21 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(deploy, /POSTGRES_ASSETS_DIR/u);
   assert.match(deploy, /postgres-data redis-data postgres-tls/u);
 
+  // The packager ships prepare-envs.sh alongside deploy.sh: it recreates the
+  // per-environment env files with distinct snowflake node ids for co-located
+  // fleets (docker-install guide §6).
+  const bundlePackager = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'),
+    'utf8',
+  );
+  assert.match(bundlePackager, /prepare-envs\.sh/u);
+  const prepareEnvs = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
+    'utf8',
+  );
+  assert.match(prepareEnvs, /GATEWAY_IM_ID_NODE_ID/u);
+  assert.match(prepareEnvs, /--dev-secrets-for-production/u);
+
   // The packager ships the override plus the embedded postgres assets.
   const packager = readFileSync(path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'), 'utf8');
   assert.match(packager, /docker-compose\.bundle\.embedded\.yml/u);

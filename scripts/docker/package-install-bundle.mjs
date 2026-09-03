@@ -203,8 +203,13 @@ Two dependency modes (one image for both):
 Quick start on any Docker host:
 
     # 1. Prepare configuration (only keys you care about; defaults work for
-    #    a first smoke test)
-    cp env/development.env.example env/development.env
+    #    a first smoke test). prepare-envs.sh creates EVERY environment's
+    #    env file at once with distinct snowflake node ids for co-located
+    #    fleets; a plain cp works for a single environment too.
+    bash prepare-envs.sh
+    #    Local verification only: also fill the production Cloud Router
+    #    secrets from the dev defaults (never for real production):
+    # bash prepare-envs.sh --dev-secrets-for-production
 
     # 2. Deploy — external PostgreSQL + Redis (default)
     bash deploy.sh --environment development
@@ -306,7 +311,12 @@ async function main() {
   }
   const deployScript = path.join(bundleDir, 'deploy.sh');
   copyFileSync(path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'deploy.sh'), deployScript);
-  const chmod = spawnSync('chmod', ['0755', deployScript], { stdio: 'ignore' });
+  const prepareEnvsScript = path.join(bundleDir, 'prepare-envs.sh');
+  copyFileSync(
+    path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
+    prepareEnvsScript,
+  );
+  const chmod = spawnSync('chmod', ['0755', deployScript, prepareEnvsScript], { stdio: 'ignore' });
   if (chmod.status !== 0) {
     // Windows filesystems ignore the POSIX mode; harmless.
   }
