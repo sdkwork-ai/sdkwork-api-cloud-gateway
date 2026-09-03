@@ -6,35 +6,46 @@
 
 ## 0. 三条命令跑起来（TL;DR）
 
-拿到安装包（`.bundle` 目录）后，在任意 Docker 主机上：
+拿到安装包（`.bundle` 目录）后，在任意 Docker 主机上。**默认外置依赖**：
+数据库和 Redis 用你自己的实例，网关通过 env 里的 `GATEWAY_POSTGRES_*` /
+`GATEWAY_CLOUDROUTER_REDIS_*` 连过去：
 
 ```bash
-cp env/development.env.example env/development.env   # 1. 生成配置（默认值即可先冒烟）
-bash deploy.sh --environment development --embedded  # 2. 部署（内置数据库，零外部依赖）
+cp env/development.env.example env/development.env   # 1. 生成配置
+# 编辑 env/development.env：填 GATEWAY_POSTGRES_* 与 GATEWAY_CLOUDROUTER_REDIS_*
+# 指向你的外部 PostgreSQL 和 Redis（连接项说明见 §1 / §4）
+bash deploy.sh --environment development             # 2. 部署（默认外置模式）
 curl http://127.0.0.1:3910/healthz                   # 3. 健康检查，返回 ok 即成功
 ```
 
-就这么多。**30 秒体验选上面这条路；要正式部署（尤其是 production），继续往下看
-「分环境快速通道」（§0.1）**——production 有 7 个必填密钥和 1 个强制 TLS 开关，
-漏了任何一项网关都会拒绝启动（fail-closed）。
+**正式部署（尤其是 production）继续看「分环境快速通道」（§0.1）**——production 有
+7 个必填密钥和 1 个强制 TLS 开关，漏了任何一项网关都会拒绝启动（fail-closed）。
+没有现成的 PostgreSQL/Redis、只想 30 秒冒烟？把第 2 步换成
+`bash deploy.sh --environment development --embedded`（随包内置库，零外部依赖）。
 
 ### 0.1 分环境快速通道（复制即用）
 
 每条通道假设你已经把 bundle 拷到目标机并 `cd` 进 bundle 目录（§3）。
+**默认外置模式**：先在 env 里填外部数据库/Redis 连接信息，再 `deploy.sh`；
+没有外部库时加 `--embedded` 用随包内置库替代。
 
-**development（开发，内置依赖，零配置）：**
+**development（开发，默认外置依赖）：**
 
 ```bash
 cp env/development.env.example env/development.env
-bash deploy.sh --environment development --embedded
+# 编辑 env/development.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+bash deploy.sh --environment development             # 外置模式（默认）
+bash deploy.sh --environment development --embedded  # 没有外部库时：内置模式，零配置
 curl http://127.0.0.1:3910/healthz
 ```
 
-**test（测试，内置依赖，零配置）：**
+**test（测试，默认外置依赖）：**
 
 ```bash
 cp env/test.env.example env/test.env
-bash deploy.sh --environment test --embedded
+# 编辑 env/test.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+bash deploy.sh --environment test                    # 外置模式（默认）
+bash deploy.sh --environment test --embedded         # 或内置模式快速起
 curl http://127.0.0.1:3911/healthz
 ```
 

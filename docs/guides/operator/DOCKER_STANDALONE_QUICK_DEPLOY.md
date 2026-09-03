@@ -1,5 +1,11 @@
 # Docker Standalone 快速部署（WSL Ubuntu + Windows）
 
+> **标准部署指南见 [docker-install.md](docker-install.md)**：`deploy.sh` 默认
+> **外置 PostgreSQL + Redis**（env 里 `GATEWAY_POSTGRES_*` /
+> `GATEWAY_CLOUDROUTER_REDIS_*` 指向你的实例），`--embedded` 仅作零外部
+> 依赖的备选。下文的裸 compose 路线中，`docker compose up -d` 默认会连
+> 内置依赖启动，外连模式见 §3.1。
+
 本指南描述 `sdkwork-api-cloud-gateway` standalone 容器镜像的构建与 WSL 快速部署，
 参考 `sdkwork-cloudrouter` 的容器组合模式。默认 development 部署通过三个域名访问网关：
 

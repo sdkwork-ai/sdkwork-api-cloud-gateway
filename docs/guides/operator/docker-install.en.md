@@ -6,37 +6,51 @@
 
 ## 0. Three Commands to a Running Gateway (TL;DR)
 
-With the install bundle (the `.bundle` directory) on any Docker host:
+With the install bundle (the `.bundle` directory) on any Docker host.
+**External dependencies are the default**: the gateway uses YOUR PostgreSQL
+and Redis instances via `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*`
+in the env file:
 
 ```bash
-cp env/development.env.example env/development.env   # 1. Create config (defaults are fine for a smoke test)
-bash deploy.sh --environment development --embedded  # 2. Deploy (built-in databases, zero external deps)
+cp env/development.env.example env/development.env   # 1. Create the config
+# Edit env/development.env: point GATEWAY_POSTGRES_* and
+# GATEWAY_CLOUDROUTER_REDIS_* at your external PostgreSQL and Redis (§1 / §4)
+bash deploy.sh --environment development             # 2. Deploy (external mode, the default)
 curl http://127.0.0.1:3910/healthz                   # 3. Health check — ok means done
 ```
 
-That's it. **Use the path above for a 30-second look; for real deployments
-(especially production), continue with the per-environment quick lanes
-(§0.1)** — production requires 7 mandatory secrets and one forced TLS switch;
-missing any of them makes the gateway refuse to start (fail-closed).
+**For real deployments (especially production), continue with the
+per-environment quick lanes (§0.1)** — production requires 7 mandatory
+secrets and one forced TLS switch; missing any of them makes the gateway
+refuse to start (fail-closed). No PostgreSQL/Redis at hand and just want a
+30-second smoke test? Swap step 2 for
+`bash deploy.sh --environment development --embedded` (bundled databases,
+zero external deps).
 
 ### 0.1 Per-Environment Quick Lanes (copy & paste)
 
 Each lane assumes the bundle is on the target host and you have `cd`-ed into
-it (§3).
+it (§3). **External mode is the default**: fill the external database/Redis
+connection settings in the env file first, then deploy; add `--embedded` to
+use the bundled databases instead.
 
-**development (dev, built-in deps, zero config):**
+**development (dev, external deps by default):**
 
 ```bash
 cp env/development.env.example env/development.env
-bash deploy.sh --environment development --embedded
+# Edit env/development.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+bash deploy.sh --environment development             # external mode (default)
+bash deploy.sh --environment development --embedded  # no external DB? bundled mode, zero config
 curl http://127.0.0.1:3910/healthz
 ```
 
-**test (built-in deps, zero config):**
+**test (external deps by default):**
 
 ```bash
 cp env/test.env.example env/test.env
-bash deploy.sh --environment test --embedded
+# Edit env/test.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+bash deploy.sh --environment test                    # external mode (default)
+bash deploy.sh --environment test --embedded         # or bundled mode for a quick start
 curl http://127.0.0.1:3911/healthz
 ```
 

@@ -223,6 +223,9 @@ Quick start on any Docker host:
     # Day-2 operations
     bash deploy.sh --environment test --ps
     bash deploy.sh --environment test --logs 2
+    bash deploy.sh --environment test --restart
+    bash deploy.sh --environment test --stop
+    bash deploy.sh --environment test --start
     bash deploy.sh --environment test --down
     bash deploy.sh --environment test --down --purge
 
