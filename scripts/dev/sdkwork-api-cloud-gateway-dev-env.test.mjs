@@ -150,6 +150,14 @@ test('embedded dependencies never default a dependency base URL to the gateway o
   assert.equal(resolved.SDKWORK_BIRDCODER_ENVIRONMENT, 'development');
   assert.equal(resolved.SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE, 'standalone');
   assert.equal(resolved.SDKWORK_BIRDCODER_RUNTIME_TARGET, 'server');
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT, 'development');
+});
+
+test('embedded cloudrouter router environment preserves explicit runtime overrides', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT: 'staging',
+  });
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT, 'staging');
 });
 
 test('embedded birdcoder assembly preserves explicit runtime overrides', () => {
@@ -176,6 +184,7 @@ test('embedded modules receive the selected lifecycle environment', () => {
   });
   assert.equal(resolved.SDKWORK_IM_ENVIRONMENT, 'development');
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'development');
+  assert.equal(resolved.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT, 'development');
 });
 
 test('embedded module environment overrides remain independent', () => {

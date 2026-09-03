@@ -113,6 +113,15 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:
       env.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET
       ?? cloudRouterDevelopmentSecret,
+    // Required by the CloudRouter embedded router build: the outbound target
+    // policy derives from the router environment, and parse_environment fails
+    // closed to the production posture when it is unset. Local development
+    // runs behind fake-IP proxies (Clash TUN 198.18.0.0/15), so an unset value
+    // makes every provider hop fail with "forbidden address" (50201). Same
+    // precedence as the BirdCoder lifecycle environment: explicit override,
+    // then the selected gateway environment, then development.
+    SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT:
+      env.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT ?? environment ?? 'development',
     // Required by the sdkwork-webserver embedded assembly (Web Server API
     // router build): the snowflake id generator needs a node id. Standalone
     // development runs a single gateway instance, so 0 is a safe default;
