@@ -140,6 +140,11 @@ services:
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
       # so only the container-specific values are injected here.
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
+      # Cloud Router open-api ingress for embedded Rust SDK consumers: the
+      # resolver (sdkwork_agents_tool_cloudrouter::cloudrouter_base_url) maps
+      # this bind to http://127.0.0.1:<port>. It must track the listener bind
+      # above (docker-compose.override.yml rebinds both to 8080).
+      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:3900
       # Host allowlist: registered API domains plus host-mapped port for direct
       # access. sdkwork-webserver (independent deploy) forwards Host when it
       # reverse-proxies to GATEWAY_HOST_PORT. Empty = accept all Host headers.

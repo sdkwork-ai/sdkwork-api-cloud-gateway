@@ -44,6 +44,9 @@ x-gateway-common: &gateway-common
     SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
     SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID: ${GATEWAY_PROFILE_ID:-standalone.${GATEWAY_ENVIRONMENT}}
     SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
+    # Cloud Router open-api ingress for embedded Rust SDK consumers: must track
+    # the listener bind above (the SDK resolver maps it to 127.0.0.1:<port>).
+    SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:3900
     SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
     # Accept raw IP literal Host headers when the deployment must stay
     # reachable directly through the host IP (security.allowIpHosts).

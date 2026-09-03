@@ -16,6 +16,12 @@ services:
       - "${GATEWAY_HOST_PORT:-3910}:8080"
     environment:
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:8080
+      # Cloud Router is composed in this process, so embedded surfaces that call
+      # its open-api through the generated Rust SDK must target this listener.
+      # The SDK resolver maps this bind to http://127.0.0.1:<port>; without it the
+      # resolver falls back to the Cloud Router standalone default
+      # (http://127.0.0.1:3900), which nothing listens on here.
+      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:8080
     networks:
       default:
         aliases:

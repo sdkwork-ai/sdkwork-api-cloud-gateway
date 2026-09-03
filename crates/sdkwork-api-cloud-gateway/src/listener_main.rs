@@ -91,6 +91,7 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
         .bind
         .parse()
         .with_context(|| format!("invalid bind address `{}`", config.server.bind))?;
+    publish_embedded_cloudrouter_ingress(&config);
 
     // The realtime builder additionally returns shutdown handles so the
     // embedded IM realtime plane (WebSocket upgrade + TCP/UDP/QUIC link
@@ -229,9 +230,220 @@ async fn shutdown_signal() {
     }
 }
 
+/// Publishes this process' ingress bind as the Cloud Router open-api ingress for
+/// embedded consumers that reach the surface through the generated Rust SDK.
+///
+/// The SDK resolver (`sdkwork_agents_tool_cloudrouter::cloudrouter_base_url`)
+/// maps `SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND` to a
+/// loopback URL and falls back to the Cloud Router standalone default
+/// `http://127.0.0.1:3900` when it is unset. The standalone Cloud Router
+/// topology files declare the variable (`0.0.0.0:3900`, `127.0.0.1:3905`, ...),
+/// so the split deployment works, but the collapsed platform gateway topology
+/// never did — and the gateway's own bind is profile-dependent (`0.0.0.0:8080`
+/// in container profiles, `3900`/`3906`/`3907` elsewhere). Every SDK call from
+/// an embedded surface therefore dialled a port this process does not own and
+/// failed with a transport connect error.
+///
+/// Explicit overrides still win: a split deployment keeps its own
+/// `SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND` or
+/// `SDKWORK_AGENTS_CLOUDROUTER_BASE_URL` and this default is skipped.
+#[cfg(feature = "foundation-cloudrouter")]
+fn publish_embedded_cloudrouter_ingress(config: &GatewayRuntimeConfig) {
+    let composed_in_process = config
+        .dependency_surfaces
+        .iter()
+        .any(|surface| surface.workspace == "sdkwork-cloudrouter");
+    if !composed_in_process {
+        return;
+    }
+    let Some(port) = bind_port(&config.server.bind) else {
+        return;
+    };
+    if env::var_os("SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND").is_none() {
+        // SAFETY: this runs on the gateway runtime thread before the HTTP
+        // listener, the embedded dependency assemblies, and any request worker
+        // read the process environment.
+        unsafe {
+            env::set_var(
+                "SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND",
+                &config.server.bind,
+            )
+        };
+    }
+    // The generations media adapter carries the same standalone-port default
+    // (`GENERATIONS_MEDIA_GATEWAY_BASE_URL`), and the AIoT intelligence bridge
+    // requires `SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL`; both must point
+    // at this process' open-api listener in the collapsed topology.
+    if env::var_os("GENERATIONS_MEDIA_GATEWAY_BASE_URL").is_none() {
+        // SAFETY: same single-threaded bootstrap window as above.
+        unsafe {
+            env::set_var(
+                "GENERATIONS_MEDIA_GATEWAY_BASE_URL",
+                format!("http://127.0.0.1:{port}"),
+            )
+        };
+    }
+    if env::var_os("SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL").is_none() {
+        // SAFETY: same single-threaded bootstrap window as above.
+        unsafe {
+            env::set_var(
+                "SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL",
+                format!("http://127.0.0.1:{port}"),
+            )
+        };
+    }
+    info!(
+        bind = %config.server.bind,
+        cloudrouter_base_url = %format!("http://127.0.0.1:{port}"),
+        "embedded cloud router open-api ingress published for in-process SDK consumers"
+    );
+}
+
+/// Compiles the publisher away when the Cloud Router surface is not linked in:
+/// nothing composes the surface, so no SDK consumer needs its ingress.
+#[cfg(not(feature = "foundation-cloudrouter"))]
+fn publish_embedded_cloudrouter_ingress(_config: &GatewayRuntimeConfig) {}
+
+/// Extracts the TCP port of an `address:port` bind string.
+#[cfg(feature = "foundation-cloudrouter")]
+fn bind_port(bind: &str) -> Option<&str> {
+    let (_, port) = bind.rsplit_once(':')?;
+    if port.is_empty() || !port.chars().all(|character| character.is_ascii_digit()) {
+        return None;
+    }
+    Some(port)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Serializes env-mutating tests: `std::env` is process-global, so
+    /// parallel tests would race on the same variables.
+    #[cfg(feature = "foundation-cloudrouter")]
+    fn env_test_guard() -> &'static std::sync::Mutex<()> {
+        static GUARD: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+        GUARD.get_or_init(|| std::sync::Mutex::new(()))
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    fn embedded_cloudrouter_test_config() -> GatewayRuntimeConfig {
+        let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        GatewayRuntimeConfig::from_application_root(root)
+            .expect("gateway application manifest parses")
+    }
+
+    /// Restores the three published variables so other tests never observe a
+    /// leaked default.
+    #[cfg(feature = "foundation-cloudrouter")]
+    struct PublishedEnvGuard {
+        previous: [(String, Option<String>); 3],
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    impl PublishedEnvGuard {
+        const KEYS: [&str; 3] = [
+            "SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND",
+            "GENERATIONS_MEDIA_GATEWAY_BASE_URL",
+            "SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL",
+        ];
+
+        fn capture_and_clear() -> Self {
+            let mut previous: [(String, Option<String>); 3] =
+                std::array::from_fn(|_| (String::new(), None));
+            for (slot, key) in Self::KEYS.iter().enumerate() {
+                previous[slot] = (key.to_string(), std::env::var(key).ok());
+                // SAFETY: test-only, serialized by env_test_guard.
+                unsafe { std::env::remove_var(key) };
+            }
+            Self { previous }
+        }
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    impl Drop for PublishedEnvGuard {
+        fn drop(&mut self) {
+            for (key, value) in &self.previous {
+                // SAFETY: test-only, serialized by env_test_guard.
+                unsafe {
+                    match value {
+                        Some(value) => std::env::set_var(key, value),
+                        None => std::env::remove_var(key),
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    #[test]
+    fn publishes_loopback_ingress_for_embedded_cloudrouter_consumers() {
+        let _guard = env_test_guard().lock().unwrap();
+        let _env = PublishedEnvGuard::capture_and_clear();
+        let config = embedded_cloudrouter_test_config();
+        assert!(
+            config
+                .dependency_surfaces
+                .iter()
+                .any(|surface| surface.workspace == "sdkwork-cloudrouter"),
+            "test application manifest must compose the cloudrouter surface"
+        );
+
+        publish_embedded_cloudrouter_ingress(&config);
+
+        let port = bind_port(&config.server.bind).expect("test bind carries a port");
+        assert_eq!(
+            std::env::var("SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND")
+                .expect("ingress bind published"),
+            config.server.bind
+        );
+        for key in [
+            "GENERATIONS_MEDIA_GATEWAY_BASE_URL",
+            "SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL",
+        ] {
+            assert_eq!(
+                std::env::var(key).expect(key),
+                format!("http://127.0.0.1:{port}"),
+                "{key} must target this process' own listener"
+            );
+        }
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    #[test]
+    fn explicit_ingress_overrides_win_over_published_defaults() {
+        let _guard = env_test_guard().lock().unwrap();
+        let _env = PublishedEnvGuard::capture_and_clear();
+        let config = embedded_cloudrouter_test_config();
+
+        // Split deployment: CloudRouter runs as its own process elsewhere.
+        // SAFETY: test-only, serialized by env_test_guard.
+        unsafe {
+            std::env::set_var(
+                "SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND",
+                "cloudrouter.internal:443",
+            )
+        };
+        publish_embedded_cloudrouter_ingress(&config);
+
+        assert_eq!(
+            std::env::var("SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND")
+                .expect("explicit override preserved"),
+            "cloudrouter.internal:443"
+        );
+    }
+
+    #[cfg(feature = "foundation-cloudrouter")]
+    #[test]
+    fn extracts_the_loopback_port_from_every_bind_form() {
+        assert_eq!(bind_port("0.0.0.0:8080"), Some("8080"));
+        assert_eq!(bind_port("127.0.0.1:3900"), Some("3900"));
+        assert_eq!(bind_port("[::]:3907"), Some("3907"));
+        assert_eq!(bind_port("gateway:3906"), Some("3906"));
+        assert_eq!(bind_port("no-port"), None);
+        assert_eq!(bind_port("host:"), None);
+        assert_eq!(bind_port("host:39x0"), None);
+    }
 
     #[test]
     fn installs_a_process_crypto_provider_before_router_construction() {
