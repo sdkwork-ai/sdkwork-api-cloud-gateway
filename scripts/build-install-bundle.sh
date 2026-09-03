@@ -2,7 +2,7 @@
 # ============================================================================
 # build-install-bundle.sh — one-command packaging pipeline (single bash entry).
 #
-# Wraps the full build chain so operators never touch node/pnpm directly:
+# Wraps the full build chain so operators never invoke build tooling by hand:
 #   1. scripts/package-server.mjs                    → cargo release build +
 #      standalone server install tarball (dist/server/*.tar.gz)
 #   2. scripts/build-api-cloud-gateway-container.mjs → OCI image
