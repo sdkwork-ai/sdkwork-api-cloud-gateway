@@ -33,7 +33,7 @@ curl http://127.0.0.1:3910/healthz                   # 3. 健康检查，返回 
 
 ```bash
 cp env/development.env.example env/development.env
-# 编辑 env/development.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+# 编辑 env/development.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*（§4.2 有完整步骤与示例）
 bash deploy.sh --environment development             # 外置模式（默认）
 bash deploy.sh --environment development --embedded  # 没有外部库时：内置模式，零配置
 curl http://127.0.0.1:3910/healthz
@@ -43,7 +43,7 @@ curl http://127.0.0.1:3910/healthz
 
 ```bash
 cp env/test.env.example env/test.env
-# 编辑 env/test.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+# 编辑 env/test.env：填 GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*（§4.2 有完整步骤与示例）
 bash deploy.sh --environment test                    # 外置模式（默认）
 bash deploy.sh --environment test --embedded         # 或内置模式快速起
 curl http://127.0.0.1:3911/healthz
@@ -54,6 +54,7 @@ curl http://127.0.0.1:3911/healthz
 ```bash
 cp env/staging.env.example env/staging.env
 # 编辑 env/staging.env：填 GATEWAY_POSTGRES_HOST/PORT/DB/USER/PASSWORD 指向你的外部库
+# （外置 PostgreSQL 与 Redis 的完整配置步骤与示例见 §4.2）
 bash deploy.sh --environment staging            # 外置模式（默认）
 bash deploy.sh --environment staging --embedded # 或内置模式快速起
 curl http://127.0.0.1:3912/healthz
@@ -65,7 +66,8 @@ curl http://127.0.0.1:3912/healthz
 cp env/production.env.example env/production.env
 # ① 替换 7 个 <CHANGE_ME>（1 个数据库密码 + 6 个 Cloud Router 密钥，§4.1 有生成命令；
 #    本地验证可偷懒：bash prepare-envs.sh --dev-secrets-for-production）
-# ② 外置模式：填 GATEWAY_POSTGRES_* 连接信息（sslmode=require 示例已预置）
+# ② 外置模式：填 GATEWAY_POSTGRES_* 连接信息（sslmode=require 示例已预置；
+#    完整的外置 PostgreSQL 与 Redis 配置步骤与示例见 §4.2）
 bash deploy.sh --environment production --replicas 3   # 或加 --embedded
 curl http://127.0.0.1:3913/healthz
 ```
@@ -177,7 +179,7 @@ cp env/<环境>.env.example env/<环境>.env
 > （功能上能跑通，但等同于弱凭据）。冒烟无所谓，production 一定要替换（§4.1）。
 
 外置模式的数据库与 schema 需按环境预先建好（`sdkwork_ai_dev/test/staging/demo/prod`），
-在仓库内一条 shell 命令一键创建：
+在仓库内一条 shell 命令一键创建（**完整的外置 PostgreSQL + Redis 配置步骤与示例见 §4.2**）：
 
 ```bash
 bash scripts/provision-external-databases.sh
@@ -212,6 +214,111 @@ grep -n "<CHANGE_ME>" env/production.env
 
 staging 的 6 个 Cloud Router 密钥模板已带 dev-only 默认值（仅限内部预发），正式对外预发
 请按 §4.1 同样方式替换。
+
+### 4.2 外置 PostgreSQL 与 Redis：配置步骤（命令 + 示例）
+
+外置模式（默认）要求你先准备好外部 PostgreSQL（**必须带 pgvector 扩展**）和 Redis，
+再把连接信息填进 env。本节给出从零到连通的完整命令。
+
+**命名约定**（数据库 = schema = 角色同名，脚本与 SQL 都遵循）：
+
+| 环境 | 数据库 / Schema / 角色 | Redis 逻辑库（RTC / Web） |
+| --- | --- | --- |
+| development | `sdkwork_ai_dev` | 1 / 2 |
+| test | `sdkwork_ai_test` | 3 / 4 |
+| staging | `sdkwork_ai_staging` | 5 / 6 |
+| demo | `sdkwork_ai_demo` | 9 / 10 |
+| production | `sdkwork_ai_prod` | 7 / 8 |
+
+**第 1 步：准备 PostgreSQL 服务器**（已有可跳过；必须是带 pgvector 的实例）：
+
+```bash
+# Ubuntu 安装 PostgreSQL + pgvector（版本号按实际，如 14/16/18）
+sudo apt install postgresql postgresql-14-pgvector
+
+# 或者用 Docker 起一个（数据落在具名卷，重启不丢）
+docker run -d --name sdkwork-pg --restart unless-stopped \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<管理员密码> \
+  -p 5432:5432 -v sdkwork-pg-data:/var/lib/postgresql/data \
+  pgvector/pgvector:pg18
+```
+
+**第 2 步：建库 / 建 schema / 装扩展 / 建角色** —— 二选一：
+
+```bash
+# 方式 A（推荐）：一键脚本。在仓库根目录执行；先在各 env 文件里填好
+# GATEWAY_POSTGRES_PASSWORD，脚本会用它创建同名角色。
+export SDKWORK_DATABASE_ADMIN_HOST=<PG主机>
+export SDKWORK_DATABASE_ADMIN_PORT=5432
+export SDKWORK_DATABASE_ADMIN_USERNAME=postgres
+export SDKWORK_DATABASE_ADMIN_PASSWORD='<管理员密码>'
+bash scripts/provision-external-databases.sh               # 全部 5 个环境
+bash scripts/provision-external-databases.sh production    # 或只供一个环境
+
+# 方式 B：手工 SQL（DBA 审核场景）。数据库、schema、角色三个动作：
+psql -h <PG主机> -U postgres -c "CREATE DATABASE sdkwork_ai_prod;"
+# 在该库内建同名 schema + 在 schema 内安装 pgvector（需超级用户）
+psql -h <PG主机> -U postgres -d sdkwork_ai_prod \
+  -v db=sdkwork_ai_prod -v app_user=sdkwork_ai_prod \
+  -f docker/postgres/external-schema.sql
+# 建/改角色并授权
+psql -h <PG主机> -U postgres -c \
+  "CREATE ROLE sdkwork_ai_prod LOGIN PASSWORD '<GATEWAY_POSTGRES_PASSWORD>';"
+psql -h <PG主机> -U postgres -d sdkwork_ai_prod -c \
+  "GRANT ALL PRIVILEGES ON DATABASE sdkwork_ai_prod TO sdkwork_ai_prod;"
+```
+
+**第 3 步：准备 Redis**（已有可跳过）：
+
+```bash
+# Docker 示例：端口映射到宿主 6380（env 模板默认值），带密码 + AOF 持久化
+docker run -d --name sdkwork-redis --restart unless-stopped \
+  -p 6380:6379 -v sdkwork-redis-data:/data \
+  redis:8-alpine redis-server --requirepass '<Redis密码>' --appendonly yes
+
+# 验证连通（返回 PONG）
+redis-cli -h <REDIS主机> -p 6380 -a '<Redis密码>' ping
+```
+
+自建/托管 Redis 均可，只要网络可达、密码已知。同一 Redis 服务多环境共用时，
+靠 env 里的逻辑库编号隔离（见上表）；也可每环境独立 Redis 实例。
+
+**第 4 步：把连接信息填进 `env/<环境>.env`**（以 production 为例）：
+
+```bash
+# --- PostgreSQL（对应第 2 步产物）---
+GATEWAY_POSTGRES_HOST=<PG主机>            # 网关跑在容器里：宿主机用 host.docker.internal
+GATEWAY_POSTGRES_PORT=5432
+GATEWAY_POSTGRES_DB=sdkwork_ai_prod
+GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_prod
+GATEWAY_POSTGRES_USER=sdkwork_ai_prod
+GATEWAY_POSTGRES_PASSWORD=<第 2 步设置的角色密码>
+GATEWAY_POSTGRES_SSL_MODE=require         # production/staging 强制；内网 dev/test 可 disable
+
+# --- Redis（对应第 3 步产物）---
+GATEWAY_CLOUDROUTER_REDIS_HOST=<REDIS主机>
+GATEWAY_CLOUDROUTER_REDIS_PORT=6380
+GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<Redis密码>
+GATEWAY_RTC_STATE_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/7
+GATEWAY_WEB_REDIS_URL=redis://:<URL编码后的Redis密码>@<REDIS主机>:6380/8
+```
+
+> 注意两点：
+> ① `GATEWAY_RTC_STATE_REDIS_URL` / `GATEWAY_WEB_REDIS_URL` 是完整 URL，
+> 密码里的 `@ : / # ?` 等字符必须百分号编码（python3
+> `urllib.parse.quote` 一行转换）；逻辑库编号按上表按环境区分。
+> ② env 模板默认 `host.docker.internal`（容器内访问宿主机服务）；Linux 宿主上
+> compose 模板已自动加 `host-gateway` 映射，直接填外部主机名/IP 也可。
+
+**第 5 步：部署前连通性验证**（两条都过再 `deploy.sh`）：
+
+```bash
+psql "host=<PG主机> port=5432 dbname=sdkwork_ai_prod user=sdkwork_ai_prod \
+  password=<角色密码> sslmode=require" -c "SELECT extname FROM pg_extension WHERE extname='vector';"
+# 预期输出一行 vector
+
+redis-cli -h <REDIS主机> -p 6380 -a '<Redis密码>' ping   # 预期 PONG
+```
 
 ## 5. 第四步：部署与验证
 

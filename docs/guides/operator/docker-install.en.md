@@ -38,7 +38,7 @@ use the bundled databases instead.
 
 ```bash
 cp env/development.env.example env/development.env
-# Edit env/development.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+# Edit env/development.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_* (§4.2 has the full steps and examples)
 bash deploy.sh --environment development             # external mode (default)
 bash deploy.sh --environment development --embedded  # no external DB? bundled mode, zero config
 curl http://127.0.0.1:3910/healthz
@@ -48,7 +48,7 @@ curl http://127.0.0.1:3910/healthz
 
 ```bash
 cp env/test.env.example env/test.env
-# Edit env/test.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*
+# Edit env/test.env: fill GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_* (§4.2 has the full steps and examples)
 bash deploy.sh --environment test                    # external mode (default)
 bash deploy.sh --environment test --embedded         # or bundled mode for a quick start
 curl http://127.0.0.1:3911/healthz
@@ -59,6 +59,7 @@ curl http://127.0.0.1:3911/healthz
 ```bash
 cp env/staging.env.example env/staging.env
 # Edit env/staging.env: fill GATEWAY_POSTGRES_HOST/PORT/DB/USER/PASSWORD
+# (full external PostgreSQL & Redis setup steps and examples in §4.2)
 bash deploy.sh --environment staging            # external mode (default)
 bash deploy.sh --environment staging --embedded # or built-in mode for a quick start
 curl http://127.0.0.1:3912/healthz
@@ -71,7 +72,8 @@ cp env/production.env.example env/production.env
 # ① Replace the 7 <CHANGE_ME> entries (1 database password + 6 Cloud Router
 #    secrets — generation one-liners in §4.1; local-verification shortcut:
 #    bash prepare-envs.sh --dev-secrets-for-production)
-# ② External mode: fill GATEWAY_POSTGRES_* (sslmode=require is preset)
+# ② External mode: fill GATEWAY_POSTGRES_* (sslmode=require is preset;
+#    full external PostgreSQL & Redis setup steps and examples in §4.2)
 bash deploy.sh --environment production --replicas 3   # or add --embedded
 curl http://127.0.0.1:3913/healthz
 ```
@@ -203,7 +205,8 @@ embedded mode remove that line or point it at `postgres:5432`.
 
 For external mode, create the per-environment database and schema ahead of
 time (`sdkwork_ai_dev/test/staging/demo/prod`) with one shell command from
-the repository:
+the repository (**full external PostgreSQL + Redis setup steps and examples
+in §4.2**):
 
 ```bash
 bash scripts/provision-external-databases.sh
@@ -242,6 +245,122 @@ grep -n "<CHANGE_ME>" env/production.env
 The staging template ships dev-only defaults for the 6 Cloud Router secrets
 (internal staging only); replace them the §4.1 way before exposing staging
 externally.
+
+### 4.2 External PostgreSQL & Redis: Setup Steps (commands + examples)
+
+External mode (the default) requires an external PostgreSQL instance
+(**with the pgvector extension**) and Redis reachable from the gateway, then
+their connection settings go into the env file. Complete path from zero:
+
+**Naming convention** (database = schema = role, followed by both the script
+and the SQL below):
+
+| Environment | Database / Schema / Role | Redis logical DBs (RTC / Web) |
+| --- | --- | --- |
+| development | `sdkwork_ai_dev` | 1 / 2 |
+| test | `sdkwork_ai_test` | 3 / 4 |
+| staging | `sdkwork_ai_staging` | 5 / 6 |
+| demo | `sdkwork_ai_demo` | 9 / 10 |
+| production | `sdkwork_ai_prod` | 7 / 8 |
+
+**Step 1: provision the PostgreSQL server** (skip if you already have one;
+it MUST have pgvector installed):
+
+```bash
+# Ubuntu: install PostgreSQL + pgvector (adjust the version, e.g. 14/16/18)
+sudo apt install postgresql postgresql-14-pgvector
+
+# Or run one via Docker (data persists in a named volume)
+docker run -d --name sdkwork-pg --restart unless-stopped \
+  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=<admin-password> \
+  -p 5432:5432 -v sdkwork-pg-data:/var/lib/postgresql/data \
+  pgvector/pgvector:pg18
+```
+
+**Step 2: create the database / schema / extension / role** — pick one:
+
+```bash
+# Option A (recommended): one-shot script. Run from the repo root; fill
+# GATEWAY_POSTGRES_PASSWORD in each env file first — the script uses it to
+# create the same-named role.
+export SDKWORK_DATABASE_ADMIN_HOST=<pg-host>
+export SDKWORK_DATABASE_ADMIN_PORT=5432
+export SDKWORK_DATABASE_ADMIN_USERNAME=postgres
+export SDKWORK_DATABASE_ADMIN_PASSWORD='<admin-password>'
+bash scripts/provision-external-databases.sh               # all five environments
+bash scripts/provision-external-databases.sh production    # or just one
+
+# Option B: manual SQL (DBA-reviewed environments). Three actions:
+psql -h <pg-host> -U postgres -c "CREATE DATABASE sdkwork_ai_prod;"
+# create the same-named schema + install pgvector inside it (superuser needed)
+psql -h <pg-host> -U postgres -d sdkwork_ai_prod \
+  -v db=sdkwork_ai_prod -v app_user=sdkwork_ai_prod \
+  -f docker/postgres/external-schema.sql
+# create the role and grant privileges
+psql -h <pg-host> -U postgres -c \
+  "CREATE ROLE sdkwork_ai_prod LOGIN PASSWORD '<gateway-postgres-password>';"
+psql -h <pg-host> -U postgres -d sdkwork_ai_prod -c \
+  "GRANT ALL PRIVILEGES ON DATABASE sdkwork_ai_prod TO sdkwork_ai_prod;"
+```
+
+**Step 3: provision Redis** (skip if you already have one):
+
+```bash
+# Docker example: publish on host port 6380 (the env template default),
+# password-protected, AOF persistence enabled
+docker run -d --name sdkwork-redis --restart unless-stopped \
+  -p 6380:6379 -v sdkwork-redis-data:/data \
+  redis:8-alpine redis-server --requirepass '<redis-password>' --appendonly yes
+
+# Verify connectivity (expect PONG)
+redis-cli -h <redis-host> -p 6380 -a '<redis-password>' ping
+```
+
+Self-hosted or managed Redis both work as long as it is reachable and the
+password is known. When multiple environments share one Redis service, they
+are isolated by the logical DB numbers in the table above; separate Redis
+instances per environment also work.
+
+**Step 4: fill the connection settings into `env/<environment>.env`**
+(production example):
+
+```bash
+# --- PostgreSQL (matches Step 2) ---
+GATEWAY_POSTGRES_HOST=<pg-host>           # gateway runs in a container: host.docker.internal targets the host
+GATEWAY_POSTGRES_PORT=5432
+GATEWAY_POSTGRES_DB=sdkwork_ai_prod
+GATEWAY_POSTGRES_SCHEMA=sdkwork_ai_prod
+GATEWAY_POSTGRES_USER=sdkwork_ai_prod
+GATEWAY_POSTGRES_PASSWORD=<role password from Step 2>
+GATEWAY_POSTGRES_SSL_MODE=require         # forced for production/staging; dev/test on an intranet may use disable
+
+# --- Redis (matches Step 3) ---
+GATEWAY_CLOUDROUTER_REDIS_HOST=<redis-host>
+GATEWAY_CLOUDROUTER_REDIS_PORT=6380
+GATEWAY_CLOUDROUTER_REDIS_PASSWORD=<redis-password>
+GATEWAY_RTC_STATE_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/7
+GATEWAY_WEB_REDIS_URL=redis://:<url-encoded-redis-password>@<redis-host>:6380/8
+```
+
+> Two things to watch:
+> ① `GATEWAY_RTC_STATE_REDIS_URL` / `GATEWAY_WEB_REDIS_URL` are full URLs:
+> special characters in the password (`@ : / # ?`) must be percent-encoded
+> (one line with python3 `urllib.parse.quote`); the logical DB numbers follow
+> the table per environment.
+> ② The env templates default to `host.docker.internal` (reaching host-side
+> services from inside the container); the compose templates add the
+> `host-gateway` mapping automatically on Linux hosts, and a plain external
+> hostname/IP works too.
+
+**Step 5: pre-deploy connectivity checks** (pass both before `deploy.sh`):
+
+```bash
+psql "host=<pg-host> port=5432 dbname=sdkwork_ai_prod user=sdkwork_ai_prod \
+  password=<role-password> sslmode=require" -c "SELECT extname FROM pg_extension WHERE extname='vector';"
+# expect one row: vector
+
+redis-cli -h <redis-host> -p 6380 -a '<redis-password>' ping   # expect PONG
+```
 
 ## 5. Step 4: Deploy and Verify
 
