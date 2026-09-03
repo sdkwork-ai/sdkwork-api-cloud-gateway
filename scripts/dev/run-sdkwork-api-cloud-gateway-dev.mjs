@@ -7,13 +7,17 @@ import process from 'node:process';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-import { resolveRepositoryRuntimeStateDirectory } from '../../../sdkwork-app-topology/tools/topology/lib/index.mjs';
+import {
+  ensurePrivateRuntimeStateDirectory,
+  resolveRepositoryRuntimeStateDirectory,
+} from '../../../sdkwork-app-topology/tools/topology/lib/index.mjs';
 import { executePostgresInitWithNode } from '../../../sdkwork-specs/tools/postgres/postgres-init-node.mjs';
 import {
   isPostgresDevProfile,
   resolvePostgresDevProfile,
 } from '../../../sdkwork-specs/tools/postgres/postgres-dev-profile.mjs';
 import {
+  resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
   resolveEmbeddedPostgresUrl,
@@ -81,7 +85,6 @@ async function main() {
       SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC: 'false',
       SDKWORK_DATABASE_ENGINE:
         process.env.SDKWORK_DATABASE_ENGINE ?? 'postgresql',
-      SDKWORK_WEB_SNOWFLAKE_NODE_ID: process.env.SDKWORK_WEB_SNOWFLAKE_NODE_ID ?? '0',
     },
   });
   if (!isPostgresDevProfile(profile.env)) {
@@ -170,6 +173,10 @@ function resolveChildEnv(profile) {
     profile.databaseUrl,
     profile.config.database.schema,
   );
+  const runtimeStateDirectory = ensurePrivateRuntimeStateDirectory({
+    owner: 'sdkwork-api-cloud-gateway',
+    repoRoot: appRoot,
+  });
   const childEnv = {
     ...profile.env,
     ...resolveTemporaryDatabaseDriverEnv(profile.env),
@@ -178,6 +185,13 @@ function resolveChildEnv(profile) {
       databaseUrl: embeddedDatabaseUrl,
       env: profile.env,
       schema: profile.config.database.schema,
+    }),
+    // Canvas pages use the client-local SQLite store (ENVIRONMENT_SPEC §7.2),
+    // which must be resolvable even though every other module runs on the
+    // PostgreSQL server profile.
+    SDKWORK_DATABASE_SQLITE_URL: resolveEmbeddedCanvasSqliteUrl({
+      env: profile.env,
+      runtimeStateDirectory,
     }),
     PGOPTIONS: `-csearch_path=${profile.config.database.schema}`,
   };

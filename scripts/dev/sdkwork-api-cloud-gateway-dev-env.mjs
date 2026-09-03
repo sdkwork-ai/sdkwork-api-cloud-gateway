@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 const cloudRouterDevelopmentSecret =
   'sdkwork-cloudrouter-local-dev-secret-20260507';
 
@@ -54,6 +56,27 @@ export function resolveEmbeddedDatabaseEnv({ databaseUrl, schema, env = process.
   };
 }
 
+export function resolveEmbeddedCanvasSqliteUrl({
+  runtimeStateDirectory,
+  env = process.env,
+}) {
+  if (!firstNonEmpty(runtimeStateDirectory)) {
+    throw new Error('embedded canvas runtime state directory is required');
+  }
+  // Canvas pages are SQLite-only (ENVIRONMENT_SPEC §7.2): the embedded gateway
+  // deployment needs a client-local SQLite store next to the server runtime
+  // state. Mirrors the docker-compose default (GATEWAY_DATABASE_SQLITE_URL),
+  // which stores canvas-pages.db under the container data volume.
+  const existing = firstNonEmpty(env.SDKWORK_DATABASE_SQLITE_URL);
+  if (existing) {
+    return existing;
+  }
+  const sqlitePath = path
+    .join(runtimeStateDirectory, 'canvas-pages.db')
+    .replace(/\\/gu, '/');
+  return `sqlite:${sqlitePath}?mode=rwc`;
+}
+
 export function resolveEmbeddedDependencyEnv(env = process.env) {
   const configuredCloudRouterBaseUrl = firstNonEmpty(
     env.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
@@ -90,6 +113,23 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET:
       env.SDKWORK_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET
       ?? cloudRouterDevelopmentSecret,
+    // Required by the sdkwork-webserver embedded assembly (Web Server API
+    // router build): the snowflake id generator needs a node id. Standalone
+    // development runs a single gateway instance, so 0 is a safe default;
+    // multi-instance deployments must assign unique ids per replica.
+    SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID:
+      env.SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID ?? '0',
+    // Required by the sdkwork-birdcoder embedded assembly: the BirdCoder
+    // server runtime refuses to boot without an explicit lifecycle
+    // environment, deployment profile, and runtime target. The collapsed
+    // gateway dev deployment is a single standalone server process that
+    // inherits the selected gateway lifecycle environment.
+    SDKWORK_BIRDCODER_ENVIRONMENT:
+      env.SDKWORK_BIRDCODER_ENVIRONMENT ?? environment ?? 'development',
+    SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE:
+      env.SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE ?? 'standalone',
+    SDKWORK_BIRDCODER_RUNTIME_TARGET:
+      env.SDKWORK_BIRDCODER_RUNTIME_TARGET ?? 'server',
     // RTC assembly startup hydrates runtime state from persistence using this
     // tenant/organization scope; without it the assembly falls back to the
     // "default" placeholder, which fails to parse as a tenant id. Mirrors the

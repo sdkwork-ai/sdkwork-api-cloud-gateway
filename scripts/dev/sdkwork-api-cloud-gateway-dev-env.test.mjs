@@ -2,11 +2,37 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
   resolveEmbeddedPostgresUrl,
   resolveTemporaryDatabaseDriverEnv,
 } from './sdkwork-api-cloud-gateway-dev-env.mjs';
+
+test('embedded canvas SQLite store lives in the runtime state directory', () => {
+  const resolved = resolveEmbeddedCanvasSqliteUrl({
+    runtimeStateDirectory: 'C:\\Users\\dev\\AppData\\Local\\sdkwork\\state',
+  });
+  assert.equal(
+    resolved,
+    'sqlite:C:/Users/dev/AppData/Local/sdkwork/state/canvas-pages.db?mode=rwc',
+  );
+});
+
+test('embedded canvas SQLite URL preserves explicit overrides', () => {
+  const resolved = resolveEmbeddedCanvasSqliteUrl({
+    env: { SDKWORK_DATABASE_SQLITE_URL: 'sqlite::memory:' },
+    runtimeStateDirectory: '/tmp/state',
+  });
+  assert.equal(resolved, 'sqlite::memory:');
+});
+
+test('embedded canvas SQLite store requires a runtime state directory', () => {
+  assert.throws(
+    () => resolveEmbeddedCanvasSqliteUrl({ runtimeStateDirectory: '  ' }),
+    /runtime state directory is required/u,
+  );
+});
 
 test('development database driver exceptions use the declared process defaults', () => {
   assert.deepEqual(resolveTemporaryDatabaseDriverEnv({}), {
@@ -120,6 +146,28 @@ test('embedded dependencies never default a dependency base URL to the gateway o
   );
   assert.equal(resolved.SDKWORK_RTC_HYDRATE_TENANT_ID, '100001');
   assert.equal(resolved.SDKWORK_RTC_HYDRATE_ORGANIZATION_ID, '0');
+  assert.equal(resolved.SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID, '0');
+  assert.equal(resolved.SDKWORK_BIRDCODER_ENVIRONMENT, 'development');
+  assert.equal(resolved.SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE, 'standalone');
+  assert.equal(resolved.SDKWORK_BIRDCODER_RUNTIME_TARGET, 'server');
+});
+
+test('embedded birdcoder assembly preserves explicit runtime overrides', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_BIRDCODER_ENVIRONMENT: 'demo',
+    SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE: 'cloud',
+    SDKWORK_BIRDCODER_RUNTIME_TARGET: 'container',
+  });
+  assert.equal(resolved.SDKWORK_BIRDCODER_ENVIRONMENT, 'demo');
+  assert.equal(resolved.SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE, 'cloud');
+  assert.equal(resolved.SDKWORK_BIRDCODER_RUNTIME_TARGET, 'container');
+});
+
+test('embedded webserver assembly preserves an explicit snowflake node id', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID: '7',
+  });
+  assert.equal(resolved.SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID, '7');
 });
 
 test('embedded modules receive the selected lifecycle environment', () => {
