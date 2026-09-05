@@ -1,6 +1,6 @@
 # Docker 傻瓜式安装指南（docker-install）
 
-> 版本：2026-09-03 · 适用：`sdkwork-api-cloud-gateway` standalone 统一安装镜像（bundle ≥ 0.1.1）
+> 版本：2026-09-04 · 适用：`sdkwork-api-cloud-gateway` standalone 统一安装镜像（bundle ≥ 0.1.1）
 > 规范依据：`sdkwork-specs/DEPLOYMENT_SPEC.md` §6、`sdkwork-specs/PNPM_SCRIPT_SPEC.md` §4.4
 > English version: [docker-install.en.md](./docker-install.en.md)
 
@@ -85,7 +85,7 @@ curl http://127.0.0.1:3913/healthz
 | PostgreSQL | 自备（托管实例或自建），`GATEWAY_POSTGRES_*` 指过去 | 随包自动启动（pgvector/pgvector:pg18，含 vector 扩展，自动 TLS） |
 | Redis | 自备，`GATEWAY_CLOUDROUTER_REDIS_*` 指过去 | 随包自动启动（redis:8-alpine，无密码） |
 | 适用场景 | 测试 / 预发 / 生产，有 DBA 或托管数据库 | 快速演示、PoC、隔离冒烟测试、无外部数据库的小规模部署 |
-| 数据位置 | 在你的数据库实例里 | 在宿主机 Docker 卷 `<环境>-postgres-data` / `<环境>-redis-data` |
+| 数据位置 | 在你的数据库实例里 | 在宿主机 Docker 卷 `sdkwork-api-cloud-gateway-<环境>-postgres-data` / `-redis-data` |
 | 升级 / 扩容 | 无状态，随时 `--replicas N` | 同样无状态；内置库单实例，是容量上限 |
 
 规则很简单：**有像样的 PostgreSQL 和 Redis 就用外置（默认）；没有或只想快速看效果就 `--embedded`。** 两种模式用同一个镜像、同一份 env 文件，切换只是加/去一个参数，改完重新执行 `deploy.sh` 即可。
@@ -151,7 +151,7 @@ bash scripts/build-install-bundle.sh --dry-run
 **版本号**：新版本发布前把 `sdkwork.app.config.json` 的 `release.currentVersion`
 改为新版本号（如 `0.1.2`），或临时用 `--version 0.1.2` 覆盖——版本号决定镜像 tag
 （`registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<版本>`）与 bundle 目录名。
-**每次发布的 bundle 目录独立存在、互不覆盖**，旧版本目录保留即可用于回滚（§5.2）。
+**每次发布的 bundle 目录独立存在、互不覆盖**，旧版本目录保留即可用于回滚（§5.3）。
 
 **分发前自检**：新 bundle 的 `image.sha256` 与 `manifest.json` 记录了镜像指纹，
 拷贝到远程后用 `sha256sum -c` 校验（§3）；`prepare-envs.sh` 不会覆盖已有 env，
@@ -216,7 +216,23 @@ cp env/<环境>.env.example env/<环境>.env
 | `GATEWAY_POSTGRES_SSL_MODE` | production/staging 示例已预置 `require`（P0-12 强制：生产库连接必须 TLS） | 生产**必填** | 生产**必填**（内置库 TLS 自动就绪） |
 | `GATEWAY_DEPS_MODE` | `external`（默认）或 `embedded` | 不用动 | 可写 `embedded` 代替 `--embedded` |
 | `GATEWAY_IM_ID_NODE_ID` | 雪花 ID 节点号；**同机多环境必须互不相同**（§6） | 建议修改 | 建议修改 |
+| `GATEWAY_CONTAINER_PORT` | 容器内监听端口，默认 `3900`；接入 sdkwork-webserver 时必须为 `8080`（见下） | 建议显式填写 | 建议显式填写 |
+| `GATEWAY_ALLOWED_HOSTS` | 网关 Host 白名单；必须包含容器网络别名 `gateway` 与 `sdkwork-api-cloud-gateway`，否则 sidecar 调用返回 421 | 生产**必填** | 生产**必填** |
 | `GATEWAY_CLOUDROUTER_API_KEY_PEPPER` 等 6 个密钥 | production 环境占位符必须替换 | 生产必填 | 生产必填 |
+
+**与 sdkwork-webserver 联动时容器端口必须是 8080**：webserver 的导入 sidecar 直连规范上游
+`sdkwork-api-cloud-gateway:8080`（checkout-direct，永不改写），因此被接入的网关部署必须
+（a）在 compose 网络上注册别名 `sdkwork-api-cloud-gateway`（bundle 模板已内置）且
+（b）在 8080 上应答。在 env 文件里写 `GATEWAY_CONTAINER_PORT=8080` 即可，compose 模板会把
+监听地址、端口映射与就绪探针三者一起对齐，**不需要任何额外的 override 文件**。
+宿主端口（`GATEWAY_HOST_PORT`，3910/3911/3912/3913）不受影响。
+
+对应的 Host 白名单也要放开容器别名（`normalize_host` 会剥离端口，写裸主机名即可）：
+
+```bash
+# env/<环境>.env
+GATEWAY_ALLOWED_HOSTS=...,gateway,sdkwork-api-cloud-gateway
+```
 
 **密码包含 URL 特殊字符时**：不要直接填 `GATEWAY_POSTGRES_PASSWORD`，改用百分号编码后的完整
 `SDKWORK_DATABASE_URL`（示例文件里有说明注释）。注意：env 文件里显式设置了
@@ -470,10 +486,74 @@ docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # 单实例�
 | 环境配置（唯一需要编辑的文件） | `<bundle>/env/<环境>.env` | `/etc/sdkwork/api-gateway/docker/<环境>.env` |
 | 单实例差异配置（可选） | `<bundle>/env/<环境>.i<序号>.env` | 同目录 `<环境>.i<序号>.env` |
 | Compose 模板 | `<bundle>/compose/docker-compose.bundle.yml`（内置模式为 `docker-compose.bundle.embedded.yml`） | 同 bundle 目录 |
-| 数据卷 | `<环境>-postgres-data` / `<环境>-redis-data`（内置模式） | 同名 |
+| 数据卷 | Docker 具名卷（两种模式均为 `sdkwork-api-cloud-gateway-<env>-secrets` / `-data`；内置模式另有 `-postgres-data` / `-redis-data` / `-postgres-tls`），完整清单与容器内映射见 §5.2 | 同名 |
 | 容器项目名 | 实例 `sdkwork-api-cloud-gateway-<env>-i<N>`；依赖 `sdkwork-api-cloud-gateway-<env>-deps` | 同名 |
 
-### 5.2 回滚流程（版本回退 / 配置回退 / 数据回退）
+### 5.2 目录与路径速查（容器内 ↔ 宿主机）
+
+排查问题 / 备份数据时快速定位用。卷名里的 `<env>` = `development` / `test` / `staging` / `demo` / `production`。
+
+**A. 容器内常用路径**（`docker exec -it <容器名> ls <路径>` 直接看）：
+
+**gateway 容器**（`sdkwork-api-cloud-gateway-<env>-i<N>-gateway-1`；deps 里的
+knowledgebase-rpc 容器共用同一套挂载）：
+
+| 容器内路径 | 内容 | 宿主侧对应 |
+| --- | --- | --- |
+| `/run/secrets/sdkwork/api-gateway/` | 运行时密钥与证书：`iam-signing-master.key`、`payment-credential-master.key`、`knowledgebase-rpc/`（mTLS server/client/CA 三件套 + `caller-context.key`、`knowledgebase-secrets.key`、`im-launch-ticket.key`） | Docker 卷 `sdkwork-api-cloud-gateway-<env>-secrets` |
+| `/var/lib/sdkwork/api-gateway/` | 网关共享状态；`knowledgebase-drive/` 是 knowledgebase 文件存储 | Docker 卷 `sdkwork-api-cloud-gateway-<env>-data` |
+| `/run/sdkwork/api-gateway/postgres-ca-bundle.crt` | 外置 PostgreSQL 自定义 CA（可选，含 `.merged.crt` 合并信任包产物） | 宿主任意文件，由 env `GATEWAY_POSTGRES_CA_FILE_MOUNT` 只读挂入 |
+| `/opt/sdkwork/api-gateway/container/` | 容器入口脚本（如 `knowledgebase-rpc-entrypoint`） | 镜像层内置，不可改 |
+
+**内置 postgres 容器**（仅 `--embedded` 模式存在：`sdkwork-api-cloud-gateway-<env>-deps-postgres-1`）：
+
+| 容器内路径 | 内容 | 宿主侧对应 |
+| --- | --- | --- |
+| `/var/lib/postgresql/` | PGDATA 数据目录（含自动生成的 `server.crt` / `server.key` TLS 证书） | Docker 卷 `sdkwork-api-cloud-gateway-<env>-postgres-data` |
+| `/var/run/sdkwork-postgres-tls/` | 自动生成的 TLS 证书（`server.crt` / `server.key`，gateway 只读挂载校验用） | Docker 卷 `sdkwork-api-cloud-gateway-<env>-postgres-tls` |
+| `/docker-entrypoint-initdb.d/` | 首次初始化 SQL（只读） | bundle 目录 `postgres/init/`（bind 挂载） |
+| `/opt/sdkwork/postgres/entrypoint.sh` | TLS 启用入口脚本（只读） | bundle 目录 `postgres/entrypoint.sh`（bind 挂载） |
+
+**内置 redis 容器**（仅 `--embedded` 模式存在：`sdkwork-api-cloud-gateway-<env>-deps-redis-1`）：
+
+| 容器内路径 | 内容 | 宿主侧对应 |
+| --- | --- | --- |
+| `/data` | AOF 持久化数据 | Docker 卷 `sdkwork-api-cloud-gateway-<env>-redis-data` |
+
+**B. 宿主机侧资源**（本机 = bundle 所在构建/部署机；远程 = Ubuntu 目标机）：
+
+| 资源 | 本机（bundle 目录） | 远程 Ubuntu |
+| --- | --- | --- |
+| bundle 安装目录 | `<bundle>/`（构建机为 `dist/docker-install/...bundle`） | `/opt/sdkwork/deploy/sdkwork-api-cloud-gateway/` |
+| env 配置（唯一需编辑） | `<bundle>/env/<env>.env` | `/etc/sdkwork/api-gateway/docker/<env>.env`（0600） |
+| Docker 网络 | `sdkwork-api-cloud-gateway-<env>`（external，脚本预建） | 同名 |
+| Docker 卷实体 | `/var/lib/docker/volumes/<卷名>/_data`（需 root/sudo） | 同左 |
+| 容器日志 | Docker json-file 默认驱动（50m × 3 轮转），`docker logs` 查看 | 同左 |
+
+**卷清单**（按环境隔离；外置模式只有前两个，内置模式五个全有）：
+
+| Docker 卷名 | 容器内挂载点 | 模式 |
+| --- | --- | --- |
+| `sdkwork-api-cloud-gateway-<env>-secrets` | `/run/secrets/sdkwork/api-gateway` | 外置 + 内置 |
+| `sdkwork-api-cloud-gateway-<env>-data` | `/var/lib/sdkwork/api-gateway` | 外置 + 内置 |
+| `sdkwork-api-cloud-gateway-<env>-postgres-data` | `/var/lib/postgresql` | 仅内置 |
+| `sdkwork-api-cloud-gateway-<env>-redis-data` | `/data` | 仅内置 |
+| `sdkwork-api-cloud-gateway-<env>-postgres-tls` | `/var/run/sdkwork-postgres-tls` | 仅内置 |
+
+**快速定位命令**：
+
+```bash
+docker volume ls --filter name=sdkwork-api-cloud-gateway                # 本环境全部卷
+docker volume inspect -f '{{.Mountpoint}}' \
+  sdkwork-api-cloud-gateway-production-data                             # 卷在宿主机的实体路径
+docker exec sdkwork-api-cloud-gateway-production-i1-gateway-1 \
+  ls /run/secrets/sdkwork/api-gateway                                   # 进容器看密钥目录
+```
+
+> 卷实体目录在 `/var/lib/docker/volumes/` 下，直接读文件需要 root；常规备份用
+> `pg_dump`（数据库，§5.3）或 `docker run --rm -v <卷名>:/data ... tar`（文件卷，§7）。
+
+### 5.3 回滚流程（版本回退 / 配置回退 / 数据回退）
 
 **升级前先做三件事，回滚才有退路**（每次升级都执行）：
 
@@ -578,8 +658,9 @@ bash prepare-envs.sh --force                       # 重置为示例值（丢弃
 - **启动内容**：deps 项目里多两个容器——`postgres`（pgvector 镜像，`ssl=on`，证书自动生成，
   schema 自动创建）与 `redis`（无密码）。网关与 knowledgebase-rpc 自动指向它们，无需改任何
   `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*`。
-- **数据持久化**：数据在 Docker 卷 `<环境>-postgres-data` / `<环境>-redis-data`，
-  `--down` 保留、`--down --purge` 删除。备份：`docker run --rm -v <环境>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`。
+- **数据持久化**：数据在 Docker 卷 `sdkwork-api-cloud-gateway-<环境>-postgres-data` /
+  `-redis-data`（完整卷名与容器内映射见 §5.2），
+  `--down` 保留、`--down --purge` 删除。备份：`docker run --rm -v sdkwork-api-cloud-gateway-<环境>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`。
 - **迁回外置**：先用 pg_dump 从内置库导出，再在外部 PostgreSQL 导入，最后去掉
   `--embedded` 重新执行 `deploy.sh` 并把 `GATEWAY_POSTGRES_*` 指向新实例。
 - **限制**：内置库是单实例（无主从/集群），不承担生产级容量与高可用；生产环境请用外置。
@@ -669,12 +750,12 @@ bash scripts/docker/remote-deploy.sh --host deploy@api.sdkwork.com \
 - [ ] `SDKWORK_DATABASE_URL` 显式覆盖与当前依赖模式一致（内置模式应为 `postgres:5432` 或删除）
 - [ ] sdkwork-webserver 各环境域名经反代可达网关 API
 
-**升级 / 回滚准备**（每次升级前过一遍，详见 §5.2）：
+**升级 / 回滚准备**（每次升级前过一遍，详见 §5.3）：
 
 - [ ] env 配置已备份（`<环境>.env.bak.<时间戳>`）
 - [ ] 上一版本 bundle 已保留（带版本号目录），`image.tar.gz` 完整
-- [ ] 数据库已有当前时点备份（外置按自有流程；内置用 §5.2 pg_dump）
+- [ ] 数据库已有当前时点备份（外置按自有流程；内置用 §5.3 pg_dump）
 - [ ] 回滚演练过一次 `--image-tag <旧版本>` 或旧 bundle apply
 
-完整操作手册：`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`；
-Ubuntu 裸机（systemd）安装见 `docs/guides/operator/INSTALLATION_STANDARDS.md`。
+远程部署操作手册（默认主机 `ubuntu@api.sdkwork.com`）：
+`docs/guides/operator/REMOTE_DEPLOY_BUNDLE.md`；Ubuntu 裸机（systemd）安装见 `docs/guides/operator/INSTALLATION_STANDARDS.md`。

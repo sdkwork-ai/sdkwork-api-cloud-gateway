@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url';
 
 import {
   ensurePrivateRuntimeStateDirectory,
-  resolveRepositoryRuntimeStateDirectory,
 } from '../../../sdkwork-app-topology/tools/topology/lib/index.mjs';
 import { executePostgresInitWithNode } from '../../../sdkwork-specs/tools/postgres/postgres-init-node.mjs';
 import {
@@ -27,11 +26,6 @@ import {
   assertRemoteCloudDevelopmentProfile,
   resolveGatewaySourceProfile,
 } from './sdkwork-api-cloud-gateway-source-config.mjs';
-import {
-  resolveEmbeddedKnowledgebaseRpcPlan,
-  startEmbeddedKnowledgebaseRpc,
-  stopEmbeddedKnowledgebaseRpc,
-} from './embedded-knowledgebase-rpc.mjs';
 
 const appRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const collapsedFeatures = [
@@ -101,28 +95,15 @@ async function main() {
   );
 
   const childEnv = resolveChildEnv(profile);
-  const knowledgebaseRpcPlan = resolveEmbeddedKnowledgebaseRpcPlan({
-    databaseSchema: profile.config.database.schema,
-    databaseUrl: profile.databaseUrl,
-    env: childEnv,
-    gatewayRoot: appRoot,
-    pgOptions: childEnv.PGOPTIONS,
-    runtimeStateRoot: resolveRepositoryRuntimeStateDirectory({
-      owner: 'sdkwork-api-cloud-gateway',
-      repoRoot: appRoot,
-    }),
-  });
+  // No managed Knowledgebase RPC process is started in development. The IM
+  // conversation runtime resolves its outbound group-knowledgebase port from
+  // SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_* and, when those inputs are fully
+  // absent (allowed in development/test), disables the outbox relay instead
+  // of requiring a listener on 127.0.0.1:50054. Deployments that need the
+  // lifecycle bridge configure a deployment-owned RPC client explicitly.
   const runtimeConfig = process.env.SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE
     ?? sourceProfile.runtimeConfig;
-  const knowledgebaseRpc = await startEmbeddedKnowledgebaseRpc(knowledgebaseRpcPlan);
-  try {
-    await runGateway(runtimeConfig, {
-      ...childEnv,
-      ...knowledgebaseRpcPlan?.clientEnv,
-    });
-  } finally {
-    await stopEmbeddedKnowledgebaseRpc(knowledgebaseRpc, knowledgebaseRpcPlan);
-  }
+  await runGateway(runtimeConfig, childEnv);
 }
 
 function resolveSelectedProfile() {

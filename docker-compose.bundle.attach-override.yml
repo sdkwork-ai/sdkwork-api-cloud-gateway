@@ -1,0 +1,39 @@
+# Attach-contract override for the sdkwork-webserver public edge.
+#
+# SDKWORK_WEBSERVER_SPEC.md §17.3: imported webserver module sidecars dial the
+# canonical upstream `sdkwork-api-cloud-gateway:8080` checkout-direct, never
+# rewritten. Every attached gateway deployment MUST therefore
+#   (a) register the network alias `sdkwork-api-cloud-gateway` on its compose
+#       network, and
+#   (b) answer on container port 8080 (the bundle default listener is 3900).
+#
+# This file is environment-neutral: the host port is supplied by deploy.sh as
+# GATEWAY_INSTANCE_HOST_PORT (base GATEWAY_HOST_PORT + 10 per instance).
+#
+# Apply with the instance project:
+#   docker compose -p sdkwork-api-cloud-gateway-<env>-i<N> \
+#     --env-file env/<env>.env \
+#     -f compose/docker-compose.bundle.yml \
+#     -f compose/docker-compose.bundle.attach-override.yml \
+#     --profile instance up -d --force-recreate gateway
+services:
+  gateway:
+    ports: !override
+      - "${GATEWAY_INSTANCE_HOST_PORT:?required}:8080"
+    environment:
+      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:8080
+      # Cloud Router is composed inside this process; embedded Rust SDK
+      # consumers resolve the router bind to http://127.0.0.1:<port>. Without
+      # this pin the resolver falls back to the standalone default
+      # (http://127.0.0.1:3900), which nothing listens on here.
+      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:8080
+    networks:
+      sdkwork:
+        aliases:
+          - sdkwork-api-cloud-gateway
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/readyz >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 240s

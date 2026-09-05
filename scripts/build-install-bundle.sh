@@ -84,8 +84,17 @@ else
 fi
 
 # Step 3: align the image ref the install bundle expects.
-if docker image inspect "$IMAGE_REF" > /dev/null 2>&1; then
-  info "step 3/4: image ${IMAGE_REF} already present"
+# When step 2 actually built an image, the freshly built :local MUST win: the
+# registry ref usually already exists from an earlier build, and reusing it
+# silently ships a stale binary inside the new bundle (the bundle would carry
+# the previous image digest while compose/env changed underneath it).
+if [[ "$SKIP_IMAGE_BUILD" -eq 0 ]]; then
+  docker image inspect "sdkwork-api-cloud-gateway:local" > /dev/null 2>&1 \
+    || die "image sdkwork-api-cloud-gateway:local missing after build step"
+  info "step 3/4: promoting freshly built sdkwork-api-cloud-gateway:local -> ${IMAGE_REF}"
+  docker tag sdkwork-api-cloud-gateway:local "$IMAGE_REF"
+elif docker image inspect "$IMAGE_REF" > /dev/null 2>&1; then
+  info "step 3/4: image ${IMAGE_REF} already present (no rebuild, keeping it)"
 elif docker image inspect "sdkwork-api-cloud-gateway:local" > /dev/null 2>&1; then
   info "step 3/4: tagging sdkwork-api-cloud-gateway:local -> ${IMAGE_REF}"
   docker tag sdkwork-api-cloud-gateway:local "$IMAGE_REF"
@@ -102,4 +111,6 @@ node scripts/docker/package-install-bundle.mjs "${BUNDLE_ARGS[@]}"
 BUNDLE_DIR="dist/docker-install/sdkwork-api-cloud-gateway-install-${VERSION}.bundle"
 info "done. bundle: ${BUNDLE_DIR}"
 info "next: copy the bundle to the target host and run:"
-info "  bash prepare-envs.sh && bash deploy.sh --environment <env> [--embedded] [--replicas N]"
+info "  bash prepare-envs.sh && bash release.sh deploy --environment <env> [--embedded] [--replicas N]"
+info "  (release.sh wraps deploy.sh with a health gate, automatic rollback, and a version ledger;"
+info "   plain deploy.sh remains available for raw apply/stop/start/restart operations)"

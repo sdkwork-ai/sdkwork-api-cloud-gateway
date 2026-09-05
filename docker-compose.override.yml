@@ -13,21 +13,21 @@
 services:
   gateway:
     ports: !override
-      - "${GATEWAY_HOST_PORT:-3910}:8080"
+      - "${GATEWAY_HOST_PORT:-3910}:${GATEWAY_CONTAINER_PORT:-8080}"
     environment:
-      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:8080
+      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-8080}
       # Cloud Router is composed in this process, so embedded surfaces that call
       # its open-api through the generated Rust SDK must target this listener.
       # The SDK resolver maps this bind to http://127.0.0.1:<port>; without it the
       # resolver falls back to the Cloud Router standalone default
       # (http://127.0.0.1:3900), which nothing listens on here.
-      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:8080
+      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-8080}
     networks:
       default:
         aliases:
           - sdkwork-api-cloud-gateway
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/readyz >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:${GATEWAY_CONTAINER_PORT:-8080}/readyz >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 20

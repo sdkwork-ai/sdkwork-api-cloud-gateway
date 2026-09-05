@@ -229,6 +229,16 @@ Quick start on any Docker host:
     bash deploy.sh --environment test --down
     bash deploy.sh --environment test --down --purge
 
+Release lifecycle (deploy with health gate + auto rollback + version ledger):
+
+    bash release.sh deploy   --environment test                  # upgrade in place
+    bash release.sh deploy   --environment test --image-tag 0.1.2
+    bash release.sh status   --environment test                  # version + health + drift
+    bash release.sh rollback --environment test                  # one step back
+    bash release.sh rollback --environment test --to 0.1.0
+    bash release.sh history  --environment test                  # release ledger
+    bash release.sh verify   --environment test                  # health probe only
+
 1. deploy.sh creates env/<environment>.env from the example when missing —
    fill secrets (PostgreSQL, Redis, Cloud Router keys) before exposing
    anything beyond localhost.
@@ -265,6 +275,7 @@ async function main() {
     console.log(`embedded postgres assets: docker/postgres/entrypoint.sh + docker/postgres/init/`);
     console.log(`env templates: ${ENVIRONMENTS.map((env) => `docker/env/${env}.env.example`).join(', ')}`);
     console.log(`deploy script: scripts/docker/bundle/deploy.sh`);
+    console.log(`release lifecycle script: scripts/docker/bundle/release.sh`);
     return;
   }
 
@@ -294,6 +305,13 @@ async function main() {
     path.join(REPO_ROOT, 'docker-compose.bundle.embedded.yml'),
     path.join(bundleDir, 'compose', 'docker-compose.bundle.embedded.yml'),
   );
+  // Attach-contract override (SDKWORK_WEBSERVER_SPEC §17.3): the webserver
+  // public edge dials `sdkwork-api-cloud-gateway:8080`, so every instance
+  // project must be composed with this override or module API proxying breaks.
+  copyFileSync(
+    path.join(REPO_ROOT, 'docker-compose.bundle.attach-override.yml'),
+    path.join(bundleDir, 'compose', 'docker-compose.bundle.attach-override.yml'),
+  );
   // Embedded-mode PostgreSQL assets: TLS-generating entrypoint + schema init
   // (deploy.sh exports POSTGRES_ASSETS_DIR at deploy time).
   copyFileSync(
@@ -319,7 +337,9 @@ async function main() {
     path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
     prepareEnvsScript,
   );
-  const chmod = spawnSync('chmod', ['0755', deployScript, prepareEnvsScript], { stdio: 'ignore' });
+  const releaseScript = path.join(bundleDir, 'release.sh');
+  copyFileSync(path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'release.sh'), releaseScript);
+  const chmod = spawnSync('chmod', ['0755', deployScript, prepareEnvsScript, releaseScript], { stdio: 'ignore' });
   if (chmod.status !== 0) {
     // Windows filesystems ignore the POSIX mode; harmless.
   }

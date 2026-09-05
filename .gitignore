@@ -12,6 +12,9 @@ etc/secrets/
 !*.example
 docker/env/*.env
 !docker/env/*.env.example
+# Release lifecycle ledger (release.sh runtime state)
+release-state/
+**/release-state/
 
 # Dependencies
 node_modules/
@@ -45,6 +48,10 @@ Thumbs.db
 tmp/
 tmp-*
 _tmp-*
+*.bak
+*.bak-*
+.cargo/
+**/.cargo/
 
 # Common runtime/build artifacts (auto-aligned)
 *.sqlite-shm

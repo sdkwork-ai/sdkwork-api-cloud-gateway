@@ -43,7 +43,7 @@ mkdir -p "$(dirname "$ca_bundle")"
 PG_ADMIN_USER=${SDKWORK_DATABASE_ADMIN_USERNAME:-postgres}
 PG_ADMIN_PASS=${SDKWORK_DATABASE_ADMIN_PASSWORD:-sdkworkdev123}
 PG_PORT=${SDKWORK_DATABASE_ADMIN_PORT:-5432}
-REDIS_PORT=${GATEWAY_CLOUDROUTER_REDIS_PORT:-6380}
+REDIS_PORT=${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
 
 log() { printf '\033[36m[prepare-host]\033[0m %s\n' "$*"; }
 ok()  { printf '\033[32m[prepare-host]\033[0m %s\n' "$*"; }

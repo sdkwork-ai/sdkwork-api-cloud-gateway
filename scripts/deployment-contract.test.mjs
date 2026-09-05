@@ -161,7 +161,7 @@ test('default compose uses external PostgreSQL/Redis; embedded is opt-in', () =>
   assert.match(compose, /profiles: \["embedded"\]/u);
   assert.match(compose, /GATEWAY_POSTGRES_HOST:-host\.docker\.internal/u);
   assert.match(compose, /GATEWAY_CLOUDROUTER_REDIS_HOST:-host\.docker\.internal/u);
-  assert.match(compose, /GATEWAY_CLOUDROUTER_REDIS_PORT:-6380/u);
+  assert.match(compose, /GATEWAY_CLOUDROUTER_REDIS_PORT:-6379/u);
   assert.match(compose, /SDKWORK_CLOUDROUTER_REDIS_PASSWORD: \$\{GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-\}/u);
   assert.match(compose, /\/etc\/sdkwork\/api-gateway\/config\.toml/u);
   assert.match(compose, /host\.docker\.internal:host-gateway/u);
@@ -530,6 +530,31 @@ test('install bundle supports external (default) and embedded dependency modes',
   );
   assert.match(prepareEnvs, /GATEWAY_IM_ID_NODE_ID/u);
   assert.match(prepareEnvs, /--dev-secrets-for-production/u);
+
+  // release.sh: the release lifecycle wrapper (deploy with health gate +
+  // automatic rollback + version ledger). The packager must ship it alongside
+  // deploy.sh, and the script must keep its five subcommands and the
+  // ledger/rollback invariants (docs/guides/operator/RELEASE_LIFECYCLE.md).
+  const releaseScript = readFileSync(
+    path.join(appRoot, 'scripts', 'docker', 'bundle', 'release.sh'),
+    'utf8',
+  );
+  assert.match(bundlePackager, /release\.sh/u);
+  for (const lifecycleAction of ['deploy', 'rollback', 'status', 'history', 'verify', 'versions']) {
+    assert.match(releaseScript, new RegExp(`\\b${lifecycleAction}\\b`), lifecycleAction);
+  }
+  assert.match(releaseScript, /probe_fleet/u);
+  assert.match(releaseScript, /ledger\.jsonl/u);
+  assert.match(releaseScript, /current\.json/u);
+  assert.match(releaseScript, /action_rollback_core/u);
+  assert.match(releaseScript, /--no-auto-rollback/u);
+  // Release-lifecycle hardening: per-environment lock for mutating actions,
+  // JSON-escaped ledger fields, bundle sha256 integrity check before docker
+  // load, and image-ID-level drift detection.
+  assert.match(releaseScript, /acquire_release_lock/u);
+  assert.match(releaseScript, /json_escape/u);
+  assert.match(releaseScript, /image\.sha256/u);
+  assert.match(releaseScript, /FORWARD-ONLY/u);
 
   // remote-deploy.sh forwards every Day-2 action flag to the remote deploy.sh;
   // the action flag must be appended for all non-apply actions (a previous bug

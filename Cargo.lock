@@ -1400,7 +1400,7 @@ name = "cloudrouter-open-sdk"
 version = "0.1.0"
 dependencies = [
  "http 1.5.0",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -5442,6 +5442,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.19",
@@ -6224,7 +6225,7 @@ name = "sdkwork-agents-tool-cloudrouter"
 version = "0.1.0"
 dependencies = [
  "cloudrouter-open-sdk",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "sdkwork-agent-kernel",
  "sdkwork-agent-provider-rig",
  "sdkwork-agents-tool-contract",
@@ -7139,6 +7140,7 @@ dependencies = [
  "sdkwork-im-contract-agent",
  "sdkwork-im-database-pool",
  "sdkwork-im-service-readiness",
+ "sdkwork-im-web-bootstrap",
  "sdkwork-knowledgebase-database-host",
  "sdkwork-mail-database-host",
  "sdkwork-merchandise-database-host",
@@ -15601,6 +15603,7 @@ dependencies = [
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "sdkwork-webserver-config-service",
  "sdkwork-webserver-contract",
  "serde",
  "serde_json",
@@ -16416,6 +16419,21 @@ dependencies = [
  "tracing",
  "url",
  "x509-parser 0.18.1",
+]
+
+[[package]]
+name = "sdkwork-webserver-config-service"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "sdkwork-server-files-service",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.20",
+ "tokio",
+ "toml 0.8.23",
+ "tracing",
 ]
 
 [[package]]

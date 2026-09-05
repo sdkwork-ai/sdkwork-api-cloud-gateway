@@ -32,7 +32,8 @@ FHS layout as Ubuntu install (`/etc/sdkwork/api-gateway/config.toml`).
 | production | 3913 | `:3900` | `sdkwork_ai_prod` |
 
 Default compose posture is **external** PostgreSQL + Redis
-(`host.docker.internal:5432` / `:6380`, Redis password empty).
+(`host.docker.internal:5432` / `:6379`, Redis password empty). Both are the
+host system's own services (no container stand-ins).
 
 ## Usage
 

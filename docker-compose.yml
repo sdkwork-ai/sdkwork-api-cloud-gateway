@@ -122,7 +122,12 @@ services:
   gateway:
     image: ${GATEWAY_IMAGE:-sdkwork-api-cloud-gateway:local}
     ports:
-      - "${GATEWAY_HOST_PORT:-3910}:3900"
+      # Host debug port -> container listener. GATEWAY_CONTAINER_PORT defaults
+      # to the Cloud Router standalone port (3900); set it to 8080 when
+      # attaching sdkwork-webserver, whose imported sidecars dial the canonical
+      # upstream `sdkwork-api-cloud-gateway:8080` checkout-direct (never
+      # rewritten; WEBSERVER_SPEC §17.3).
+      - "${GATEWAY_HOST_PORT:-3910}:${GATEWAY_CONTAINER_PORT:-3900}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -139,12 +144,12 @@ services:
       # template as the same file);
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
       # so only the container-specific values are injected here.
-      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:3900
+      SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
       # Cloud Router open-api ingress for embedded Rust SDK consumers: the
       # resolver (sdkwork_agents_tool_cloudrouter::cloudrouter_base_url) maps
       # this bind to http://127.0.0.1:<port>. It must track the listener bind
       # above (docker-compose.override.yml rebinds both to 8080).
-      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:3900
+      SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
       # Host allowlist: registered API domains plus host-mapped port for direct
       # access. sdkwork-webserver (independent deploy) forwards Host when it
       # reverse-proxies to GATEWAY_HOST_PORT. Empty = accept all Host headers.
@@ -270,7 +275,7 @@ services:
       # Default: external Redis, no password (GATEWAY_CLOUDROUTER_REDIS_*).
       SDKWORK_CLOUDROUTER_REDIS_ENABLED: "true"
       SDKWORK_CLOUDROUTER_REDIS_HOST: ${GATEWAY_CLOUDROUTER_REDIS_HOST:-host.docker.internal}
-      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6380}
+      SDKWORK_CLOUDROUTER_REDIS_PORT: ${GATEWAY_CLOUDROUTER_REDIS_PORT:-6379}
       SDKWORK_CLOUDROUTER_REDIS_DATABASE: ${GATEWAY_CLOUDROUTER_REDIS_DATABASE:-0}
       SDKWORK_CLOUDROUTER_REDIS_USERNAME: ${GATEWAY_CLOUDROUTER_REDIS_USERNAME:-}
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ${GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-}
@@ -279,8 +284,8 @@ services:
       SDKWORK_CLOUDROUTER_REDIS_KEY_PREFIX: ${GATEWAY_CLOUDROUTER_REDIS_KEY_PREFIX:-cloudrouter}
       SDKWORK_CLOUDROUTER_REDIS_MAX_CONNECTIONS: ${GATEWAY_CLOUDROUTER_REDIS_MAX_CONNECTIONS:-50}
       # Shared external Redis; DB indexes isolate RTC / web keys.
-      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://host.docker.internal:6380/1}
-      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6380/2}
+      SDKWORK_RTC_STATE_REDIS_URL: ${GATEWAY_RTC_STATE_REDIS_URL:-redis://host.docker.internal:6379/1}
+      SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6379/2}
       # Image generation Drive import object store: the default is a relative
       # `.data` path which is not writable inside the container (install root
       # is read-only for the sdkwork user); point it at the durable data

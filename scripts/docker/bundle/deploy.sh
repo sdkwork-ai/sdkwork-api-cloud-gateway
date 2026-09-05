@@ -36,7 +36,8 @@
 #     --dry-run          print the resolved commands only
 #
 # Instance port plan (deterministic, collision-free across environments):
-#   instance i publishes GATEWAY_HOST_PORT + (i - 1) * 10 -> container 3900.
+#   instance i publishes GATEWAY_HOST_PORT + (i - 1) * 10 -> the container
+#   listener GATEWAY_CONTAINER_PORT (default 3900; 8080 for webserver attach).
 #   Example production (base 3913): instances publish 3913, 3923, 3933, ...
 #   sdkwork-webserver load-balances across these host ports per environment.
 #
@@ -330,7 +331,7 @@ apply() {
     start_instance "${index}"
   done
   info "environment ${ENVIRONMENT}: ${REPLICAS} gateway instance(s) applied"
-  info "instance host ports: $((HOST_PORT_BASE)) (+10 per instance) -> container 3900"
+  info "instance host ports: $((HOST_PORT_BASE)) (+10 per instance) -> container ${GATEWAY_CONTAINER_PORT:-3900}"
   info "health: curl http://127.0.0.1:${HOST_PORT_BASE}/healthz"
 }
 

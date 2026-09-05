@@ -19,8 +19,14 @@ reset_role docker/env/development.env
 reset_role docker/env/test.env
 reset_role docker/env/production.env
 
-# Prove host.docker.internal from a container that already exists
+# Prove host.docker.internal from a container that already exists.
+# Note: /dev/tcp is a bash feature (the gateway image's /bin/sh is dash),
+# so the probe runs under bash; PostgreSQL and the host Redis both live on
+# the host system (5432 / 6379).
 echo "==> probe host.docker.internal via gateway image"
 docker run --rm --add-host=host.docker.internal:host-gateway \
   --entrypoint sh sdkwork-api-cloud-gateway:local -c \
-  'getent hosts host.docker.internal; (echo >/dev/tcp/host.docker.internal/5432) && echo PG_OK; (echo >/dev/tcp/host.docker.internal/6380) && echo REDIS_OK'
+  'getent hosts host.docker.internal' && \
+docker run --rm --add-host=host.docker.internal:host-gateway \
+  --entrypoint bash pgvector/pgvector:pg18 -c \
+  '(echo >/dev/tcp/host.docker.internal/5432) && echo PG_OK; (echo >/dev/tcp/host.docker.internal/6379) && echo REDIS_OK'

@@ -1,6 +1,6 @@
 # Docker Foolproof Install Guide (docker-install)
 
-> Version: 2026-09-03 · Applies to: `sdkwork-api-cloud-gateway` standalone unified install image (bundle ≥ 0.1.1)
+> Version: 2026-09-04 · Applies to: `sdkwork-api-cloud-gateway` standalone unified install image (bundle ≥ 0.1.1)
 > Spec basis: `sdkwork-specs/DEPLOYMENT_SPEC.md` §6, `sdkwork-specs/PNPM_SCRIPT_SPEC.md` §4.4
 > 中文版：[docker-install.md](./docker-install.md)
 
@@ -92,7 +92,7 @@ One image, two postures, selected at deploy time. **External is the default**:
 | PostgreSQL | Bring your own (managed or self-hosted) via `GATEWAY_POSTGRES_*` | Started automatically with the bundle (pgvector/pgvector:pg18, `vector` extension included, TLS auto-enabled) |
 | Redis | Bring your own via `GATEWAY_CLOUDROUTER_REDIS_*` | Started automatically (redis:8-alpine, no password) |
 | Best for | test / staging / production with a DBA or managed databases | demos, PoCs, isolated smoke tests, small deployments without external databases |
-| Data lives in | Your database instance | Docker volumes `<env>-postgres-data` / `<env>-redis-data` on the host |
+| Data lives in | Your database instance | Docker volumes `sdkwork-api-cloud-gateway-<env>-postgres-data` / `-redis-data` on the host |
 | Upgrades / scaling | Stateless, `--replicas N` anytime | Also stateless; the built-in pair is single-instance and the capacity ceiling |
 
 The rule is simple: **if you have decent PostgreSQL and Redis, use external
@@ -181,7 +181,7 @@ Pick the skip flags by what actually changed this time:
 `--version 0.1.2` — the version drives the image tag
 (`registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<version>`) and the
 bundle directory name. **Each release keeps its own bundle directory, never
-overwritten**; keep the previous one for rollback (§5.2).
+overwritten**; keep the previous one for rollback (§5.3).
 
 **Pre-shipping checks**: the new bundle's `image.sha256` and
 `manifest.json` record the image fingerprint — verify with `sha256sum -c`
@@ -252,7 +252,27 @@ everything else):
 | `GATEWAY_POSTGRES_SSL_MODE` | `require` is preset in production/staging examples (P0-12: production database connections must use TLS) | **required** in production | **required** in production (embedded TLS is wired automatically) |
 | `GATEWAY_DEPS_MODE` | `external` (default) or `embedded` | leave alone | may set `embedded` instead of `--embedded` |
 | `GATEWAY_IM_ID_NODE_ID` | Snowflake node id; **must differ across co-located environments** (§6) | recommended | recommended |
+| `GATEWAY_CONTAINER_PORT` | Listener port *inside* the container, default `3900`; must be `8080` when attaching sdkwork-webserver (see below) | recommended | recommended |
+| `GATEWAY_ALLOWED_HOSTS` | Gateway Host allowlist; must include the compose network aliases `gateway` and `sdkwork-api-cloud-gateway`, otherwise sidecar calls get `421 Misdirected Request` | **required** in production | **required** in production |
 | `GATEWAY_CLOUDROUTER_API_KEY_PEPPER` + 5 more secrets | production placeholders MUST be replaced | required in production | required in production |
+
+**The container port must be 8080 when sdkwork-webserver is attached.**
+Imported webserver sidecars dial the canonical upstream
+`sdkwork-api-cloud-gateway:8080` checkout-direct (never rewritten), so an
+attached gateway deployment must (a) register the alias
+`sdkwork-api-cloud-gateway` on its compose network (the bundle templates do
+this) and (b) answer on 8080. Set `GATEWAY_CONTAINER_PORT=8080` in the env
+file — the compose template then aligns the listener bind, the port mapping
+and the readiness probe together, so **no extra override file is needed**.
+The host port (`GATEWAY_HOST_PORT`, 3910/3911/3912/3913) is unaffected.
+
+The Host allowlist must also admit the compose aliases (`normalize_host`
+strips the port, so bare host names are enough):
+
+```bash
+# env/<environment>.env
+GATEWAY_ALLOWED_HOSTS=...,gateway,sdkwork-api-cloud-gateway
+```
 
 **Password contains URL-reserved characters?** Do not put it in
 `GATEWAY_POSTGRES_PASSWORD` directly; set a percent-encoded
@@ -536,10 +556,81 @@ docker compose -p sdkwork-api-cloud-gateway-<env>-i1 ps             # single ins
 | Environment config (the only file to edit) | `<bundle>/env/<env>.env` | `/etc/sdkwork/api-gateway/docker/<env>.env` |
 | Per-instance overrides (optional) | `<bundle>/env/<env>.i<N>.env` | same directory `<env>.i<N>.env` |
 | Compose templates | `<bundle>/compose/docker-compose.bundle.yml` (embedded mode: `docker-compose.bundle.embedded.yml`) | same bundle directory |
-| Data volumes | `<env>-postgres-data` / `<env>-redis-data` (embedded mode) | same names |
+| Data volumes | Named Docker volumes (both modes: `sdkwork-api-cloud-gateway-<env>-secrets` / `-data`; embedded mode adds `-postgres-data` / `-redis-data` / `-postgres-tls`) — full list and in-container mapping in §5.2 | same names |
 | Compose project names | instances `sdkwork-api-cloud-gateway-<env>-i<N>`; deps `sdkwork-api-cloud-gateway-<env>-deps` | same names |
 
-### 5.2 Rollback Flow (app version / config / data)
+### 5.2 Directory & Path Quick Reference (in-container ↔ host)
+
+Use this when troubleshooting or backing up. `<env>` = `development` / `test` /
+`staging` / `demo` / `production`.
+
+**A. Common in-container paths** (inspect with
+`docker exec -it <container> ls <path>`):
+
+**gateway container** (`sdkwork-api-cloud-gateway-<env>-i<N>-gateway-1`; the
+knowledgebase-rpc container in deps shares the same mounts):
+
+| In-container path | Contents | Host-side counterpart |
+| --- | --- | --- |
+| `/run/secrets/sdkwork/api-gateway/` | Runtime keys & certs: `iam-signing-master.key`, `payment-credential-master.key`, `knowledgebase-rpc/` (mTLS server/client/CA trio + `caller-context.key`, `knowledgebase-secrets.key`, `im-launch-ticket.key`) | Docker volume `sdkwork-api-cloud-gateway-<env>-secrets` |
+| `/var/lib/sdkwork/api-gateway/` | Gateway shared state; `knowledgebase-drive/` is the knowledgebase file store | Docker volume `sdkwork-api-cloud-gateway-<env>-data` |
+| `/run/sdkwork/api-gateway/postgres-ca-bundle.crt` | Custom external-PostgreSQL CA (optional, plus the generated `.merged.crt` trust bundle) | Any host file, mounted read-only via env `GATEWAY_POSTGRES_CA_FILE_MOUNT` |
+| `/opt/sdkwork/api-gateway/container/` | Container entrypoint scripts (e.g. `knowledgebase-rpc-entrypoint`) | Baked into the image, read-only |
+
+**Embedded postgres container** (`--embedded` only:
+`sdkwork-api-cloud-gateway-<env>-deps-postgres-1`):
+
+| In-container path | Contents | Host-side counterpart |
+| --- | --- | --- |
+| `/var/lib/postgresql/` | PGDATA data directory (also holds the auto-generated `server.crt` / `server.key` TLS certs) | Docker volume `sdkwork-api-cloud-gateway-<env>-postgres-data` |
+| `/var/run/sdkwork-postgres-tls/` | Auto-generated TLS certs (`server.crt` / `server.key`, mounted read-only into the gateway) | Docker volume `sdkwork-api-cloud-gateway-<env>-postgres-tls` |
+| `/docker-entrypoint-initdb.d/` | First-boot init SQL (read-only) | bundle directory `postgres/init/` (bind mount) |
+| `/opt/sdkwork/postgres/entrypoint.sh` | TLS-enabling entrypoint (read-only) | bundle directory `postgres/entrypoint.sh` (bind mount) |
+
+**Embedded redis container** (`--embedded` only:
+`sdkwork-api-cloud-gateway-<env>-deps-redis-1`):
+
+| In-container path | Contents | Host-side counterpart |
+| --- | --- | --- |
+| `/data` | AOF persistence data | Docker volume `sdkwork-api-cloud-gateway-<env>-redis-data` |
+
+**B. Host-side resources** (local = the machine holding the bundle; remote =
+the Ubuntu target host):
+
+| Resource | Local (bundle directory) | Remote Ubuntu |
+| --- | --- | --- |
+| Bundle install directory | `<bundle>/` (build machine: `dist/docker-install/...bundle`) | `/opt/sdkwork/deploy/sdkwork-api-cloud-gateway/` |
+| Env config (the only file to edit) | `<bundle>/env/<env>.env` | `/etc/sdkwork/api-gateway/docker/<env>.env` (0600) |
+| Docker network | `sdkwork-api-cloud-gateway-<env>` (external, pre-created by the script) | same name |
+| Docker volume backing store | `/var/lib/docker/volumes/<volume>/_data` (requires root/sudo) | same |
+| Container logs | Docker json-file default driver (50m × 3 rotated), via `docker logs` | same |
+
+**Volume list** (isolated per environment; external mode uses only the first
+two, embedded mode uses all five):
+
+| Docker volume | In-container mount | Mode |
+| --- | --- | --- |
+| `sdkwork-api-cloud-gateway-<env>-secrets` | `/run/secrets/sdkwork/api-gateway` | external + embedded |
+| `sdkwork-api-cloud-gateway-<env>-data` | `/var/lib/sdkwork/api-gateway` | external + embedded |
+| `sdkwork-api-cloud-gateway-<env>-postgres-data` | `/var/lib/postgresql` | embedded only |
+| `sdkwork-api-cloud-gateway-<env>-redis-data` | `/data` | embedded only |
+| `sdkwork-api-cloud-gateway-<env>-postgres-tls` | `/var/run/sdkwork-postgres-tls` | embedded only |
+
+**Quick lookup commands**:
+
+```bash
+docker volume ls --filter name=sdkwork-api-cloud-gateway                # all volumes for this deployment
+docker volume inspect -f '{{.Mountpoint}}' \
+  sdkwork-api-cloud-gateway-production-data                             # host-side backing path of a volume
+docker exec sdkwork-api-cloud-gateway-production-i1-gateway-1 \
+  ls /run/secrets/sdkwork/api-gateway                                   # list the secrets dir inside the container
+```
+
+> The volume backing directories live under `/var/lib/docker/volumes/`; reading
+> them directly requires root. For routine backups use `pg_dump` (database,
+> §5.3) or `docker run --rm -v <volume>:/data ... tar` (file volumes, §7).
+
+### 5.3 Rollback Flow (app version / config / data)
 
 **Do three things BEFORE every upgrade, or there is no way back**:
 
@@ -662,9 +753,10 @@ bash prepare-envs.sh --force                       # reset to example values (di
   knowledgebase-rpc are repointed at them automatically; no
   `GATEWAY_POSTGRES_*` / `GATEWAY_CLOUDROUTER_REDIS_*` edits needed.
 - **Data persistence**: data lives in Docker volumes
-  `<env>-postgres-data` / `<env>-redis-data`; `--down` keeps them,
+  `sdkwork-api-cloud-gateway-<env>-postgres-data` / `-redis-data`
+  (full volume names and in-container mapping in §5.2); `--down` keeps them,
   `--down --purge` deletes them. Backup:
-  `docker run --rm -v <env>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`.
+  `docker run --rm -v sdkwork-api-cloud-gateway-<env>-postgres-data:/data -v $PWD:/backup alpine tar czf /backup/pg.tar.gz /data`.
 - **Migrating back to external**: pg_dump out of the built-in database,
   restore into your external PostgreSQL, then drop `--embedded`, point
   `GATEWAY_POSTGRES_*` at the new instance, and re-run `deploy.sh`.
@@ -771,12 +863,13 @@ in `image.env` automatically.
 - [ ] Explicit `SDKWORK_DATABASE_URL` overrides match the dependency mode (embedded: `postgres:5432` or removed)
 - [ ] Every environment domain reaches the gateway API through sdkwork-webserver
 
-**Upgrade / rollback readiness** (run through before every upgrade, see §5.2):
+**Upgrade / rollback readiness** (run through before every upgrade, see §5.3):
 
 - [ ] env config backed up (`<env>.env.bak.<timestamp>`)
 - [ ] Previous-version bundle kept (version-suffixed directory) with its `image.tar.gz` intact
-- [ ] Database backed up as of now (external: own procedure; embedded: §5.2 pg_dump)
+- [ ] Database backed up as of now (external: own procedure; embedded: §5.3 pg_dump)
 - [ ] Rollback drilled once via `--image-tag <old-version>` or old-bundle apply
 
-Full operator manual: `docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`;
+Remote deploy operations guide (default host `ubuntu@api.sdkwork.com`):
+`docs/guides/operator/REMOTE_DEPLOY_BUNDLE.en.md`;
 bare-metal Ubuntu (systemd) install: `docs/guides/operator/INSTALLATION_STANDARDS.md`.
