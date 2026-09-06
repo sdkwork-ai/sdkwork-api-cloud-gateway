@@ -635,7 +635,7 @@ RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
    \`sdkwork-knowledgebase-rpc.service\` before the gateway service.
 5. \`sudo systemctl enable --now ${serviceName}\`
 
-See docs/guides/operator/INSTALLATION_STANDARDS.md for the complete per-OS
+See docs/guides/operator/docker-install.md for the complete per-OS
 installation and configuration standards (Linux/macOS/Windows/container).
 `;
 }

@@ -35,7 +35,7 @@ Per `RUNTIME_DIRECTORY_SPEC` §4.5, production-like containers use external
 PostgreSQL and Redis. Defaults:
 
 - PostgreSQL: `host.docker.internal:5432`
-- Redis: `host.docker.internal:6380`, **empty password**
+- Redis: `host.docker.internal:6379` (canonical host port, `DEPLOYMENT_SPEC.md` §6.1), **empty password**
 
 Optional in-compose databases:
 
@@ -94,4 +94,4 @@ collision-free across environments). See
 Space-level entrypoint (WSL / CI): `bash bin/build-gateway-docker.sh` in the
 `sdkwork-space` root packages the same bundle.
 
-Full operator guide: [`docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md`](../docs/guides/operator/REMOTE_DEPLOY_UBUNTU_DOCKER.md).
+Full operator guide: [`docs/guides/operator/docker-install.md`](../docs/guides/operator/docker-install.md).

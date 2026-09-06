@@ -89,3 +89,4 @@ docker/certs/
 
 # Local artifacts and build output (do not commit)
 /demo.env
+/bin/

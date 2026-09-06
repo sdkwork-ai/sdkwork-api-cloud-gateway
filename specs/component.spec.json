@@ -1173,6 +1173,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/user-store",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/moderation",
       "ownership": "dependency",
@@ -1259,6 +1266,13 @@
     {
       "surface": "open",
       "prefix": "/store/v3/api/artifacts",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/store/v3/api/user-stores",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -2296,7 +2310,8 @@
         "/app/v3/api/releases",
         "/app/v3/api/download_grants",
         "/app/v3/api/library",
-        "/app/v3/api/wishlist"
+        "/app/v3/api/wishlist",
+        "/app/v3/api/user-store"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -2339,7 +2354,8 @@
         "/store/v3/api/catalog",
         "/store/v3/api/listings",
         "/store/v3/api/automation",
-        "/store/v3/api/artifacts"
+        "/store/v3/api/artifacts",
+        "/store/v3/api/user-stores"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",

@@ -31,7 +31,28 @@ for arg in "$@"; do
 done
 
 # Suggested distinct node ids for co-located fleets (docs §6).
-declare -A NODE_IDS=( [development]=21 [test]=22 [staging]=23 [production]=24 [demo]=25 )
+# Portability: a case function instead of `declare -A` — macOS ships bash 3.2
+# which has no associative arrays.
+node_id_for() {
+  case "$1" in
+    development) printf '21' ;;
+    test)        printf '22' ;;
+    staging)     printf '23' ;;
+    production)  printf '24' ;;
+    demo)        printf '25' ;;
+    *)           printf '' ;;
+  esac
+}
+
+# Portable in-place line replacement: BSD sed (macOS) requires `sed -i ''`,
+# so write to a temp file and move over the target instead of `sed -i`.
+# awk whole-line replacement is also safe for values containing & or |.
+replace_line() { # <file> <key> <value>
+  awk -v k="$2" -v v="$3" '
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?"k"=" { print k"="v; next }
+    { print }
+  ' "$1" > "$1.tmp" && mv -f "$1.tmp" "$1"
+}
 
 shopt -s nullglob
 examples=(env/*.env.example)
@@ -47,9 +68,9 @@ for example in "${examples[@]}"; do
     continue
   fi
   cp "$example" "$target"
-  node_id=${NODE_IDS[$environment]:-}
+  node_id=$(node_id_for "$environment")
   if [[ -n "$node_id" ]]; then
-    sed -i "s/^GATEWAY_IM_ID_NODE_ID=.*/GATEWAY_IM_ID_NODE_ID=${node_id}/" "$target"
+    replace_line "$target" "GATEWAY_IM_ID_NODE_ID" "${node_id}"
   fi
   echo "created ${target} (node id ${node_id:-example default})"
 done
@@ -64,8 +85,7 @@ if [[ "$dev_secrets" -eq 1 ]]; then
     GATEWAY_CLOUDROUTER_INTERNAL_GATEWAY_SIGNING_SECRET; do
     value=$(grep -E "^${key}=" env/development.env | head -1 | cut -d= -f2-)
     [[ -n "$value" ]] || { echo "missing ${key} in env/development.env" >&2; exit 1; }
-    value=${value//&/\\&}
-    sed -i "s|^${key}=.*|${key}=${value}|" env/production.env
+    replace_line env/production.env "${key}" "${value}"
   done
   echo "production Cloud Router secrets filled from development defaults (DEV-ONLY; local verification only)"
 fi

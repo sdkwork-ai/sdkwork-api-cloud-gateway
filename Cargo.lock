@@ -2136,6 +2136,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fraction"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e246562084dde8ebbcc943b261c406ce4f68e5032ec28029a251a47d6a295500"
+dependencies = [
+ "num",
+ "num-bigint",
+]
+
+[[package]]
 name = "fs-set-times"
 version = "0.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3480,17 +3490,48 @@ dependencies = [
  "data-encoding",
  "email_address",
  "fancy-regex",
- "fraction",
+ "fraction 0.15.4",
  "getrandom 0.3.4",
  "idna",
  "itoa",
- "jsonschema-regex",
- "jsonschema-value",
+ "jsonschema-regex 0.49.9",
+ "jsonschema-value 0.49.9",
  "num-cmp",
  "num-traits",
  "percent-encoding",
- "referencing",
+ "referencing 0.49.9",
  "regex",
+ "serde",
+ "serde_json",
+ "strum",
+ "unicode-general-category",
+ "uuid-simd",
+]
+
+[[package]]
+name = "jsonschema"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7070bf0681439ff992bb94947cb3a361f57c880561c1e9e90ddb5941c7ec2d04"
+dependencies = [
+ "ahash",
+ "bytecount",
+ "data-encoding",
+ "email_address",
+ "fancy-regex",
+ "fraction 0.17.0",
+ "getrandom 0.3.4",
+ "idna",
+ "itoa",
+ "jsonschema-regex 0.54.0",
+ "jsonschema-value 0.54.0",
+ "num-cmp",
+ "num-traits",
+ "percent-encoding",
+ "referencing 0.54.0",
+ "regex",
+ "reqwest 0.13.4",
+ "rustls 0.23.43",
  "serde",
  "serde_json",
  "strum",
@@ -3508,6 +3549,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonschema-regex"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6525f2f72c37c1a09f59a6d0d33f60ecf8beabd00be92fe8d49555cae15289c"
+dependencies = [
+ "regex-syntax",
+]
+
+[[package]]
 name = "jsonschema-value"
 version = "0.49.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3515,10 +3565,26 @@ checksum = "7ec7637f83e510868ae6ed625f7ebfbbde4554ee8ce49854caa5126a8b9b9ecb"
 dependencies = [
  "ahash",
  "bytecount",
- "fraction",
+ "fraction 0.15.4",
  "num-cmp",
  "num-traits",
  "serde_json",
+]
+
+[[package]]
+name = "jsonschema-value"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4309c6b52390b1ebdd2053e513e9f23d4bb18d0c3c2df8142eded3eb188a85bf"
+dependencies = [
+ "ahash",
+ "bytecount",
+ "fraction 0.17.0",
+ "getrandom 0.3.4",
+ "num-cmp",
+ "num-traits",
+ "serde_json",
+ "zmij",
 ]
 
 [[package]]
@@ -5349,6 +5415,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "referencing"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0304d4734d208eaf24528093715e2cb5260c977b1be1eb81cd487f601e3ff35d"
+dependencies = [
+ "ahash",
+ "fluent-uri",
+ "getrandom 0.3.4",
+ "hashbrown 0.17.1",
+ "itoa",
+ "micromap",
+ "parking_lot",
+ "percent-encoding",
+ "serde_json",
+]
+
+[[package]]
 name = "regex"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5558,6 +5641,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a4e1d4b9b938a26d2996af33229f0ca0956c652c1375067f0b45291c1df8417"
 dependencies = [
  "rmp",
+]
+
+[[package]]
+name = "roxmltree"
+version = "0.21.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1964b10c76125c36f8afe190065a4bf9a87bf324842c05701330bba9f1cacbb"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -6182,6 +6274,8 @@ name = "sdkwork-agents-runtime-facade"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "jsonschema 0.54.0",
+ "roxmltree",
  "sdkwork-agent-kernel",
  "sdkwork-agent-provider-claude-code",
  "sdkwork-agent-provider-core",
@@ -6515,6 +6609,7 @@ dependencies = [
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-appstore-routes-common",
  "sdkwork-appstore-service-host",
+ "sdkwork-appstore-user-store-service",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
@@ -6534,6 +6629,8 @@ dependencies = [
  "sdkwork-routes-publisher-backend-api",
  "sdkwork-routes-release-app-api",
  "sdkwork-routes-release-open-api",
+ "sdkwork-routes-user-store-app-api",
+ "sdkwork-routes-user-store-open-api",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
@@ -6704,6 +6801,8 @@ dependencies = [
  "sdkwork-api-voice-assembly",
  "sdkwork-api-webserver-assembly",
  "sdkwork-api-xiangqi-assembly",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-iam-web-adapter",
  "sdkwork-im-database-pool",
@@ -7862,6 +7961,7 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
+ "sdkwork-appstore-user-store-service",
  "sdkwork-database-sqlx",
  "serde",
  "serde_json",
@@ -7883,6 +7983,7 @@ dependencies = [
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
  "sdkwork-appstore-repository-sqlx",
+ "sdkwork-appstore-user-store-service",
  "sdkwork-utils-rust",
  "sdkwork-web-core",
  "serde",
@@ -7910,6 +8011,18 @@ dependencies = [
  "serde_json",
  "tokio",
  "urlencoding",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-appstore-user-store-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tracing",
  "uuid",
 ]
 
@@ -15504,6 +15617,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-user-store-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-appstore-routes-common",
+ "sdkwork-appstore-user-store-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-user-store-open-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-appstore-routes-common",
+ "sdkwork-appstore-user-store-service",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "sdkwork-routes-video-open-api"
 version = "0.3.0"
 dependencies = [
@@ -16456,7 +16599,7 @@ dependencies = [
  "base64 0.22.1",
  "bcrypt",
  "ipnet",
- "jsonschema",
+ "jsonschema 0.49.9",
  "md-5 0.10.6",
  "rcgen",
  "regex",

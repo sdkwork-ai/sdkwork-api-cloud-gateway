@@ -29,6 +29,13 @@
 # POSTGRES_ASSETS_DIR must be exported by deploy.sh (absolute path of the
 # postgres entrypoint/init assets bundled at <bundle>/postgres).
 
+# Bounded json-file log rotation: unbounded container logs eventually fill
+# the host disk on long-lived deployments (OPERATIONS_SPEC.md §2.3).
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
 services:
   postgres:
     profiles: ["deps"]
@@ -95,6 +102,11 @@ services:
     environment:
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   gateway:
     environment:
       SDKWORK_DATABASE_HOST: postgres
@@ -113,6 +125,11 @@ services:
     volumes:
       - postgres-tls:/run/sdkwork/postgres-tls:ro
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 networks:
   sdkwork:
     name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}

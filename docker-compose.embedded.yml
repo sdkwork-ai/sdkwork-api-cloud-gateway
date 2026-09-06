@@ -9,6 +9,13 @@
 # Redis runs without a password. PostgreSQL credentials come from
 # GATEWAY_POSTGRES_* in the selected docker/env/<environment>.env.
 
+# Bounded json-file log rotation: unbounded container logs eventually fill
+# the host disk on long-lived deployments (OPERATIONS_SPEC.md §2.3).
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
 services:
   knowledgebase-rpc:
     depends_on:
@@ -19,6 +26,11 @@ services:
     environment:
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@postgres:5432/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=disable&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   gateway:
     depends_on:
       knowledgebase-rpc:
@@ -43,3 +55,9 @@ services:
       SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: redis://redis:6379/2
     volumes:
       - postgres-tls:/run/sdkwork/postgres-tls:ro
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

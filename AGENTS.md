@@ -68,7 +68,7 @@ Use dynamic progressive loading before reading implementation files:
   `PNPM_SCRIPT_SPEC.md`, and `TEST_SPEC.md`.
 - Rust/Cargo: `RUST_CODE_SPEC.md` and `TEST_SPEC.md`.
 - Source config/runtime environment: `SOURCE_CONFIG_SPEC.md`, `CONFIG_SPEC.md`,
-  `ENVIRONMENT_SPEC.md`, `RUNTIME_DIRECTORY_SPEC.md`, `DEPLOYMENT_SPEC.md`, and `TEST_SPEC.md`.
+  `ENVIRONMENT_SPEC.md`, `RUNTIME_DIRECTORY_SPEC.md`, `DEPLOYMENT_SPEC.md`, `DOCKER_SPEC.md`, and `TEST_SPEC.md`.
 - Component or gateway composition: `COMPONENT_SPEC.md`, `COMPOSABLE_ARCHITECTURE_SPEC.md`,
   `APPLICATION_GATEWAY_SPEC.md`, `APP_RUNTIME_TOPOLOGY_SPEC.md`, `APP_COMPOSITION_SPEC.md`, and
   `TEST_SPEC.md`.
@@ -76,7 +76,7 @@ Use dynamic progressive loading before reading implementation files:
   `COMPONENT_SPEC.md`, and `TEST_SPEC.md`; add `PAGINATION_SPEC.md` for list/search work.
 - Security/auth/IAM: `IAM_SPEC.md`, `IAM_LOGIN_INTEGRATION_SPEC.md`, `SECURITY_SPEC.md`, and
   `PRIVACY_SPEC.md`.
-- Workflow/package/release/deploy: `GITHUB_WORKFLOW_SPEC.md`, `DEPLOYMENT_SPEC.md`,
+- Workflow/package/release/deploy: `GITHUB_WORKFLOW_SPEC.md`, `DEPLOYMENT_SPEC.md`, `DOCKER_SPEC.md`,
   `RELEASE_SPEC.md`, `SUPPLY_CHAIN_SECURITY_SPEC.md`, and `PNPM_SCRIPT_SPEC.md`.
 
 ## Int64 Wire Contract (API_SPEC §13.6)
@@ -293,3 +293,41 @@ Verification:
 node ../sdkwork-specs/tools/sync-agent-sdk-generation-standard.mjs --root . --check
 ```
 <!-- /SDKWORK-SDK-GENERATION-STANDARD: v1 -->
+
+## Deployment Standard (bin/)
+
+Per `../sdkwork-specs/MODULE_BIN_SPEC.md`, this Rust module ships the
+standardized `bin/` entrypoint family; all build/package/deploy work `MUST`
+go through them (or the repository pnpm scripts they delegate to):
+
+| Entrypoint | Delegates to |
+| --- | --- |
+| `bin/docker-image.sh` | `pnpm build:container` → `registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<version>` |
+| `bin/docker-deploy.sh` | `scripts/docker/bundle/deploy.sh` (WSL or remote Ubuntu via `--host`) |
+| `bin/apps-build.sh` | `server` → `cargo build --release` |
+| `bin/apps-package.sh` | `scripts/package-server.mjs package --deployment-profile <p> --version <v>` → archive collected into `target/bin-packages/` with a sidecar `.sha256` |
+| `bin/apps-deploy.sh` | host-native `install/install-ubuntu.sh` on the Ubuntu target + systemd enable/health probe (`production` only; every other environment uses the container bundle) |
+
+| `bin/config.sh` | `ops-config.sh` — deployed-configuration `list/show/get/set/diff/validate/edit`, secrets redacted, backup + validate before mutation (`OPERATIONS_SPEC.md` §3) |
+| `bin/doctor.sh` | `ops-observe.sh` — read-only environment diagnostics (9 checks, exit 70 on FAIL, `--json`/`--export`) |
+| `bin/backup.sh` | `ops-backup.sh` — backup/list/verify/restore into `/opt/deploy/sdkwork-api-cloud-gateway/backups/` (`OPERATIONS_SPEC.md` §5); the database dump uses the `GATEWAY_POSTGRES_*` keys |
+| `bin/docker-deploy.sh logs` | `--instance/--service/--tail/--since/--follow/--export` (bounded read by default) |
+- App types declared: `server`; environments: `development`, `test`,
+  `staging`, `demo`, `production`.
+- The install bundle is synced to
+  `/opt/deploy/sdkwork-api-cloud-gateway/bundle` on the target and
+  `deploy.sh` always runs with that directory as its working directory;
+  `--image-tag`, `--replicas` and `--deps external|embedded` are forwarded to
+  it. `rollback` uses the bundle-owned `release.sh` (`--to <version>`).
+- Container port `3900`, host ports `3910-3914` per environment
+  (`DOCKER_SPEC.md` §3.2); image naming and bundle layout per
+  `DOCKER_SPEC.md`; external host-system PostgreSQL/Redis per
+  `DEPLOYMENT_SPEC.md` §6.1. The gateway `MUST NOT` publish public
+  `:80`/`:443` — the public edge is `sdkwork-webserver`.
+- The host-native server package ships a single production config template,
+  so that channel covers `production` only; every other environment uses the
+  container path, and the entrypoint fails fast with that guidance.
+- Mutating commands support `--dry-run`; production mutations require
+  `--yes`; `--purge` requires `--yes` in every environment; each run appends
+  its exit status to `target/bin-evidence/evidence.log`.
+- Validate with: `node ../sdkwork-specs/tools/check-module-bin.mjs --root .`

@@ -389,7 +389,14 @@ action_deploy() {
         local sumfile="${BUNDLE_ROOT}/image.sha256" expected actual
         if [ -f "${sumfile}" ]; then
           expected="$(awk '{print $1}' "${sumfile}")"
-          actual="$(sha256sum "${BUNDLE_ROOT}/image.tar.gz" | awk '{print $1}')"
+          # Portable digest: sha256sum (GNU) → shasum (macOS) → openssl. PORTABILITY:allow
+          if command -v sha256sum >/dev/null 2>&1; then
+            actual="$(sha256sum "${BUNDLE_ROOT}/image.tar.gz" | awk '{print $1}')"
+          elif command -v shasum >/dev/null 2>&1; then
+            actual="$(shasum -a 256 "${BUNDLE_ROOT}/image.tar.gz" | awk '{print $1}')"
+          else
+            actual="$(openssl dgst -sha256 "${BUNDLE_ROOT}/image.tar.gz" | awk '{print $NF}')"
+          fi
           [ "${expected}" = "${actual}" ] || die "bundle integrity check FAILED: image.sha256 (${expected}) does not match image.tar.gz (${actual}) — the bundle may be corrupted or tampered"
           info "bundle integrity check passed (sha256 ${expected})"
         else

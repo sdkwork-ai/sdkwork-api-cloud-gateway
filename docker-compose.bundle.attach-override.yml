@@ -16,6 +16,13 @@
 #     -f compose/docker-compose.bundle.yml \
 #     -f compose/docker-compose.bundle.attach-override.yml \
 #     --profile instance up -d --force-recreate gateway
+# Bounded json-file log rotation: unbounded container logs eventually fill
+# the host disk on long-lived deployments (OPERATIONS_SPEC.md §2.3).
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
 services:
   gateway:
     ports: !override
@@ -37,3 +44,9 @@ services:
       timeout: 5s
       retries: 20
       start_period: 240s
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

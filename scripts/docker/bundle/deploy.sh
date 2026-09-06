@@ -25,10 +25,22 @@
 #                        instances (see remote-deploy.sh; the Ubuntu config
 #                        root /etc/sdkwork/api-gateway/docker/<env>.env is the
 #                        convention). The file MUST already exist.
+#     --set KEY VALUE    write one required value into the env file (refuses to
+#                        overwrite an already-configured value)
+#     --force-set K V    like --set but replaces even a configured value
+#     --check-config     run the env preflight checks only (including the
+#                        live external PostgreSQL/Redis connectivity probes
+#                        in external mode); deploy nothing
 #     --down             stop instances + the knowledgebase-rpc singleton
 #     --purge            with --down: also delete volumes and network
 #     --ps               show instance status
-#     --logs [N]         follow gateway instance N logs (default 1)
+#     --logs [N]         gateway instance logs, instance N (default 1;
+#                        prefer the explicit --instance form)
+#     --instance <N>     select the instance for --logs (default 1)
+#     --service <name>   compose service to read (default gateway)
+#     --tail <N|all>     lines from the end (default 200)
+#     --since <dur|time> start point, e.g. 15m or 2026-09-05T10:00:00Z
+#     --follow           keep streaming (default: bounded read)
 #     --stop             stop instances + the deps singleton (containers kept)
 #     --start            start a previously --stop-ed environment again
 #     --restart          restart the deps singleton + gateway instances
@@ -82,8 +94,15 @@ ACTION="apply"
 PURGE="0"
 IMAGE_TAG=""
 OPT_ENV_FILE=""
+SET_KEY=""
+SET_VALUE=""
+SET_FORCE="0"
 DRY_RUN="0"
 LOG_INSTANCE="1"
+LOG_SERVICE="gateway"
+LOG_TAIL="200"
+LOG_SINCE=""
+LOG_FOLLOW="0"
 DEPS_MODE_FLAG=""
 
 while [ $# -gt 0 ]; do
@@ -98,9 +117,17 @@ while [ $# -gt 0 ]; do
     --purge)       PURGE="1"; shift ;;
     --ps)          ACTION="ps"; shift ;;
     --logs)        ACTION="logs"; LOG_INSTANCE="${2:-1}"; case "${2:-}" in ''|*[!0-9]*) shift ;; *) shift 2 ;; esac ;;
+    --instance)    LOG_INSTANCE="$2"; shift 2 ;;
+    --service)     LOG_SERVICE="$2"; shift 2 ;;
+    --tail)        LOG_TAIL="$2"; shift 2 ;;
+    --since)       LOG_SINCE="$2"; shift 2 ;;
+    --follow)      LOG_FOLLOW="1"; shift ;;
     --stop)        ACTION="stop"; shift ;;
     --start)       ACTION="start"; shift ;;
     --restart)     ACTION="restart"; shift ;;
+    --set)         [ $# -ge 3 ] || die "--set requires KEY and VALUE"; ACTION="set"; SET_KEY="$2"; SET_VALUE="$3"; shift 3 ;;
+    --force-set)   [ $# -ge 3 ] || die "--force-set requires KEY and VALUE"; ACTION="set"; SET_KEY="$2"; SET_VALUE="$3"; SET_FORCE="1"; shift 3 ;;
+    --check-config) ACTION="check-config"; shift ;;
     --dry-run)     DRY_RUN="1"; shift ;;
     -h|--help)     usage ;;
     *)             die "unsupported option: $1 (see --help)" ;;
@@ -144,7 +171,75 @@ env_key() {
   sed -n "s/^${1}=//p" "${ENV_FILE}" | tail -1 | tr -d '\r'
 }
 
-# --- dependency mode -----------------------------------------------------------------
+# --- env preflight (fail-closed, collects ALL gaps) -------------------------------
+# The bundle env/<environment>.env is the single live configuration source
+# (docker-install.md §2.1). Apply-like actions must never start from template
+# placeholders or an incomplete attach contract. These checks encode field
+# failures: 421 from a missing webserver attach alias, pool auth failures from
+# <CHANGE_ME> passwords, and snowflake collisions from duplicated node ids.
+#
+# Design contract (PORTABILITY_SPEC.md / OPERATIONS_SPEC.md §3):
+#   - READ-ONLY: a value that is already configured is kept as-is; deploy never
+#     rewrites or re-prompts for configured secrets.
+#   - COLLECTING: every missing required key is reported in ONE run with
+#     foolproof fix instructions, instead of dying on the first miss.
+#   - FAIL-CLOSED: deploy aborts while any required input is unconfigured.
+
+is_unconfigured() {  # empty value or template placeholder
+  case "$1" in
+    ""|"<CHANGE_ME>"|"<change_me>"|"CHANGE_ME"|"changeme") return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Upsert one KEY=VALUE into the env file (BSD/GNU portable: awk + tmp + mv).
+# Refuses to overwrite a configured value unless forced: re-deploys must run
+# without touching live secrets. Returns 3 when it declined to overwrite.
+set_env_key() {  # $1=key $2=value $3=force
+  local key="$1" value="$2" force="${3:-0}" current secret="0"
+  case "${key}" in
+    ''|*[!A-Za-z0-9_]*) die "--set key must be a bare identifier (letters, digits, _): '${key}'" ;;
+  esac
+  current="$(env_key "${key}")"
+  if ! is_unconfigured "${current}" && [ "${force}" != "1" ]; then
+    info "${key} is already configured in ${ENV_FILE}; kept as-is (deploy never rewrites configured values)."
+    info "to replace it deliberately, re-run with: --force-set ${key} '<new-value>'"
+    return 3
+  fi
+  case "${key}" in
+    *PASSWORD*|*SECRET*|*PEPPER*|*API_KEY*|*_KEY|*DATABASE_URL*|*_URL) secret="1" ;;
+  esac
+  awk -v k="${key}" -v v="${value}" '
+    $0 ~ "^[[:space:]]*(export[[:space:]]+)?"k"=" { print k"="v; found=1; next }
+    { print }
+    END { if (!found) print k"="v }
+  ' "${ENV_FILE}" > "${ENV_FILE}.tmp" && mv -f "${ENV_FILE}.tmp" "${ENV_FILE}"
+  if [ "${secret}" = "1" ]; then
+    info "set ${key}=<redacted> in ${ENV_FILE}"
+  else
+    info "set ${key}=${value} in ${ENV_FILE}"
+  fi
+  info "next step: re-run the deploy command, e.g. $0 --environment ${ENVIRONMENT}"
+}
+
+# Read-only required-key check. Reports the gap with concrete fix instructions
+# and marks the run failed; never dies on the first miss.
+require_env_key() {  # $1=key $2=label $3=example value
+  local key="$1" label="$2" example="$3" value
+  value="$(env_key "${key}")"
+  if is_unconfigured "${value}"; then
+    info "MISSING: ${key} (${label}) is not configured"
+    info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set ${key} '<value>'"
+    info "  fix 2: edit ${ENV_FILE} and set: ${key}=${example}"
+    PREFLIGHT_FAIL="1"
+  else
+    info "OK: ${key} configured (existing value kept; deploy never rewrites it)"
+  fi
+}
+
+PREFLIGHT_FAIL="0"
+
+# --- dependency mode (resolved BEFORE preflight so external-only checks gate) --
 # External PostgreSQL + Redis is the default posture; --embedded opts into the
 # built-in databases started in the per-environment deps project. Priority:
 # --embedded / --external flag > GATEWAY_DEPS_MODE in the env file > external.
@@ -164,6 +259,265 @@ if [ "${DEPS_MODE}" = "embedded" ]; then
 else
   info "dependency mode: external (default; configure GATEWAY_POSTGRES_* / GATEWAY_CLOUDROUTER_REDIS_*)"
 fi
+
+# --- external dependency probes (foolproof, fail-closed) -------------------------
+# From the deploy host, container-side endpoint names collapse to loopback:
+# host.docker.internal is the docker-bridge alias for THIS host, so probing it
+# directly would resolve nowhere outside a container. Remote hosts/IPs are
+# probed verbatim.
+probe_endpoint_host() {
+  case "$1" in
+    host.docker.internal|localhost) printf '127.0.0.1' ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+resolve_ca_source() {  # echo the host-side CA bundle path for the mount value
+  local mount="$1" src=""
+  [ -n "${mount}" ] || return 0
+  case "${mount}" in
+    /*) src="${mount}" ;;
+    *)  src="${COMPOSE_DIR}/${mount}" ;;
+  esac
+  printf '%s' "${src}"
+}
+
+probe_external_postgres() {
+  local host port user db pass url ssl ca_mount ca_src probe out rc=0
+  host="$(env_key GATEWAY_POSTGRES_HOST)"
+  port="$(env_key GATEWAY_POSTGRES_PORT)"; port="${port:-5432}"
+  user="$(env_key GATEWAY_POSTGRES_USER)"
+  db="$(env_key GATEWAY_POSTGRES_DB)"
+  pass="$(env_key GATEWAY_POSTGRES_PASSWORD)"
+  url="$(env_key SDKWORK_DATABASE_URL)"
+  ssl="$(env_key GATEWAY_POSTGRES_SSL_MODE)"
+  ca_mount="$(env_key GATEWAY_POSTGRES_CA_FILE_MOUNT)"
+  ca_src="$(resolve_ca_source "${ca_mount}")"
+  [ -f "${ca_src}" ] || ca_src=""
+  if ! command -v psql >/dev/null 2>&1; then
+    info "NOTE: psql not found on this host — skipped the live PostgreSQL probe (install postgresql-client for the full preflight)"
+    return 0
+  fi
+  probe="$(probe_endpoint_host "${host}")"
+  if [ -n "${url}" ]; then
+    # SDKWORK_DATABASE_URL, when set, overrides compose's assembled URL
+    # entirely (compose default folds the GATEWAY_POSTGRES_PASSWORD default
+    # in) — so it IS the effective configuration; probe it verbatim
+    # (endpoint name rewritten for host-side resolution).
+    url="${url//host.docker.internal/127.0.0.1}"
+    out="$(env PGCONNECT_TIMEOUT=5 psql "${url}" -w -Atc 'select 1' 2>&1)" || rc=$?
+  else
+    out="$(env PGCONNECT_TIMEOUT=5 \
+      ${ssl:+PGSSLMODE="${ssl}"} \
+      ${ca_src:+PGSSLROOTCERT="${ca_src}"} \
+      PGPASSWORD="${pass}" \
+      psql -h "${probe}" -p "${port}" -U "${user}" -d "${db}" -w -Atc 'select 1' 2>&1)" || rc=$?
+  fi
+  if [ "${rc}" = "0" ]; then
+    info "OK: external PostgreSQL reachable and credentials accepted (${host}:${port}/${db} as ${user})"
+    return 0
+  fi
+  case "${out}" in
+    *"password authentication failed"*)
+      die "external PostgreSQL rejected the configured credentials (${user}@${host}:${port}/${db}). On the database host, align the role password with the deploy env, e.g.: sudo -u postgres psql -c \"ALTER ROLE ${user} PASSWORD '<the GATEWAY_POSTGRES_PASSWORD value from ${ENV_FILE}>'\" — then re-run this command." ;;
+    *"does not exist"*)
+      die "external PostgreSQL database not found (${db} on ${host}:${port}). Create it on the database host, e.g.: sudo -u postgres psql -c \"CREATE DATABASE ${db} OWNER ${user};\" — then re-run this command." ;;
+    *"Peer authentication failed"*)
+      die "external PostgreSQL pg_hba.conf rejects password auth for ${user} from this host. Add a host-based scram-sha-256 line for ${user} in pg_hba.conf and reload PostgreSQL." ;;
+    *"no pg_hba.conf entry"*)
+      die "external PostgreSQL pg_hba.conf has no entry allowing ${user} to connect from this host. Add one (host ${db} ${user} <cidr> scram-sha-256) and reload PostgreSQL." ;;
+    *"SSL"*"error"*|*"certificate verify failed"*)
+      die "external PostgreSQL TLS handshake failed (${host}:${port}, GATEWAY_POSTGRES_SSL_MODE=$(env_key GATEWAY_POSTGRES_SSL_MODE)). Verify GATEWAY_POSTGRES_CA_FILE_MOUNT points at the real server trust chain ($(resolve_ca_source "${ca_mount}")) and that the server presents a cert issued under it." ;;
+    *)
+      die "external PostgreSQL unreachable (${host}:${port}): ${out}. Check the service is up (systemctl status postgresql), the host/port values in ${ENV_FILE}, and firewall rules." ;;
+  esac
+}
+
+probe_external_redis() {
+  local host port pass probe out rc=0
+  host="$(env_key GATEWAY_CLOUDROUTER_REDIS_HOST)"
+  port="$(env_key GATEWAY_CLOUDROUTER_REDIS_PORT)"; port="${port:-6379}"
+  pass="$(env_key GATEWAY_CLOUDROUTER_REDIS_PASSWORD)"
+  if ! command -v redis-cli >/dev/null 2>&1; then
+    info "NOTE: redis-cli not found on this host — skipped the live Redis probe (install redis-tools for the full preflight)"
+    return 0
+  fi
+  probe="$(probe_endpoint_host "${host}")"
+  if [ -n "${pass}" ]; then
+    out="$(REDISCLI_AUTH="${pass}" timeout 6 redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
+  else
+    out="$(timeout 6 redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
+  fi
+  if [ "${rc}" = "0" ] && [ "${out}" = "PONG" ]; then
+    info "OK: external Redis reachable (${host}:${port})"
+    return 0
+  fi
+  case "${out}" in
+    *"WRONGPASS"*|*"NOAUTH"*|*"Client sent AUTH"*)
+      die "external Redis rejected the configured auth (${host}:${port}). Align GATEWAY_CLOUDROUTER_REDIS_PASSWORD in ${ENV_FILE} with the Redis requirepass value (empty value = passwordless Redis), then re-run this command." ;;
+    *)
+      die "external Redis unreachable (${host}:${port}): ${out}. Check the service is up (systemctl status redis-server), the host/port values in ${ENV_FILE}, and firewall rules." ;;
+  esac
+}
+
+case "${ACTION}" in
+  apply|start|restart|check-config)
+    pre_host_port="$(env_key GATEWAY_HOST_PORT)"
+    if is_unconfigured "${pre_host_port}"; then
+      info "MISSING: GATEWAY_HOST_PORT (host management port) is not configured"
+      info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_HOST_PORT <port>   e.g. 3910"
+      info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_HOST_PORT=3910"
+      PREFLIGHT_FAIL="1"
+    else
+      case "${pre_host_port}" in ''|*[!0-9]*) die "env preflight: GATEWAY_HOST_PORT must be numeric (got '${pre_host_port}')" ;; esac
+      info "OK: GATEWAY_HOST_PORT=${pre_host_port}"
+    fi
+    pre_container_port="$(env_key GATEWAY_CONTAINER_PORT)"
+    if is_unconfigured "${pre_container_port}"; then
+      info "MISSING: GATEWAY_CONTAINER_PORT (in-container listen port) is not configured"
+      info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_CONTAINER_PORT <port>   e.g. 8080"
+      info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_CONTAINER_PORT=8080"
+      PREFLIGHT_FAIL="1"
+    else
+      case "${pre_container_port}" in ''|*[!0-9]*) die "env preflight: GATEWAY_CONTAINER_PORT must be numeric (got '${pre_container_port}')" ;; esac
+      info "OK: GATEWAY_CONTAINER_PORT=${pre_container_port}"
+    fi
+    pre_node_id="$(env_key GATEWAY_IM_ID_NODE_ID)"
+    if is_unconfigured "${pre_node_id}"; then
+      info "MISSING: GATEWAY_IM_ID_NODE_ID (snowflake node id, unique per host) is not configured"
+      info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_IM_ID_NODE_ID <id>   e.g. 21-25 per environment"
+      info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_IM_ID_NODE_ID=21"
+      PREFLIGHT_FAIL="1"
+    else
+      case "${pre_node_id}" in ''|*[!0-9]*) die "env preflight: GATEWAY_IM_ID_NODE_ID must be numeric (got '${pre_node_id}')" ;; esac
+      info "OK: GATEWAY_IM_ID_NODE_ID=${pre_node_id}"
+    fi
+    # Database credentials: GATEWAY_POSTGRES_PASSWORD, or the full
+    # SDKWORK_DATABASE_URL when credentials contain URL-reserved characters.
+    pre_db_password="$(env_key GATEWAY_POSTGRES_PASSWORD)"
+    pre_db_url="$(env_key SDKWORK_DATABASE_URL)"
+    if is_unconfigured "${pre_db_password}" && is_unconfigured "${pre_db_url}"; then
+      info "MISSING: database credentials — configure GATEWAY_POSTGRES_PASSWORD (or SDKWORK_DATABASE_URL)"
+      info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_POSTGRES_PASSWORD '<your-db-password>'"
+      info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_POSTGRES_PASSWORD=<your-db-password>"
+      info "  fix 3 (URL form, when the password contains URL-reserved characters):"
+      info "         $0 --environment ${ENVIRONMENT} --set SDKWORK_DATABASE_URL 'postgresql://<user>:<password>@<host>:5432/<db>?sslmode=disable'"
+      PREFLIGHT_FAIL="1"
+    else
+      info "OK: database credentials configured (existing value kept; deploy never rewrites it)"
+    fi
+    [ "${pre_db_password}" = "<CHANGE_ME>" ] && die "env preflight: GATEWAY_POSTGRES_PASSWORD is still the <CHANGE_ME> template placeholder (docker-install.md §4.1); fix with: $0 --environment ${ENVIRONMENT} --set GATEWAY_POSTGRES_PASSWORD '<real-password>'"
+    require_env_key GATEWAY_POSTGRES_HOST "PostgreSQL host the gateway connects to" "host.docker.internal"
+    pre_pg_host="$(env_key GATEWAY_POSTGRES_HOST)"
+    case "${pre_pg_host}" in
+      *example.com*|*example.org*|*your-db-host*)
+        info "MISSING: GATEWAY_POSTGRES_HOST is still the documentation placeholder '${pre_pg_host}'"
+        info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_POSTGRES_HOST '<real-host>'   e.g. host.docker.internal for the co-located host instance"
+        info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_POSTGRES_HOST=host.docker.internal"
+        PREFLIGHT_FAIL="1" ;;
+    esac
+    require_env_key GATEWAY_POSTGRES_PORT "PostgreSQL port" "5432"
+    pre_pg_port="$(env_key GATEWAY_POSTGRES_PORT)"
+    case "${pre_pg_port}" in ''|*[!0-9]*) die "env preflight: GATEWAY_POSTGRES_PORT must be numeric (got '${pre_pg_port}')" ;; esac
+    require_env_key GATEWAY_POSTGRES_USER "PostgreSQL user" "sdkwork_ai_<env>"
+    require_env_key GATEWAY_POSTGRES_DB "PostgreSQL database name" "sdkwork_ai_<env>"
+    pre_allowed_hosts="$(env_key GATEWAY_ALLOWED_HOSTS)"
+    if is_unconfigured "${pre_allowed_hosts}"; then
+      info "MISSING: GATEWAY_ALLOWED_HOSTS (host allowlist, must include attach aliases) is not configured"
+      info "  fix: edit ${ENV_FILE} and set GATEWAY_ALLOWED_HOSTS=<comma-separated hosts>,gateway,sdkwork-api-cloud-gateway"
+      PREFLIGHT_FAIL="1"
+    else
+      case ",${pre_allowed_hosts}," in
+        *,gateway,*) ;;
+        *) die "env preflight: GATEWAY_ALLOWED_HOSTS must contain the webserver attach alias 'gateway' (sidecars get 421 otherwise)" ;;
+      esac
+      case ",${pre_allowed_hosts}," in
+        *,sdkwork-api-cloud-gateway,*) ;;
+        *) die "env preflight: GATEWAY_ALLOWED_HOSTS must contain the compose network alias 'sdkwork-api-cloud-gateway'" ;;
+      esac
+      info "OK: GATEWAY_ALLOWED_HOSTS includes both attach aliases"
+    fi
+    # TLS posture: when the env enables GATEWAY_POSTGRES_CA_FILE_MOUNT the
+    # source must already be a regular file. Docker silently turns a missing
+    # bind-mount source into an empty directory (both on the host and inside
+    # the container); rustls then fails with "Is a directory (os error 21)"
+    # and the gateway crash-loops with no error line (docker-install.md §4.2).
+    pre_ca_mount="$(env_key GATEWAY_POSTGRES_CA_FILE_MOUNT)"
+    if [ -n "${pre_ca_mount}" ]; then
+      case "${pre_ca_mount}" in
+        /*) pre_ca_src="${pre_ca_mount}" ;;
+        *) pre_ca_src="${COMPOSE_DIR}/${pre_ca_mount}" ;;
+      esac
+      [ -f "${pre_ca_src}" ] || die "env preflight: GATEWAY_POSTGRES_CA_FILE_MOUNT source is not a regular file: ${pre_ca_src} (copy the host PostgreSQL CA bundle there, e.g. cp /etc/sdkwork/postgres-tls/ca.crt <path>)"
+    fi
+    # --- external-mode-only configuration (embedded mode has no external DB) ---
+    if [ "${DEPS_MODE}" = "external" ]; then
+      # Redis runs externally as well: without an endpoint the gateway
+      # sidecar has nowhere to reach the shared cache/session store.
+      require_env_key GATEWAY_CLOUDROUTER_REDIS_HOST "external Redis host" "host.docker.internal"
+      require_env_key GATEWAY_CLOUDROUTER_REDIS_PORT "external Redis port" "6379"
+      pre_redis_port="$(env_key GATEWAY_CLOUDROUTER_REDIS_PORT)"
+      case "${pre_redis_port}" in ''|*[!0-9]*) die "env preflight: GATEWAY_CLOUDROUTER_REDIS_PORT must be numeric (got '${pre_redis_port}')" ;; esac
+      # SSL mode must be a real libpq/rustls value, and any verifying mode
+      # needs the CA mount — the IM pool verifies the server chain even in
+      # `require` mode and crash-loops without it (docker-install.md §4.2).
+      pre_ssl_mode="$(env_key GATEWAY_POSTGRES_SSL_MODE)"
+      pre_ssl_mode="${pre_ssl_mode:-disable}"
+      case "${pre_ssl_mode}" in
+        disable|allow|prefer|require|verify-ca|verify-full)
+          info "OK: GATEWAY_POSTGRES_SSL_MODE=${pre_ssl_mode}" ;;
+        *)
+          die "env preflight: GATEWAY_POSTGRES_SSL_MODE='${pre_ssl_mode}' is invalid (disable|allow|prefer|require|verify-ca|verify-full); fix with: $0 --environment ${ENVIRONMENT} --set GATEWAY_POSTGRES_SSL_MODE require" ;;
+      esac
+      case "${pre_ssl_mode}" in
+        require|verify-ca|verify-full)
+          if is_unconfigured "${pre_ca_mount}"; then
+            info "MISSING: GATEWAY_POSTGRES_CA_FILE_MOUNT is required while GATEWAY_POSTGRES_SSL_MODE=${pre_ssl_mode} (the IM pool verifies the server certificate even in require mode)"
+            info "  fix 1 (recommended): $0 --environment ${ENVIRONMENT} --set GATEWAY_POSTGRES_CA_FILE_MOUNT './docker/ca/postgres-ca-bundle.crt'"
+            info "  fix 2: edit ${ENV_FILE} and set: GATEWAY_POSTGRES_CA_FILE_MOUNT=./docker/ca/postgres-ca-bundle.crt"
+            info "  then place the host PostgreSQL trust chain there, e.g.:"
+            info "    mkdir -p <bundle>/compose/docker/ca && cat /etc/sdkwork/postgres-tls/ca.crt /etc/sdkwork/postgres-tls/server.crt > <bundle>/compose/docker/ca/postgres-ca-bundle.crt"
+            PREFLIGHT_FAIL="1"
+          fi ;;
+      esac
+    else
+      info "dependency mode is embedded — external database host/SSL checks skipped"
+    fi
+    # Node ids must be unique across every env file sharing this ENV_DIR so
+    # co-located fleets never collide (DEPLOYMENT_SPEC §6).
+    if [ -n "${pre_node_id}" ]; then
+      for pre_other in "${ENV_DIR}"/*.env; do
+        [ -f "${pre_other}" ] || continue
+        [ "${pre_other}" = "${ENV_FILE}" ] && continue
+        case "${pre_other}" in *.env.example) continue ;; esac
+        pre_other_node="$(sed -n 's/^GATEWAY_IM_ID_NODE_ID=//p' "${pre_other}" | tail -1 | tr -d '\r')"
+        if [ -n "${pre_other_node}" ] && [ "${pre_other_node}" = "${pre_node_id}" ]; then
+          die "env preflight: GATEWAY_IM_ID_NODE_ID=${pre_node_id} is also used by ${pre_other}; co-located fleets require unique node ids (DEPLOYMENT_SPEC §6)"
+        fi
+      done
+    fi
+    if [ "${ENVIRONMENT}" = "production" ] || [ "${ENVIRONMENT}" = "staging" ]; then
+      case "$(env_key GATEWAY_CLOUDROUTER_API_KEY_PEPPER)" in
+        *development-only*)
+          info "WARNING: ${ENVIRONMENT} still uses development-only Cloud Router secrets; rotate before real traffic (docker-install.md §4.1)"
+          info "  fix: $0 --environment ${ENVIRONMENT} --force-set GATEWAY_CLOUDROUTER_API_KEY_PEPPER '<strong-random-value>'"
+          ;;
+      esac
+    fi
+    if [ "${PREFLIGHT_FAIL}" = "1" ]; then
+      info "env preflight FAILED: configure every MISSING key above (pick one fix per key), then re-run this command. Nothing was deployed."
+      exit 1
+    fi
+    # Live connectivity probes: run only once every required key is present,
+    # so a probe failure is a real environment problem, not a missing key.
+    # Probing needs no docker and never mutates anything on the databases.
+    if [ "${DEPS_MODE}" = "external" ] && [ "${DRY_RUN}" != "1" ]; then
+      probe_external_postgres
+      probe_external_redis
+    fi
+    info "env preflight passed: all required inputs are configured (existing values kept; deploy never rewrites them)"
+    ;;
+esac
 
 # --- image resolution ----------------------------------------------------------------
 # Priority: --image-tag > bundle image.env > env-file GATEWAY_IMAGE tag > 0.1.0.
@@ -459,10 +813,15 @@ restart_fleet() {
 
 logs() {
   local index="${LOG_INSTANCE}"
-  case "${index}" in ''|*[!0-9]*) die "--logs expects an instance number" ;; esac
+  case "${index}" in ''|*[!0-9]*) die "--logs/--instance expects an instance number" ;; esac
+  case "${LOG_TAIL}" in all) ;; ''|*[!0-9]*) die "--tail expects a positive integer or 'all'" ;; esac
   export_instance_env "${index}"
-  docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
-    "${COMPOSE_FILES[@]}" --profile instance logs -f --tail 200 gateway
+  local args=(docker compose -p "${NETWORK}-i${index}" $(instance_env_args "${index}") \
+    "${COMPOSE_FILES[@]}" --profile instance logs --tail "${LOG_TAIL}")
+  if [ -n "${LOG_SINCE}" ]; then args+=(--since "${LOG_SINCE}"); fi
+  if [ "${LOG_FOLLOW}" = "1" ]; then args+=(--follow); fi
+  if [ -n "${LOG_SERVICE}" ]; then args+=("${LOG_SERVICE}"); fi
+  "${args[@]}"
 }
 
 case "${ACTION}" in
@@ -473,5 +832,12 @@ case "${ACTION}" in
   stop)    stop_fleet ;;
   start)   start_fleet ;;
   restart) restart_fleet ;;
+  check-config) info "configuration check only: nothing was deployed" ;;
+  set)
+    [ -n "${SET_KEY}" ] || die "--set requires KEY and VALUE"
+    set_status="0"
+    set_env_key "${SET_KEY}" "${SET_VALUE}" "${SET_FORCE}" || set_status=$?
+    exit "${set_status}"
+    ;;
   *) die "unsupported action: ${ACTION}" ;;
 esac

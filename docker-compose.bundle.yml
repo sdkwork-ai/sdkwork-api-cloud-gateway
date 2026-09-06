@@ -179,6 +179,13 @@ x-gateway-common: &gateway-common
         cpus: ${GATEWAY_CPU_RESERVATION:-0.5}
         memory: ${GATEWAY_MEMORY_RESERVATION:-512m}
 
+# Bounded json-file log rotation: unbounded container logs eventually fill
+# the host disk on long-lived deployments (OPERATIONS_SPEC.md §2.3).
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "50m"
+    max-file: "3"
 services:
   # One knowledgebase-rpc singleton per environment (shared by all gateway
   # instances over the per-environment network). Started and awaited before
@@ -217,6 +224,11 @@ services:
 
   # One gateway instance per compose project (deploy.sh runs instances 1..N as
   # independent projects so N instances coexist without name collisions).
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
   gateway:
     <<: *gateway-common
     profiles: [instance]
@@ -235,6 +247,11 @@ services:
       retries: 20
       start_period: 240s
 
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
 networks:
   sdkwork:
     name: sdkwork-api-cloud-gateway-${GATEWAY_ENVIRONMENT:?required}

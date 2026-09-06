@@ -22,6 +22,7 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -220,6 +221,14 @@ Quick start on any Docker host:
     # Production with 3 instances
     bash deploy.sh --environment production --replicas 3
 
+    # Configuration check only (fail-closed env preflight + live external
+    # PostgreSQL/Redis probes; deploys nothing)
+    bash deploy.sh --environment production --check-config
+
+    # Write one missing value into the env file (never rewrites an
+    # already-configured value; --force-set replaces deliberately)
+    bash deploy.sh --environment production --set GATEWAY_POSTGRES_PASSWORD '<value>'
+
     # Day-2 operations
     bash deploy.sh --environment test --ps
     bash deploy.sh --environment test --logs 2
@@ -252,6 +261,22 @@ Release lifecycle (deploy with health gate + auto rollback + version ledger):
 4. Health: curl http://127.0.0.1:<instance-port>/healthz (readiness:
    /readyz).
 
+Env file key contract (env/<environment>.env):
+  - Host-side keys use the GATEWAY_* prefix; docker compose maps them to
+    the container-side SDKWORK_* names (compose only interpolates what it
+    declares, so a key the compose file never references is dead weight).
+  - The ONLY SDKWORK_* keys the compose templates consume from the env
+    file are the database pool tunables SDKWORK_DATABASE_AUTO_MIGRATE,
+    SDKWORK_DATABASE_MAX_CONNECTIONS, SDKWORK_DATABASE_MIN_CONNECTIONS,
+    SDKWORK_DATABASE_ACQUIRE_TIMEOUT, SDKWORK_DATABASE_IDLE_TIMEOUT,
+    SDKWORK_DATABASE_MAX_LIFETIME, SDKWORK_DATABASE_TEMPORARY_* plus the
+    optional SDKWORK_DATABASE_URL credential override. Keep exactly these;
+    other SDKWORK_* lines in the env file are inert (container env comes
+    from the image ENV + the compose environment section).
+  - deploy.sh --check-config verifies every required key fail-closed and,
+    in external mode, live-probes PostgreSQL auth and Redis ping before
+    anything is deployed.
+
 Full guide: docs/guides/operator/docker-install.md (中文) /
 docker-install.en.md (English).
 `;
@@ -280,6 +305,23 @@ async function main() {
   }
 
   buildImage(settings, ref);
+
+  // Preserve operator-maintained env files across repacks. docker-install.md
+  // §2.1 promises "repeated packaging never loses server configuration":
+  // once prepare-envs.sh generated env/<environment>.env and the operator
+  // filled it in, those files are the single live configuration source. The
+  // bundle rebuild below replaces templates but MUST NOT delete live env
+  // files (any env/*.env except the *.env.example templates, including
+  // per-instance overrides like development.i1.env).
+  const envDir = path.join(bundleDir, 'env');
+  const preservedLiveEnvFiles = new Map();
+  if (existsSync(envDir)) {
+    for (const entry of readdirSync(envDir)) {
+      if (entry.endsWith('.env') && !entry.endsWith('.env.example')) {
+        preservedLiveEnvFiles.set(entry, readFileSync(path.join(envDir, entry)));
+      }
+    }
+  }
 
   rmSync(bundleDir, { recursive: true, force: true });
   mkdirSync(path.join(bundleDir, 'compose'), { recursive: true });
@@ -329,6 +371,10 @@ async function main() {
       throw new Error(`env template missing: ${source}`);
     }
     copyFileSync(source, path.join(bundleDir, 'env', `${environment}.env.example`));
+  }
+  for (const [name, content] of preservedLiveEnvFiles) {
+    writeFileSync(path.join(bundleDir, 'env', name), content);
+    console.log(`preserved operator env: env/${name}`);
   }
   const deployScript = path.join(bundleDir, 'deploy.sh');
   copyFileSync(path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'deploy.sh'), deployScript);

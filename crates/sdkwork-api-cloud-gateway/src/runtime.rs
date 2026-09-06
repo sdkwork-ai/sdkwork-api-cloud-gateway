@@ -295,6 +295,13 @@ async fn build_embedded_router(
             message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
                 .to_owned(),
         })?;
+    // DATABASE_FRAMEWORK_SPEC §4.3 steps 3-6: discover every enabled
+    // dependency surface's database module and run its lifecycle bootstrap
+    // before the owner assemblies compose. Failures fail closed.
+    crate::embedded_database_bootstrap::discover_and_bootstrap_embedded_database_modules(
+        &config, &pool, false,
+    )
+    .await?;
     let dependency_bootstrap =
         crate::embedded_dependency_routes::bootstrap_embedded_dependency_contributions(
             &config, &pool,
@@ -405,11 +412,16 @@ async fn build_embedded_router(
     }
     let hosted = composed.into_hosted(framework);
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
-        .map(GatewayRuntime::assemble_router)?;
+        .map(GatewayRuntime::assemble_router)?
+        .layer(axum::middleware::from_fn(
+            crate::dependency_error_observer::observe_dependency_server_errors,
+        ));
     Ok((router, dependency_bootstrap.runtime))
 }
 
 fn is_production_like_environment(config: &GatewayRuntimeConfig) -> bool {
+    // Demo (ENVIRONMENT_SPEC §5.1) is an isolated customer-showcase tier with
+    // the relaxed showcase posture, so it is deliberately NOT production-like.
     matches!(
         config
             .service
