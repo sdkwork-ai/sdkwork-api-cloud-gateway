@@ -29,7 +29,7 @@ SDKWORK_DEPLOY_ENVS="development test staging production"
 #   - specs/topology.spec.json (cloudPublicHosts)
 #   - sdkwork-webserver deployments/webserver/server.<env>.toml (client edge)
 # (ENVIRONMENT_SPEC §5.1.0.1: every environment serves every registered domain.)
-SDKWORK_DEPLOY_DOMAINS="sdkwork.com birdcoder.com dtupay.com sdkwork.cn birdcoder.cn dtupay.cn skubc.com skubc.cn zowalk.com zowalk.cn offer86.com offer86.cn 86offer.com 86offer.cn"
+SDKWORK_DEPLOY_DOMAINS="sdkwork.com birdcoder.com dtupay.com noaper.com sdkwork.cn birdcoder.cn dtupay.cn noaper.cn skubc.com skubc.cn zowalk.com zowalk.cn offer86.com offer86.cn 86offer.com 86offer.cn"
 
 # env_prefix <env> -> subdomain prefix (empty for production)
 env_prefix() {

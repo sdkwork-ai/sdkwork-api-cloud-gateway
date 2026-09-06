@@ -23,6 +23,7 @@ const profiles = ['standalone', 'cloud'];
 const baseDomains = [
   'sdkwork.com', 'birdcoder.com', 'dtupay.com',
   'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
+  'noaper.com', 'noaper.cn',
   'skubc.com', 'skubc.cn',
   'zowalk.com', 'zowalk.cn',
   'offer86.com', 'offer86.cn',

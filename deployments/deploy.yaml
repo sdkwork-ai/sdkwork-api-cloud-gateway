@@ -28,6 +28,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-dev.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -40,6 +44,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -105,6 +113,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -117,6 +129,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -182,6 +198,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-staging.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -194,6 +214,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -259,6 +283,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-test.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -271,6 +299,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-test.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -336,6 +368,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-dev.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -348,6 +384,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-dev.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-dev.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -413,6 +453,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -425,6 +469,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -490,6 +538,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-staging.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -502,6 +554,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-staging.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-staging.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
@@ -567,6 +623,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.com
+      - tls: noaper.com
+        mode: web
+        web: adaptive
+        domain: api-test.noaper.com
       - tls: sdkwork.cn
         mode: web
         web: adaptive
@@ -579,6 +639,10 @@ profiles:
         mode: web
         web: adaptive
         domain: api-test.dtupay.cn
+      - tls: noaper.cn
+        mode: web
+        web: adaptive
+        domain: api-test.noaper.cn
       - tls: skubc.com
         mode: web
         web: adaptive
