@@ -38,7 +38,7 @@ effective(<profile>.<environment>) =
 | development | `server.development.toml` | 16 | `api-dev.sdkwork.com` | 80 |
 | test | `server.test.toml` | 16 | `api-test.sdkwork.com` | 80 |
 | staging | `server.staging.toml` | 16 | `api-staging.sdkwork.com` | 80 |
-| demo | `server.demo.toml` | 14 | `api-demo.sdkwork.com` | 80 |
+| demo | `server.demo.toml` | 16 | `api-demo.sdkwork.com` | 80 |
 | production | `server.production.toml` | 16 | `api.sdkwork.com` | 443 ssl + 80 |
 
 Surfaces: platform.api-gateway.
