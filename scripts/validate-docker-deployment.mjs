@@ -26,9 +26,8 @@ export {
 // serves api-<suffix>.<base-domain> for every entry. Keep aligned with
 // scripts/deploy/lib/environments.sh and etc/sdkwork.deployment.config.json.
 const BASE_DOMAINS = [
-  'sdkwork.com', 'birdcoder.com', 'dtupay.com',
-  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
-  'noaper.com', 'noaper.cn',
+  'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
+  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
   'skubc.com', 'skubc.cn',
   'zowalk.com', 'zowalk.cn',
   'offer86.com', 'offer86.cn',

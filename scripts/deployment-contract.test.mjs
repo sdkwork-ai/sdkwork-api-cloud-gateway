@@ -21,9 +21,8 @@ const profiles = ['standalone', 'cloud'];
 // Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1). Keep
 // aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS.
 const baseDomains = [
-  'sdkwork.com', 'birdcoder.com', 'dtupay.com',
-  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
-  'noaper.com', 'noaper.cn',
+  'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
+  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
   'skubc.com', 'skubc.cn',
   'zowalk.com', 'zowalk.cn',
   'offer86.com', 'offer86.cn',

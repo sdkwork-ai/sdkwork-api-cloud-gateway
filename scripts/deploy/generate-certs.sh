@@ -5,7 +5,7 @@
 # Output: docker/certs/<env>/{fullchain.pem,privkey.pem}  (gitignored — local dev only).
 #
 # The SAN list covers every public domain for that environment, so a single cert
-# secures api-dev.sdkwork.com / api-dev.birdcoder.com / api-dev.dtupay.com etc.
+# secures api-dev.sdkwork.com / api-dev.birdcoder.com / api-dev.dtupay.com / api-dev.noaper.com etc.
 #
 # For real production use Let's Encrypt (ACME) instead — the gateway already carries
 # ACME profile config — but self-signed keeps local/offline bring-up zero-dependency.

@@ -16,9 +16,8 @@ $ErrorActionPreference = 'Stop'
 # MUST stay aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS
 # and etc/sdkwork.deployment.config.json cloudApiBaseUrl.
 $baseDomains = @(
-    'sdkwork.com', 'birdcoder.com', 'dtupay.com',
-    'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn',
-    'noaper.com', 'noaper.cn',
+    'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
+    'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
     'skubc.com', 'skubc.cn',
     'zowalk.com', 'zowalk.cn',
     'offer86.com', 'offer86.cn',
