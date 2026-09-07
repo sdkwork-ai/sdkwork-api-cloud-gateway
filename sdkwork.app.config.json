@@ -119,16 +119,27 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.4",
+    "currentVersion": "0.1.5",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.4"
+      "BETA": "0.1.5"
     },
     "notes": [
       {
-        "version": "0.1.4",
+        "version": "0.1.5",
         "channel": "BETA",
         "current": true,
+        "summary": "Rebuild with LF line endings for all packaged database migrations (7 sibling repos were CRLF-polluted by an external editor/sync, tripping the migration checksum drift gate fail-closed at container startup). Carries the 0.1.4 ai/models route dedup fix and 0.1.3 zero-config consumer permissions.",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.4",
+        "channel": "BETA",
+        "current": false,
         "summary": "Fix axum 'Overlapping method route' startup panic: GET /app/v3/api/ai/models is now served solely by the sdkwork-models catalog app router; agents no longer registers a duplicate snapshot-projection route. Also includes the 0.1.3 zero-config consumer permissions changes.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
