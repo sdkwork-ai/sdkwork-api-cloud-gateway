@@ -119,16 +119,27 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.3",
+    "currentVersion": "0.1.4",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.3"
+      "BETA": "0.1.4"
     },
     "notes": [
       {
-        "version": "0.1.3",
+        "version": "0.1.4",
         "channel": "BETA",
         "current": true,
+        "summary": "Fix axum 'Overlapping method route' startup panic: GET /app/v3/api/ai/models is now served solely by the sdkwork-models catalog app router; agents no longer registers a duplicate snapshot-projection route. Also includes the 0.1.3 zero-config consumer permissions changes.",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.3",
+        "channel": "BETA",
+        "current": false,
         "summary": "Zero-config consumer permissions: web-framework manifest gates no longer block app-api surfaces (tier 0-2); tenant-default organization context (org null/blank normalizes to 0) across knowledgebase/appstore/aiot/notary/github/shop/im; fixes systemic 40301/40304 on consumer journeys.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
