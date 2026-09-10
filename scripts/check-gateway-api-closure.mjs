@@ -84,7 +84,10 @@ export function routesFromRustManifest(filePath) {
   const stringConstants = new Map();
   addRustStringConstants(source, null, stringConstants);
 
-  const moduleImportPattern = /use\s+crate::([a-z_][a-z0-9_]*)\s*;/gu;
+  // Module files beside the manifest (e.g. `use crate::routes::…;`) carry
+  // string constants and, for RouteDefinition generators, the route literals.
+  const moduleSources = [];
+  const moduleImportPattern = /use\s+crate::([a-z_][a-z0-9_]*)/gu;
   for (const match of source.matchAll(moduleImportPattern)) {
     const moduleName = match[1];
     const candidates = [
@@ -93,11 +96,9 @@ export function routesFromRustManifest(filePath) {
     ];
     const modulePath = candidates.find((candidate) => fs.existsSync(candidate));
     if (!modulePath) continue;
-    addRustStringConstants(
-      fs.readFileSync(modulePath, "utf8"),
-      moduleName,
-      stringConstants,
-    );
+    const moduleText = fs.readFileSync(modulePath, "utf8");
+    moduleSources.push(moduleText);
+    addRustStringConstants(moduleText, moduleName, stringConstants);
   }
 
   const routes = [];
@@ -111,6 +112,22 @@ export function routesFromRustManifest(filePath) {
       operationId: undefined,
       apiAuthority: undefined,
     });
+  }
+  // RouteDefinition struct literals (sdkwork route generators): the manifest
+  // projection (manifest.rs) references them via `route_definitions()` in a
+  // sibling module, so scan the file and its modules for the flat
+  // method/path/operation_id fields. Method spelling varies by generator
+  // ("Get" vs "GET"); validateRoute rejects anything outside HTTP_METHODS.
+  const definitionPattern = /RouteDefinition\s*\{\s*method:\s*"([A-Za-z]+)"\s*,\s*path:\s*"([^"]+)"(?:\s*,\s*operation_id:\s*"([^"]*)")?/gu;
+  for (const text of [source, ...moduleSources]) {
+    for (const match of text.matchAll(definitionPattern)) {
+      routes.push({
+        method: match[1].toUpperCase(),
+        path: match[2],
+        operationId: match[3] || undefined,
+        apiAuthority: undefined,
+      });
+    }
   }
   return routes;
 }

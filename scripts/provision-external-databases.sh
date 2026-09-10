@@ -83,7 +83,8 @@ provision_one() {
   env_file="$repo_root/docker/env/$env_name.env"
   app_password=""
   if [ -f "$env_file" ]; then
-    app_password=$(grep -E '^GATEWAY_POSTGRES_PASSWORD=' "$env_file" | cut -d= -f2- || true)
+    # tr -d '\r': a Windows-checked-out env file must not bake CR into the role password.
+    app_password=$(grep -E '^GATEWAY_POSTGRES_PASSWORD=' "$env_file" | cut -d= -f2- | tr -d '\r' || true)
   fi
   if [ -z "$app_password" ]; then
     app_password=$(default_password "$env_name")
@@ -96,22 +97,27 @@ provision_one() {
   echo "provisioning $env_name ($db) on $admin_host:$admin_port"
 
   if ! psql_admin -tAc "SELECT 1 FROM pg_database WHERE datname = '$db'" | grep -q 1; then
-    psql_admin -c "CREATE DATABASE \"$db\";"
+    psql_admin -v ON_ERROR_STOP=1 -c "CREATE DATABASE \"$db\";"
   fi
 
-  psql_admin -d "$db" -v db="$db" -v app_user="$db" -f "$schema_sql"
+  psql_admin -d "$db" -v ON_ERROR_STOP=1 -v db="$db" -v app_user="$db" -f "$schema_sql"
 
-  role_exists=$(psql_admin -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$db'" || true)
+  role_exists=$(psql_admin -v ON_ERROR_STOP=1 -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$db'" || true)
+  # psql performs :'var' literal-quoting on stdin/-f input but NOT on -c
+  # strings (psql 18 verified), so the password statement is piped instead of
+  # passed with -c: a value containing quotes can never break out of it.
   if [ "$role_exists" != "1" ]; then
-    psql_admin -c "CREATE ROLE \"$db\" LOGIN PASSWORD '$app_password';"
+    printf "CREATE ROLE \"%s\" LOGIN PASSWORD :'app_password';\n" "$db" \
+      | psql_admin -v ON_ERROR_STOP=1 -v app_password="$app_password"
   else
-    psql_admin -c "ALTER ROLE \"$db\" WITH LOGIN PASSWORD '$app_password';"
+    printf "ALTER ROLE \"%s\" WITH LOGIN PASSWORD :'app_password';\n" "$db" \
+      | psql_admin -v ON_ERROR_STOP=1 -v app_password="$app_password"
   fi
 
-  psql_admin -d "$db" -c "GRANT ALL PRIVILEGES ON DATABASE \"$db\" TO \"$db\";"
-  psql_admin -d "$db" -c "GRANT ALL ON SCHEMA \"$db\" TO \"$db\";"
-  psql_admin -d "$db" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$db\" GRANT ALL ON TABLES TO \"$db\";"
-  psql_admin -d "$db" -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$db\" GRANT ALL ON SEQUENCES TO \"$db\";"
+  psql_admin -d "$db" -v ON_ERROR_STOP=1 -c "GRANT ALL PRIVILEGES ON DATABASE \"$db\" TO \"$db\";"
+  psql_admin -d "$db" -v ON_ERROR_STOP=1 -c "GRANT ALL ON SCHEMA \"$db\" TO \"$db\";"
+  psql_admin -d "$db" -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$db\" GRANT ALL ON TABLES TO \"$db\";"
+  psql_admin -d "$db" -v ON_ERROR_STOP=1 -c "ALTER DEFAULT PRIVILEGES IN SCHEMA \"$db\" GRANT ALL ON SEQUENCES TO \"$db\";"
 
   echo "ready $env_name: database=$db schema=$db user=$db"
 }

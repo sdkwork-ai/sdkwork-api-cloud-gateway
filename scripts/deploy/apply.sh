@@ -12,7 +12,7 @@
 # Public reverse proxy is owned by the independent sdkwork-webserver product.
 # This script does NOT generate or install nginx site mappings.
 #
-# Environments run as isolated compose projects with distinct host ports (3910-3913)
+# Environments run as isolated compose projects with distinct host ports (3910-3914)
 # and distinct sdkwork-specs databases, so dev/test/staging/prod never collide.
 #
 # Usage:

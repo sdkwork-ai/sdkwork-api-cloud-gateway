@@ -217,7 +217,7 @@ bin/docker-deploy.sh install --environment demo --deps embedded
 curl http://127.0.0.1:3910/healthz    # development（其余环境 3911/3912/3914/3913）
 # 公网平面验证必须经 webserver（Host 探测）：
 # curl --noproxy '*' -H 'Host: api-demo.sdkwork.com' http://<webserver-host>:19098/healthz
-pnpm validate:docker-deployment 2>/dev/null || node scripts/validate-docker-deployment.mjs --help
+pnpm check:container-deployment 2>/dev/null || node scripts/validate-docker-deployment.mjs --help
 ```
 
 **每个环境的端口与完整可复制命令见 §4.1–§4.5。**

@@ -52,9 +52,20 @@ function appVersion() {
   return version;
 }
 
+// The version composes the bundle directory name and the image ref; mirror
+// package-server.mjs's normalizeVersion allowlist so neither can escape the
+// output root or fragment a docker ref.
+function normalizeVersion(value) {
+  const text = String(value ?? '').trim();
+  if (!/^[0-9A-Za-z][0-9A-Za-z._+-]*$/u.test(text)) {
+    throw new Error(`Invalid package version: ${value}`);
+  }
+  return text;
+}
+
 function parseArgs(argv) {
   const settings = {
-    version: appVersion(),
+    version: normalizeVersion(appVersion()),
     tag: undefined,
     repository: process.env.SDKWORK_CONTAINER_REPOSITORY || DEFAULT_IMAGE_REPOSITORY,
     outputRoot: DEFAULT_OUTPUT_ROOT,
@@ -70,7 +81,7 @@ function parseArgs(argv) {
       continue;
     }
     if (argument === '--version') {
-      settings.version = argv[++index];
+      settings.version = normalizeVersion(argv[++index]);
     } else if (argument === '--tag') {
       settings.tag = argv[++index];
     } else if (argument === '--repository') {
@@ -88,6 +99,7 @@ function parseArgs(argv) {
     }
   }
   settings.tag ??= settings.version;
+  settings.tag = normalizeVersion(settings.tag);
   return settings;
 }
 

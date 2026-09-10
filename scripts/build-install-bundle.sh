@@ -63,6 +63,16 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# The version composes the bundle directory name and the image ref; a value
+# with slashes or shell characters must never reach either.
+case "${VERSION}" in
+  [A-Za-z0-9]*) ;;
+  *) die "invalid version '${VERSION}' (must start with a letter or digit)" ;;
+esac
+case "${VERSION}" in
+  *[!A-Za-z0-9._-]*) die "invalid version '${VERSION}' (allowed: letters, digits, '.', '_', '-')" ;;
+esac
+
 # Step 1: release build + server install tarball (cargo is incremental; only
 # Rust sources changed since the last build are recompiled).
 if [[ "$SKIP_SERVER_PACKAGE" -eq 1 ]]; then

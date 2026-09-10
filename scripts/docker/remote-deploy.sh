@@ -23,7 +23,7 @@
 #   --host <user@host>      remote Ubuntu host (required)
 #   --ssh-key <path>        SSH private key (default ~/.ssh/id_ed25519)
 #   --ssh-port <port>       SSH port (default 22)
-#   --environment <env>     development|test|staging|production (default development)
+#   --environment <env>     development|test|staging|demo|production (default development)
 #   --replicas <N>          gateway instances (default 1)
 #   --bundle <dir>          reuse an existing bundle directory instead of building
 #   --image-tag <tag>       image tag used when building locally
@@ -97,10 +97,22 @@ done
 
 [ -n "${HOST}" ] || die "--host <user@host> is required"
 case "${ENVIRONMENT}" in
-  development|test|staging|production) ;;
-  *) die "unsupported environment: ${ENVIRONMENT} (development|test|staging|production)" ;;
+  development|test|staging|demo|production) ;;
+  *) die "unsupported environment: ${ENVIRONMENT} (development|test|staging|demo|production)" ;;
 esac
 case "${REPLICAS}" in ''|*[!0-9]*) die "--replicas must be a positive integer" ;; esac
+case "${SSH_PORT}" in ''|*[!0-9]*) die "--ssh-port must be numeric" ;; esac
+# Remote-root paths are spliced into single-quoted remote shell commands
+# below; a quote character would break out of them.
+for remote_path in "${REMOTE_ROOT}" "${CONFIG_ROOT}"; do
+  case "${remote_path}" in
+    /*) ;;
+    *) die "remote paths must be absolute: ${remote_path}" ;;
+  esac
+  case "${remote_path}" in
+    *"'"*) die "remote paths must not contain single quotes: ${remote_path}" ;;
+  esac
+done
 
 SSH_BASE=(ssh -o BatchMode=yes -o ConnectTimeout=10 -p "${SSH_PORT}")
 [ -f "${SSH_KEY}" ] && SSH_BASE+=(-i "${SSH_KEY}")

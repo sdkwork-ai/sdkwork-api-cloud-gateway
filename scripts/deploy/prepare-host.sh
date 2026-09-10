@@ -13,7 +13,7 @@
 #      (production env) validates; write the CA into docker/ca/postgres-ca-bundle.crt
 #      so the gateway container's TLS trust mount resolves
 #   5. provision the per-environment databases/roles/schemas
-#      (sdkwork_ai_dev/test/staging/prod) via provision-external-databases.sh
+#      (sdkwork_ai_dev/test/staging/demo/prod) via provision-external-databases.sh
 #   6. make redis bind 0.0.0.0 (no auth — matches the dev/test env files)
 #
 # This is the "Ubuntu host-native services" external posture documented in
@@ -160,10 +160,17 @@ else
   pg_ctlcluster "$pgver" main reload
 fi
 
-# admin password (idempotent)
-PGPASSWORD="$PG_ADMIN_PASS" psql -h 127.0.0.1 -p "$PG_PORT" -U "$PG_ADMIN_USER" -c "ALTER USER \"$PG_ADMIN_USER\" WITH PASSWORD '$PG_ADMIN_PASS';" 2>/dev/null \
-  || PGPASSWORD="$PG_ADMIN_PASS" psql -h /var/run/postgresql -U "$PG_ADMIN_USER" -c "ALTER USER \"$PG_ADMIN_USER\" WITH PASSWORD '$PG_ADMIN_PASS';" 2>/dev/null \
-  || log "could not set admin password via psql (continuing)"
+# admin password (idempotent). psql performs :'var' literal-quoting on stdin
+# input but NOT on -c strings (psql 18 verified), so the statement is piped:
+# an admin password with quotes can never break out of it.
+pg_set_admin_password() {
+  printf "ALTER USER \"%s\" WITH PASSWORD :'admin_password';\n" "$PG_ADMIN_USER" \
+    | PGPASSWORD="$PG_ADMIN_PASS" psql -h 127.0.0.1 -p "$PG_PORT" -U "$PG_ADMIN_USER" -v ON_ERROR_STOP=1 -v admin_password="$PG_ADMIN_PASS" 2>/dev/null \
+    || printf "ALTER USER \"%s\" WITH PASSWORD :'admin_password';\n" "$PG_ADMIN_USER" \
+    | PGPASSWORD="$PG_ADMIN_PASS" psql -h /var/run/postgresql -U "$PG_ADMIN_USER" -v ON_ERROR_STOP=1 -v admin_password="$PG_ADMIN_PASS" 2>/dev/null \
+    || log "could not set admin password via psql (continuing)"
+}
+pg_set_admin_password
 ok "postgresql listening on 0.0.0.0:$PG_PORT"
 
 # ---- 5. redis bind + port (must match docker/env GATEWAY_CLOUDROUTER_REDIS_PORT) -
@@ -205,7 +212,7 @@ export SDKWORK_DATABASE_ADMIN_PORT="$PG_PORT"
 export SDKWORK_DATABASE_ADMIN_USERNAME="$PG_ADMIN_USER"
 export SDKWORK_DATABASE_ADMIN_PASSWORD="$PG_ADMIN_PASS"
 export PGPASSWORD="$PG_ADMIN_PASS"
-bash "$repo_root/scripts/provision-external-databases.sh" development test staging production
+bash "$repo_root/scripts/provision-external-databases.sh" development test staging demo production
 
 echo
 ok "HOST SERVICES READY"

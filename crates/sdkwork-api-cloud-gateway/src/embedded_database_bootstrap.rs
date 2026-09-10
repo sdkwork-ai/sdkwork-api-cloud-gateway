@@ -58,14 +58,13 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         .iter()
         .map(|(workspace, root)| (root.clone(), workspace.clone()))
         .collect();
-    let (registry, report) =
-        discover_database_modules(&app_roots).map_err(|error| {
-            GatewayRuntimeError::EmbeddedDatabaseBootstrap {
-                workspace: "(discovery)".to_owned(),
-                module_id: "(discovery)".to_owned(),
-                message: error.to_string(),
-            }
-        })?;
+    let (registry, report) = discover_database_modules(&app_roots).map_err(|error| {
+        GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+            workspace: "(discovery)".to_owned(),
+            module_id: "(discovery)".to_owned(),
+            message: error.to_string(),
+        }
+    })?;
     for skipped in &report.skipped_without_database_assets {
         tracing::debug!(
             target: "sdkwork.api.cloud_gateway.database",
@@ -110,13 +109,14 @@ async fn bootstrap_discovered_module(
     let orchestrator = LifecycleOrchestrator::new(pool.clone(), module)
         .with_applied_by(DATABASE_BOOTSTRAP_APPLIED_BY);
 
-    orchestrator.init().await.map_err(|error| {
-        GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+    orchestrator
+        .init()
+        .await
+        .map_err(|error| GatewayRuntimeError::EmbeddedDatabaseBootstrap {
             workspace: workspace.to_owned(),
             module_id: module_id.clone(),
             message: format!("init failed: {error}"),
-        }
-    })?;
+        })?;
 
     let mut applied_migrations = 0usize;
     if force_migrate || options.auto_migrate {
@@ -181,7 +181,10 @@ fn surface_app_root_env_key(workspace: &str) -> Option<String> {
     if module.is_empty() || !module.chars().all(|c| c.is_ascii_lowercase() || c == '-') {
         return None;
     }
-    Some(format!("SDKWORK_{}_APP_ROOT", module.to_uppercase().replace('-', "_")))
+    Some(format!(
+        "SDKWORK_{}_APP_ROOT",
+        module.to_uppercase().replace('-', "_")
+    ))
 }
 
 /// Runs the explicit installer lifecycle through the same owner assembly

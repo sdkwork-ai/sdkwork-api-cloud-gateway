@@ -161,6 +161,19 @@ env_key() {
 
 now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
+# Version tags are embedded unescaped into ledger JSON and image refs, so a
+# tag that is not a bare version-shaped token must be refused up front.
+require_tag_shape() {
+  case "$1" in
+    ''|[!A-Za-z0-9]*)
+      die "invalid version tag '$1' (must start with a letter or digit)" ;;
+  esac
+  case "$1" in
+    *[!A-Za-z0-9._-]*)
+      die "invalid version tag '$1' (allowed characters: letters, digits, '.', '_', '-')" ;;
+  esac
+}
+
 # --- docker helpers ----------------------------------------------------------------
 image_exists() { docker image inspect "$1" >/dev/null 2>&1; }
 image_id()     { docker image inspect --format '{{.Id}}' "$1" 2>/dev/null || true; }
@@ -229,8 +242,9 @@ append_ledger() {
     >> "${LEDGER_FILE}"
 }
 
-# JSON string or null (arguments are already quoted or the literal null).
-json_or_null() { if [ -n "$1" ]; then printf '"%s"' "$1"; else printf 'null'; fi; }
+# JSON string or null (the value is escaped, so a hand-edited current.json
+# can never corrupt the ledger line through fromVersion).
+json_or_null() { if [ -n "$1" ]; then printf '"%s"' "$(json_escape "$1")"; else printf 'null'; fi; }
 
 write_current() {
   # write_current <version> <imageRef> <imageId> <replicas> <hostPortBase> <depsMode>
@@ -353,6 +367,7 @@ action_deploy() {
   local target_tag target_ref target_id from_version probe_ok=1
   target_tag="${IMAGE_TAG}"
   [ -n "${target_tag}" ] || target_tag="$(resolve_image_tag)"
+  require_tag_shape "${target_tag}"
   target_ref="${IMAGE_BASE}:${target_tag}"
 
   from_version="$(read_current_field version)"
@@ -444,6 +459,7 @@ action_deploy() {
 action_rollback_core() {
   # action_rollback_core <version> <note> — the shared rollback executor
   local target="$1" note="$2" current_ref current_id target_ref target_id from_version
+  require_tag_shape "${target}"
   from_version="$(read_current_field version)"
   target_ref="${IMAGE_BASE}:${target}"
   current_id="$(read_current_field imageId)"

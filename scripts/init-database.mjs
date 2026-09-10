@@ -76,6 +76,19 @@ if (!database) {
   console.error("[init-database] SDKWORK_DATABASE_NAME is required");
   process.exit(1);
 }
+// These three values are interpolated into double-quoted SQL identifiers and
+// single-quoted literals below, so anything outside a PostgreSQL identifier
+// character set must be rejected up front (a stray quote would corrupt the
+// statement rather than fail with a confusing syntax error).
+const IDENTIFIER_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/u;
+for (const [label, value] of [["database", database], ["schema", schema], ["application user", applicationUser]]) {
+  if (!IDENTIFIER_PATTERN.test(value) || value.length > 63) {
+    console.error(
+      `[init-database] ${label} must be a bare PostgreSQL identifier (letters, digits, _, <=63 chars): '${value}'`,
+    );
+    process.exit(1);
+  }
+}
 
 console.log(`[init-database] database=${database} schema=${schema} user=${applicationUser}`);
 

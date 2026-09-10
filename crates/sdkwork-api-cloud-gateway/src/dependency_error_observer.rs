@@ -19,7 +19,15 @@ const LOG_TARGET: &str = "sdkwork.api.cloud_gateway.dependency_error";
 
 /// Problem-details fields (RFC 9457 style) the gateway emits on failures.
 const ENVELOPE_FIELDS: &[&str] = &[
-    "type", "title", "status", "detail", "instance", "code", "traceId", "operationId", "i18nKey",
+    "type",
+    "title",
+    "status",
+    "detail",
+    "instance",
+    "code",
+    "traceId",
+    "operationId",
+    "i18nKey",
 ];
 
 pub async fn observe_dependency_server_errors(request: Request, next: Next) -> Response {
@@ -54,12 +62,10 @@ pub async fn observe_dependency_server_errors(request: Request, next: Next) -> R
             let fields = ENVELOPE_FIELDS
                 .iter()
                 .filter_map(|field| {
-                    envelope
-                        .get(*field)
-                        .map(|value| match value.as_str() {
-                            Some(text) => format!("{field}={text}"),
-                            None => format!("{field}={value}"),
-                        })
+                    envelope.get(*field).map(|value| match value.as_str() {
+                        Some(text) => format!("{field}={text}"),
+                        None => format!("{field}={value}"),
+                    })
                 })
                 .collect::<Vec<_>>()
                 .join(" ");

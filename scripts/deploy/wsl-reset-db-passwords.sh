@@ -10,8 +10,11 @@ reset_role() {
   role=$(grep -E '^GATEWAY_POSTGRES_USER=' "$env_file" | cut -d= -f2- | tr -d '\r')
   pw=$(grep -E '^GATEWAY_POSTGRES_PASSWORD=' "$env_file" | cut -d= -f2- | tr -d '\r')
   echo "reset role=$role from $env_file"
-  psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 \
-    -c "ALTER ROLE \"${role}\" WITH LOGIN PASSWORD '${pw}';"
+  # psql performs :'var' literal-quoting on stdin/-f input but NOT on -c
+  # strings (psql 18 verified), so the statement is piped: a password with
+  # quotes can never break out of (or inject into) the ALTER ROLE.
+  printf "ALTER ROLE \"%s\" WITH LOGIN PASSWORD :'pw';\n" "$role" \
+    | psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -v pw="$pw"
   PGPASSWORD="$pw" psql -h 127.0.0.1 -U "$role" -d "$role" -c 'SELECT current_user AS ok;'
 }
 

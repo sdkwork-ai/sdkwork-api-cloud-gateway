@@ -2,9 +2,9 @@
 # Deploy sdkwork-api-cloud-gateway in external-dependency Docker mode.
 #
 # Each environment runs as an isolated compose project with a distinct host
-# port (3910-3913) and sdkwork-specs database identity (sdkwork_ai_dev/test/
-# staging/prod). External PostgreSQL and Redis must already be reachable from
-# the container (typically host.docker.internal on WSL).
+# port (3910-3914) and sdkwork-specs database identity (sdkwork_ai_dev/test/
+# staging/demo/prod). External PostgreSQL and Redis must already be reachable
+# from the container (typically host.docker.internal on WSL).
 #
 # Usage:
 #   scripts/deploy-docker-environment.sh development

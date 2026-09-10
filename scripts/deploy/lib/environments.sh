@@ -19,8 +19,10 @@ SDKWORK_DEPLOY_LIB_ENV=1
 # shellcheck source=lib/common.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/common.sh"
 
-# All lifecycle environments (order = host-port order).
-SDKWORK_DEPLOY_ENVS="development test staging production"
+# All lifecycle environments (order = host-port order). Five-environment canon
+# (DOCKER_SPEC.md §3 / ENVIRONMENT_SPEC.md §5.1): demo joins the matrix on
+# host port 3914 with workspace identity sdkwork_ai_demo.
+SDKWORK_DEPLOY_ENVS="development test staging demo production"
 
 # Public top-level domains the gateway is served on.
 # MUST stay aligned with the registered base-domain family:
@@ -37,6 +39,7 @@ env_prefix() {
     development) echo dev ;;
     test)        echo test ;;
     staging)     echo staging ;;
+    demo)        echo demo ;;
     production)  echo "" ;;
     *) die "unknown environment: $1" ;;
   esac
@@ -48,6 +51,7 @@ env_host_port() {
     development) echo 3910 ;;
     test)        echo 3911 ;;
     staging)     echo 3912 ;;
+    demo)        echo 3914 ;;
     production)  echo 3913 ;;
     *) die "unknown environment: $1" ;;
   esac
@@ -59,6 +63,7 @@ env_db() {
     development) echo sdkwork_ai_dev ;;
     test)        echo sdkwork_ai_test ;;
     staging)     echo sdkwork_ai_staging ;;
+    demo)        echo sdkwork_ai_demo ;;
     production)  echo sdkwork_ai_prod ;;
     *) die "unknown environment: $1" ;;
   esac

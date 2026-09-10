@@ -119,16 +119,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.5",
+    "currentVersion": "0.1.7",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.5"
+      "BETA": "0.1.7"
     },
     "notes": [
       {
-        "version": "0.1.5",
+        "version": "0.1.7",
         "channel": "BETA",
         "current": true,
+        "summary": "Full rebuild and five-environment redeploy on WSL Ubuntu-22.04 Docker with host-native external PostgreSQL/Redis (Redis without password). Carries the sdkwork-cloudrouter 0041 forward migration (ai_mcp_* registry tables, iam_gateway_membership, ai_metering_usage indexes) that repairs an unversioned baseline drift which failed the postgres-runtime-schema readiness probe on pre-existing databases. Also regenerates Cargo.lock (hashlink).",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.6",
+        "channel": "BETA",
+        "current": false,
+        "summary": "Full rebuild and multi-environment redeploy verification on WSL Ubuntu-22.04 with external host PostgreSQL/Redis (Redis without password). Carries all 0.1.5 behavior (LF migration line endings, ai/models route dedup, zero-config consumer permissions).",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.5",
+        "channel": "BETA",
+        "current": false,
         "summary": "Rebuild with LF line endings for all packaged database migrations (7 sibling repos were CRLF-polluted by an external editor/sync, tripping the migration checksum drift gate fail-closed at container startup). Carries the 0.1.4 ai/models route dedup fix and 0.1.3 zero-config consumer permissions.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
