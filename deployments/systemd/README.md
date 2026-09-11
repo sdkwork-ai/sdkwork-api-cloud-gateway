@@ -44,10 +44,14 @@ source commit、package id、deployment profile 与 runtime target 必须与待�
 推荐使用包内安装器（落位 `config.toml` + `api-gateway.env` + secrets）：
 
 ```bash
-sudo bash scripts/install-ubuntu.sh \
+# 在解压后的服务包根目录执行（包内安装器落位于 install/）
+sudo bash install/install-ubuntu.sh \
   --environment production \
   --deployment-profile standalone
 ```
+
+> 安装器源码位于仓库 `bin/packaging/install-ubuntu.sh`（MODULE_BIN_SPEC.md §2.1），
+> 由 `scripts/package-server.mjs` 打包进归档的 `install/` 目录。
 
 手工步骤（与安装器等价）：
 

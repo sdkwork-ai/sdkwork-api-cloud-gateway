@@ -6,6 +6,9 @@
 -- search_path to the same-named schema, so the database and its schema must
 -- exist before module migrations run.
 --
+-- Applied automatically by bin/host/provision-external-databases.sh; run it by
+-- hand only when provisioning a database out of band.
+--
 -- The script is parameterized with psql variables, so the same file serves
 -- every environment: schema name = database name, owner = gateway user.
 --
@@ -13,7 +16,7 @@
 -- to be installed on the server, e.g. `postgresql-14-pgvector` on Ubuntu):
 --   psql -h <host> -U <admin> -c "CREATE DATABASE sdkwork_ai_test;"
 --   psql -h <host> -U <admin> -d sdkwork_ai_test -v db=sdkwork_ai_test \
---     -v app_user=sdkwork_ai_test -f docker/postgres/external-schema.sql
+--     -v app_user=sdkwork_ai_test -f bin/host/external-schema.sql
 --
 -- Optional psql variables (defaults match the built-in compose posture):
 --   db         database name and schema name (default sdkwork_ai_prod)

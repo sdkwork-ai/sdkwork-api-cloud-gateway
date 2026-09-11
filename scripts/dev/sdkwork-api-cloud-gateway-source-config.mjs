@@ -2,9 +2,13 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { parseDotEnv } from '../../../sdkwork-specs/tools/postgres/postgres-config.mjs';
+import { ENVIRONMENTS } from '../deployment-environments.mjs';
 
 const deploymentProfiles = new Set(['standalone', 'cloud']);
-const lifecycleEnvironments = new Set(['development', 'test', 'staging', 'production']);
+// Canonical lifecycle canon (DEPLOYMENT_SPEC §5 / ENVIRONMENT_SPEC §2): the
+// five-environment set lives in scripts/deployment-environments.mjs — never
+// re-declared here, so `demo` cannot silently fall out of the matrix again.
+const lifecycleEnvironments = new Set(ENVIRONMENTS);
 
 export function resolveGatewaySourceProfile({ appRoot, deploymentProfile, environment }) {
   if (!deploymentProfiles.has(deploymentProfile)) {

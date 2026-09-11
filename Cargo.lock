@@ -7153,6 +7153,7 @@ dependencies = [
  "sdkwork-im-contract-agent",
  "sdkwork-im-database-pool",
  "sdkwork-im-service-readiness",
+ "sdkwork-im-web-bootstrap",
  "sdkwork-knowledgebase-database-host",
  "sdkwork-mail-database-host",
  "sdkwork-merchandise-database-host",

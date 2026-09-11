@@ -21,8 +21,8 @@
 #   export SDKWORK_DATABASE_ADMIN_PORT=5432
 #   export SDKWORK_DATABASE_ADMIN_USERNAME=postgres
 #   export SDKWORK_DATABASE_ADMIN_PASSWORD=...
-#   scripts/provision-external-databases.sh
-#   scripts/provision-external-databases.sh development test
+#   bin/host/provision-external-databases.sh
+#   bin/host/provision-external-databases.sh development test
 set -eu
 
 usage() {
@@ -39,8 +39,8 @@ Admin connection (required):
 EOF
 }
 
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-schema_sql="$repo_root/docker/postgres/external-schema.sql"
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+schema_sql="$repo_root/bin/host/external-schema.sql"
 
 admin_host=${SDKWORK_DATABASE_ADMIN_HOST:-127.0.0.1}
 admin_port=${SDKWORK_DATABASE_ADMIN_PORT:-5432}

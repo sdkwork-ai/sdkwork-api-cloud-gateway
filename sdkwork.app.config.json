@@ -119,16 +119,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.9",
+    "currentVersion": "0.1.11",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.9"
+      "BETA": "0.1.11"
     },
     "notes": [
       {
-        "version": "0.1.9",
+        "version": "0.1.11",
         "channel": "BETA",
         "current": true,
+        "summary": "Fix 40301 `failedStage: cors` on browser journeys from registered console hosts (for example http://im-dev.sdkwork.com calling POST /app/v3/api/auth/sessions). The embedded host mounted its dependency routers behind the IAM Web Framework pipeline, whose security policy was built from SDKWORK_CORS_ALLOWED_ORIGINS alone, so the request-path Cors interceptor rejected every `<label><suffix>.<base-domain>` origin that the outer tower layer had already admitted. The IAM web adapter now attaches the CORS_SPEC section 5 registered console host pattern to the pipeline policy through the shared sdkwork-web-bootstrap resolver, fail-closed on a half-configured pattern, exactly as sdkwork-webserver already does. Also aligns sdkwork-web-core's RegisteredConsoleHosts matcher with CORS_SPEC section 3 and with tools/cors/registry.mjs by rejecting port-bearing console origins instead of accepting any port on a registered host.",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.10",
+        "channel": "BETA",
+        "current": false,
+        "summary": "CORS console-host pattern matching: the gateway expands SDKWORK_CORS_CONSOLE_HOST_{LABELS,SUFFIX,SCHEMES} against the registered base domains (SDKWORK_REGISTERED_SERVICE_BASE_DOMAINS) instead of carrying a hand-enumerated per-environment origin list, shrinking the deployed CORS allow-list from roughly 104 KiB to about 1 KiB while still matching exact single-label console hosts (no wildcard subdomain). Consumes sdkwork-web-core's RegisteredConsoleHosts policy hook and aligns every CORS carrier with the sdkwork-specs CORS standard (CORS_SPEC.md) via the check-cors-standard gate. Also fixes the co-located Snowflake node IDs (GATEWAY_IM_ID_NODE_ID 21/22/23/25/24) so the five same-host environments stop contending for the sdkwork_node_registry lease. Rebuilt and redeployed across all five WSL Ubuntu-22.04 environments.",
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.9",
+        "channel": "BETA",
+        "current": false,
         "summary": "Unify the operator surface on the bin/ nine-entrypoint family: image build, bundle packaging and deployment now route exclusively through bin/, and the install bundle source moved from scripts/docker/bundle to deployments/docker/bundle. Removes the legacy deploy toolkit (apply.sh/apply.ps1, wsl-redeploy-envs.sh, wsl-up-three-envs.sh, deploy-docker-environment.sh, deploy-cloud-environment.mjs, remote-deploy.sh, generate-nginx-conf.sh, install-certs.sh) because sdkwork-webserver owns the public reverse proxy edge. Re-syncs the Cargo.lock workspace dependency graph for the container feature. Restores LF line endings on 5 CRLF-polluted packaged migrations (sdkwork-appstore 0002/0003, sdkwork-generations 0001 up/down, sdkwork-webserver 0005) that would otherwise trip the migration checksum drift gate fail-closed at container startup; the repaired bytes match the checksums already recorded in ops_schema_migration_history across all five environments, so no database reconciliation was required.",
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",

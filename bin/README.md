@@ -17,6 +17,24 @@ identity and delegation.
 Declared app types: `server`. Default image tag comes from
 `sdkwork.app.config.json` → `release.currentVersion`.
 
+## Sub-layout (`MODULE_BIN_SPEC.md` §2.1)
+
+Only the nine entrypoints above are the operator surface. Everything else under
+`bin/` is library, asset, or build input — invoked by the entrypoints, never by
+hand:
+
+| Path | Contents |
+| --- | --- |
+| `lib/` | `bootstrap.sh` + `module.sh` (module identity, image name, app-type map, delegation commands) |
+| `container/` | scripts baked into the image: `entrypoint` (container `ENTRYPOINT`), `knowledgebase-rpc-entrypoint`, `postgres/{entrypoint.sh,init/}` (embedded-mode assets) |
+| `host/` | docker / WSL host preparation: `prepare-host.sh`, `provision-external-databases.sh`, `external-schema.sql`, `wsl-reset-db-passwords.sh`, `bind-windows-hosts.ps1` |
+| `packaging/` | package-builder inputs: `install-ubuntu.sh` (shipped as `install/install-ubuntu.sh`), `build-install-bundle.sh`, `validate-ubuntu-package.sh` |
+| `docker-bundle-*.sh` | target-side bundle executors, copied to the bundle root as `deploy.sh` / `release.sh` / `prepare-envs.sh` |
+
+The build outputs the artifact copies: `Dockerfile` stages `bin/container/*`
+into the image's `container/` directory, and the packagers copy
+`bin/docker-bundle-*.sh` and `bin/container/postgres/*` into the bundle.
+
 ## Container path (every environment) — canonical
 
 ```sh

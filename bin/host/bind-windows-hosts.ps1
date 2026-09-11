@@ -4,17 +4,20 @@
   Bind SDKWork API gateway domains to 127.0.0.1 in the Windows hosts file.
 
 .DESCRIPTION
-  WSL2 forwards localhost to Windows 127.0.0.1, so nginx on WSL port 80
-  is reachable from Windows browsers via these hostnames.
+  WSL2 forwards localhost to Windows 127.0.0.1, so the WSL-hosted edge (the
+  sdkwork-webserver reverse proxy on port 80) is reachable from Windows
+  browsers via these hostnames.
 
 .EXAMPLE
-  powershell -ExecutionPolicy Bypass -File scripts/bind-windows-hosts.ps1
+  powershell -ExecutionPolicy Bypass -File bin/host/bind-windows-hosts.ps1
 #>
 $ErrorActionPreference = 'Stop'
 
 # Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1).
-# MUST stay aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS
-# and etc/sdkwork.deployment.config.json cloudApiBaseUrl.
+# MUST stay aligned with the canonical deployment registry
+# (scripts/deployment-environments.mjs ENVIRONMENTS + the expectedHosts matrix
+# asserted in scripts/deployment-contract.test.mjs) and with
+# etc/sdkwork.deployment.config.json cloudApiBaseUrl.
 $baseDomains = @(
     'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
     'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
@@ -32,7 +35,7 @@ $markerEnd = '# === SDKWORK API GATEWAY DOMAINS END ==='
 $envSuffixes = @('api-dev', 'api-test', 'api-staging', 'api-demo', 'api')
 
 $domainBlock = @( $markerBegin )
-$domainBlock += '# SDKWork API Cloud Gateway (WSL nginx :80 -> container 391x)'
+$domainBlock += '# SDKWork API Cloud Gateway (WSL webserver edge :80 -> container 391x)'
 foreach ($suffix in $envSuffixes) {
     $names = foreach ($d in $baseDomains) { "$suffix.$d" }
     $domainBlock += "127.0.0.1 $names"

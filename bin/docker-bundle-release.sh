@@ -76,9 +76,9 @@ if [ -f "${SCRIPT_DIR}/compose/docker-compose.bundle.yml" ]; then
   DEFAULT_STATE_ROOT="${SCRIPT_DIR}/release-state"
   BUNDLE_IMAGE_ENV="${SCRIPT_DIR}/image.env"
 else
-  REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+  REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
   BUNDLE_ROOT=""
-  DEPLOY_SCRIPT="${SCRIPT_DIR}/deploy.sh"
+  DEPLOY_SCRIPT="${SCRIPT_DIR}/docker-bundle-deploy.sh"
   DEFAULT_STATE_ROOT="${REPO_ROOT}/release-state"
   BUNDLE_IMAGE_ENV=""
 fi
@@ -128,7 +128,7 @@ case "${ENVIRONMENT}" in
   development|test|staging|demo|production) ;;
   *) die "unsupported environment: ${ENVIRONMENT} (development|test|staging|demo|production)" ;;
 esac
-[ -f "${DEPLOY_SCRIPT}" ] || die "deploy.sh missing beside release.sh: ${DEPLOY_SCRIPT}"
+[ -f "${DEPLOY_SCRIPT}" ] || die "deploy executor missing beside release.sh: ${DEPLOY_SCRIPT}"
 
 if [ -n "${OPT_ENV_FILE}" ]; then
   ENV_FILE="${OPT_ENV_FILE}"

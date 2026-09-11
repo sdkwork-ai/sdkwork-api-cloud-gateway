@@ -6,7 +6,7 @@
  * Output layout per environment (dist/docker-packages/<environment>/):
  *   docker-compose.yml / docker-compose.embedded.yml   repo compose (paths intact)
  *   docker/config/config.toml                          host-mounted runtime config
- *   docker/postgres/                                   embedded-mode assets
+ *   bin/container/postgres/                            embedded-mode assets
  *   docker/env/<environment>.env                       operator-editable env file
  *   README.md / manifest.json
  *
@@ -17,15 +17,15 @@
  *     operator secrets (git-ignored docker/env/<environment>.env) are NEVER
  *     copied into a deliverable (SUPPLY_CHAIN_SECURITY_SPEC).
  *   - The repo-relative compose layout is preserved so every bind mount
- *     (./docker/config/config.toml, ./docker/postgres/*) resolves inside the
- *     bundle without path rewriting.
+ *     (./docker/config/config.toml, ./bin/container/postgres/*) resolves inside
+ *     the bundle without path rewriting.
  *   - Each environment file is validated with the same
  *     validateDeploymentEnvironment used by deploy-time checks before it is
  *     packaged.
  *
- * Public entry: `pnpm build:container:environments`; shell users go through
- * scripts/package-docker-environments.sh, which is a thin shim onto this file
- * (one implementation, one entry semantics).
+ * Public entry: `pnpm build:container:environments` — the single entry surface
+ * (MODULE_BIN_SPEC.md §1; the legacy scripts/package-docker-environments.sh
+ * shim is removed).
  */
 
 import { spawnSync } from 'node:child_process';
@@ -132,7 +132,7 @@ function packageEnvironment(environment, outputRoot) {
   mkdirSync(path.join(target, 'docker', 'env'), { recursive: true });
 
   // Repo-relative layout is preserved so docker-compose.yml bind mounts
-  // (./docker/config/config.toml, ./docker/postgres/*) resolve as-is.
+  // (./docker/config/config.toml, ./bin/container/postgres/*) resolve as-is.
   copyFileSync(requireRepoFile('docker-compose.yml'), path.join(target, 'docker-compose.yml'));
   copyFileSync(
     requireRepoFile('docker-compose.embedded.yml'),
@@ -142,9 +142,10 @@ function packageEnvironment(environment, outputRoot) {
     requireRepoFile(path.join('docker', 'config', 'config.toml')),
     path.join(target, 'docker', 'config', 'config.toml'),
   );
+  mkdirSync(path.join(target, 'bin', 'container'), { recursive: true });
   cpSync(
-    requireRepoFile(path.join('docker', 'postgres')),
-    path.join(target, 'docker', 'postgres'),
+    requireRepoFile(path.join('bin', 'container', 'postgres')),
+    path.join(target, 'bin', 'container', 'postgres'),
     { recursive: true },
   );
   // From the committed example template only — never the operator's local

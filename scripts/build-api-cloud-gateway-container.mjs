@@ -288,11 +288,11 @@ async function validateBuildPlan(plan) {
   if (!existsSync(path.join(appRoot, 'specs', 'component.spec.json'))) {
     issues.push('missing specs/component.spec.json');
   }
-  if (!existsSync(path.join(appRoot, 'container', 'entrypoint'))) {
-    issues.push('missing container/entrypoint');
+  if (!existsSync(path.join(appRoot, 'bin', 'container', 'entrypoint'))) {
+    issues.push('missing bin/container/entrypoint');
   }
-  if (!existsSync(path.join(appRoot, 'container', 'knowledgebase-rpc-entrypoint'))) {
-    issues.push('missing container/knowledgebase-rpc-entrypoint');
+  if (!existsSync(path.join(appRoot, 'bin', 'container', 'knowledgebase-rpc-entrypoint'))) {
+    issues.push('missing bin/container/knowledgebase-rpc-entrypoint');
   }
   if (plan.push) {
     const repository = imageRepository(plan.imageTag);
@@ -480,10 +480,16 @@ async function assembleBuildContext(plan) {
   await cp(path.join(appRoot, 'sdkwork.app.config.json'), path.join(plan.imageBuildDir, 'sdkwork.app.config.json'));
   await cp(path.join(appRoot, 'README.md'), path.join(plan.imageBuildDir, 'README.md'));
 
-  // Container entrypoint + metadata.
-  await cp(path.join(appRoot, 'container', 'entrypoint'), path.join(plan.imageBuildDir, 'container', 'entrypoint'));
+  // Container entrypoint + metadata. Authored sources live under
+  // bin/container/ (MODULE_BIN_SPEC.md §2.1); the build context keeps the
+  // artifact-relative `container/` layout the image contract fixes
+  // (APPLICATION_DEPLOY_LAYOUT_SPEC), so the copy is a build output.
   await cp(
-    path.join(appRoot, 'container', 'knowledgebase-rpc-entrypoint'),
+    path.join(appRoot, 'bin', 'container', 'entrypoint'),
+    path.join(plan.imageBuildDir, 'container', 'entrypoint'),
+  );
+  await cp(
+    path.join(appRoot, 'bin', 'container', 'knowledgebase-rpc-entrypoint'),
     path.join(plan.imageBuildDir, 'container', 'knowledgebase-rpc-entrypoint'),
   );
   await writeFile(
@@ -762,8 +768,10 @@ async function main(argv = process.argv.slice(2)) {
       }
     }
   }
-  if (settings.check && plan.issues.length > 0) {
-    return 1;
+  if (settings.check) {
+    // `--check` validates the plan and must never proceed to a build (its
+    // documented contract): a clean plan exits 0, a plan with issues exits 1.
+    return plan.issues.length > 0 ? 1 : 0;
   }
   if (settings.dryRun) {
     return 0;

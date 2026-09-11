@@ -15,7 +15,7 @@
 #      env templates + manifest)
 #
 # Usage:
-#   bash scripts/build-install-bundle.sh [options]
+#   bash bin/packaging/build-install-bundle.sh [options]
 #
 # Options:
 #   --skip-server-package  reuse the existing dist/server tarball (skip the
@@ -35,7 +35,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT"
 
 LOG_PREFIX="[sdkwork-gateway-build]"

@@ -5,7 +5,7 @@ Multi-environment standalone container deployment for WSL Ubuntu / Linux hosts.
 ## Layout parity with Ubuntu install
 
 `topology.applicationCode` = `api-gateway` (APPLICATION_DEPLOY_LAYOUT_SPEC).
-Container mounts use the **same** FHS paths as `scripts/install-ubuntu.sh`:
+Container mounts use the **same** FHS paths as `bin/packaging/install-ubuntu.sh`:
 
 | Purpose | Path |
 | --- | --- |
@@ -74,6 +74,7 @@ collision-free across environments). See
 | development | 3910 | `sdkwork_ai_dev` | `api-dev.{sdkwork,birdcoder,dtupay}.com` |
 | test | 3911 | `sdkwork_ai_test` | `api-test.{sdkwork,birdcoder,dtupay}.com` |
 | staging | 3912 | `sdkwork_ai_staging` | `api-staging.{sdkwork,birdcoder,dtupay}.com` |
+| demo | 3914 | `sdkwork_ai_demo` | `api-demo.{sdkwork,birdcoder,dtupay}.com` |
 | production | 3913 | `sdkwork_ai_prod` | `api.{sdkwork,birdcoder,dtupay}.com` |
 
 ## Commands
@@ -94,10 +95,14 @@ Operator channel — `bin/` only (`MODULE_BIN_SPEC.md`; see
 Internal implementation (invoked by `bin/`, not an operator surface):
 `scripts/build-api-cloud-gateway-container.mjs` (image build),
 `scripts/docker/package-install-bundle.mjs` (bundle packaging),
-`deployments/docker/bundle/` (bundle source: compose + env + executor),
-`scripts/deploy/prepare-host.sh` (host PostgreSQL + Redis),
-`scripts/provision-external-databases.sh` (database provisioning),
-`scripts/bind-windows-hosts.ps1` (Windows hosts entries).
+`bin/docker-bundle-deploy.sh` / `bin/docker-bundle-release.sh` /
+`bin/docker-bundle-prepare-envs.sh` (bundle executor sources; the packager copies
+them to the bundle root as `deploy.sh` / `release.sh` / `prepare-envs.sh`),
+`bin/host/prepare-host.sh` (host PostgreSQL + Redis; also issues the host CA and
+writes `docker/ca/postgres-ca-bundle.crt`),
+`bin/host/provision-external-databases.sh` (database provisioning, reads
+`bin/host/external-schema.sql`),
+`bin/host/bind-windows-hosts.ps1` (Windows hosts entries).
 
 Space-level entrypoint (WSL / CI): `bash bin/build-gateway-docker.sh` in the
 `sdkwork-space` root packages the same bundle.

@@ -309,10 +309,10 @@ async function main() {
   if (settings.dryRun) {
     console.log(`docker save ${ref} | gzip -> ${path.join(bundleDir, 'image.tar.gz')}`);
     console.log(`compose templates: docker-compose.bundle.yml + docker-compose.bundle.embedded.yml`);
-    console.log(`embedded postgres assets: docker/postgres/entrypoint.sh + docker/postgres/init/`);
+    console.log(`embedded postgres assets: bin/container/postgres/entrypoint.sh + bin/container/postgres/init/`);
     console.log(`env templates: ${ENVIRONMENTS.map((env) => `docker/env/${env}.env.example`).join(', ')}`);
-    console.log(`deploy script: deployments/docker/bundle/deploy.sh`);
-    console.log(`release lifecycle script: deployments/docker/bundle/release.sh`);
+    console.log(`deploy script: bin/docker-bundle-deploy.sh -> deploy.sh`);
+    console.log(`release lifecycle script: bin/docker-bundle-release.sh -> release.sh`);
     return;
   }
 
@@ -369,11 +369,11 @@ async function main() {
   // Embedded-mode PostgreSQL assets: TLS-generating entrypoint + schema init
   // (deploy.sh exports POSTGRES_ASSETS_DIR at deploy time).
   copyFileSync(
-    path.join(REPO_ROOT, 'docker', 'postgres', 'entrypoint.sh'),
+    path.join(REPO_ROOT, 'bin', 'container', 'postgres', 'entrypoint.sh'),
     path.join(bundleDir, 'postgres', 'entrypoint.sh'),
   );
   cpSync(
-    path.join(REPO_ROOT, 'docker', 'postgres', 'init'),
+    path.join(REPO_ROOT, 'bin', 'container', 'postgres', 'init'),
     path.join(bundleDir, 'postgres', 'init'),
     { recursive: true },
   );
@@ -388,15 +388,17 @@ async function main() {
     writeFileSync(path.join(bundleDir, 'env', name), content);
     console.log(`preserved operator env: env/${name}`);
   }
+  // Source names are flat (MODULE_BIN_SPEC.md §2.2); the bundle root names are
+  // fixed by DOCKER_SPEC.md §4.1 / APPLICATION_DEPLOY_LAYOUT_SPEC.md §9.1.
   const deployScript = path.join(bundleDir, 'deploy.sh');
-  copyFileSync(path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'deploy.sh'), deployScript);
+  copyFileSync(path.join(REPO_ROOT, 'bin', 'docker-bundle-deploy.sh'), deployScript);
   const prepareEnvsScript = path.join(bundleDir, 'prepare-envs.sh');
   copyFileSync(
-    path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'prepare-envs.sh'),
+    path.join(REPO_ROOT, 'bin', 'docker-bundle-prepare-envs.sh'),
     prepareEnvsScript,
   );
   const releaseScript = path.join(bundleDir, 'release.sh');
-  copyFileSync(path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'release.sh'), releaseScript);
+  copyFileSync(path.join(REPO_ROOT, 'bin', 'docker-bundle-release.sh'), releaseScript);
   const chmod = spawnSync('chmod', ['0755', deployScript, prepareEnvsScript, releaseScript], { stdio: 'ignore' });
   if (chmod.status !== 0) {
     // Windows filesystems ignore the POSIX mode; harmless.

@@ -289,7 +289,16 @@ function gitResolvedDependencies(metadata) {
   const repositories = new Map();
   for (const root of roots) {
     if (repositories.has(root)) continue;
-    const commit = run('git', ['rev-parse', 'HEAD'], { cwd: root });
+    let commit;
+    try {
+      commit = run('git', ['rev-parse', 'HEAD'], { cwd: root });
+    } catch {
+      // A path dependency checked out from a repository that has no commits yet
+      // (fresh/unborn `git init`) cannot contribute a commit digest. Skip that
+      // repository instead of failing the whole SBOM: the locked registry
+      // packages appended below still describe every external dependency.
+      continue;
+    }
     let remote = `file://${root.split(path.sep).join('/')}`;
     try {
       remote = run('git', ['remote', 'get-url', 'origin'], { cwd: root }) || remote;

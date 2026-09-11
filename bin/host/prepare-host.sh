@@ -18,13 +18,13 @@
 #
 # This is the "Ubuntu host-native services" external posture documented in
 # docker-compose.external.yml. For a managed/cloud database instead, skip this
-# script (apply.sh --skip-host) and point GATEWAY_POSTGRES_HOST /
-# GATEWAY_CLOUDROUTER_REDIS_HOST at the remote endpoints.
+# script and point GATEWAY_POSTGRES_HOST / GATEWAY_CLOUDROUTER_REDIS_HOST at the
+# remote endpoints (the container channel is bin/docker-deploy.sh).
 #
 # Usage:
-#   sudo scripts/deploy/prepare-host.sh
-#   sudo scripts/deploy/prepare-host.sh --no-tls        # plaintext PG (sslmode=disable)
-#   sudo SDKWORK_DATABASE_ADMIN_PASSWORD=secret scripts/deploy/prepare-host.sh
+#   sudo bin/host/prepare-host.sh
+#   sudo bin/host/prepare-host.sh --no-tls        # plaintext PG (sslmode=disable)
+#   sudo SDKWORK_DATABASE_ADMIN_PASSWORD=secret bin/host/prepare-host.sh
 set -eu
 
 # ---- root guard -------------------------------------------------------------
@@ -36,7 +36,7 @@ fi
 NO_TLS=false
 for a in "$@"; do case "$a" in --no-tls) NO_TLS=true ;; esac; done
 
-repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 ca_bundle="$repo_root/docker/ca/postgres-ca-bundle.crt"
 mkdir -p "$(dirname "$ca_bundle")"
 
@@ -212,11 +212,11 @@ export SDKWORK_DATABASE_ADMIN_PORT="$PG_PORT"
 export SDKWORK_DATABASE_ADMIN_USERNAME="$PG_ADMIN_USER"
 export SDKWORK_DATABASE_ADMIN_PASSWORD="$PG_ADMIN_PASS"
 export PGPASSWORD="$PG_ADMIN_PASS"
-bash "$repo_root/scripts/provision-external-databases.sh" development test staging demo production
+bash "$repo_root/bin/host/provision-external-databases.sh" development test staging demo production
 
 echo
 ok "HOST SERVICES READY"
 echo "  PostgreSQL : 127.0.0.1:$PG_PORT (host.docker.internal in containers)"
 echo "  Redis      : 127.0.0.1:$REDIS_PORT"
 echo "  PG CA bundle: $ca_bundle"
-echo "  Next: sudo bash scripts/deploy/apply.sh   (or: pnpm deploy:apply)"
+echo "  Next: bin/docker-deploy.sh install --environment <env>   (see docs/guides/operator/docker-install.md)"

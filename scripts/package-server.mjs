@@ -565,9 +565,12 @@ async function copyInstallerAssets(stageRoot) {
   const installRoot = path.join(stageRoot, 'install');
   const installer = path.join(installRoot, 'install-ubuntu.sh');
   const knowledgebaseRpcEntrypoint = path.join(installRoot, 'knowledgebase-rpc-entrypoint');
-  await copyFile(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), installer);
   await copyFile(
-    path.join(appRoot, 'container', 'knowledgebase-rpc-entrypoint'),
+    path.join(appRoot, 'bin', 'packaging', 'install-ubuntu.sh'),
+    installer,
+  );
+  await copyFile(
+    path.join(appRoot, 'bin', 'container', 'knowledgebase-rpc-entrypoint'),
     knowledgebaseRpcEntrypoint,
   );
   await copyFile(

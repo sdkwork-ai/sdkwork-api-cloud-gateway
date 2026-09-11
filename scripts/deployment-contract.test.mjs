@@ -19,7 +19,7 @@ const appRoot = path.resolve('.');
 const environments = ENVIRONMENTS;
 const profiles = ['standalone', 'cloud'];
 // Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1). Keep
-// aligned with scripts/deploy/lib/environments.sh SDKWORK_DEPLOY_DOMAINS.
+// aligned with bin/lib/deploy-environments.sh SDKWORK_DEPLOY_DOMAINS.
 const baseDomains = [
   'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
   'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
@@ -182,7 +182,7 @@ test('container image packages the official Knowledgebase RPC sidecar', () => {
   assert.match(buildScript, /sdkwork-intelligence-knowledgebase-rpc-bin/u);
   assert.match(buildScript, /sdkwork-knowledgebase/u);
   assert.match(buildScript, /knowledgebaseRpcBinaryPath/u);
-  assert.match(buildScript, /container\/knowledgebase-rpc-entrypoint/u);
+  assert.match(buildScript, /'bin', 'container', 'knowledgebase-rpc-entrypoint'/u);
   assert.match(dockerfile, /KNOWLEDGEBASE_RPC_BINARY/u);
   assert.match(dockerfile, /container\/knowledgebase-rpc-entrypoint/u);
 });
@@ -190,7 +190,7 @@ test('container image packages the official Knowledgebase RPC sidecar', () => {
 test('container composition wires the IM Knowledgebase client through strict RPC security', () => {
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const entrypoint = readFileSync(
-    path.join(appRoot, 'container', 'knowledgebase-rpc-entrypoint'),
+    path.join(appRoot, 'bin', 'container', 'knowledgebase-rpc-entrypoint'),
     'utf8',
   );
 
@@ -228,7 +228,7 @@ test('container composition wires the IM Knowledgebase client through strict RPC
 
 test('container entrypoint does not bootstrap sdkwork-webserver secrets', () => {
   const gatewayEntrypoint = readFileSync(
-    path.join(appRoot, 'container', 'entrypoint'),
+    path.join(appRoot, 'bin', 'container', 'entrypoint'),
     'utf8',
   );
   const dockerfile = readFileSync(path.join(appRoot, 'Dockerfile'), 'utf8');
@@ -240,15 +240,15 @@ test('container entrypoint does not bootstrap sdkwork-webserver secrets', () => 
 });
 
 test('ubuntu and container share api-gateway config layout; gateway does not own nginx', () => {
-  const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
+  const installer = readFileSync(path.join(appRoot, 'bin', 'packaging', 'install-ubuntu.sh'), 'utf8');
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   // The legacy deploy toolkit orchestrator (scripts/deploy/apply.sh) was removed
   // by the bin/ operator-surface consolidation. The "gateway owns no reverse
   // proxy" contract now lives on the surviving deploy channel: the bundle
   // entrypoint and the host-provisioning contract doc (DOCKER_SPEC.md §1).
-  const deployReadme = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'README.md'), 'utf8');
+  const deployReadme = readFileSync(path.join(appRoot, 'bin', 'host', 'README.md'), 'utf8');
   const bundleDeploy = readFileSync(
-    path.join(appRoot, 'deployments', 'docker', 'bundle', 'deploy.sh'),
+    path.join(appRoot, 'bin', 'docker-bundle-deploy.sh'),
     'utf8',
   );
   const ports = ENVIRONMENT_HOST_PORTS;
@@ -322,7 +322,7 @@ test('packaged binary help and version bypass runtime initialization', () => {
 });
 
 test('Ubuntu installer uses canonical runtime paths and preserves operator config', () => {
-  const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
+  const installer = readFileSync(path.join(appRoot, 'bin', 'packaging', 'install-ubuntu.sh'), 'utf8');
   const gatewayUnit = readFileSync(
     path.join(appRoot, 'deployments', 'systemd', 'sdkwork-api-gateway.service'),
     'utf8',
@@ -350,7 +350,7 @@ test('Ubuntu installer uses canonical runtime paths and preserves operator confi
 
 test('database lifecycle is explicit and delegated to owner assemblies', () => {
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
-  const entrypoint = readFileSync(path.join(appRoot, 'container', 'entrypoint'), 'utf8');
+  const entrypoint = readFileSync(path.join(appRoot, 'bin', 'container', 'entrypoint'), 'utf8');
   const systemd = readFileSync(
     path.join(appRoot, 'deployments', 'systemd', 'sdkwork-api-gateway.service'),
     'utf8',
@@ -385,7 +385,7 @@ test('database lifecycle is explicit and delegated to owner assemblies', () => {
 
 test('single-node containers provision the Payment key in the canonical secret mount', () => {
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
-  const entrypoint = readFileSync(path.join(appRoot, 'container', 'entrypoint'), 'utf8');
+  const entrypoint = readFileSync(path.join(appRoot, 'bin', 'container', 'entrypoint'), 'utf8');
 
   assert.match(
     compose,
@@ -408,13 +408,13 @@ test('production-like embedded PostgreSQL enables transport encryption', () => {
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const embedded = readFileSync(path.join(appRoot, 'docker-compose.embedded.yml'), 'utf8');
   const postgresEntrypoint = readFileSync(
-    path.join(appRoot, 'docker', 'postgres', 'entrypoint.sh'),
+    path.join(appRoot, 'bin', 'container', 'postgres', 'entrypoint.sh'),
     'utf8',
   );
 
   assert.match(compose, /ssl=on/u);
   assert.match(compose, /ssl_cert_file=\/var\/lib\/postgresql\/server\.crt/u);
-  assert.match(compose, /docker\/postgres\/entrypoint\.sh:/u);
+  assert.match(compose, /bin\/container\/postgres\/entrypoint\.sh:/u);
   assert.match(compose, /profiles: \["embedded"\]/u);
   assert.match(
     embedded,
@@ -432,7 +432,7 @@ test('production-like embedded PostgreSQL enables transport encryption', () => {
   assert.match(postgresEntrypoint, /chmod 0600 "\$private_key_tmp"/u);
   assert.match(postgresEntrypoint, /umask "\$original_umask"/u);
   assert.match(postgresEntrypoint, /cp "\$certificate" "\$shared_certificate_tmp"/u);
-  const gatewayEntrypoint = readFileSync(path.join(appRoot, 'container', 'entrypoint'), 'utf8');
+  const gatewayEntrypoint = readFileSync(path.join(appRoot, 'bin', 'container', 'entrypoint'), 'utf8');
   assert.match(
     gatewayEntrypoint,
     /cat "\$system_trust_bundle" "\$ca_file" > "\$trust_bundle_tmp"/u,
@@ -510,7 +510,7 @@ test('install bundle supports external (default) and embedded dependency modes',
 
   // deploy.sh: external is the default; --embedded is the explicit opt-in and
   // GATEWAY_DEPS_MODE=embedded in the env file is equivalent.
-  const deploy = readFileSync(path.join(appRoot, 'deployments', 'docker', 'bundle', 'deploy.sh'), 'utf8');
+  const deploy = readFileSync(path.join(appRoot, 'bin', 'docker-bundle-deploy.sh'), 'utf8');
   assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE_FLAG:-\$\(env_key GATEWAY_DEPS_MODE\)\}"/u);
   assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE:-external\}"/u);
   assert.match(deploy, /--embedded\)\s+DEPS_MODE_FLAG="embedded"/u);
@@ -530,7 +530,7 @@ test('install bundle supports external (default) and embedded dependency modes',
   // The shell packaging wrapper must drive the real chain (server package →
   // container image → registry tag → bundle) so operators never need pnpm.
   const buildWrapper = readFileSync(
-    path.join(appRoot, 'scripts', 'build-install-bundle.sh'),
+    path.join(appRoot, 'bin', 'packaging', 'build-install-bundle.sh'),
     'utf8',
   );
   assert.match(buildWrapper, /package-server\.mjs/u);
@@ -538,7 +538,7 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(buildWrapper, /package-install-bundle\.mjs/u);
   assert.match(buildWrapper, /currentVersion/u);
   const prepareEnvs = readFileSync(
-    path.join(appRoot, 'deployments', 'docker', 'bundle', 'prepare-envs.sh'),
+    path.join(appRoot, 'bin', 'docker-bundle-prepare-envs.sh'),
     'utf8',
   );
   assert.match(prepareEnvs, /GATEWAY_IM_ID_NODE_ID/u);
@@ -549,7 +549,7 @@ test('install bundle supports external (default) and embedded dependency modes',
   // deploy.sh, and the script must keep its five subcommands and the
   // ledger/rollback invariants (docs/guides/operator/RELEASE_LIFECYCLE.md).
   const releaseScript = readFileSync(
-    path.join(appRoot, 'deployments', 'docker', 'bundle', 'release.sh'),
+    path.join(appRoot, 'bin', 'docker-bundle-release.sh'),
     'utf8',
   );
   assert.match(bundlePackager, /release\.sh/u);
@@ -570,13 +570,14 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(releaseScript, /FORWARD-ONLY/u);
 
   // The bin/ family is the only operator surface (MODULE_BIN_SPEC.md). The
-  // module wiring must keep the bundle source at the canonical
-  // deployments/docker/bundle location (no sdkwork_module_install_bundle_dir
-  // override — the shared-library default applies) and drive the canonical
-  // container build with the full registry reference; the legacy
+  // module wiring must NOT override the install-bundle resolution — the
+  // shared-library default (newest under dist/docker-install) applies — and
+  // must drive the canonical container build with the full registry reference;
+  // the legacy
   // direct-entrypoint wrappers (pnpm release:*/deploy:apply:standalone:docker*,
   // scripts/docker/remote-deploy.sh) are removed — operators go through
-  // bin/docker-deploy.sh.
+  // bin/docker-deploy.sh. The bundle executors are authored flat in bin/
+  // (§2.2); there is no source-tree bundle.
   const moduleWiring = readFileSync(path.join(appRoot, 'bin', 'lib', 'module.sh'), 'utf8');
   assert.doesNotMatch(moduleWiring, /sdkwork_module_install_bundle_dir/u);
   assert.doesNotMatch(moduleWiring, /scripts\/docker\/bundle/u);
@@ -691,15 +692,21 @@ test('deployment environment registry is the single source of truth for packagin
     false,
     'deploy-docker-environment.sh must stay removed (bin/ is the single deploy channel)',
   );
-
-  const shim = readFileSync(
-    path.join(appRoot, 'scripts', 'package-docker-environments.sh'),
-    'utf8',
+  // The shell shim (scripts/package-docker-environments.sh) is removed too: it
+  // was a second entry surface onto the same Node implementation, which
+  // MODULE_BIN_SPEC.md §1 forbids. `pnpm build:container:environments` is the
+  // single entry.
+  assert.equal(
+    existsSync(path.join(appRoot, 'scripts', 'package-docker-environments.sh')),
+    false,
+    'package-docker-environments.sh must stay removed (single entry surface, §1)',
   );
-  assert.match(
-    shim,
-    /package-environment-bundles\.mjs/u,
-    'the shell packaging shim must delegate to the shared mjs encapsulation',
+  assert.equal(
+    JSON.parse(readFileSync(path.join(appRoot, 'package.json'), 'utf8')).scripts[
+      'build:container:environments'
+    ],
+    'node scripts/docker/package-environment-bundles.mjs',
+    'the mjs packager must stay the single packaging entry surface',
   );
 
   const packager = readFileSync(

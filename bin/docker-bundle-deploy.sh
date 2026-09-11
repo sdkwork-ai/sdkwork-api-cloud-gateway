@@ -8,7 +8,8 @@
 #
 # Layout (auto-detected):
 #   bundle:  ./compose/docker-compose.bundle.yml + ./env/  + ./image.tar.gz
-#   repo:    ../../docker-compose.bundle.yml  + ../../docker/env/
+#   repo:    <repo-root>/docker-compose.bundle.yml + <repo-root>/docker/env/
+#            (authored at bin/docker-bundle-deploy.sh in the repository)
 #
 # Usage:
 #   deploy.sh --environment <development|test|staging|demo|production> [options]
@@ -77,12 +78,14 @@ if [ -f "${SCRIPT_DIR}/compose/docker-compose.bundle.yml" ]; then
   BUNDLE_IMAGE_ENV="${SCRIPT_DIR}/image.env"
   POSTGRES_ASSETS_DIR="${SCRIPT_DIR}/postgres"
 else
-  # Repository layout: deploy.sh sits in deployments/docker/bundle/.
-  COMPOSE_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+  # Repository layout: this script is authored flat as
+  # bin/docker-bundle-deploy.sh (MODULE_BIN_SPEC.md §2.2), so one level up is
+  # the repository root.
+  COMPOSE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
   ENV_DIR="${COMPOSE_DIR}/docker/env"
   BUNDLE_IMAGE_TGZ=""
   BUNDLE_IMAGE_ENV=""
-  POSTGRES_ASSETS_DIR="${COMPOSE_DIR}/docker/postgres"
+  POSTGRES_ASSETS_DIR="${COMPOSE_DIR}/bin/container/postgres"
 fi
 COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.bundle.yml"
 EMBEDDED_COMPOSE_FILE="${COMPOSE_DIR}/docker-compose.bundle.embedded.yml"

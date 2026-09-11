@@ -358,7 +358,7 @@ go through them (or the repository pnpm scripts they delegate to):
 | Entrypoint | Delegates to |
 | --- | --- |
 | `bin/docker-image.sh` | `pnpm build:container` → `registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<version>` |
-| `bin/docker-deploy.sh` | `deployments/docker/bundle/deploy.sh` (WSL or remote Ubuntu via `--host`) |
+| `bin/docker-deploy.sh` | `bin/docker-bundle-deploy.sh` (private executor, copied into the install bundle as `deploy.sh` by `package-install-bundle.mjs`; WSL or remote Ubuntu via `--host`) |
 | `bin/apps-build.sh` | `server` → `cargo build --release` |
 | `bin/apps-package.sh` | `scripts/package-server.mjs package --deployment-profile <p> --version <v>` → archive collected into `target/bin-packages/` with a sidecar `.sha256` |
 | `bin/apps-deploy.sh` | host-native `install/install-ubuntu.sh` on the Ubuntu target + systemd enable/health probe (`production` only; every other environment uses the container bundle) |

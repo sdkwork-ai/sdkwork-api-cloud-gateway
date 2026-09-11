@@ -77,9 +77,6 @@ Thumbs.db
 docker/ca/
 !docker/ca/README.md
 
-# Generated self-signed TLS certs (per-environment, local dev only)
-docker/certs/
-
 # WorkBuddy local metadata (never committed)
 /.workbuddy/
 # Runtime-generated environment configuration

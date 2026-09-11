@@ -50,8 +50,8 @@ services:
       POSTGRES_PASSWORD: ${GATEWAY_POSTGRES_PASSWORD:-sdkwork_ai_prod}
     volumes:
       - postgres-data:/var/lib/postgresql
-      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-      - ./docker/postgres/entrypoint.sh:/opt/sdkwork/postgres/entrypoint.sh:ro
+      - ./bin/container/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./bin/container/postgres/entrypoint.sh:/opt/sdkwork/postgres/entrypoint.sh:ro
       - postgres-tls:/var/run/sdkwork-postgres-tls
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${GATEWAY_POSTGRES_USER:-sdkwork_ai_prod} -d ${GATEWAY_POSTGRES_DB:-sdkwork_ai_prod}"]

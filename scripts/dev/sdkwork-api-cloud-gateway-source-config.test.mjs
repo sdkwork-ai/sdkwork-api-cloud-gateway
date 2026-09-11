@@ -42,12 +42,14 @@ test('cloud development selects only an explicit remote gateway', () => {
 
 test('source configuration declares the complete deployment profile matrix', () => {
   for (const deploymentProfile of ['standalone', 'cloud']) {
-    for (const environment of ['development', 'test', 'staging', 'production']) {
+    for (const environment of ['development', 'test', 'staging', 'demo', 'production']) {
       const profile = resolveGatewaySourceProfile({ appRoot, deploymentProfile, environment });
       assert.equal(profile.profileId, `${deploymentProfile}.${environment}`);
       // Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1):
-      // api[-<suffix>].<base-domain> for all 14 registered base domains.
-      assert.equal(profile.environmentConfig.publicHosts.length, 14);
+      // api[-<suffix>].<base-domain> for all 16 registered base domains
+      // (sdkwork / birdcoder / dtupay / noaper / skubc / zowalk / offer86 /
+      // 86offer, each in .com + .cn).
+      assert.equal(profile.environmentConfig.publicHosts.length, 16);
       assert.doesNotThrow(() => assertCloudPublicProfile(profile));
     }
   }
