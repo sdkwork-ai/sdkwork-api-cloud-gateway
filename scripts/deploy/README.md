@@ -1,66 +1,18 @@
-# sdkwork-api-cloud-gateway — Deploy Toolkit
+# sdkwork-api-cloud-gateway — Host Provisioning Utilities (infra only)
 
-Reusable, idempotent deployment for the standalone container gateway on
-Ubuntu / WSL.
+> **Channel contract (`MODULE_BIN_SPEC.md` §1)**: the operator surface is the
+> `bin/` nine-entrypoint family (`bin/docker-image.sh`, `bin/docker-deploy.sh`,
+> ...). The former deploy toolkit orchestrators (`apply.sh`, `apply.ps1`,
+> `wsl-redeploy-envs.sh`, `wsl-up-three-envs.sh`, `generate-nginx-conf.sh`,
+> `install-certs.sh`) have been removed; `sdkwork-webserver` owns the public
+> reverse proxy edge.
 
-Packages **development / test / staging / production** with non-conflicting
-host ports, **external PostgreSQL + Redis (no Redis password)**, and the same
-FHS layout as Ubuntu install (`/etc/sdkwork/api-gateway/config.toml`).
-
-> Public reverse proxy is **not** owned here. Configure
-> `sdkwork-webserver` (independent Docker product) to forward
-> `api-dev.*` / `api-test.*` / `api-staging.*` / `api.*` to the gateway host
-> ports below.
-
-## Design
+Remaining files are host/TLS provisioning infrastructure consumed by the
+compose topology — they never start or upgrade the application stack:
 
 | File | Responsibility |
 | --- | --- |
-| `lib/common.sh` | Logging, OS detection, docker/root helpers |
-| `lib/environments.sh` | Env → port / database / domain matrix (single source of truth) |
-| `prepare-host.sh` | Linux: install/start PostgreSQL+pgvector+Redis, provision DBs |
-| `apply.sh` | Orchestrator: host-prep → build → deploy → health check (**no nginx**) |
-| `apply.ps1` | Windows wrapper that delegates to WSL |
-
-## Environment / port / database matrix
-
-| Environment | Host port | Container | Database |
-| --- | --- | --- | --- |
-| development | 3910 | `:3900` | `sdkwork_ai_dev` |
-| test | 3911 | `:3900` | `sdkwork_ai_test` |
-| staging | 3912 | `:3900` | `sdkwork_ai_staging` |
-| production | 3913 | `:3900` | `sdkwork_ai_prod` |
-
-Default compose posture is **external** PostgreSQL + Redis
-(`host.docker.internal:5432` / `:6379`, Redis password empty). Both are the
-host system's own services (no container stand-ins).
-
-## Usage
-
-```bash
-sudo bash scripts/deploy/apply.sh                 # all envs
-sudo bash scripts/deploy/apply.sh --skip-build
-sudo bash scripts/deploy/apply.sh --skip-host
-sudo bash scripts/deploy/apply.sh --env development test
-```
-
-Windows:
-
-```powershell
-pwsh scripts/deploy/apply.ps1
-pwsh scripts/deploy/apply.ps1 -Env development,test
-pwsh scripts/deploy/apply.ps1 -WslPassword Helloworld
-```
-
-## Verification
-
-```bash
-node scripts/validate-docker-deployment.mjs --matrix --compose
-curl -fsS http://127.0.0.1:3910/healthz
-```
-
-Layout check:
-
-```bash
-node ../sdkwork-specs/tools/check-application-deploy-layout.mjs --root .
-```
+| `generate-certs.sh` | Generate the PostgreSQL/RPC TLS material under `docker/ca/` |
+| `prepare-host.sh` | Install/start host PostgreSQL + Redis for external-deps mode |
+| `wsl-reset-db-passwords.sh` | Reset local development database passwords |
+| `lib/` | Shared helpers for the scripts above |

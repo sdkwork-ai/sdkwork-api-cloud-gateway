@@ -81,7 +81,7 @@ bin/docker-deploy.sh install --environment demo
 
 ## 3. Returning to the previous version after a failed upgrade
 
-`bin/docker-deploy.sh rollback --environment <env> [--to <version>]` uses the bundle release.sh ledger and can return to the previous or a named version.
+`bin/docker-deploy.sh rollback --environment <env> [--to <version>]` uses the release ledger and can return to the previous or a named version.
 
 ## 4. Evidence to attach before escalating
 

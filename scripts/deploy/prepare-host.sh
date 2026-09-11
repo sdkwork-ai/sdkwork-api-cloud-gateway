@@ -97,7 +97,7 @@ pgdata="/var/lib/postgresql/$pgver/main"
 
 set_conf() {  # key value
   if grep -qE "^[[:space:]]*#?[[:space:]]*$1[[:space:]=]" "$pgconf"; then
-    sed -i -E "s|^[[:space:]]*#?[[:space:]]*$1[[:space:]=]+.*|$1 = $2|" "$pgconf"
+    sed -i -E "s|^[[:space:]]*#?[[:space:]]*$1[[:space:]=]+.*|$1 = $2|" "$pgconf" # PORTABILITY:target-linux
   else
     echo "$1 = $2" >> "$pgconf"
   fi
@@ -142,7 +142,7 @@ hba_present() { grep -qF "$1" "$pghba"; }
 if ! hba_present "host all all 0.0.0.0/0 md5"; then
   # keep local trust for admin tooling
   if ! hba_present "host all all 127.0.0.1/32 trust"; then
-    sed -i "1i host all all 127.0.0.1/32 trust" "$pghba"
+    sed -i "1i host all all 127.0.0.1/32 trust" "$pghba" # PORTABILITY:target-linux
   fi
   {
     echo "host all all 0.0.0.0/0 md5"
@@ -187,12 +187,12 @@ redis_restart() {
 if [ -f /etc/redis/redis.conf ]; then
   redis_changed=false
   if ! grep -qE "^bind[[:space:]]+0.0.0.0" /etc/redis/redis.conf; then
-    sed -i -E 's/^#?[[:space:]]*bind[[:space:]]+.*/bind 0.0.0.0/' /etc/redis/redis.conf
+    sed -i -E 's/^#?[[:space:]]*bind[[:space:]]+.*/bind 0.0.0.0/' /etc/redis/redis.conf # PORTABILITY:target-linux
     redis_changed=true
   fi
   if grep -qE '^port[[:space:]]+[0-9]+' /etc/redis/redis.conf; then
     if ! grep -qE "^port[[:space:]]+$REDIS_PORT" /etc/redis/redis.conf; then
-      sed -i -E '/^[[:space:]]*#/! s/^port[[:space:]]+[0-9]+/port '"$REDIS_PORT"'/' /etc/redis/redis.conf
+      sed -i -E '/^[[:space:]]*#/! s/^port[[:space:]]+[0-9]+/port '"$REDIS_PORT"'/' /etc/redis/redis.conf # PORTABILITY:target-linux
       redis_changed=true
     fi
   else

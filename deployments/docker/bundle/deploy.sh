@@ -77,7 +77,7 @@ if [ -f "${SCRIPT_DIR}/compose/docker-compose.bundle.yml" ]; then
   BUNDLE_IMAGE_ENV="${SCRIPT_DIR}/image.env"
   POSTGRES_ASSETS_DIR="${SCRIPT_DIR}/postgres"
 else
-  # Repository layout: deploy.sh sits in scripts/docker/bundle/.
+  # Repository layout: deploy.sh sits in deployments/docker/bundle/.
   COMPOSE_DIR="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
   ENV_DIR="${COMPOSE_DIR}/docker/env"
   BUNDLE_IMAGE_TGZ=""
@@ -333,6 +333,27 @@ probe_external_postgres() {
   esac
 }
 
+# Run a command under a wall-clock bound. GNU `timeout` is coreutils-only and
+# absent on macOS, so fall back to a background watchdog; both paths bound the
+# probe identically.
+run_bounded() {
+  local seconds="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    local bounded_rc=0
+    timeout "${seconds}" "$@" || bounded_rc=$?
+    return "${bounded_rc}"
+  fi
+  "$@" &
+  local cmd_pid=$!
+  ( sleep "${seconds}"; kill -TERM "${cmd_pid}" 2>/dev/null ) >/dev/null 2>&1 &
+  local watchdog_pid=$!
+  local rc=0
+  wait "${cmd_pid}" 2>/dev/null || rc=$?
+  kill -TERM "${watchdog_pid}" 2>/dev/null || true
+  return "${rc}"
+}
+
+
 probe_external_redis() {
   local host port pass probe out rc=0
   host="$(env_key GATEWAY_CLOUDROUTER_REDIS_HOST)"
@@ -344,9 +365,9 @@ probe_external_redis() {
   fi
   probe="$(probe_endpoint_host "${host}")"
   if [ -n "${pass}" ]; then
-    out="$(REDISCLI_AUTH="${pass}" timeout 6 redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
+    out="$(run_bounded 6 env REDISCLI_AUTH="${pass}" redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
   else
-    out="$(timeout 6 redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
+    out="$(run_bounded 6 redis-cli -h "${probe}" -p "${port}" ping 2>&1)" || rc=$?
   fi
   if [ "${rc}" = "0" ] && [ "${out}" = "PONG" ]; then
     info "OK: external Redis reachable (${host}:${port})"

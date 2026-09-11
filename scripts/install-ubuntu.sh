@@ -105,7 +105,7 @@ if ! "$binary_source" --version >/dev/null; then
 fi
 
 if [ -z "$destdir" ]; then
-  if ! getent group sdkwork >/dev/null 2>&1; then
+  if ! getent group sdkwork >/dev/null 2>&1; then # PORTABILITY:target-linux
     groupadd --system sdkwork
   fi
   if ! id sdkwork >/dev/null 2>&1; then

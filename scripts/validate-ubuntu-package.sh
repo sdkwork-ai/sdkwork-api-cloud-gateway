@@ -32,7 +32,7 @@ archive_dir=$(dirname "$archive")
 archive_name=$(basename "$archive")
 (
   cd "$archive_dir"
-  sha256sum --quiet -c "$archive_name.sha256"
+  sha256sum --quiet -c "$archive_name.sha256" # PORTABILITY:target-linux
 )
 tar -xzf "$archive" -C "$validation_root"
 package_root="$validation_root/$stage_name"
@@ -43,7 +43,7 @@ fi
 
 (
   cd "$package_root"
-  sha256sum --quiet -c checksums.sha256
+  sha256sum --quiet -c checksums.sha256 # PORTABILITY:target-linux
   bash install/install-ubuntu.sh \
     --environment "$environment" \
     --deployment-profile "$deployment_profile" \

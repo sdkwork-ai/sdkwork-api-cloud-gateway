@@ -30,7 +30,7 @@ bin/docker-deploy.sh status --environment demo
 bin/doctor.sh --environment demo          # 聚合诊断（9 项检查）
 ```
 
-## 4. 版本回退（bundle release.sh）
+## 4. 版本回退
 
 ```bash
 bin/docker-deploy.sh rollback --environment demo              # 回到上一版本
@@ -46,7 +46,4 @@ bin/docker-deploy.sh stop    --environment demo                  # 停止（保�
 bin/docker-deploy.sh start   --environment demo                  # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment demo                  # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down --environment demo --purge --yes
-bin/docker-deploy.sh stop    --environment demo                  # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment demo                  # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment demo                  # 只重启应用实例（依赖与网关不中断）
 ```

@@ -15,13 +15,15 @@ bin/docker-deploy.sh install --environment demo        # local WSL (external Pos
 bin/docker-deploy.sh install --environment demo --host ssh://ops@10.0.0.8   # remote Ubuntu
 ```
 
-Offline bundle install:
+Offline install (when the build host cannot reach the target, still run bin/ from the repo side):
 
 ```bash
-tar -xzf <bundle>.tar.gz && cd <bundle>
-$EDITOR env/<environment>.env
-bash deploy.sh --environment <environment> [--replicas N]
+bin/docker-image.sh save -o dist/image.tar.gz              # produces image tar.gz + sha256
+bin/docker-deploy.sh install --environment <environment> --host ssh://[user@]host [--replicas N]
 ```
+
+bin/ handles bundle sync, sha256 verification, image loading and the health gate; the
+in-bundle executor is invoked by bin/ — never run scripts by hand.
 
 ## 1. Prerequisites
 
@@ -57,8 +59,8 @@ bin/docker-deploy.sh status   --environment <env>
 bin/docker-deploy.sh down     --environment <env> [--purge]   # --purge requires --yes
 ```
 
-- `install` syncs `scripts/docker/bundle/` (deploy.sh + env/ + compose) to `/opt/deploy/sdkwork-api-cloud-gateway/bundle` on the target host and runs `deploy.sh`; idempotent.
-- This bundle ships `release.sh`, so `rollback [--to <version>]` uses the bundle-owned release history.
+- `install` syncs this module's bundle (env/ + compose + built-in executor) to `/opt/deploy/sdkwork-api-cloud-gateway/bundle` on the target host and drives the rolling apply from there via bin/; idempotent.
+- This bundle ships a release ledger, so `rollback [--to <version>]` works against it.
 - Multi-instance: instance 1 completes migration and reaches health before instances 2..N start (`DOCKER_SPEC.md` §4.2).
 - The knowledgebase-rpc singleton provisions shared secrets material before instance 1 via the `<project>-deps` project.
 - **§4 expands every command for all five environments, copy-paste ready.**
@@ -71,7 +73,7 @@ bin/docker-deploy.sh down     --environment <env> [--purge]   # --purge requires
 > replace `ops@10.0.0.8` with your remote Ubuntu host, and note that `--host`
 > defaults to `wsl` (local WSL) when omitted. Any mutating command accepts
 > `--dry-run` to print the plan without executing it.
-> This bundle ships `release.sh`, so `rollback --to <version>` is effective.
+> This bundle ships a release ledger, so `rollback --to <version>` is effective.
 
 ### 4.1 development
 
@@ -91,9 +93,6 @@ bin/docker-deploy.sh stop    --environment development           # stop (keeps c
 bin/docker-deploy.sh start   --environment development           # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment development           # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down     --environment development --purge --yes
-bin/docker-deploy.sh stop    --environment development           # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment development           # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment development           # restart app instances only (deps and gateway stay up)
 
 curl --noproxy '*' http://127.0.0.1:3910/healthz
 ```
@@ -116,9 +115,6 @@ bin/docker-deploy.sh stop    --environment test                  # stop (keeps c
 bin/docker-deploy.sh start   --environment test                  # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment test                  # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down     --environment test --purge --yes
-bin/docker-deploy.sh stop    --environment test                  # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment test                  # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment test                  # restart app instances only (deps and gateway stay up)
 
 curl --noproxy '*' http://127.0.0.1:3911/healthz
 ```
@@ -141,9 +137,6 @@ bin/docker-deploy.sh stop    --environment staging               # stop (keeps c
 bin/docker-deploy.sh start   --environment staging               # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment staging               # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down     --environment staging --purge --yes
-bin/docker-deploy.sh stop    --environment staging               # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment staging               # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment staging               # restart app instances only (deps and gateway stay up)
 
 curl --noproxy '*' http://127.0.0.1:3912/healthz
 ```
@@ -166,9 +159,6 @@ bin/docker-deploy.sh stop    --environment demo                  # stop (keeps c
 bin/docker-deploy.sh start   --environment demo                  # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment demo                  # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down     --environment demo --purge --yes
-bin/docker-deploy.sh stop    --environment demo                  # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment demo                  # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment demo                  # restart app instances only (deps and gateway stay up)
 
 curl --noproxy '*' http://127.0.0.1:3914/healthz
 ```
@@ -194,9 +184,6 @@ bin/docker-deploy.sh stop    --environment production            # stop (keeps c
 bin/docker-deploy.sh start   --environment production            # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment production            # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down     --environment production --purge --yes
-bin/docker-deploy.sh stop    --environment production            # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment production            # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment production            # restart app instances only (deps and gateway stay up)
 
 curl --noproxy '*' http://127.0.0.1:3913/healthz
 ```
@@ -226,17 +213,17 @@ node scripts/validate-docker-deployment.mjs --help
 ### 5.1 Configuration Preflight and Env-File Key Contract
 
 ```bash
-# Check only, deploy nothing: fail-closed validation of every required key;
-# in external mode it also live-probes PostgreSQL auth and Redis ping
-# (host.docker.internal is mapped to 127.0.0.1 automatically)
-bash deploy.sh --environment production --check-config
+# Check only, deploy nothing: fail-closed validation of every required key
+bin/config.sh validate --environment production
 
-# Write one missing value (never rewrites a configured value; use
-# --force-set to replace deliberately)
-bash deploy.sh --environment production --set GATEWAY_POSTGRES_PASSWORD '<value>'
+# Show the current configuration (secrets redacted)
+bin/config.sh show --environment production
 
-# Use an env file outside the bundle (the file must already exist)
-bash deploy.sh --environment production --env-file /etc/sdkwork/api-gateway/docker/production.env
+# Set a config value (backs up and validates before mutating)
+bin/config.sh set --environment production --key GATEWAY_POSTGRES_PASSWORD --value '<value>'
+
+# Config diff (deployed state vs bundle baseline)
+bin/config.sh diff --environment production
 ```
 
 **Env-file key contract (`env/<environment>.env`)**:

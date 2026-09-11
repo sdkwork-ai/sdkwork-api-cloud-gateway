@@ -27,9 +27,9 @@ reset_role docker/env/production.env
 # so the probe runs under bash; PostgreSQL and the host Redis both live on
 # the host system (5432 / 6379).
 echo "==> probe host.docker.internal via gateway image"
+# PORTABILITY:target-linux — the probe runs through a Linux container image.
 docker run --rm --add-host=host.docker.internal:host-gateway \
-  --entrypoint sh sdkwork-api-cloud-gateway:local -c \
-  'getent hosts host.docker.internal' && \
+  --entrypoint sh sdkwork-api-cloud-gateway:local -c 'getent hosts host.docker.internal' && \
 docker run --rm --add-host=host.docker.internal:host-gateway \
   --entrypoint bash pgvector/pgvector:pg18 -c \
   '(echo >/dev/tcp/host.docker.internal/5432) && echo PG_OK; (echo >/dev/tcp/host.docker.internal/6379) && echo REDIS_OK'

@@ -78,7 +78,7 @@ bin/docker-deploy.sh install --environment demo
 
 ## 3. 升级失败回到旧版本
 
-`bin/docker-deploy.sh rollback --environment <env> [--to <version>]` 走 bundle release.sh 台账，可回退到上一个或指定版本。
+`bin/docker-deploy.sh rollback --environment <env> [--to <version>]` 依据发布台账回退，可回退到上一个或指定版本。
 
 ## 4. 上报前必须附上的证据
 

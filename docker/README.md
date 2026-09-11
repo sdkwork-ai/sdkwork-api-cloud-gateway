@@ -46,20 +46,20 @@ docker compose --profile embedded \
 
 ## Quick start
 
+The operator channel is the `bin/` nine-entrypoint family (`MODULE_BIN_SPEC.md`);
+this directory holds the deployment assets those entrypoints drive.
+
 ```bash
 # 1. Provision databases (sdkwork_ai_dev/test/staging/prod)
 pnpm db:postgres:provision
 
-# 2. Configure secrets in docker/env/<environment>.env (from *.env.example)
+# 2. Configure secrets (docker/env/<environment>.env from *.env.example)
 
-# 3. Build image and deploy (external PG/Redis; no nginx)
-pnpm build:container
-pnpm deploy:apply:standalone -- development --validate
-# or: pnpm deploy:apply -- --env development test production
-
-# Unified-bundle path (one image, any environment, N instances per env):
-pnpm build:container:install
-pnpm deploy:apply:standalone:docker -- --environment production --replicas 3
+# 3. Build the image and deploy via bin/ (external PG/Redis; no nginx)
+bin/docker-image.sh build
+bin/docker-deploy.sh install --environment development
+bin/docker-deploy.sh install --environment production --yes --replicas 3
+bin/docker-deploy.sh status  --environment production
 ```
 
 ## Port and domain matrix
@@ -78,18 +78,26 @@ collision-free across environments). See
 
 ## Commands
 
-| Public script | Implementation | Purpose |
-| --- | --- | --- |
-| `pnpm build:container` | `scripts/build-api-cloud-gateway-container.mjs` | Build the unified environment-neutral image |
-| `pnpm build:container:install` | `scripts/docker/package-install-bundle.mjs` | Build image + package the self-contained install bundle (`dist/docker-install/*.bundle/`) |
-| `pnpm build:container:environments` | `scripts/docker/package-environment-bundles.mjs` | Package one deployment bundle per environment from the committed `.env.example` templates (`dist/docker-packages/<environment>/`; `scripts/package-docker-environments.sh` is the shell entry onto the same implementation) |
-| `pnpm deploy:apply:standalone:docker -- --environment <env> [--replicas N]` | `scripts/docker/bundle/deploy.sh` | Deploy the unified bundle: any environment, N instances per environment |
-| `pnpm deploy:apply:standalone:docker:remote -- --host <user@host> --environment <env> [--replicas N]` | `scripts/docker/remote-deploy.sh` | Package locally, push to a remote Ubuntu host over SSH key auth, deploy with env config centralized at `/etc/sdkwork/api-gateway/docker/<env>.env` |
-| `pnpm deploy:apply:standalone -- <env\|all>` | `scripts/deploy-docker-environment.sh` | Start/stop per-environment stacks from the repository compose (external mode) |
-| `pnpm db:postgres:provision` | `scripts/provision-external-databases.sh` | Create sdkwork-specs workspace databases |
-| `pnpm deploy:apply` / `pnpm deploy:apply:wsl` | `scripts/deploy/apply.sh` (+ `apply.ps1`) | Build + deploy all envs + health check (no nginx) |
-| `pnpm deploy:host:prepare` | `scripts/deploy/prepare-host.sh` | Install/start host PostgreSQL + Redis |
-| `pnpm install:hosts` | `scripts/bind-windows-hosts.ps1` | Bind Windows hosts entries |
+Operator channel — `bin/` only (`MODULE_BIN_SPEC.md`; see
+`docs/guides/operator/docker-install.md` and `RELEASE_LIFECYCLE.md`):
+
+| Operator command | Purpose |
+| --- | --- |
+| `bin/docker-image.sh build` | Build the unified environment-neutral image |
+| `bin/docker-image.sh save / load` | Offline image transport (tar.gz + sha256) |
+| `bin/docker-deploy.sh install/upgrade --environment <env> [--host ...] [--replicas N]` | Deploy the bundle: any environment, N instances, health-gated |
+| `bin/docker-deploy.sh rollback / status / logs / stop / start / restart / down` | Day-2 operations |
+| `bin/config.sh list/show/get/set/diff/validate` | Deployed configuration (secrets redacted) |
+| `bin/doctor.sh --environment <env>` | Aggregated diagnostics |
+| `bin/backup.sh create/list/verify/restore` | Backup and restore |
+
+Internal implementation (invoked by `bin/`, not an operator surface):
+`scripts/build-api-cloud-gateway-container.mjs` (image build),
+`scripts/docker/package-install-bundle.mjs` (bundle packaging),
+`deployments/docker/bundle/` (bundle source: compose + env + executor),
+`scripts/deploy/prepare-host.sh` (host PostgreSQL + Redis),
+`scripts/provision-external-databases.sh` (database provisioning),
+`scripts/bind-windows-hosts.ps1` (Windows hosts entries).
 
 Space-level entrypoint (WSL / CI): `bash bin/build-gateway-docker.sh` in the
 `sdkwork-space` root packages the same bundle.

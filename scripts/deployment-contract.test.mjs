@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { parse } from 'yaml';
@@ -242,7 +242,15 @@ test('container entrypoint does not bootstrap sdkwork-webserver secrets', () => 
 test('ubuntu and container share api-gateway config layout; gateway does not own nginx', () => {
   const installer = readFileSync(path.join(appRoot, 'scripts', 'install-ubuntu.sh'), 'utf8');
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
-  const apply = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'apply.sh'), 'utf8');
+  // The legacy deploy toolkit orchestrator (scripts/deploy/apply.sh) was removed
+  // by the bin/ operator-surface consolidation. The "gateway owns no reverse
+  // proxy" contract now lives on the surviving deploy channel: the bundle
+  // entrypoint and the host-provisioning contract doc (DOCKER_SPEC.md §1).
+  const deployReadme = readFileSync(path.join(appRoot, 'scripts', 'deploy', 'README.md'), 'utf8');
+  const bundleDeploy = readFileSync(
+    path.join(appRoot, 'deployments', 'docker', 'bundle', 'deploy.sh'),
+    'utf8',
+  );
   const ports = ENVIRONMENT_HOST_PORTS;
 
   assert.match(installer, /config_root=\$destdir\/etc\/sdkwork\/api-gateway/u);
@@ -250,7 +258,12 @@ test('ubuntu and container share api-gateway config layout; gateway does not own
   assert.match(installer, /env_target=\$config_root\/api-gateway\.env/u);
   assert.match(compose, /\/etc\/sdkwork\/api-gateway\/config\.toml/u);
   assert.match(compose, /SDKWORK_CLOUDROUTER_REDIS_PASSWORD: \$\{GATEWAY_CLOUDROUTER_REDIS_PASSWORD:-\}/u);
-  assert.match(apply, /does NOT generate or install nginx/u);
+  assert.match(deployReadme, /owns the public\s+>?\s*reverse proxy edge/u);
+  assert.doesNotMatch(bundleDeploy, /nginx/u);
+  assert.ok(
+    !existsSync(path.join(appRoot, 'scripts', 'deploy', 'generate-nginx-conf.sh')),
+    'the gateway must not ship an nginx site-mapping generator',
+  );
 
   for (const environment of environments) {
     const example = parseDotEnv(
@@ -497,7 +510,7 @@ test('install bundle supports external (default) and embedded dependency modes',
 
   // deploy.sh: external is the default; --embedded is the explicit opt-in and
   // GATEWAY_DEPS_MODE=embedded in the env file is equivalent.
-  const deploy = readFileSync(path.join(appRoot, 'scripts', 'docker', 'bundle', 'deploy.sh'), 'utf8');
+  const deploy = readFileSync(path.join(appRoot, 'deployments', 'docker', 'bundle', 'deploy.sh'), 'utf8');
   assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE_FLAG:-\$\(env_key GATEWAY_DEPS_MODE\)\}"/u);
   assert.match(deploy, /DEPS_MODE="\$\{DEPS_MODE:-external\}"/u);
   assert.match(deploy, /--embedded\)\s+DEPS_MODE_FLAG="embedded"/u);
@@ -525,7 +538,7 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(buildWrapper, /package-install-bundle\.mjs/u);
   assert.match(buildWrapper, /currentVersion/u);
   const prepareEnvs = readFileSync(
-    path.join(appRoot, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
+    path.join(appRoot, 'deployments', 'docker', 'bundle', 'prepare-envs.sh'),
     'utf8',
   );
   assert.match(prepareEnvs, /GATEWAY_IM_ID_NODE_ID/u);
@@ -536,7 +549,7 @@ test('install bundle supports external (default) and embedded dependency modes',
   // deploy.sh, and the script must keep its five subcommands and the
   // ledger/rollback invariants (docs/guides/operator/RELEASE_LIFECYCLE.md).
   const releaseScript = readFileSync(
-    path.join(appRoot, 'scripts', 'docker', 'bundle', 'release.sh'),
+    path.join(appRoot, 'deployments', 'docker', 'bundle', 'release.sh'),
     'utf8',
   );
   assert.match(bundlePackager, /release\.sh/u);
@@ -556,20 +569,39 @@ test('install bundle supports external (default) and embedded dependency modes',
   assert.match(releaseScript, /image\.sha256/u);
   assert.match(releaseScript, /FORWARD-ONLY/u);
 
-  // remote-deploy.sh forwards every Day-2 action flag to the remote deploy.sh;
-  // the action flag must be appended for all non-apply actions (a previous bug
-  // silently ran a full apply when --down/--ps/--restart was requested).
-  const remoteDeploy = readFileSync(
-    path.join(appRoot, 'scripts', 'docker', 'remote-deploy.sh'),
-    'utf8',
-  );
-  for (const day2Action of ['down', 'stop', 'start', 'restart', 'ps']) {
-    assert.match(
-      remoteDeploy,
-      new RegExp(`--${day2Action}\\)\\s+ACTION="${day2Action}"`, 'u'),
-    );
+  // The bin/ family is the only operator surface (MODULE_BIN_SPEC.md). The
+  // module wiring must keep the bundle source at the canonical
+  // deployments/docker/bundle location (no sdkwork_module_install_bundle_dir
+  // override — the shared-library default applies) and drive the canonical
+  // container build with the full registry reference; the legacy
+  // direct-entrypoint wrappers (pnpm release:*/deploy:apply:standalone:docker*,
+  // scripts/docker/remote-deploy.sh) are removed — operators go through
+  // bin/docker-deploy.sh.
+  const moduleWiring = readFileSync(path.join(appRoot, 'bin', 'lib', 'module.sh'), 'utf8');
+  assert.doesNotMatch(moduleWiring, /sdkwork_module_install_bundle_dir/u);
+  assert.doesNotMatch(moduleWiring, /scripts\/docker\/bundle/u);
+  assert.match(moduleWiring, /pnpm build:container --tag "\$\{ref\}"/u);
+  assert.match(moduleWiring, /sdkwork_module_health_port/u);
+  for (const envPort of ['3910', '3911', '3912', '3913', '3914']) {
+    assert.match(moduleWiring, new RegExp(envPort, 'u'));
   }
-  assert.match(remoteDeploy, /DEPLOY_ARGS\+=\("--\$\{ACTION\}"\)/u);
+  const pkgScripts = JSON.parse(readFileSync(path.join(appRoot, 'package.json'), 'utf8')).scripts;
+  for (const removed of [
+    'release:deploy:standalone:docker',
+    'release:rollback:standalone:docker',
+    'release:status:standalone:docker',
+    'release:history:standalone:docker',
+    'release:verify:standalone:docker',
+    'deploy:apply:standalone:docker',
+    'deploy:apply:standalone:docker:remote',
+    'deploy:apply:standalone',
+    'deploy:apply:cloud',
+    'install:wsl',
+    'deploy:apply',
+    'deploy:apply:wsl',
+  ]) {
+    assert.equal(pkgScripts[removed], undefined, `${removed} must stay removed (bin/ is the only channel)`);
+  }
 
   // The packager ships the override plus the embedded postgres assets.
   const packager = readFileSync(path.join(appRoot, 'scripts', 'docker', 'package-install-bundle.mjs'), 'utf8');
@@ -650,22 +682,14 @@ test('shipped compose files bound container logs (DEPLOYMENT_SPEC §6 runtime ha
 });
 
 test('deployment environment registry is the single source of truth for packaging and deploy scripts', () => {
-  // The shell deploy script and the per-environment packager must both derive
-  // their environment set from scripts/deployment-environments.mjs instead of
-  // re-declaring it.
-  const deployScript = readFileSync(
-    path.join(appRoot, 'scripts', 'deploy-docker-environment.sh'),
-    'utf8',
-  );
-  assert.match(
-    deployScript,
-    /deployment-environments\.mjs list/u,
-    'deploy-docker-environment.sh must read the canonical environment list',
-  );
-  assert.doesNotMatch(
-    deployScript,
-    /development\|test\|staging\|demo\|production\)\s*;;/u,
-    'deploy-docker-environment.sh must not hardcode the environment case list',
+  // The legacy shell deploy script (deploy-docker-environment.sh) is removed:
+  // bin/docker-deploy.sh is the single deploy channel. The per-environment
+  // packager must still derive its environment set from
+  // scripts/deployment-environments.mjs instead of re-declaring it.
+  assert.equal(
+    existsSync(path.join(appRoot, 'scripts', 'deploy-docker-environment.sh')),
+    false,
+    'deploy-docker-environment.sh must stay removed (bin/ is the single deploy channel)',
   );
 
   const shim = readFileSync(

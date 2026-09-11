@@ -119,6 +119,7 @@
     }
   },
   "release": {
+<<<<<<< HEAD
     "currentVersion": "0.1.7",
     "defaultChannel": "BETA",
     "latest": {
@@ -141,6 +142,19 @@
         "channel": "BETA",
         "current": false,
         "summary": "Full rebuild and multi-environment redeploy verification on WSL Ubuntu-22.04 with external host PostgreSQL/Redis (Redis without password). Carries all 0.1.5 behavior (LF migration line endings, ai/models route dedup, zero-config consumer permissions).",
+=======
+    "currentVersion": "0.1.9",
+    "defaultChannel": "BETA",
+    "latest": {
+      "BETA": "0.1.9"
+    },
+    "notes": [
+      {
+        "version": "0.1.9",
+        "channel": "BETA",
+        "current": true,
+        "summary": "Unify the operator surface on the bin/ nine-entrypoint family: image build, bundle packaging and deployment now route exclusively through bin/, and the install bundle source moved from scripts/docker/bundle to deployments/docker/bundle. Removes the legacy deploy toolkit (apply.sh/apply.ps1, wsl-redeploy-envs.sh, wsl-up-three-envs.sh, deploy-docker-environment.sh, deploy-cloud-environment.mjs, remote-deploy.sh, generate-nginx-conf.sh, install-certs.sh) because sdkwork-webserver owns the public reverse proxy edge. Re-syncs the Cargo.lock workspace dependency graph for the container feature. Restores LF line endings on 5 CRLF-polluted packaged migrations (sdkwork-appstore 0002/0003, sdkwork-generations 0001 up/down, sdkwork-webserver 0005) that would otherwise trip the migration checksum drift gate fail-closed at container startup; the repaired bytes match the checksums already recorded in ops_schema_migration_history across all five environments, so no database reconciliation was required.",
+>>>>>>> 08752b9 (refactor: consolidate deploy scripts under deployments/docker and refresh operator docs)
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
           "linux-x64-cloud-server-tar-gz",

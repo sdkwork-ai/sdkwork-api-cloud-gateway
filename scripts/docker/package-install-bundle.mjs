@@ -311,8 +311,8 @@ async function main() {
     console.log(`compose templates: docker-compose.bundle.yml + docker-compose.bundle.embedded.yml`);
     console.log(`embedded postgres assets: docker/postgres/entrypoint.sh + docker/postgres/init/`);
     console.log(`env templates: ${ENVIRONMENTS.map((env) => `docker/env/${env}.env.example`).join(', ')}`);
-    console.log(`deploy script: scripts/docker/bundle/deploy.sh`);
-    console.log(`release lifecycle script: scripts/docker/bundle/release.sh`);
+    console.log(`deploy script: deployments/docker/bundle/deploy.sh`);
+    console.log(`release lifecycle script: deployments/docker/bundle/release.sh`);
     return;
   }
 
@@ -389,14 +389,14 @@ async function main() {
     console.log(`preserved operator env: env/${name}`);
   }
   const deployScript = path.join(bundleDir, 'deploy.sh');
-  copyFileSync(path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'deploy.sh'), deployScript);
+  copyFileSync(path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'deploy.sh'), deployScript);
   const prepareEnvsScript = path.join(bundleDir, 'prepare-envs.sh');
   copyFileSync(
-    path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'prepare-envs.sh'),
+    path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'prepare-envs.sh'),
     prepareEnvsScript,
   );
   const releaseScript = path.join(bundleDir, 'release.sh');
-  copyFileSync(path.join(REPO_ROOT, 'scripts', 'docker', 'bundle', 'release.sh'), releaseScript);
+  copyFileSync(path.join(REPO_ROOT, 'deployments', 'docker', 'bundle', 'release.sh'), releaseScript);
   const chmod = spawnSync('chmod', ['0755', deployScript, prepareEnvsScript, releaseScript], { stdio: 'ignore' });
   if (chmod.status !== 0) {
     // Windows filesystems ignore the POSIX mode; harmless.

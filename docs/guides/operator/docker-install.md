@@ -15,13 +15,14 @@ bin/docker-deploy.sh install --environment demo        # 本机 WSL（外置 Pos
 bin/docker-deploy.sh install --environment demo --host ssh://ops@10.0.0.8   # 远程 Ubuntu
 ```
 
-离线 bundle 直装：
+离线安装（构建机不可达目标机时，仍从仓库侧执行 bin/）：
 
 ```bash
-tar -xzf <bundle>.tar.gz && cd <bundle>
-$EDITOR env/<environment>.env
-bash deploy.sh --environment <environment> [--replicas N]
+bin/docker-image.sh save -o dist/image.tar.gz              # 产出镜像 tar.gz + sha256
+bin/docker-deploy.sh install --environment <environment> --host ssh://[user@]host [--replicas N]
 ```
+
+bin/ 会完成 bundle 同步、sha256 校验、镜像加载与健康门禁；bundle 内执行器由 bin/ 调用，无需手动执行任何脚本。
 
 ## 1. 前置条件
 
@@ -57,8 +58,8 @@ bin/docker-deploy.sh status   --environment <env>
 bin/docker-deploy.sh down     --environment <env> [--purge]   # --purge 需 --yes
 ```
 
-- `install` 同步 `scripts/docker/bundle/`（deploy.sh + env/ + compose）到目标主机 `/opt/deploy/sdkwork-api-cloud-gateway/bundle` 并执行 `deploy.sh`；幂等。
-- 本 bundle 含 `release.sh`，`rollback [--to <version>]` 使用 bundle 自带的发布历史。
+- `install` 同步本模块 bundle（env/ + compose + 内置执行器）到目标主机 `/opt/deploy/sdkwork-api-cloud-gateway/bundle`，并在目标机侧由 bin/ 驱动完成滚动 apply；幂等。
+- 本 bundle 带发布台账（release ledger），`rollback [--to <version>]` 依据台账回退。
 - 多实例：实例 1 先行完成迁移并健康后，实例 2..N 才启动（`DOCKER_SPEC.md` §4.2 契约）。
 - knowledgebase-rpc 单例在实例 1 之前由 `<project>-deps` 项目供应共享密钥材料。
 - **§4 给出五个环境逐条展开、可直接复制的命令。**
@@ -70,7 +71,7 @@ bin/docker-deploy.sh down     --environment <env> [--purge]   # --purge 需 --ye
 > 时自动取该值**）；`ops@10.0.0.8` 换成你的远程 Ubuntu 主机；`--host` 省略时
 > 默认为 `wsl`（本机 WSL）。
 > 全部变更类命令都可先加 `--dry-run` 打印计划而不执行。
-> 本仓库的 bundle 带 `release.sh`，因此 `rollback --to <version>` 有效。
+> 本模块 bundle 带发布台账，因此 `rollback --to <version>` 有效。
 
 ### 4.1 development（开发）
 
@@ -90,9 +91,6 @@ bin/docker-deploy.sh stop    --environment development           # 停止（保�
 bin/docker-deploy.sh start   --environment development           # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment development           # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down     --environment development --purge --yes
-bin/docker-deploy.sh stop    --environment development           # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment development           # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment development           # 只重启应用实例（依赖与网关不中断）
 
 curl --noproxy '*' http://127.0.0.1:3910/healthz
 ```
@@ -115,9 +113,6 @@ bin/docker-deploy.sh stop    --environment test                  # 停止（保�
 bin/docker-deploy.sh start   --environment test                  # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment test                  # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down     --environment test --purge --yes
-bin/docker-deploy.sh stop    --environment test                  # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment test                  # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment test                  # 只重启应用实例（依赖与网关不中断）
 
 curl --noproxy '*' http://127.0.0.1:3911/healthz
 ```
@@ -140,9 +135,6 @@ bin/docker-deploy.sh stop    --environment staging               # 停止（保�
 bin/docker-deploy.sh start   --environment staging               # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment staging               # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down     --environment staging --purge --yes
-bin/docker-deploy.sh stop    --environment staging               # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment staging               # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment staging               # 只重启应用实例（依赖与网关不中断）
 
 curl --noproxy '*' http://127.0.0.1:3912/healthz
 ```
@@ -165,9 +157,6 @@ bin/docker-deploy.sh stop    --environment demo                  # 停止（保�
 bin/docker-deploy.sh start   --environment demo                  # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment demo                  # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down     --environment demo --purge --yes
-bin/docker-deploy.sh stop    --environment demo                  # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment demo                  # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment demo                  # 只重启应用实例（依赖与网关不中断）
 
 curl --noproxy '*' http://127.0.0.1:3914/healthz
 ```
@@ -193,9 +182,6 @@ bin/docker-deploy.sh stop    --environment production            # 停止（保�
 bin/docker-deploy.sh start   --environment production            # 启动已停止的栈（先起嵌入式依赖）
 bin/docker-deploy.sh restart --environment production            # 只重启应用实例（依赖与网关不中断）
 bin/docker-deploy.sh down     --environment production --purge --yes
-bin/docker-deploy.sh stop    --environment production            # 停止（保留容器与卷，不重打包）
-bin/docker-deploy.sh start   --environment production            # 启动已停止的栈（先起嵌入式依赖）
-bin/docker-deploy.sh restart --environment production            # 只重启应用实例（依赖与网关不中断）
 
 curl --noproxy '*' http://127.0.0.1:3913/healthz
 ```
@@ -225,15 +211,17 @@ pnpm check:container-deployment 2>/dev/null || node scripts/validate-docker-depl
 ### 5.1 配置预检与 env 键契约
 
 ```bash
-# 只查不部署：fail-closed 校验全部必填键；external 模式下还会实探
-# PostgreSQL 认证与 Redis ping（host.docker.internal 自动映射 127.0.0.1）
-bash deploy.sh --environment production --check-config
+# 只查不部署：fail-closed 校验全部必填键
+bin/config.sh validate --environment production
 
-# 写入缺失值（绝不改写已配置值；确需替换用 --force-set）
-bash deploy.sh --environment production --set GATEWAY_POSTGRES_PASSWORD '<value>'
+# 查看当前配置（密钥自动脱敏）
+bin/config.sh show --environment production
 
-# 使用 bundle 外的 env 文件（文件必须已存在）
-bash deploy.sh --environment production --env-file /etc/sdkwork/api-gateway/docker/production.env
+# 写入配置值（变更前自动备份并校验）
+bin/config.sh set --environment production --key GATEWAY_POSTGRES_PASSWORD --value '<value>'
+
+# 配置差异比对（部署态 vs bundle 基线）
+bin/config.sh diff --environment production
 ```
 
 **env 文件键契约（`env/<environment>.env`）**：

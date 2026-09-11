@@ -16,7 +16,7 @@ bin/backup.sh list  --environment demo
 
 Daily production cron (02:30):
 ```cron
-30 2 * * * cd /opt/deploy/sdkwork-api-cloud-gateway/bundle && bash deploy.sh --environment production --ps >/dev/null
+30 2 * * * cd /e/sdkwork-space/sdkwork-api-cloud-gateway && bin/docker-deploy.sh status --environment production >/dev/null
 30 2 * * * <repo>/bin/backup.sh create --environment production --host ssh://ops@db-host
 ```
 

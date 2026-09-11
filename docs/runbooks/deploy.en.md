@@ -32,7 +32,7 @@ bin/docker-deploy.sh status --environment demo
 bin/doctor.sh --environment demo          # aggregated diagnostics (9 checks)
 ```
 
-## 4. Version rollback (bundle release.sh)
+## 4. Version rollback
 
 ```bash
 bin/docker-deploy.sh rollback --environment demo              # previous version
@@ -48,7 +48,4 @@ bin/docker-deploy.sh stop    --environment demo                  # stop (keeps c
 bin/docker-deploy.sh start   --environment demo                  # start a stopped stack (embedded deps first)
 bin/docker-deploy.sh restart --environment demo                  # restart app instances only (deps and gateway stay up)
 bin/docker-deploy.sh down --environment demo --purge --yes
-bin/docker-deploy.sh stop    --environment demo                  # stop (keeps containers and volumes; no repackage)
-bin/docker-deploy.sh start   --environment demo                  # start a stopped stack (embedded deps first)
-bin/docker-deploy.sh restart --environment demo                  # restart app instances only (deps and gateway stay up)
 ```
