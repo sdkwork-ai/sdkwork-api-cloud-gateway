@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-api-cloud-gateway"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+
+[lints]
+workspace = true
 [features]
 default = ["foundation-appbase"]
 foundation-appbase = [

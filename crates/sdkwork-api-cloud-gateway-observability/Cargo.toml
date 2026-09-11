@@ -1,9 +1,13 @@
 [package]
+rust-version.workspace = true
 name = "sdkwork-api-cloud-gateway-observability"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+
+[lints]
+workspace = true
 [dependencies]
 serde.workspace = true
 sdkwork-api-cloud-gateway-config.workspace = true
