@@ -3,6 +3,9 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use sdkwork_web_core::registered_client_origins::merge_registered_sdkwork_client_origins;
+use sdkwork_web_core::registered_console_hosts::{
+    registered_console_hosts_from_lookup, RegisteredConsoleHosts,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -228,6 +231,15 @@ pub struct CorsConfig {
     pub allow_any_origin: bool,
     #[serde(default)]
     pub allowed_origins: Vec<String>,
+    /// Registered console host pattern
+    /// (`<scheme>://<label><suffix>.<registered base domain>`).
+    ///
+    /// Every module browser console is served from its own cloud sub-domain and
+    /// calls this edge cross-origin, and origin matching has no sub-domain
+    /// wildcard, so a deployment either enumerates thousands of exact origins or
+    /// declares the closed pattern. `None` keeps exact-origin-only matching.
+    #[serde(default)]
+    pub registered_console_hosts: Option<RegisteredConsoleHosts>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -762,6 +774,17 @@ impl GatewayRuntimeConfig {
         if let Some(allowed_origins) = env.get("SDKWORK_CORS_ALLOWED_ORIGINS") {
             self.cors.allowed_origins = parse_csv_env(allowed_origins);
         }
+        // Registered console host pattern: a half-configured or invalid pattern
+        // must fail loudly at startup rather than silently rejecting every
+        // module console preflight. Resolved through the injected environment so
+        // the pattern obeys the same override contract as every other key.
+        match registered_console_hosts_from_lookup(|key| env.get(key).cloned()) {
+            Ok(Some(hosts)) => self.cors.registered_console_hosts = Some(hosts),
+            Ok(None) => {}
+            Err(reason) => {
+                return Err(invalid_value("cors.registeredConsoleHosts", reason));
+            }
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED") {
             self.traffic.rate_limit_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED", enabled)?;
@@ -812,6 +835,15 @@ impl GatewayRuntimeConfig {
         )?;
         validate_positive_usize("request.maxBodyBytes", self.request.max_body_bytes)?;
 
+        // The registered console host pattern is validated in every environment,
+        // production included: it is a closed registry, so an invalid pattern is
+        // a configuration defect rather than a posture choice.
+        if let Some(hosts) = &self.cors.registered_console_hosts {
+            hosts
+                .validate()
+                .map_err(|reason| invalid_value("cors.registeredConsoleHosts", reason))?;
+        }
+
         if is_production_like_environment(self.service.environment.as_str())
             && self
                 .dependency_surfaces
@@ -824,22 +856,24 @@ impl GatewayRuntimeConfig {
                     "must be false for a production-like gateway that exposes app-api",
                 ));
             }
-            if self.cors.allowed_origins.is_empty() {
-                return Err(invalid_value(
-                    "cors.allowedOrigins",
-                    "must contain at least one exact HTTP(S) origin for a production-like gateway that exposes app-api",
-                ));
-            }
-            if !self
-                .cors
-                .allowed_origins
-                .iter()
-                .any(|origin| is_exact_http_origin(origin))
-            {
-                return Err(invalid_value(
-                    "cors.allowedOrigins",
-                    "must contain at least one exact HTTP(S) origin for a production-like gateway that exposes app-api",
-                ));
+            if self.cors.registered_console_hosts.is_none() {
+                if self.cors.allowed_origins.is_empty() {
+                    return Err(invalid_value(
+                        "cors.allowedOrigins",
+                        "must contain at least one exact HTTP(S) origin, or configure cors.registeredConsoleHosts, for a production-like gateway that exposes app-api",
+                    ));
+                }
+                if !self
+                    .cors
+                    .allowed_origins
+                    .iter()
+                    .any(|origin| is_exact_http_origin(origin))
+                {
+                    return Err(invalid_value(
+                        "cors.allowedOrigins",
+                        "must contain at least one exact HTTP(S) origin, or configure cors.registeredConsoleHosts, for a production-like gateway that exposes app-api",
+                    ));
+                }
             }
             for origin in &self.cors.allowed_origins {
                 validate_exact_allowed_origin("cors.allowedOrigins[]", origin)?;
@@ -1028,6 +1062,7 @@ impl Default for CorsConfig {
         Self {
             allow_any_origin: true,
             allowed_origins: Vec::new(),
+            registered_console_hosts: None,
         }
     }
 }

@@ -218,7 +218,7 @@ sudo chmod 640 /etc/sdkwork-api-cloud-gateway/gateway.toml
 
 编辑 `/etc/sdkwork-api-cloud-gateway/gateway.toml`，至少修改：
 
-- `[cors].allowedOrigins`：真实前端 HTTPS Origin，必须包含协议，不带路径。
+- `[cors].allowedOrigins`：真实前端 HTTPS Origin，必须包含协议，不带路径。只放模式无法表达的精确源站（例如环回端口）；模块控制台改用 `[cors.registeredConsoleHosts]` 声明 `labels` / `environmentSuffix` / `schemes`（`baseDomains` 省略即用平台注册表，不允许放宽到未注册域名）。
 - `[security].allowedHosts`：用户实际访问的域名；经代理转发时确保代理保留正确的 `Host`。
 - `[security].trustedProxyCidrs`：只填写真实可信代理网段。
 - `[security.waf].mode`：先以 `monitor` 观察，评审后再切到 `enforce`。

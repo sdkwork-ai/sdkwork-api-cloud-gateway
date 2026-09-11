@@ -44,8 +44,9 @@ bin/ 会完成 bundle 同步、sha256 校验、镜像加载与健康门禁；bun
 | production | 3913 | `standalone.production` | `api.*` | `sdkwork_ai_prod` |
 
 - 容器内部统一 `:3900`；多实例端口步进 `GATEWAY_HOST_PORT + (index-1)*10`。
-- `GATEWAY_ALLOWED_HOSTS` / `GATEWAY_CORS_ALLOWED_ORIGINS` 必须枚举全部注册 base-domain 家族（`ENVIRONMENT_SPEC.md` §5.1.0.1）。
-- env 文件权威值：`docker/env/<environment>.env`（自 `*.env.example` 复制并填密钥）。
+- `GATEWAY_ALLOWED_HOSTS` 必须枚举全部注册 base-domain 家族（`ENVIRONMENT_SPEC.md` §5.1.0.1）。
+- 浏览器 CORS 分两半：`GATEWAY_CORS_ALLOWED_ORIGINS` 只放模式无法表达的精确源站（各环境环回端口），控制台闭包由**注册控制台主机模式**表达——`GATEWAY_CORS_CONSOLE_HOST_LABELS`（标签注册表，全平台 111 个）+ `GATEWAY_CORS_CONSOLE_HOST_SUFFIX`（`-dev`/`-test`/`-staging`/`-demo`/生产空）+ `GATEWAY_CORS_CONSOLE_HOST_SCHEMES`（非生产 `http,https`，生产 `https`）。模式按组件精确匹配，不会退化为任意子域通配；`app://*`/`tauri://*`/小程序源站由框架自动合并，不要写进 env。切勿再把控制台源站逐条枚举进 `*_CORS_ALLOWED_ORIGINS`（全量约 3000 条 / 100 KiB，逼近 Linux 128 KiB 单变量上限）。
+- env 文件权威值：`docker/env/<environment>.env`（自 `*.env.example` 复制并填密钥）。改动后运行 `node scripts/derive-cors-allowed-origins.mjs --apply` 物化，`pnpm check:cors-carriers` 是门禁。
 
 ## 3. 标准安装流程（bin/ 入口）
 

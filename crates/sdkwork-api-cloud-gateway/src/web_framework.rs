@@ -46,7 +46,19 @@ pub(crate) fn gateway_cors_policy(config: &GatewayRuntimeConfig) -> CorsPolicy {
             policy.allowed_origins.push(origin.clone());
         }
     }
-    policy.with_registered_sdkwork_client_origins()
+    policy = policy.with_registered_sdkwork_client_origins();
+    // The registered console host pattern is validated by the config layer, so a
+    // failure here is unreachable; degrade to the exact-origin policy rather
+    // than panicking inside request-path assembly.
+    if let Some(hosts) = config.cors.registered_console_hosts.clone() {
+        match policy.clone().with_registered_console_hosts(hosts) {
+            Ok(configured) => policy = configured,
+            Err(error) => {
+                tracing::error!(error = %error, "registered console host pattern rejected; falling back to exact origins");
+            }
+        }
+    }
+    policy
 }
 
 #[cfg(test)]

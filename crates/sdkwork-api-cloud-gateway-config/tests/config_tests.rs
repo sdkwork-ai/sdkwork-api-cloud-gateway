@@ -339,6 +339,110 @@ fn production_app_api_rejects_non_origin_cors_entries() {
 }
 
 #[test]
+fn production_cors_accepts_registered_console_host_pattern() {
+    // The console closure is declared as a closed pattern instead of an
+    // enumeration: `labels x base domains x suffix x schemes`. An empty exact
+    // allow-list is therefore correct (only the loopback seeds are missing
+    // here), because the pattern — not the list — admits the consoles.
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = []
+
+        [cors.registeredConsoleHosts]
+        labels = ["im", "shop", "server-app", "api"]
+        environmentSuffix = ""
+        schemes = ["https"]
+        "#,
+    )
+    .expect("registered console host pattern should be accepted in production");
+
+    let hosts = config
+        .cors
+        .registered_console_hosts
+        .as_ref()
+        .expect("pattern parsed");
+    assert_eq!(hosts.environment_suffix, "");
+    assert_eq!(hosts.schemes, vec!["https".to_owned()]);
+    // Omitted `baseDomains` falls back to the registered platform registry, so
+    // a deployment can never widen the rule by accident.
+    assert_eq!(hosts.base_domains.len(), 16, "registered base domain registry");
+    assert!(hosts.base_domains.iter().any(|domain| domain == "sdkwork.com"));
+}
+
+#[test]
+fn production_cors_rejects_unregistered_console_host_base_domain() {
+    let toml = r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = []
+
+        [cors.registeredConsoleHosts]
+        labels = ["im"]
+        environmentSuffix = ""
+        schemes = ["https"]
+        baseDomains = ["attacker.example"]
+        "#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
+}
+
+#[test]
+fn console_host_pattern_env_override_is_fail_closed() {
+    let base = r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://api.sdkwork.com"]
+        "#;
+
+    // A half-configured pattern must fail loudly instead of silently serving a
+    // console the edge will reject with "No 'Access-Control-Allow-Origin'".
+    let mut partial = HashMap::new();
+    partial.insert(
+        "SDKWORK_CORS_CONSOLE_HOST_LABELS".to_owned(),
+        "im,shop".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::from_toml_str(base)
+        .expect("base config")
+        .with_env_overrides(&partial)
+        .is_err());
+
+    let mut complete = HashMap::new();
+    complete.insert(
+        "SDKWORK_CORS_CONSOLE_HOST_LABELS".to_owned(),
+        "im,shop".to_owned(),
+    );
+    complete.insert(
+        "SDKWORK_CORS_CONSOLE_HOST_SUFFIX".to_owned(),
+        String::new(),
+    );
+    complete.insert(
+        "SDKWORK_CORS_CONSOLE_HOST_SCHEMES".to_owned(),
+        "https".to_owned(),
+    );
+    let config = GatewayRuntimeConfig::from_toml_str(base)
+        .expect("base config")
+        .with_env_overrides(&complete)
+        .expect("complete pattern");
+    let hosts = config
+        .cors
+        .registered_console_hosts
+        .as_ref()
+        .expect("pattern parsed from env");
+    assert_eq!(hosts.labels, vec!["im".to_owned(), "shop".to_owned()]);
+    assert_eq!(hosts.environment_suffix, "");
+}
+
+#[test]
 fn application_component_publishes_only_embedded_assembly_surfaces() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -761,12 +865,30 @@ fn production_profile_ships_enforceable_operational_rules() {
         .iter()
         .any(|rule| rule.id == "auth-body-limit" && rule.max_body_bytes == Some(1024 * 1024)));
 
-    // Credential and console origins are allowed; everything else is not.
-    assert!(config
-        .cors
-        .allowed_origins
-        .contains(&"https://api.sdkwork.com".to_string()));
+    // Browser CORS is a closed pattern plus exact seeds: the console closure is
+    // declared by `[cors.registeredConsoleHosts]` (never enumerated, the full
+    // closure is ~3000 origins), and the exact list keeps only the loopback
+    // seeds the pattern cannot express.
     assert!(!config.cors.allow_any_origin);
+    let hosts = config
+        .cors
+        .registered_console_hosts
+        .as_ref()
+        .expect("production profile declares the console host pattern");
+    assert_eq!(hosts.environment_suffix, "");
+    assert_eq!(hosts.schemes, vec!["https".to_owned()]);
+    assert!(hosts.base_domains.len() == 16);
+    // The API plane host and the bundled webserver consoles must be registered:
+    // they are page origins in production, not just API hosts.
+    for label in ["api", "server", "server-admin", "server-app", "im"] {
+        assert!(
+            hosts.labels.iter().any(|registered| registered == label),
+            "label `{label}` must be registered"
+        );
+    }
+    assert!(config.cors.allowed_origins.iter().all(|origin| origin
+        .starts_with("http://localhost:")
+        || origin.starts_with("http://127.0.0.1:")));
 }
 
 #[test]

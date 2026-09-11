@@ -45,8 +45,9 @@ in-bundle executor is invoked by bin/ — never run scripts by hand.
 | production | 3913 | `standalone.production` | `api.*` | `sdkwork_ai_prod` |
 
 - Containers always listen on `:3900`; multi-instance port stride `GATEWAY_HOST_PORT + (index-1)*10`.
-- `GATEWAY_ALLOWED_HOSTS` / `GATEWAY_CORS_ALLOWED_ORIGINS` must enumerate the complete registered base-domain family (`ENVIRONMENT_SPEC.md` §5.1.0.1).
-- Authoritative env values: `docker/env/<environment>.env` (copied from `*.env.example`, secrets filled in).
+- `GATEWAY_ALLOWED_HOSTS` must enumerate the complete registered base-domain family (`ENVIRONMENT_SPEC.md` §5.1.0.1).
+- Browser CORS has two halves: `GATEWAY_CORS_ALLOWED_ORIGINS` carries only the exact origins the pattern cannot express (the per-environment loopback ports), while the console closure is declared by the **registered console host pattern** — `GATEWAY_CORS_CONSOLE_HOST_LABELS` (label registry, 111 platform labels) + `GATEWAY_CORS_CONSOLE_HOST_SUFFIX` (`-dev`/`-test`/`-staging`/`-demo`/empty in production) + `GATEWAY_CORS_CONSOLE_HOST_SCHEMES` (`http,https` outside production, `https` in production). Matching stays exact per component and never degrades into an arbitrary sub-domain wildcard; `app://*`, `tauri://*` and the mini-program origin are merged by the framework and must not be written into the env file. Do not enumerate the console origins into `*_CORS_ALLOWED_ORIGINS` again (~3000 entries / 100 KiB, close to the Linux 128 KiB single-variable limit).
+- Authoritative env values: `docker/env/<environment>.env` (copied from `*.env.example`, secrets filled in). After editing, run `node scripts/derive-cors-allowed-origins.mjs --apply`; `pnpm check:cors-carriers` is the gate.
 
 ## 3. Standard Install Flow (bin/ entrypoints)
 

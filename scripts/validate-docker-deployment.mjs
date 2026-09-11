@@ -13,6 +13,12 @@ import {
   ENVIRONMENTS,
   ENVIRONMENT_SUFFIX,
 } from './deployment-environments.mjs';
+import {
+  BASE_DOMAINS,
+  canonicalConsoleHostConfig,
+  canonicalSeedOrigins,
+  isPatternCoveredOrigin,
+} from './cors-allowed-origins.mjs';
 
 // Re-exported so downstream consumers (contract tests, packagers) keep a
 // single import surface while the canonical list lives in the shared registry.
@@ -22,17 +28,6 @@ export {
   ENVIRONMENT_SUFFIX,
 };
 
-// Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1): the edge
-// serves api-<suffix>.<base-domain> for every entry. Keep aligned with
-// scripts/deploy/lib/environments.sh and etc/sdkwork.deployment.config.json.
-const BASE_DOMAINS = [
-  'sdkwork.com', 'birdcoder.com', 'dtupay.com', 'noaper.com',
-  'sdkwork.cn', 'birdcoder.cn', 'dtupay.cn', 'noaper.cn',
-  'skubc.com', 'skubc.cn',
-  'zowalk.com', 'zowalk.cn',
-  'offer86.com', 'offer86.cn',
-  '86offer.com', '86offer.cn',
-];
 const DESKTOP_CORS_ORIGINS = [
   'app://dsh',
   'app://birdcoder',
@@ -146,39 +141,96 @@ export function validateDeploymentEnvironment(env, mode) {
       throw new Error(`GATEWAY_ALLOWED_HOSTS is missing ${host}`);
     }
   }
+  // Browser CORS is declared as a *pattern*, not an enumeration: the console
+  // closure is `label x base domain x suffix x scheme` and enumerating it costs
+  // ~3000 exact origins (~100 KiB) per non-production environment, which is a
+  // deployment hazard against the Linux 128 KiB `MAX_ARG_STRLEN` limit. The
+  // gateway matches the pattern exactly per component (sdkwork-web-core
+  // `registered_console_hosts`), so the carriers must declare the pattern and
+  // must NOT re-enumerate the closure.
   const corsOrigins = csv(env.GATEWAY_CORS_ALLOWED_ORIGINS);
-  const corsHosts = corsOrigins.flatMap((origin) => {
-    let parsed;
-    try {
-      parsed = new URL(origin);
-    } catch {
-      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains an invalid origin: ${origin}`);
-    }
+  for (const origin of corsOrigins) {
     if (origin.includes('*')) {
       throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains a wildcard origin: ${origin}`);
     }
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-      return [parsed.hostname];
+    if (!/^(https?|app|tauri):\/\//u.test(origin)) {
+      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains an unsupported origin: ${origin}`);
     }
-    if (parsed.protocol === 'app:' || parsed.protocol === 'tauri:') {
-      return [];
-    }
-    throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS contains an unsupported origin: ${origin}`);
-  });
-  for (const host of hosts) {
-    if (!corsHosts.includes(host)) {
-      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${host}`);
+    if (isPatternCoveredOrigin(origin, environment)) {
+      throw new Error(
+        `GATEWAY_CORS_ALLOWED_ORIGINS enumerates the console pattern (${origin}); ` +
+          'the registered console host pattern already covers it — keep only ' +
+          'the exact seeds (run: node scripts/derive-cors-allowed-origins.mjs --apply)',
+      );
     }
   }
-  for (const origin of DESKTOP_CORS_ORIGINS) {
-    if (!corsOrigins.includes(origin)) {
-      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${origin}`);
+  const expectedSeeds = canonicalSeedOrigins(environment);
+  const missingSeeds = expectedSeeds.filter((origin) => !corsOrigins.includes(origin));
+  if (missingSeeds.length > 0) {
+    throw new Error(
+      `GATEWAY_CORS_ALLOWED_ORIGINS is missing the loopback seed(s) ${missingSeeds.join(', ')} ` +
+        '(run: node scripts/derive-cors-allowed-origins.mjs --apply)',
+    );
+  }
+  // Registered desktop-shell and mini-program origins are merged into every
+  // policy by the web framework, so a carrier that repeats them only invites
+  // drift; flag the regression instead of silently accepting it.
+  for (const origin of [...DESKTOP_CORS_ORIGINS, ...MINI_PROGRAM_CORS_ORIGINS]) {
+    if (corsOrigins.includes(origin)) {
+      throw new Error(
+        `GATEWAY_CORS_ALLOWED_ORIGINS repeats ${origin}, which the web framework merges ` +
+          'into every policy (run: node scripts/derive-cors-allowed-origins.mjs --apply)',
+      );
     }
   }
-  for (const origin of MINI_PROGRAM_CORS_ORIGINS) {
-    if (!corsOrigins.includes(origin)) {
-      throw new Error(`GATEWAY_CORS_ALLOWED_ORIGINS is missing ${origin}`);
-    }
+
+  const consoleConfig = canonicalConsoleHostConfig(environment);
+  const declaredLabels = csv(env.GATEWAY_CORS_CONSOLE_HOST_LABELS);
+  if (declaredLabels.length === 0) {
+    throw new Error(
+      'GATEWAY_CORS_CONSOLE_HOST_LABELS is required: the gateway matches Origin exactly and ' +
+        'has no sub-domain wildcard, so every module console is rejected without the pattern',
+    );
+  }
+  const missingLabels = consoleConfig.labels
+    .split(',')
+    .filter((label) => !declaredLabels.includes(label));
+  if (missingLabels.length > 0) {
+    throw new Error(
+      `GATEWAY_CORS_CONSOLE_HOST_LABELS is missing ${missingLabels.length} registered label(s), ` +
+        `e.g. ${missingLabels.slice(0, 3).join(', ')} ` +
+        '(run: node scripts/derive-cors-allowed-origins.mjs --apply)',
+    );
+  }
+  // The API plane host is itself a page origin in some environments, so the
+  // `api` label is load-bearing for `GATEWAY_ALLOWED_HOSTS` coverage.
+  if (!declaredLabels.includes('api')) {
+    throw new Error('GATEWAY_CORS_CONSOLE_HOST_LABELS must include the `api` edge label');
+  }
+  if (env.GATEWAY_CORS_CONSOLE_HOST_SUFFIX !== consoleConfig.suffix) {
+    throw new Error(
+      `GATEWAY_CORS_CONSOLE_HOST_SUFFIX must be "${consoleConfig.suffix}" for ${environment} ` +
+        `(got "${env.GATEWAY_CORS_CONSOLE_HOST_SUFFIX ?? ''}")`,
+    );
+  }
+  const declaredSchemes = csv(env.GATEWAY_CORS_CONSOLE_HOST_SCHEMES);
+  const missingSchemes = consoleConfig.schemes
+    .split(',')
+    .filter((scheme) => !declaredSchemes.includes(scheme));
+  if (missingSchemes.length > 0) {
+    throw new Error(
+      `GATEWAY_CORS_CONSOLE_HOST_SCHEMES must include ${consoleConfig.schemes} for ${environment} ` +
+        `(got "${env.GATEWAY_CORS_CONSOLE_HOST_SCHEMES ?? ''}")`,
+    );
+  }
+  if (environment === 'production' && declaredSchemes.includes('http')) {
+    throw new Error('GATEWAY_CORS_CONSOLE_HOST_SCHEMES must stay HTTPS-only in production');
+  }
+  if (environment !== 'production' && !declaredSchemes.includes('http')) {
+    throw new Error(
+      `GATEWAY_CORS_CONSOLE_HOST_SCHEMES must include http in ${environment}: the environment ` +
+        'edge serves plain HTTP on its host port',
+    );
   }
 
   if (mode === 'external') {
