@@ -10,7 +10,7 @@
 
 Status: resolved (original audit below retained as historical record)
 Date: 2026-07-31
-Scope: `E:/sdkwork-space` sibling API applications and `sdkwork-api-cloud-gateway`
+Scope: `<workspace-root>` sibling API applications and `sdkwork-api-cloud-gateway`
 Decision: **not aligned; not release-ready** (superseded by the 2026-08-05 revision)
 eady**
 

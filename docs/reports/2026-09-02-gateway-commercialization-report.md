@@ -70,5 +70,5 @@ knowledgebase provider-secret-adapter、knowledgebase rpc-bin、birdcoder assemb
 1. **外部设备真机验证**：Windows 宿主→自身 LAN IP 的 hairpin 在 WSL mirrored 网络模式下不被支持；已放行防火墙，建议用局域网内另一台设备访问 `http://192.168.31.109:3914/healthz` 做最终确认。
 2. **provider secrets**：cloudrouter 有非阻断 WARN —— 商业部署需配置 `SDKWORK_CLOUDROUTER_PROVIDER_SECRET_MAP_JSON`（或 managed provider secrets），否则走 legacy OpenAI relay fallback。
 3. **knowledgebase outbox webhook**：demo 日志有 `SDKWORK_KNOWLEDGEBASE_OUTBOX_WEBHOOK_URL is not configured` 错误，非阻断。
-4. **pnpm store**：`/mnt/e/.pnpm-store/v11/index.db` WAL 损坏，建议磁盘空闲时删除该 store 重建（或迁移至 ext4）。
+4. **pnpm store**：`<device-state-dir>/.pnpm-store/v11/index.db` WAL 损坏，建议磁盘空闲时删除该 store 重建（或迁移至 ext4）。
 5. **上游并行会话**：drive SDK 今天的再生成（Int64 契约）未同步更新消费者代码，本次已修复 notes/canvas/deployments；建议与并行会话确认无冲突。

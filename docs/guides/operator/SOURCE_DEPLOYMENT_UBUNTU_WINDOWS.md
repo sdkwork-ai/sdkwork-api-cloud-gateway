@@ -50,7 +50,7 @@
 以下命令默认 SDKWork 工作区位于：
 
 - Ubuntu：`/srv/sdkwork-space`
-- Windows：`C:\sdkwork-space`
+- Windows：`<workspace-root>`
 
 可以使用其他目录，但所有 `sdkwork-*` 仓库必须保持同级关系。
 
@@ -364,7 +364,7 @@ corepack prepare pnpm@10.33.0 --activate
 ### 5.2 校验、构建和打包
 
 ```powershell
-Set-Location C:\sdkwork-space\sdkwork-api-cloud-gateway
+Set-Location <workspace-root>/sdkwork-api-cloud-gateway
 cargo metadata --no-deps --format-version 1
 cargo fmt -- --check
 pnpm check
@@ -399,7 +399,7 @@ dist\server\sdkwork-api-cloud-gateway-0.1.0-windows-x64-cloud-server.tar.gz
 ```powershell
 New-Item -ItemType Directory -Force C:\ProgramData\SDKWork\ApiCloudGateway\releases | Out-Null
 New-Item -ItemType Directory -Force C:\ProgramData\SDKWork\ApiCloudGateway\config | Out-Null
-tar -xzf C:\Temp\sdkwork-api-cloud-gateway-0.1.0-windows-x64-standalone-server.tar.gz `
+tar -xzf <device-state-dir>\sdkwork-api-cloud-gateway-0.1.0-windows-x64-standalone-server.tar.gz `
   -C C:\ProgramData\SDKWork\ApiCloudGateway\releases
 $Release = 'C:\ProgramData\SDKWork\ApiCloudGateway\releases\sdkwork-api-cloud-gateway-0.1.0-windows-x64-standalone-server'
 Set-Content -Path C:\ProgramData\SDKWork\ApiCloudGateway\current.txt -Value $Release

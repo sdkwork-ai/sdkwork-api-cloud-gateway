@@ -14,10 +14,10 @@
 ### Task 1: SDKWork Cloud Router Gateway Standard
 
 **Files:**
-- Modify: `E:/sdkwork-space/sdkwork-cloudrouter/specs/component.spec.json`
-- Modify: `E:/sdkwork-space/sdkwork-cloudrouter/specs/dependency-api-surfaces.json`
-- Modify: `E:/sdkwork-space/sdkwork-cloudrouter/specs/README.md`
-- Modify: `E:/sdkwork-space/sdkwork-cloudrouter/scripts/run-cloud-router-product.test.mjs`
+- Modify: `<workspace-root>/sdkwork-cloudrouter/specs/component.spec.json`
+- Modify: `<workspace-root>/sdkwork-cloudrouter/specs/dependency-api-surfaces.json`
+- Modify: `<workspace-root>/sdkwork-cloudrouter/specs/README.md`
+- Modify: `<workspace-root>/sdkwork-cloudrouter/scripts/run-cloud-router-product.test.mjs`
 - Optional existing config templates only if already present: `.env.release.example`, `apps/sdkwork-cloudrouter-pc/.env.example`
 
 - [ ] Add failing governance assertions for shared gateway integration metadata and no standalone gateway catalog.
@@ -28,9 +28,9 @@
 ### Task 2: Craw Chat Gateway Standard
 
 **Files:**
-- Modify: `E:/sdkwork-space/sdkwork-im/specs/component.spec.json`
-- Modify: `E:/sdkwork-space/sdkwork-im/specs/im-app-api-sdk-integration.spec.md`
-- Modify: `E:/sdkwork-space/sdkwork-im/scripts/dependency-management-standard.test.mjs`
+- Modify: `<workspace-root>/sdkwork-im/specs/component.spec.json`
+- Modify: `<workspace-root>/sdkwork-im/specs/im-app-api-sdk-integration.spec.md`
+- Modify: `<workspace-root>/sdkwork-im/scripts/dependency-management-standard.test.mjs`
 - Optional existing config templates only if already present: app PC env examples or runtime script docs
 
 - [ ] Add failing dependency-management assertions for shared gateway target metadata and no standalone gateway catalog.

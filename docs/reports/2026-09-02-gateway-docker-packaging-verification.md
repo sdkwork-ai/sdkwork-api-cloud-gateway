@@ -85,7 +85,7 @@ Docker 镜像包 + 统一安装 bundle 产出并通过多实例多环境冒烟�
    另一台设备访问 `http://192.168.31.109:<port>/healthz`（防火墙规则此前已放行 3914）。
 3. ~~pnpm 运行于 /mnt/e~~ **根因确证 + ext4 出路已实证（本轮）**：
    pnpm 因项目（/mnt/e, DrvFS/9p）与默认 store（~/.local/share/pnpm, ext4）跨设备、
-   硬链接不可跨文件系统，会把 store 回退到项目盘 `/mnt/e/.pnpm-store`，
+   硬链接不可跨文件系统，会把 store 回退到项目盘 `<device-state-dir>/.pnpm-store`，
    SQLite over 9p 必报 `disk I/O error`——根因确证。
    实证：源码 rsync 至 WSL ext4（`~/sdkwork-build/sdkwork-api-cloud-gateway`，
    排除 target/node_modules/dist）后 `pnpm install --frozen-lockfile` 2.1s 成功、
