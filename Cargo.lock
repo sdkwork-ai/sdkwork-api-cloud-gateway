@@ -6276,13 +6276,16 @@ dependencies = [
 name = "sdkwork-agents-tool-cloudrouter"
 version = "0.1.0"
 dependencies = [
+ "axum 0.8.9",
  "cloudrouter-open-sdk",
  "reqwest 0.13.4",
  "sdkwork-agent-kernel",
  "sdkwork-agent-provider-rig",
  "sdkwork-agents-tool-contract",
+ "sdkwork-utils-rust",
  "serde_json",
  "tokio",
+ "tower 0.5.3",
  "tracing",
 ]
 
@@ -6626,6 +6629,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-routes-system-app-api",
+ "sdkwork-utils-rust",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -6698,6 +6702,7 @@ dependencies = [
  "opentelemetry-otlp 0.31.1",
  "opentelemetry_sdk 0.31.0",
  "rustls",
+ "sdkwork-agents-tool-cloudrouter",
  "sdkwork-api-account-assembly",
  "sdkwork-api-agents-assembly",
  "sdkwork-api-aiot-assembly",
@@ -7759,15 +7764,16 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
+ "chrono",
  "sdkwork-api-deployments-assembly",
  "sdkwork-api-mcp-assembly",
  "sdkwork-api-skills-assembly",
  "sdkwork-intelligence-deploy-repository-sqlx",
  "sdkwork-intelligence-webserver-repository-sqlx",
  "sdkwork-intelligence-webserver-service",
- "sdkwork-routes-webserver-app-api",
  "sdkwork-routes-webserver-backend-api",
  "sdkwork-routes-webserver-internal-api",
+ "sdkwork-utils-rust",
  "sdkwork-web-bootstrap",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -8576,6 +8582,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hex",
  "hmac 0.12.1",
+ "http-body 1.1.0",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -13504,7 +13511,9 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "chrono",
+ "futures-util",
  "http 1.5.0",
+ "httpdate",
  "sdkwork-drive-config",
  "sdkwork-drive-contract",
  "sdkwork-drive-http",
@@ -15747,23 +15756,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-routes-webserver-app-api"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.8.9",
- "sdkwork-iam-web-adapter",
- "sdkwork-routes-webserver-common",
- "sdkwork-web-axum",
- "sdkwork-web-bootstrap",
- "sdkwork-web-core",
- "sdkwork-webserver-contract",
- "serde",
- "tokio",
- "tower 0.5.3",
-]
-
-[[package]]
 name = "sdkwork-routes-webserver-backend-api"
 version = "0.1.0"
 dependencies = [
@@ -16659,6 +16651,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+ "sqlx",
 ]
 
 [[package]]

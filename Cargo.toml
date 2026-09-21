@@ -54,6 +54,10 @@ sdkwork-api-mail-assembly = { path = "../sdkwork-mail/crates/sdkwork-api-mail-as
 sdkwork-api-aiot-assembly = { path = "../sdkwork-aiot/crates/sdkwork-api-aiot-assembly" }
 sdkwork-api-appstore-assembly = { path = "../sdkwork-appstore/crates/sdkwork-api-appstore-assembly" }
 sdkwork-api-agents-assembly = { path = "../sdkwork-agents/crates/sdkwork-api-agents-assembly" }
+# The agents turn path reaches CloudRouter; the gateway composes that surface
+# in-process and must install the dispatcher it consumes
+# (APPLICATION_GATEWAY_SPEC §2.3).
+sdkwork-agents-tool-cloudrouter = { path = "../sdkwork-agents/crates/sdkwork-agents-tool-cloudrouter" }
 sdkwork-api-generations-assembly = { path = "../sdkwork-generations/crates/sdkwork-api-generations-assembly" }
 sdkwork-api-account-assembly = { path = "../sdkwork-account/crates/sdkwork-api-account-assembly" }
 sdkwork-api-catalog-assembly = { path = "../sdkwork-catalog/crates/sdkwork-api-catalog-assembly" }

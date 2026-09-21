@@ -230,23 +230,26 @@ async fn shutdown_signal() {
     }
 }
 
-/// Publishes this process' ingress bind as the Cloud Router open-api ingress for
-/// embedded consumers that reach the surface through the generated Rust SDK.
+/// Publishes this process' ingress bind for embedded consumers that reach the
+/// Cloud Router surface **in-process**.
 ///
-/// The SDK resolver (`sdkwork_agents_tool_cloudrouter::cloudrouter_base_url`)
-/// maps `SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND` to a
-/// loopback URL and falls back to the Cloud Router standalone default
-/// `http://127.0.0.1:3900` when it is unset. The standalone Cloud Router
-/// topology files declare the variable (`0.0.0.0:3900`, `127.0.0.1:3905`, ...),
-/// so the split deployment works, but the collapsed platform gateway topology
-/// never did — and the gateway's own bind is profile-dependent (`0.0.0.0:8080`
-/// in container profiles, `3900`/`3906`/`3907` elsewhere). Every SDK call from
-/// an embedded surface therefore dialled a port this process does not own and
-/// failed with a transport connect error.
+/// This function must never synthesize a loopback HTTP base URL for a surface
+/// the gateway already composes in-process. Doing so is prohibited by
+/// `APPLICATION_GATEWAY_SPEC.md` §2.3 and `APP_SDK_INTEGRATION_SPEC.md` §5.2:
+/// the dependency is linked into this process, so it is consumed through the
+/// declared in-process port and there is no HTTP base URL to derive. The
+/// previous implementation formatted `http://127.0.0.1:{port}` from this
+/// process' own bind for `GENERATIONS_MEDIA_GATEWAY_BASE_URL` and
+/// `..._APPLICATION_OPEN_HTTP_URL`, which is exactly the self-loop the specs
+/// forbid — and, because the gateway's bind is profile-dependent
+/// (`0.0.0.0:8080` in container profiles, `3900`/`3906`/`3907` elsewhere),
+/// every embedded SDK call dialled a port this process does not own and failed
+/// with a transport connect error.
 ///
-/// Explicit overrides still win: a split deployment keeps its own
-/// `SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND` or
-/// `SDKWORK_AGENTS_CLOUDROUTER_BASE_URL` and this default is skipped.
+/// What remains correct here is publishing the **bind** value itself: a
+/// same-process consumer that needs to know where this process listens reads
+/// `SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND`, and explicit
+/// overrides from a split deployment still win.
 #[cfg(feature = "foundation-cloudrouter")]
 fn publish_embedded_cloudrouter_ingress(config: &GatewayRuntimeConfig) {
     let composed_in_process = config
@@ -270,32 +273,11 @@ fn publish_embedded_cloudrouter_ingress(config: &GatewayRuntimeConfig) {
             )
         };
     }
-    // The generations media adapter carries the same standalone-port default
-    // (`GENERATIONS_MEDIA_GATEWAY_BASE_URL`), and the AIoT intelligence bridge
-    // requires `SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL`; both must point
-    // at this process' open-api listener in the collapsed topology.
-    if env::var_os("GENERATIONS_MEDIA_GATEWAY_BASE_URL").is_none() {
-        // SAFETY: same single-threaded bootstrap window as above.
-        unsafe {
-            env::set_var(
-                "GENERATIONS_MEDIA_GATEWAY_BASE_URL",
-                format!("http://127.0.0.1:{port}"),
-            )
-        };
-    }
-    if env::var_os("SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL").is_none() {
-        // SAFETY: same single-threaded bootstrap window as above.
-        unsafe {
-            env::set_var(
-                "SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL",
-                format!("http://127.0.0.1:{port}"),
-            )
-        };
-    }
     info!(
         bind = %config.server.bind,
-        cloudrouter_base_url = %format!("http://127.0.0.1:{port}"),
-        "embedded cloud router open-api ingress published for in-process SDK consumers"
+        open_http_port = port,
+        "embedded cloud router ingress bind published for in-process consumers \
+         (no loopback HTTP base URL is derived: the surface is composed in-process)"
     );
 }
 
@@ -306,12 +288,15 @@ fn publish_embedded_cloudrouter_ingress(_config: &GatewayRuntimeConfig) {}
 
 /// Extracts the TCP port of an `address:port` bind string.
 #[cfg(feature = "foundation-cloudrouter")]
-fn bind_port(bind: &str) -> Option<&str> {
-    let (_, port) = bind.rsplit_once(':')?;
-    if port.is_empty() || !port.chars().all(|character| character.is_ascii_digit()) {
-        return None;
-    }
-    Some(port)
+/// Extracts the TCP port of an `address:port` bind string.
+///
+/// Thin alias over the shared component so every SDKWork process parses binds
+/// identically; the previous private copy accepted a value the shared one
+/// rejects (`[::]:3907` was fine, but an out-of-range port like `host:99999`
+/// was silently accepted here and then failed at bind time).
+#[cfg(feature = "foundation-cloudrouter")]
+fn bind_port(bind: &str) -> Option<u16> {
+    sdkwork_utils_rust::service_base_url::bind_port(bind)
 }
 
 #[cfg(test)]
@@ -333,8 +318,10 @@ mod tests {
             .expect("gateway application manifest parses")
     }
 
-    /// Restores the three published variables so other tests never observe a
-    /// leaked default.
+    /// Restores the published variables so other tests never observe a leaked
+    /// default. Only the ingress bind is published now: the loopback base URLs
+    /// the gateway used to fabricate for in-process surfaces are prohibited
+    /// (`APPLICATION_GATEWAY_SPEC.md` §2.3, `APP_SDK_INTEGRATION_SPEC.md` §5.2).
     #[cfg(feature = "foundation-cloudrouter")]
     struct PublishedEnvGuard {
         previous: [(String, Option<String>); 3],
@@ -377,7 +364,7 @@ mod tests {
 
     #[cfg(feature = "foundation-cloudrouter")]
     #[test]
-    fn publishes_loopback_ingress_for_embedded_cloudrouter_consumers() {
+    fn publishes_the_ingress_bind_without_fabricating_loopback_base_urls() {
         let _guard = env_test_guard().lock().unwrap();
         let _env = PublishedEnvGuard::capture_and_clear();
         let config = embedded_cloudrouter_test_config();
@@ -391,20 +378,24 @@ mod tests {
 
         publish_embedded_cloudrouter_ingress(&config);
 
-        let port = bind_port(&config.server.bind).expect("test bind carries a port");
         assert_eq!(
             std::env::var("SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND")
                 .expect("ingress bind published"),
             config.server.bind
         );
+        // The surface is composed in-process, so no HTTP base URL may be
+        // derived for it. Publishing `http://127.0.0.1:{port}` here is the
+        // self-loop that made every embedded SDK call dial a port this process
+        // does not own.
         for key in [
             "GENERATIONS_MEDIA_GATEWAY_BASE_URL",
             "SDKWORK_CLOUDROUTER_APPLICATION_OPEN_HTTP_URL",
         ] {
-            assert_eq!(
-                std::env::var(key).expect(key),
-                format!("http://127.0.0.1:{port}"),
-                "{key} must target this process' own listener"
+            assert!(
+                std::env::var_os(key).is_none(),
+                "{key} must not be derived from this process' own bind \
+                 (APPLICATION_GATEWAY_SPEC §2.3): a loopback base URL for an \
+                 in-process surface is prohibited"
             );
         }
     }
@@ -436,13 +427,16 @@ mod tests {
     #[cfg(feature = "foundation-cloudrouter")]
     #[test]
     fn extracts_the_loopback_port_from_every_bind_form() {
-        assert_eq!(bind_port("0.0.0.0:8080"), Some("8080"));
-        assert_eq!(bind_port("127.0.0.1:3900"), Some("3900"));
-        assert_eq!(bind_port("[::]:3907"), Some("3907"));
-        assert_eq!(bind_port("gateway:3906"), Some("3906"));
+        assert_eq!(bind_port("0.0.0.0:8080"), Some(8080));
+        assert_eq!(bind_port("127.0.0.1:3900"), Some(3900));
+        assert_eq!(bind_port("[::]:3907"), Some(3907));
+        assert_eq!(bind_port("gateway:3906"), Some(3906));
         assert_eq!(bind_port("no-port"), None);
         assert_eq!(bind_port("host:"), None);
         assert_eq!(bind_port("host:39x0"), None);
+        // Out-of-range ports are now rejected too: the private copy this
+        // replaces accepted `host:99999` and failed later at bind time.
+        assert_eq!(bind_port("host:99999"), None);
     }
 
     #[test]

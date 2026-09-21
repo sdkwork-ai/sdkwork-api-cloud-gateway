@@ -73,6 +73,14 @@ foundation-rtc = ["dep:sdkwork-api-rtc-assembly"]
 foundation-notary = ["dep:sdkwork-api-notary-assembly"]
 foundation-mail = ["dep:sdkwork-api-mail-assembly"]
 foundation-agents = ["dep:sdkwork-api-agents-assembly"]
+# The agents turn path calls CloudRouter. When the gateway composes both
+# surfaces, the agents consumer must dispatch in-process instead of dialling
+# this process' own listener (APPLICATION_GATEWAY_SPEC §2.3).
+foundation-agents-cloudrouter-embedded = [
+    "foundation-agents",
+    "foundation-cloudrouter",
+    "dep:sdkwork-agents-tool-cloudrouter",
+]
 foundation-generations = ["dep:sdkwork-api-generations-assembly"]
 foundation-account = ["dep:sdkwork-api-account-assembly"]
 foundation-catalog = ["dep:sdkwork-api-catalog-assembly"]
@@ -141,6 +149,7 @@ platform-foundation-suite-container = [
     "foundation-notary",
     "foundation-mail",
     "foundation-agents",
+    "foundation-agents-cloudrouter-embedded",
     "foundation-account",
     "foundation-catalog",
     "foundation-customerservice",
@@ -238,6 +247,7 @@ sdkwork-api-mail-assembly = { workspace = true, optional = true }
 sdkwork-api-aiot-assembly = { workspace = true, optional = true }
 sdkwork-api-appstore-assembly = { workspace = true, optional = true }
 sdkwork-api-agents-assembly = { workspace = true, optional = true }
+sdkwork-agents-tool-cloudrouter = { workspace = true, optional = true }
 sdkwork-api-generations-assembly = { workspace = true, optional = true }
 sdkwork-api-account-assembly = { workspace = true, optional = true }
 sdkwork-api-catalog-assembly = { workspace = true, optional = true }

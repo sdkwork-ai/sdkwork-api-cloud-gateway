@@ -145,10 +145,13 @@ services:
       # environment variables take precedence over it (ENVIRONMENT_SPEC §3),
       # so only the container-specific values are injected here.
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
-      # Cloud Router open-api ingress for embedded Rust SDK consumers: the
-      # resolver (sdkwork_agents_tool_cloudrouter::cloudrouter_base_url) maps
-      # this bind to http://127.0.0.1:<port>. It must track the listener bind
-      # above (docker-compose.override.yml rebinds both to 8080).
+      # Cloud Router open-api ingress bind, published for diagnostics and for a
+      # same-process consumer that needs to know where this process listens.
+      # It is NOT mapped to a loopback base URL: CloudRouter is composed into
+      # this process, so in-process consumers dispatch through the declared
+      # in-process port and the resolver deliberately yields no HTTP base URL
+      # (APPLICATION_GATEWAY_SPEC §2.3, APP_SDK_INTEGRATION_SPEC §5.2). Keep it
+      # tracking the listener bind above so the published value stays truthful.
       SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
       # Host allowlist: registered API domains plus host-mapped port for direct
       # access. sdkwork-webserver (independent deploy) forwards Host when it

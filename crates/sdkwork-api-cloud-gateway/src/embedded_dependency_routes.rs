@@ -9,6 +9,7 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::WebModule;
+use tracing::{info, warn};
 
 use crate::GatewayRuntimeError;
 
@@ -137,9 +138,12 @@ pub async fn bootstrap_embedded_dependency_contributions(
         modules.push(module);
     }
 
-    // The capture below is only written when `foundation-image` compiles and
-    // only read when both surfaces are enabled, so cfg-reduced builds can hit
-    // unused_mut/unused_variables — suppress those on the declaration.
+    // CloudRouter's contribution router (its surface dispatcher), captured once
+    // and handed to every in-process consumer in this process — image generation
+    // and the agents turn path alike. Capturing it unconditionally (rather than
+    // only when `foundation-image` is compiled) keeps "which other surface
+    // happens to be enabled" from deciding whether an in-process consumer can
+    // reach CloudRouter at all.
     #[cfg(feature = "foundation-cloudrouter")]
     #[allow(unused_mut, unused_variables)]
     let mut cloudrouter_open_surface: Option<axum::Router> = None;
@@ -154,20 +158,16 @@ pub async fn bootstrap_embedded_dependency_contributions(
         )
         .await
         .map_err(|message| workspace_build_error(config, "sdkwork-cloudrouter", message))?;
-        // APPLICATION_GATEWAY_SPEC §2.3: the image generation module is also
-        // embedded in this process, so it must reach CloudRouter through the
-        // in-process dispatch adapter (built below) instead of an HTTP base
-        // URL that would loop back into a listener. The contribution router is
-        // CloudRouter's surface dispatcher: a dispatched open-api request runs
-        // the full edge-runtime gateway pipeline (API-key authentication and
-        // billing) exactly as an external HTTP request would.
-        #[cfg(feature = "foundation-image")]
-        if workspace_surface_enabled(config, "sdkwork-image") {
-            cloudrouter_open_surface = module
-                .contributions()
-                .first()
-                .map(|contribution| contribution.router.clone());
-        }
+        // APPLICATION_GATEWAY_SPEC §2.3: a module composed into this process must
+        // reach CloudRouter through an in-process dispatch adapter instead of an
+        // HTTP base URL that would loop back into a listener. The contribution
+        // router is CloudRouter's surface dispatcher: a dispatched open-api
+        // request runs the full edge-runtime gateway pipeline (API-key
+        // authentication and billing) exactly as an external HTTP request would.
+        cloudrouter_open_surface = module
+            .contributions()
+            .first()
+            .map(|contribution| contribution.router.clone());
         modules.push(module);
     }
 
@@ -186,6 +186,9 @@ pub async fn bootstrap_embedded_dependency_contributions(
         let embedded_provider: Option<
             std::sync::Arc<dyn sdkwork_image_generation_provider_spi::ImageGenerationProvider>,
         > = cloudrouter_open_surface
+            // Cloned, not moved: the same captured router is also installed for
+            // the agents turn path further below (`axum::Router` clone is cheap).
+            .clone()
             .filter(|_| workspace_surface_enabled(config, "sdkwork-cloudrouter"))
             .map(|router| {
                 std::sync::Arc::new(
@@ -445,6 +448,58 @@ pub async fn bootstrap_embedded_dependency_contributions(
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-agents", message))?;
         modules.push(module);
+    }
+
+    // APPLICATION_GATEWAY_SPEC §2.3 / APP_SDK_INTEGRATION_SPEC §5.2: the agents
+    // turn path reaches CloudRouter for every chat completion. When this process
+    // composes the CloudRouter assembly, the turn must dispatch into that surface
+    // in-process instead of dialling this process' own listener — the self-loop
+    // that produced the production `Bad gateway` incident, and whose correct
+    // resolution (`no HTTP base URL`) surfaced as an unserviceable `50301` on
+    // every turn. Installing the dispatcher here is the composition root's
+    // obligation; without it the transport fails closed rather than falling back
+    // to a loopback.
+    #[cfg(feature = "foundation-agents-cloudrouter-embedded")]
+    if workspace_surface_enabled(config, "sdkwork-agents") {
+        match cloudrouter_open_surface.clone() {
+            Some(router) => {
+                let dispatcher: sdkwork_agents_tool_cloudrouter::EmbeddedSurfaceDispatcher =
+                    std::sync::Arc::new(move |request: axum::extract::Request| {
+                        let router = router.clone();
+                        Box::pin(async move {
+                            tower::ServiceExt::oneshot(router, request).await
+                        })
+                    });
+                let installed = sdkwork_agents_tool_cloudrouter::install_embedded_cloudrouter_surface(
+                    dispatcher,
+                );
+                // `false` means an earlier installation was kept, so turns keep
+                // using the first surface. The transport layer already logged an
+                // error for it; do not claim this installation took effect.
+                if installed {
+                    info!(
+                        workspace = "sdkwork-agents",
+                        "embedded cloud router turn surface installed for in-process dispatch \
+                         (no loopback HTTP base URL is used)"
+                    );
+                } else {
+                    warn!(
+                        workspace = "sdkwork-agents",
+                        "an embedded cloud router turn surface was already installed; this \
+                         composition root's router is NOT serving turns — check for a \
+                         duplicated wiring path or a changed composition order"
+                    );
+                }
+            }
+            None => {
+                warn!(
+                    workspace = "sdkwork-agents",
+                    "sdkwork-cloudrouter is declared as an embedded dependency surface but its \
+                     contribution router was not captured; cloud router turns will fail closed \
+                     until the assembly exposes one"
+                );
+            }
+        }
     }
 
     #[cfg(feature = "foundation-generations")]
