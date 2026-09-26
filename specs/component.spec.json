@@ -1384,6 +1384,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/cloud_accounts",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/domain_zones",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-app-api",
@@ -3032,6 +3039,7 @@
         "/app/v3/api/artifacts",
         "/app/v3/api/build_templates",
         "/app/v3/api/certificates",
+        "/app/v3/api/cloud_accounts",
         "/app/v3/api/domain_zones",
         "/app/v3/api/signing_identities",
         "/app/v3/api/sites",
