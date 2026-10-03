@@ -513,6 +513,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/app_template_orders",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/withdrawals",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-order-app-api",
