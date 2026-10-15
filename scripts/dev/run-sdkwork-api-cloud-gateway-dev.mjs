@@ -16,9 +16,15 @@ import {
   resolvePostgresDevProfile,
 } from '../../../sdkwork-specs/tools/postgres/postgres-dev-profile.mjs';
 import {
+  resolveDevelopmentCargoEnv,
+  resolveDevelopmentOpusEnv,
+} from './sdkwork-api-cloud-gateway-dev-cargo-env.mjs';
+import {
+  describeCloudRouterCredentialKeyRingSource,
   resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
+  resolveEmbeddedMemoryObjectStoreRoot,
   resolveEmbeddedPostgresUrl,
   resolveTemporaryDatabaseDriverEnv,
 } from './sdkwork-api-cloud-gateway-dev-env.mjs';
@@ -37,6 +43,7 @@ const requiredBuildCriticalSources = [
   'crates/sdkwork-api-cloud-gateway/src/listener_main.rs',
   'etc/sdkwork.deployment.config.json',
   'etc/sdkwork-api-cloud-gateway.development.toml',
+  'scripts/dev/sdkwork-api-cloud-gateway-dev-cargo-env.mjs',
   'scripts/dev/sdkwork-api-cloud-gateway-dev-env.mjs',
   'scripts/dev/sdkwork-api-cloud-gateway-source-config.mjs',
   'scripts/dev/embedded-knowledgebase-rpc.mjs',
@@ -93,8 +100,27 @@ async function main() {
   process.stdout.write(
     `[sdkwork-api-cloud-gateway] PostgreSQL ready: ${profile.config.database.database}/${profile.config.database.schema}\n`,
   );
+  process.stdout.write(
+    `[sdkwork-api-cloud-gateway] CloudRouter upstream credential key ring: ${describeCloudRouterCredentialKeyRingSource({ env: profile.env, repoRoot: appRoot })}\n`,
+  );
 
-  const childEnv = resolveChildEnv(profile);
+  const opusEnv = resolveDevelopmentOpusEnv({ appRoot, env: profile.env });
+  const childEnv = resolveChildEnv(profile, opusEnv);
+  process.stdout.write(
+    `[sdkwork-api-cloud-gateway] cargo incremental=${childEnv.CARGO_INCREMENTAL ?? 'toolchain-default'}\n`,
+  );
+  if (childEnv.OPUS_LIB_DIR) {
+    process.stdout.write(
+      `[sdkwork-api-cloud-gateway] prebuilt Opus: ${childEnv.OPUS_LIB_DIR}\n`,
+    );
+  } else if (process.platform === 'win32') {
+    // Not fatal here: the cargo error for a missing Opus is opaque, so name the
+    // remediation before the build starts.
+    process.stdout.write(
+      '[sdkwork-api-cloud-gateway] prebuilt Opus not found; if the AIoT surface fails to build, '
+      + 'run: powershell -NoProfile -File scripts/build-windows-libopus.ps1\n',
+    );
+  }
   // No managed Knowledgebase RPC process is started in development. The IM
   // conversation runtime resolves its outbound group-knowledgebase port from
   // SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_* and, when those inputs are fully
@@ -149,7 +175,7 @@ function ensureBuildCriticalSources() {
   }
 }
 
-function resolveChildEnv(profile) {
+function resolveChildEnv(profile, opusEnv = { env: {} }) {
   const embeddedDatabaseUrl = resolveEmbeddedPostgresUrl(
     profile.databaseUrl,
     profile.config.database.schema,
@@ -174,6 +200,14 @@ function resolveChildEnv(profile) {
       env: profile.env,
       runtimeStateDirectory,
     }),
+    SDKWORK_MEMORY_DRIVE_OBJECT_STORE_ROOT: resolveEmbeddedMemoryObjectStoreRoot({
+      env: profile.env,
+      runtimeStateDirectory,
+    }),
+    // Development builds run without incremental compilation; see
+    // sdkwork-api-cloud-gateway-dev-cargo-env.mjs.
+    ...resolveDevelopmentCargoEnv({ env: profile.env }),
+    ...opusEnv.env,
     PGOPTIONS: `-csearch_path=${profile.config.database.schema}`,
   };
   return childEnv;

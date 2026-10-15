@@ -19,14 +19,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "aead"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1973cfbc1a2daf9cf550e74e1f088c28e7f7d8c1e1418fb6c9dc5184b7e84c99"
+dependencies = [
+ "crypto-common 0.2.2",
+ "inout 0.2.2",
+]
+
+[[package]]
 name = "aes"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b169f7a6d4742236a0a00c541b845991d0ac43e546831af1249753ab4c3aa3a0"
 dependencies = [
  "cfg-if",
- "cipher",
+ "cipher 0.4.4",
  "cpufeatures 0.2.17",
+]
+
+[[package]]
+name = "aes"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35f0f96ce78e38c3dc6d8948aa8163d06385be74000f3c7a95bf1eef35d3ea32"
+dependencies = [
+ "cipher 0.5.2",
+ "cpubits",
+ "cpufeatures 0.3.1",
 ]
 
 [[package]]
@@ -35,12 +56,26 @@ version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "831010a0f742e1209b3bcea8fab6a8e149051ba6099432c8cb2cc117dec3ead1"
 dependencies = [
- "aead",
- "aes",
- "cipher",
- "ctr",
- "ghash",
+ "aead 0.5.2",
+ "aes 0.8.4",
+ "cipher 0.4.4",
+ "ctr 0.9.2",
+ "ghash 0.5.1",
  "subtle",
+]
+
+[[package]]
+name = "aes-gcm"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f2b8006a0c83f52b62ba44a97b58bf76fe2f70a329e588f67f89691d93d498f"
+dependencies = [
+ "aead 0.6.1",
+ "aes 0.9.3",
+ "cipher 0.5.2",
+ "ctr 0.10.1",
+ "ctutils",
+ "ghash 0.6.0",
 ]
 
 [[package]]
@@ -429,9 +464,9 @@ dependencies = [
 
 [[package]]
 name = "aws-config"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a767267da9e2c2e189b2f9df8b5657e850ecf5352644734ba130d4a57095cf1b"
+checksum = "b8d7b388a9fc3a6db15a5ec778c38b354eff1364882c94d08e0252f7a47dcaa4"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -449,7 +484,7 @@ dependencies = [
  "bytes",
  "fastrand",
  "hex",
- "http 1.5.0",
+ "http",
  "sha1 0.10.7",
  "time",
  "tokio",
@@ -496,9 +531,9 @@ dependencies = [
 
 [[package]]
 name = "aws-runtime"
-version = "1.9.1"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9007227e10b5fed2f3e0a2beff489211e2b5604c400b7a9d5d81ca9d64c24bb"
+checksum = "2b8a9911551b4ea6ca13805ef52ed96f7d2bbb43cc3b4a14cb0776a71f33cfaa"
 dependencies = [
  "aws-credential-types",
  "aws-sigv4",
@@ -512,10 +547,8 @@ dependencies = [
  "bytes",
  "bytes-utils",
  "fastrand",
- "http 0.2.12",
- "http 1.5.0",
- "http-body 0.4.6",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "percent-encoding",
  "pin-project-lite",
  "tracing",
@@ -524,9 +557,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-s3"
-version = "1.144.0"
+version = "1.152.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30dc8bf6baaf7d46336a0ca2c69f223d9b90d7a801fb3e28f7ea17b00dc6b1de"
+checksum = "004d5acbd6850ab58789a43822e0a2ef23927a46b012c17f8fa51253103db9f8"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
@@ -548,9 +581,8 @@ dependencies = [
  "fastrand",
  "hex",
  "hmac 0.13.0",
- "http 0.2.12",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "lru",
  "percent-encoding",
  "regex-lite",
@@ -561,9 +593,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-sso"
-version = "1.108.0"
+version = "1.114.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c15301b04372832947916607983b114b3374b9db0be058a00fb7513800de1f05"
+checksum = "12be2f9c8eef7f5fc919c96d538e629698469a02b4cb75408b26b1bd984ebe79"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
@@ -579,17 +611,16 @@ dependencies = [
  "aws-types",
  "bytes",
  "fastrand",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "regex-lite",
  "tracing",
 ]
 
 [[package]]
 name = "aws-sdk-ssooidc"
-version = "1.110.0"
+version = "1.116.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72cc2c205cb27108183cf1856333f7d584c2ba0f505421b4209ca5828f9ea899"
+checksum = "d7645db8724ea3b82fdccfb67e1b0f637c9d8ab0e7ef29d84884d8d8d73f805d"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
@@ -605,17 +636,16 @@ dependencies = [
  "aws-types",
  "bytes",
  "fastrand",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "regex-lite",
  "tracing",
 ]
 
 [[package]]
 name = "aws-sdk-sts"
-version = "1.113.0"
+version = "1.119.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68182ecb449f7537db0f4d5d25917789cf41e32074a9fe47b6a0b847fe1d2032"
+checksum = "03e490aa904849b38e770922faac779dd245f5cf8be81f19065acf18d276e4ad"
 dependencies = [
  "arc-swap",
  "aws-credential-types",
@@ -632,17 +662,16 @@ dependencies = [
  "aws-smithy-xml",
  "aws-types",
  "fastrand",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "regex-lite",
  "tracing",
 ]
 
 [[package]]
 name = "aws-sigv4"
-version = "1.5.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "723c2234ad7511ceef63eab016b7ba6ff7c55590fefb96fa8467af014a07309f"
+checksum = "2312577f088c9fbf4206dfdb884cf1de9407b43e1a923cbed5237775116fc24b"
 dependencies = [
  "aws-credential-types",
  "aws-smithy-eventstream",
@@ -654,8 +683,7 @@ dependencies = [
  "form_urlencoded",
  "hex",
  "hmac 0.13.0",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "p256",
  "percent-encoding",
  "sha2 0.11.0",
@@ -687,8 +715,8 @@ dependencies = [
  "bytes",
  "crc-fast",
  "hex",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "md-5 0.11.0",
  "pin-project-lite",
@@ -699,9 +727,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-eventstream"
-version = "0.61.2"
+version = "0.61.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6de526c7b567420a31bc283657a7921b45c4cafe0827fdf2490713dcc770c28f"
+checksum = "80c2051c2f1016fb8e6548dd07b8bc2ac9c3fe583721444b92f515e856d31609"
 dependencies = [
  "aws-smithy-types",
  "bytes",
@@ -710,9 +738,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-http"
-version = "0.64.0"
+version = "0.64.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37843d9add67c3aff5856f409c6dc315d3cdff60f9c0cb5b670dab1e9920306d"
+checksum = "639b4d8f8555f24a9be649811c3eb0b4d4616f4d61daf0c32e28873bc1ea9af1"
 dependencies = [
  "aws-smithy-eventstream",
  "aws-smithy-runtime-api",
@@ -721,8 +749,8 @@ dependencies = [
  "bytes-utils",
  "futures-core",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "percent-encoding",
  "pin-project-lite",
@@ -732,15 +760,15 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-http-client"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebfd138fac0337cee7516c352757ea73b9f2266e57d0bcb5bc70e9547e45aef1"
+checksum = "51c89cc3f1f281d659a67a519a1b5c6d445b5ce09fa7e5aee40c2c2707e9509d"
 dependencies = [
  "aws-smithy-async",
  "aws-smithy-runtime-api",
  "aws-smithy-types",
  "h2",
- "http 1.5.0",
+ "http",
  "hyper",
  "hyper-rustls",
  "hyper-util",
@@ -756,9 +784,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-json"
-version = "0.63.0"
+version = "0.63.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dc65a121adb4b33729919fcfa14fa36fb33c1555a8f06bb0e2188dbfdc1d9ef"
+checksum = "3385d469edbe8b60cc72002784652b5efca39178192aa9cc4b44c9875c6bdc18"
 dependencies = [
  "aws-smithy-runtime-api",
  "aws-smithy-schema",
@@ -776,9 +804,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-query"
-version = "0.62.0"
+version = "0.62.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "512346c7212ab7436df2d77a16d976a468ae44a418835511d2a69269810aaf62"
+checksum = "f1d1d71f6562be974caa85442ecd90194c40fdb5df045f182a6c2e872ce95056"
 dependencies = [
  "aws-smithy-runtime-api",
  "aws-smithy-schema",
@@ -789,9 +817,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-runtime"
-version = "1.14.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b82e438d30e02a825d363bd639a9efaed68a8089d86101054b0081e7e0d3e606"
+checksum = "d6e302ac1d88b99652489df31abdec6ac42a2ab2ac3982ad0ac49f64dfaf28ba"
 dependencies = [
  "aws-smithy-async",
  "aws-smithy-http",
@@ -802,10 +830,8 @@ dependencies = [
  "aws-smithy-types",
  "bytes",
  "fastrand",
- "http 0.2.12",
- "http 1.5.0",
- "http-body 0.4.6",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "pin-project-lite",
  "pin-utils",
@@ -815,16 +841,15 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-runtime-api"
-version = "1.15.0"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "954c563ce84507722d2679f07a35d21b9c6466b3872d513020d0281fc8112ac9"
+checksum = "c0730c16f91124c6a2abb4932c77e299288b3dd9f967ea2e9ec48cc6731e87a4"
 dependencies = [
  "aws-smithy-async",
  "aws-smithy-runtime-api-macros",
  "aws-smithy-types",
  "bytes",
- "http 0.2.12",
- "http 1.5.0",
+ "http",
  "pin-project-lite",
  "tokio",
  "tracing",
@@ -844,29 +869,27 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-schema"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d56e0a4e53127a632224e43633b0fe045fa9e1e3cfc68b9830f1115e103f910"
+checksum = "e8f395d93304280b64b7632fea798d177e74897fe7f063416ce627cd6fa24829"
 dependencies = [
  "aws-smithy-runtime-api",
  "aws-smithy-types",
- "http 1.5.0",
+ "http",
 ]
 
 [[package]]
 name = "aws-smithy-types"
-version = "1.6.2"
+version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fce83ce9abbb198d25bc7131e468d0f9fe1257125e58c39f3f9fc9f5098c9647"
+checksum = "69bb407740a197147da48238ecc94498493c9e85445732360cec180296ca45f1"
 dependencies = [
  "base64-simd",
  "bytes",
  "bytes-utils",
  "futures-core",
- "http 0.2.12",
- "http 1.5.0",
- "http-body 0.4.6",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "itoa",
  "num-integer",
@@ -881,9 +904,9 @@ dependencies = [
 
 [[package]]
 name = "aws-smithy-xml"
-version = "0.62.0"
+version = "0.62.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce84f71c72fee2cbbadde6e7d082f5fb466e3a84733855295fa7aafd1b31b7d8"
+checksum = "0b932c8d6dc127fc980eecd78f8694ae9b9551b69a93a7def2a199c1c0033daf"
 dependencies = [
  "aws-smithy-runtime-api",
  "aws-smithy-schema",
@@ -893,9 +916,9 @@ dependencies = [
 
 [[package]]
 name = "aws-types"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eec1cd5469f328c782dc3e33d4153cf118a54e33cbb3356d60d16f89883e1f94"
+checksum = "209f3a6d82a6e9e5f94abbed94c7a26e1c052341002bf57a5fb5481f625896fc"
 dependencies = [
  "aws-credential-types",
  "aws-smithy-async",
@@ -916,8 +939,8 @@ dependencies = [
  "axum-core 0.4.5",
  "bytes",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "itoa",
  "matchit 0.7.3",
@@ -945,8 +968,8 @@ dependencies = [
  "bytes",
  "form_urlencoded",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-util",
@@ -980,8 +1003,8 @@ dependencies = [
  "async-trait",
  "bytes",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "mime",
  "pin-project-lite",
@@ -999,8 +1022,8 @@ checksum = "08c78f31d7b1291f7ee735c1c6780ccde7785daae9a9206026862dab7d8792d1"
 dependencies = [
  "bytes",
  "futures-core",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "mime",
  "pin-project-lite",
@@ -1066,13 +1089,13 @@ checksum = "2af50177e190e07a26ab74f8b1efbfe2ef87da2116221318cb1c2e82baf7de06"
 
 [[package]]
 name = "bcrypt"
-version = "0.17.1"
+version = "0.19.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abaf6da45c74385272ddf00e1ac074c7d8a6c1a1dda376902bd6a427522a8b2c"
+checksum = "a0cd0bd35a28836d528d2b58ad499bc3c5641d59379421b1be9eeb0c2f2b912a"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "blowfish",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "subtle",
  "zeroize",
 ]
@@ -1161,12 +1184,12 @@ dependencies = [
 
 [[package]]
 name = "blowfish"
-version = "0.9.1"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e412e2cd0f2b2d93e02543ceae7917b3c70331573df19ee046bcbc35e45e87d7"
+checksum = "62ce3946557b35e71d1bbe07ec385073ce9eda05043f95de134eb578fcf1a298"
 dependencies = [
  "byteorder",
- "cipher",
+ "cipher 0.5.2",
 ]
 
 [[package]]
@@ -1242,6 +1265,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cap-fs-ext"
+version = "4.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56ff379b70af8e08307a8f65e7040c7301cb4a572538ade16b4984f0da77847f"
+dependencies = [
+ "cap-primitives",
+ "cap-std",
+ "io-lifetimes 3.0.1",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "cap-primitives"
 version = "4.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1277,7 +1312,7 @@ version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26b52a9543ae338f279b96b0b9fed9c8093744685043739079ce85cd58f289a6"
 dependencies = [
- "cipher",
+ "cipher 0.4.4",
 ]
 
 [[package]]
@@ -1346,7 +1381,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
 dependencies = [
  "crypto-common 0.1.7",
- "inout",
+ "inout 0.1.4",
+]
+
+[[package]]
+name = "cipher"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8cf2a2c93cd704877c0858356ed03480ff301ee950b43f1cbe4573b088bfa6c"
+dependencies = [
+ "block-buffer 0.12.1",
+ "crypto-common 0.2.2",
+ "inout 0.2.2",
 ]
 
 [[package]]
@@ -1393,7 +1439,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 name = "cloudrouter-open-sdk"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -1497,6 +1543,12 @@ name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
+name = "cpubits"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "15b85f9c39137c3a891689859392b1bd49812121d0d61c9caf00d46ed5ce06ae"
 
 [[package]]
 name = "cpufeatures"
@@ -1629,7 +1681,9 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453"
 dependencies = [
+ "getrandom 0.4.3",
  "hybrid-array",
+ "rand_core 0.10.1",
 ]
 
 [[package]]
@@ -1649,7 +1703,16 @@ version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0369ee1ad671834580515889b80f2ea915f23b8be8d0daa4bbaf2ac5c7590835"
 dependencies = [
- "cipher",
+ "cipher 0.4.4",
+]
+
+[[package]]
+name = "ctr"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "baaca1c4b237092596f64d571e9db6ce4109c4ef9742e27590f1709594461f21"
+dependencies = [
+ "cipher 0.5.2",
 ]
 
 [[package]]
@@ -2367,7 +2430,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0d8a4362ccb29cb0b265253fb0a2728f592895ee6854fd9bc13f2ffda266ff1"
 dependencies = [
  "opaque-debug",
- "polyval",
+ "polyval 0.6.2",
+]
+
+[[package]]
+name = "ghash"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eecf2d5dc9b66b732b97707a0210906b1d30523eb773193ab777c0c84b3e8d5"
+dependencies = [
+ "polyval 0.7.3",
 ]
 
 [[package]]
@@ -2435,7 +2507,7 @@ dependencies = [
  "fnv",
  "futures-core",
  "futures-sink",
- "http 1.5.0",
+ "http",
  "indexmap 2.14.1",
  "slab",
  "tokio",
@@ -2502,30 +2574,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a596f1b20ed2cc5ecac41a164aaebc7258057060f06c0cf7a2ba3991ee7990fb"
 dependencies = [
  "hashbrown 0.17.1",
-]
-
-[[package]]
-name = "headers"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3314d5adb5d94bcdf56771f2e50dbbc80bb4bdf88967526706205ac9eff24eb"
-dependencies = [
- "base64 0.22.1",
- "bytes",
- "headers-core",
- "http 1.5.0",
- "httpdate",
- "mime",
- "sha1 0.10.7",
-]
-
-[[package]]
-name = "headers-core"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54b4a22553d4242c49fddb9ba998a99962b5cc6f22cb5a3482bec22522403ce4"
-dependencies = [
- "http 1.5.0",
 ]
 
 [[package]]
@@ -2704,17 +2752,6 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "601cbb57e577e2f5ef5be8e7b83f0f63994f25aa94d673e54a92d5c516d101f1"
-dependencies = [
- "bytes",
- "fnv",
- "itoa",
-]
-
-[[package]]
-name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0"
@@ -2725,23 +2762,12 @@ dependencies = [
 
 [[package]]
 name = "http-body"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ceab25649e9960c0311ea418d17bee82c0dcec1bd053b5f9a66e265a693bed2"
-dependencies = [
- "bytes",
- "http 0.2.12",
- "pin-project-lite",
-]
-
-[[package]]
-name = "http-body"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca2a8f2913ee65f60facd6a5905613afaa448497a0230cc41ce022d93290bc2c"
 dependencies = [
  "bytes",
- "http 1.5.0",
+ "http",
 ]
 
 [[package]]
@@ -2752,8 +2778,8 @@ checksum = "23169fe34a5fbcdd3f3862e78fb9b6fccd5f02a6dc6f732547005d45631ce71c"
 dependencies = [
  "bytes",
  "futures-core",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "pin-project-lite",
 ]
 
@@ -2789,8 +2815,8 @@ dependencies = [
  "futures-channel",
  "futures-core",
  "h2",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "httparse",
  "httpdate",
  "itoa",
@@ -2806,7 +2832,7 @@ version = "0.27.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33ca68d021ef39cf6463ab54c1d0f5daf03377b70561305bb89a8f83aab66e0f"
 dependencies = [
- "http 1.5.0",
+ "http",
  "hyper",
  "hyper-util",
  "rustls",
@@ -2857,8 +2883,8 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "hyper",
  "ipnet",
  "libc",
@@ -3102,6 +3128,7 @@ dependencies = [
 name = "im-adapters-redis-cache"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "chrono",
  "im-domain-core",
  "im-platform-contracts",
@@ -3274,6 +3301,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inout"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4250ce6452e92010fdf7268ccc5d14faa80bb12fc741938534c58f16804e03c7"
+dependencies = [
+ "hybrid-array",
+]
+
+[[package]]
 name = "instant-acme"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3283,8 +3319,8 @@ dependencies = [
  "aws-lc-rs",
  "base64 0.22.1",
  "bytes",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "httpdate",
  "hyper",
@@ -3488,9 +3524,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.56.0"
+version = "0.58.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6a806f80c1f5560431009ce5ec29b59d38f950e0cd7db5f1b8925e6d8104e21"
+checksum = "f622c574a29fb3034a0a90645afee194dfedc75fc124228801b6e77041075bd1"
 dependencies = [
  "ahash",
  "bytecount",
@@ -3500,12 +3536,12 @@ dependencies = [
  "fraction",
  "getrandom 0.3.4",
  "itoa",
- "jsonschema-regex 0.56.0",
- "jsonschema-value 0.56.0",
+ "jsonschema-regex 0.58.6",
+ "jsonschema-value 0.58.6",
  "num-cmp",
  "num-traits",
  "percent-encoding",
- "referencing 0.56.0",
+ "referencing 0.58.6",
  "regex",
  "serde",
  "serde_json",
@@ -3525,9 +3561,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema-regex"
-version = "0.56.0"
+version = "0.58.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb862addfa7782108933abcf842fe25334523a9df5b89ea4d9620e3dd7b42181"
+checksum = "a968fffd387b2ab005bf00c1851f5d26e90df05b6f7ad609ed0d620033cca5e7"
 dependencies = [
  "regex-syntax",
 ]
@@ -3550,9 +3586,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema-value"
-version = "0.56.0"
+version = "0.58.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a05cd404c5ff6e2731dbbf7e290a27417750acfb59e329560a1d0af384c93fb0"
+checksum = "39b7670345e5ce87371339d13705dbb9276b7e3e934bbe1efa2c6734a1f65a96"
 dependencies = [
  "ahash",
  "bytecount",
@@ -3856,7 +3892,7 @@ dependencies = [
  "bytes",
  "encoding_rs",
  "futures-util",
- "http 1.5.0",
+ "http",
  "httparse",
  "memchr",
  "mime",
@@ -4199,6 +4235,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentelemetry"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6cdb0b1b267eb9db3331b434ed9ddab10d50e280a9adf9d13e5233e2002b61b5"
+dependencies = [
+ "futures-core",
+ "futures-sink",
+ "js-sys",
+ "pin-project-lite",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
 name = "opentelemetry-http"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4206,9 +4256,22 @@ checksum = "50f6639e842a97dbea8886e3439710ae463120091e2e064518ba8e716e6ac36d"
 dependencies = [
  "async-trait",
  "bytes",
- "http 1.5.0",
+ "http",
  "opentelemetry 0.30.0",
  "reqwest 0.12.28",
+]
+
+[[package]]
+name = "opentelemetry-http"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee2c3625b8aa04209f7e01e513bc8044da9687fa38a9eacf59628ca5f3b87300"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "http",
+ "opentelemetry 0.33.0",
+ "reqwest 0.13.4",
 ]
 
 [[package]]
@@ -4219,7 +4282,7 @@ checksum = "91cf61a1868dacc576bf2b2a1c3e9ab150af7272909e80085c3173384fe11f76"
 dependencies = [
  "async-trait",
  "futures-core",
- "http 1.5.0",
+ "http",
  "opentelemetry 0.27.1",
  "opentelemetry-proto 0.27.0",
  "opentelemetry_sdk 0.27.1",
@@ -4236,9 +4299,9 @@ version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dbee664a43e07615731afc539ca60c6d9f1a9425e25ca09c57bc36c87c55852b"
 dependencies = [
- "http 1.5.0",
+ "http",
  "opentelemetry 0.30.0",
- "opentelemetry-http",
+ "opentelemetry-http 0.30.0",
  "opentelemetry-proto 0.30.0",
  "opentelemetry_sdk 0.30.0",
  "prost 0.13.5",
@@ -4253,7 +4316,7 @@ version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f69cd6acbb9af919df949cd1ec9e5e7fdc2ef15d234b6b795aaa525cc02f71f"
 dependencies = [
- "http 1.5.0",
+ "http",
  "opentelemetry 0.31.0",
  "opentelemetry-proto 0.31.0",
  "opentelemetry_sdk 0.31.0",
@@ -4261,6 +4324,24 @@ dependencies = [
  "thiserror 2.0.20",
  "tokio",
  "tonic 0.14.6",
+]
+
+[[package]]
+name = "opentelemetry-otlp"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "699a67345e21962a231955b9059a157e428b219fa5df8efe11f08346fb23a344"
+dependencies = [
+ "http",
+ "httpdate",
+ "opentelemetry 0.33.0",
+ "opentelemetry-http 0.33.0",
+ "opentelemetry-proto 0.33.0",
+ "opentelemetry_sdk 0.33.0",
+ "prost 0.14.4",
+ "reqwest 0.13.4",
+ "thiserror 2.0.20",
+ "tokio",
 ]
 
 [[package]]
@@ -4298,6 +4379,17 @@ dependencies = [
  "prost 0.14.4",
  "tonic 0.14.6",
  "tonic-prost",
+]
+
+[[package]]
+name = "opentelemetry-proto"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25da1ac11a0aeccf38d7f77ee0348715adaf8340f65ad46c94a02c6b20e2f65d"
+dependencies = [
+ "opentelemetry 0.33.0",
+ "opentelemetry_sdk 0.33.0",
+ "prost 0.14.4",
 ]
 
 [[package]]
@@ -4350,6 +4442,24 @@ dependencies = [
  "futures-util",
  "opentelemetry 0.31.0",
  "percent-encoding",
+ "rand 0.9.5",
+ "thiserror 2.0.20",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
+name = "opentelemetry_sdk"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb39533d9d1c912123efd7d41d7e0c29d16917b60ce15b4c8d87cb1af7f67520"
+dependencies = [
+ "futures-channel",
+ "futures-executor",
+ "futures-util",
+ "opentelemetry 0.33.0",
+ "percent-encoding",
+ "portable-atomic",
  "rand 0.9.5",
  "thiserror 2.0.20",
  "tokio",
@@ -4684,7 +4794,18 @@ dependencies = [
  "cfg-if",
  "cpufeatures 0.2.17",
  "opaque-debug",
- "universal-hash",
+ "universal-hash 0.5.1",
+]
+
+[[package]]
+name = "polyval"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0fa31d631f2b2cb2a544d0aa321ce847a94764d701ca2becc411138b93d49cd"
+dependencies = [
+ "cpubits",
+ "cpufeatures 0.3.1",
+ "universal-hash 0.6.1",
 ]
 
 [[package]]
@@ -5361,9 +5482,9 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.56.0"
+version = "0.58.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3b4a92fac7e28c27de3ad26df2ecb9e652f227b258e845af034052e5b22c96c"
+checksum = "558f3855529c0a7e78a48e409fa653456e55f1b167eab4109c16a255b7727e3f"
 dependencies = [
  "ahash",
  "fluent-uri",
@@ -5424,8 +5545,8 @@ dependencies = [
  "futures-core",
  "futures-util",
  "h2",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -5474,8 +5595,8 @@ dependencies = [
  "futures-core",
  "futures-util",
  "h2",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -5525,9 +5646,9 @@ dependencies = [
 
 [[package]]
 name = "rig-core"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35f5520515ae8f6851adcbc6fde9eea8e96f657418c062e16c82cd81cce44e8e"
+checksum = "432d83e0facf16749f91fe729cbffca84437e8062d2f4e92f4f12e903693922d"
 dependencies = [
  "as-any",
  "async-stream",
@@ -5538,7 +5659,7 @@ dependencies = [
  "futures",
  "futures-timer",
  "glob",
- "http 1.5.0",
+ "http",
  "indexmap 2.14.1",
  "mime",
  "mime_guess",
@@ -5548,9 +5669,10 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "thiserror 2.0.20",
  "tokio",
- "tokio-tungstenite 0.28.0",
+ "tokio-tungstenite 0.29.0",
  "tracing",
  "tracing-futures",
  "url",
@@ -5580,8 +5702,8 @@ dependencies = [
  "bytes",
  "chrono",
  "futures",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "pastey",
  "pin-project-lite",
@@ -6094,6 +6216,7 @@ dependencies = [
 name = "sdkwork-agent-provider-transport-ipc"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "sdkwork-agent-kernel",
  "serde",
  "serde_json",
@@ -6132,7 +6255,7 @@ dependencies = [
 name = "sdkwork-agent-server"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "anyhow",
  "axum 0.8.9",
  "chrono",
@@ -6173,6 +6296,7 @@ dependencies = [
  "tracing-subscriber",
  "ureq",
  "uuid",
+ "zeroize",
 ]
 
 [[package]]
@@ -6206,6 +6330,7 @@ dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-utils-rust",
+ "tokio",
  "tracing",
 ]
 
@@ -6219,6 +6344,7 @@ dependencies = [
  "sdkwork-agent-server",
  "sdkwork-agents-contract",
  "sdkwork-agents-database-host",
+ "sdkwork-agents-runtime-facade",
  "sdkwork-agents-tool-cloudrouter",
  "sdkwork-database-sqlx",
  "sdkwork-intelligence-agents-service",
@@ -6366,9 +6492,9 @@ dependencies = [
 name = "sdkwork-aiot-adapter-xiaozhi"
 version = "0.1.0"
 dependencies = [
- "aes",
+ "aes 0.8.4",
  "audiopus",
- "ctr",
+ "ctr 0.9.2",
  "sdkwork-aiot-protocol",
  "sdkwork-aiot-security",
 ]
@@ -7185,7 +7311,6 @@ dependencies = [
  "sdkwork-api-order-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-shop-assembly",
- "sdkwork-catalog-database-host",
  "sdkwork-comms-conversation-service",
  "sdkwork-community-database-host",
  "sdkwork-community-feeds-community-embedded",
@@ -7341,7 +7466,7 @@ name = "sdkwork-api-log-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-database-sqlx",
  "sdkwork-log-core",
  "sdkwork-log-database-host",
@@ -7434,6 +7559,28 @@ dependencies = [
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
  "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-memory-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-config",
+ "sdkwork-intelligence-memory-repository-sqlx",
+ "sdkwork-intelligence-memory-service",
+ "sdkwork-memory-database-host",
+ "sdkwork-memory-drive",
+ "sdkwork-memory-provider-openai",
+ "sdkwork-routes-memory-app-api",
+ "sdkwork-routes-memory-backend-api",
+ "sdkwork-routes-memory-open-api",
+ "sdkwork-routes-memory-support",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
 ]
 
 [[package]]
@@ -7658,6 +7805,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-sandbox-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-intelligence-sandbox-repository-sqlx",
+ "sdkwork-intelligence-sandbox-service",
+ "sdkwork-routes-sandbox-app-api",
+ "sdkwork-routes-sandbox-internal-api",
+ "sdkwork-sandbox-database-host",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-api-search-assembly"
 version = "0.1.0"
 dependencies = [
@@ -7767,7 +7934,10 @@ dependencies = [
  "chrono",
  "sdkwork-api-deployments-assembly",
  "sdkwork-api-mcp-assembly",
+ "sdkwork-api-sandbox-assembly",
  "sdkwork-api-skills-assembly",
+ "sdkwork-database-sqlx",
+ "sdkwork-deploy-contract",
  "sdkwork-intelligence-deploy-repository-sqlx",
  "sdkwork-intelligence-webserver-repository-sqlx",
  "sdkwork-intelligence-webserver-service",
@@ -7780,6 +7950,7 @@ dependencies = [
  "sdkwork-webserver-contract",
  "sdkwork-webserver-database-host",
  "serde_json",
+ "sqlx",
  "thiserror 2.0.20",
  "tokio",
  "tracing",
@@ -7906,6 +8077,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "sdkwork-appstore-authorization",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "uuid",
@@ -7927,10 +8099,12 @@ dependencies = [
  "sdkwork-appstore-release-service",
  "sdkwork-appstore-user-store-service",
  "sdkwork-database-sqlx",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -7970,10 +8144,14 @@ dependencies = [
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
  "sdkwork-appstore-repository-sqlx",
+ "sdkwork-database-sqlx",
  "sdkwork-utils-rust",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
  "urlencoding",
  "uuid",
 ]
@@ -8280,23 +8458,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-catalog-database-host"
+name = "sdkwork-catalog-service-host"
 version = "0.1.0"
 dependencies = [
  "dotenvy",
  "sdkwork-database-config",
- "sdkwork-database-lifecycle",
- "sdkwork-database-spi",
+ "sdkwork-database-id",
  "sdkwork-database-sqlx",
-]
-
-[[package]]
-name = "sdkwork-catalog-service-host"
-version = "0.1.0"
-dependencies = [
- "sdkwork-catalog-database-host",
- "sdkwork-database-spi",
- "sdkwork-database-sqlx",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tracing",
 ]
 
 [[package]]
@@ -8381,7 +8552,7 @@ dependencies = [
  "futures-util",
  "getrandom 0.3.4",
  "hex",
- "http-body 1.1.0",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -8392,6 +8563,7 @@ dependencies = [
  "sdkwork-account-service",
  "sdkwork-account-service-host",
  "sdkwork-api-community-assembly",
+ "sdkwork-api-course-assembly",
  "sdkwork-api-iam-assembly",
  "sdkwork-api-inventory-assembly",
  "sdkwork-api-log-assembly",
@@ -8582,7 +8754,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hex",
  "hmac 0.12.1",
- "http-body 1.1.0",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-rustls",
@@ -8686,6 +8858,10 @@ version = "0.1.0"
 dependencies = [
  "sdkwork-agent-kernel",
 ]
+
+[[package]]
+name = "sdkwork-commerce-money"
+version = "0.1.0"
 
 [[package]]
 name = "sdkwork-commerce-partner-repository-sqlx"
@@ -9433,7 +9609,7 @@ dependencies = [
 name = "sdkwork-deploy-certificate-material"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "base64 0.22.1",
  "chrono",
  "rcgen",
@@ -9481,6 +9657,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "sdkwork-deploy-core",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
@@ -9689,7 +9866,7 @@ dependencies = [
 name = "sdkwork-drive-app-sdk-generated-rust"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -9720,6 +9897,7 @@ version = "0.1.0"
 dependencies = [
  "dotenvy",
  "sdkwork-database-config",
+ "sdkwork-database-drift",
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
@@ -9731,7 +9909,7 @@ name = "sdkwork-drive-http"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "redis 1.6.0",
  "sdkwork-drive-config",
  "sdkwork-drive-observability",
@@ -9750,7 +9928,7 @@ dependencies = [
 name = "sdkwork-drive-internal-sdk-generated-rust"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -9775,12 +9953,12 @@ dependencies = [
 name = "sdkwork-drive-observability"
 version = "0.1.0"
 dependencies = [
- "opentelemetry 0.30.0",
- "opentelemetry-otlp 0.30.0",
- "opentelemetry_sdk 0.30.0",
+ "opentelemetry 0.33.0",
+ "opentelemetry-otlp 0.33.0",
+ "opentelemetry_sdk 0.33.0",
  "sdkwork-drive-config",
  "tracing",
- "tracing-opentelemetry 0.31.0",
+ "tracing-opentelemetry 0.34.0",
  "tracing-subscriber",
 ]
 
@@ -9802,9 +9980,9 @@ dependencies = [
 name = "sdkwork-drive-security"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "jsonwebtoken",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
@@ -9820,6 +9998,7 @@ dependencies = [
  "async-trait",
  "sdkwork-drive-config",
  "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -9842,7 +10021,11 @@ dependencies = [
  "aws-config",
  "aws-credential-types",
  "aws-sdk-s3",
+ "aws-smithy-http-client",
+ "aws-smithy-runtime-api",
+ "aws-smithy-xml",
  "aws-types",
+ "futures-util",
  "sdkwork-drive-storage-contract",
  "tokio",
 ]
@@ -9860,7 +10043,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "sdkwork-database-config",
  "sdkwork-database-id",
  "sdkwork-database-repository",
@@ -10155,7 +10338,7 @@ dependencies = [
 name = "sdkwork-github-integration-provider-github"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "base64 0.22.1",
  "chrono",
  "rand 0.8.8",
@@ -10203,7 +10386,7 @@ dependencies = [
 name = "sdkwork-iam-bootstrap"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "argon2",
  "base64 0.22.1",
  "chrono",
@@ -10272,7 +10455,7 @@ dependencies = [
 name = "sdkwork-iam-provider-account-service"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "base64 0.22.1",
  "chrono",
  "rand_core 0.6.4",
@@ -10287,8 +10470,8 @@ dependencies = [
 name = "sdkwork-iam-web-adapter"
 version = "0.1.0"
 dependencies = [
- "aes",
- "aes-gcm",
+ "aes 0.8.4",
+ "aes-gcm 0.10.3",
  "argon2",
  "async-trait",
  "axum 0.8.9",
@@ -10299,7 +10482,7 @@ dependencies = [
  "password-hash",
  "quick-xml",
  "rand_core 0.6.4",
- "reqwest 0.12.28",
+ "reqwest 0.13.4",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
  "sdkwork-iam-bootstrap",
@@ -10585,6 +10768,7 @@ dependencies = [
 name = "sdkwork-im-web-bootstrap"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum 0.8.9",
  "im-app-context",
  "sdkwork-iam-web-adapter",
@@ -10861,6 +11045,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
  "sqlx",
  "thiserror 1.0.69",
  "time",
@@ -10874,12 +11059,15 @@ dependencies = [
 name = "sdkwork-intelligence-knowledgebase-service"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes 0.8.4",
+ "aes-gcm 0.10.3",
  "ammonia",
  "async-trait",
  "base64 0.22.1",
+ "cbc",
  "cloudrouter-open-sdk",
  "futures",
+ "hkdf 0.12.4",
  "hmac 0.12.1",
  "pulldown-cmark",
  "reqwest 0.12.28",
@@ -10894,6 +11082,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
+ "sha1 0.10.7",
  "sha2 0.10.9",
  "thiserror 1.0.69",
  "time",
@@ -10967,6 +11156,58 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-intelligence-memory-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-database-config",
+ "sdkwork-database-id",
+ "sdkwork-database-repository",
+ "sdkwork-database-sqlx",
+ "sdkwork-intelligence-memory-service",
+ "sdkwork-memory-contract",
+ "sdkwork-memory-database-host",
+ "sdkwork-memory-plugin-native-sql",
+ "sdkwork-memory-profile-resolver",
+ "sdkwork-memory-retrieval",
+ "sdkwork-memory-spi",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-intelligence-memory-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.23.1",
+ "futures",
+ "hmac 0.13.0",
+ "rand 0.10.2",
+ "regex",
+ "reqwest 0.13.4",
+ "sdkwork-database-id",
+ "sdkwork-id-core",
+ "sdkwork-memory-contract",
+ "sdkwork-memory-plugin-native-sql",
+ "sdkwork-memory-plugin-search-first-vector",
+ "sdkwork-memory-retrieval",
+ "sdkwork-memory-spi",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sha2 0.11.0",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "url",
+]
+
+[[package]]
 name = "sdkwork-intelligence-prompts-ai-contract"
 version = "0.1.0"
 dependencies = [
@@ -10991,13 +11232,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-intelligence-sandbox-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-database-sqlx",
+ "sdkwork-intelligence-sandbox-service",
+ "sdkwork-sandbox-provider-spi",
+ "sdkwork-utils-rust",
+ "serde_json",
+ "sqlx",
+ "zeroize",
+]
+
+[[package]]
 name = "sdkwork-intelligence-sandbox-service"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "sdkwork-sandbox-provider-spi",
+ "sdkwork-utils-rust",
  "thiserror 2.0.20",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -11033,7 +11290,7 @@ name = "sdkwork-intelligence-webserver-repository-sqlx"
 version = "0.1.0"
 dependencies = [
  "async-trait",
- "base64 0.22.1",
+ "base64 0.23.1",
  "chrono",
  "futures-util",
  "sdkwork-database-config",
@@ -11043,6 +11300,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "sdkwork-webserver-acme-service",
  "sdkwork-webserver-contract",
+ "sdkwork-webserver-core",
  "sdkwork-webserver-database-host",
  "sdkwork-webserver-edge-runtime",
  "sdkwork-webserver-resolver-cache",
@@ -11050,6 +11308,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tokio",
  "tracing",
 ]
 
@@ -11194,13 +11453,14 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde_json",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
 name = "sdkwork-knowledgebase-contract"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
@@ -11236,9 +11496,11 @@ dependencies = [
  "sdkwork-drive-workspace-service",
  "sdkwork-intelligence-knowledgebase-object-key-service",
  "sdkwork-intelligence-knowledgebase-service",
+ "sdkwork-knowledgebase-database-host",
  "sdkwork-utils-rust",
  "sqlx",
  "time",
+ "tracing",
  "url",
  "uuid",
 ]
@@ -11254,6 +11516,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11268,6 +11531,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11297,6 +11561,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "tracing",
  "zeroize",
 ]
 
@@ -11312,6 +11577,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "tracing",
  "zeroize",
 ]
 
@@ -11326,6 +11592,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11341,6 +11608,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "tracing",
  "zeroize",
 ]
 
@@ -11355,6 +11623,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11369,6 +11638,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11383,6 +11653,7 @@ dependencies = [
  "sdkwork-knowledgebase-provider-runtime",
  "serde",
  "serde_json",
+ "tracing",
  "zeroize",
 ]
 
@@ -11390,7 +11661,7 @@ dependencies = [
 name = "sdkwork-knowledgebase-internal-sdk-generated-rust"
 version = "0.1.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -11402,7 +11673,7 @@ name = "sdkwork-knowledgebase-observability"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-knowledgebase-contract",
  "sdkwork-knowledgebase-provider-runtime",
  "sdkwork-utils-rust",
@@ -11422,6 +11693,7 @@ name = "sdkwork-knowledgebase-provider-runtime"
 version = "0.1.0"
 dependencies = [
  "httpdate",
+ "percent-encoding",
  "reqwest 0.12.28",
  "sdkwork-knowledgebase-contract",
  "sdkwork-utils-rust",
@@ -11565,8 +11837,8 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "bytes",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "sdkwork-log-core",
  "tokio",
@@ -11641,7 +11913,7 @@ dependencies = [
 name = "sdkwork-lr-store"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "anyhow",
  "base64 0.22.1",
  "chrono",
@@ -11807,6 +12079,7 @@ version = "0.1.0"
 dependencies = [
  "dotenvy",
  "sdkwork-database-config",
+ "sdkwork-database-drift",
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
@@ -11906,6 +12179,122 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-memory-contract"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-memory-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+ "sqlx",
+]
+
+[[package]]
+name = "sdkwork-memory-drive"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-database-config",
+ "sdkwork-database-sqlx",
+ "sdkwork-drive-config",
+ "sdkwork-drive-storage-contract",
+ "sdkwork-drive-storage-local",
+ "sdkwork-drive-storage-s3",
+ "sdkwork-drive-uploader-service",
+ "sdkwork-drive-workspace-service",
+ "sdkwork-memory-spi",
+ "sdkwork-utils-rust",
+ "sqlx",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-memory-plugin-native-sql"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "sdkwork-database-config",
+ "sdkwork-database-id",
+ "sdkwork-database-sqlx",
+ "sdkwork-memory-spi",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-memory-plugin-search-first-vector"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "sdkwork-memory-spi",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-memory-profile-resolver"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-memory-spi",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
+name = "sdkwork-memory-provider-openai"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest 0.13.4",
+ "sdkwork-memory-spi",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-memory-retrieval"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-memory-contract",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-memory-spi"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "sdkwork-merchandise-database-host"
 version = "0.1.0"
 dependencies = [
@@ -11920,37 +12309,36 @@ dependencies = [
 name = "sdkwork-merchandise-repository-sqlx"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "chrono",
+ "sdkwork-commerce-money",
  "sdkwork-contract-service",
  "sdkwork-database-id",
- "sdkwork-database-sqlx",
  "sdkwork-merchandise-service",
- "serde",
  "serde_json",
  "sqlx",
- "uuid",
+ "tracing",
 ]
 
 [[package]]
 name = "sdkwork-merchandise-service"
 version = "0.1.0"
 dependencies = [
- "async-trait",
- "chrono",
  "sdkwork-contract-service",
- "sdkwork-utils-rust",
- "serde",
  "serde_json",
- "uuid",
 ]
 
 [[package]]
 name = "sdkwork-merchandise-service-host"
 version = "0.1.0"
 dependencies = [
+ "sdkwork-database-id",
  "sdkwork-database-sqlx",
  "sdkwork-merchandise-database-host",
+ "sdkwork-merchandise-repository-sqlx",
+ "sdkwork-merchandise-service",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tracing",
 ]
 
 [[package]]
@@ -11960,13 +12348,11 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-contract-service",
  "sdkwork-iam-context-service",
- "sdkwork-merchandise-repository-sqlx",
  "sdkwork-merchandise-service",
  "sdkwork-utils-rust",
  "sdkwork-web-core",
  "serde",
  "serde_json",
- "sqlx",
  "uuid",
 ]
 
@@ -12158,7 +12544,7 @@ dependencies = [
 name = "sdkwork-notary-case-repository-sqlx"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.10.3",
  "async-trait",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
@@ -12199,6 +12585,7 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "dotenvy",
+ "sdkwork-commerce-money",
  "sdkwork-contract-service",
  "sdkwork-database-config",
  "sdkwork-database-id",
@@ -12291,6 +12678,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-order-integration-deployments"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-contract-service",
+ "sdkwork-database-sqlx",
+ "sdkwork-order-service",
+ "sqlx",
+]
+
+[[package]]
 name = "sdkwork-order-integration-membership"
 version = "0.1.0"
 dependencies = [
@@ -12335,6 +12732,7 @@ dependencies = [
 name = "sdkwork-order-integration-physical-commerce"
 version = "0.1.0"
 dependencies = [
+ "sdkwork-commerce-money",
  "sdkwork-contract-service",
  "sdkwork-database-config",
  "sdkwork-database-history",
@@ -12381,6 +12779,7 @@ dependencies = [
 name = "sdkwork-order-service"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "sdkwork-contract-service",
  "sdkwork-payment-service",
  "sdkwork-utils-rust",
@@ -12394,10 +12793,12 @@ name = "sdkwork-order-service-host"
 version = "0.1.0"
 dependencies = [
  "dotenvy",
+ "sdkwork-database-id",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-order-database-host",
  "sdkwork-order-integration-account",
+ "sdkwork-order-integration-deployments",
  "sdkwork-order-integration-membership",
  "sdkwork-order-integration-partner",
  "sdkwork-order-integration-payment",
@@ -12407,6 +12808,8 @@ dependencies = [
  "sdkwork-order-service",
  "sdkwork-payment-providers",
  "sdkwork-payment-repository-sqlx",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
  "sqlx",
  "tokio",
  "tracing",
@@ -12437,6 +12840,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-payment-compensation-worker"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "sdkwork-contract-service",
+ "sdkwork-payment-providers",
+ "sdkwork-payment-repository-sqlx",
+ "sdkwork-utils-rust",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-payment-database-host"
 version = "0.1.0"
 dependencies = [
@@ -12451,7 +12869,7 @@ dependencies = [
 name = "sdkwork-payment-providers"
 version = "0.1.0"
 dependencies = [
- "aes-gcm",
+ "aes-gcm 0.11.1",
  "async-trait",
  "base64 0.22.1",
  "chrono",
@@ -12466,7 +12884,9 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "time",
  "tokio",
+ "tracing",
  "urlencoding",
  "uuid",
  "x509-parser 0.17.0",
@@ -12485,6 +12905,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
+ "tracing",
  "uuid",
 ]
 
@@ -12502,11 +12923,14 @@ version = "0.1.0"
 dependencies = [
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+ "sdkwork-payment-compensation-worker",
  "sdkwork-payment-database-host",
  "sdkwork-payment-providers",
  "sdkwork-payment-repository-sqlx",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -12908,7 +13332,7 @@ name = "sdkwork-routes-canvas-app-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-canvas-pages-service",
  "sdkwork-database-config",
  "sdkwork-iam-web-adapter",
@@ -12927,7 +13351,7 @@ name = "sdkwork-routes-canvas-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-canvas-pages-service",
  "sdkwork-database-config",
  "sdkwork-iam-web-adapter",
@@ -12946,7 +13370,7 @@ name = "sdkwork-routes-canvas-http-auth"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-canvas-pages-service",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -12962,6 +13386,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-catalog-service-host",
  "sdkwork-contract-service",
+ "sdkwork-database-id",
  "sdkwork-database-sqlx",
  "sdkwork-iam-context-service",
  "sdkwork-iam-web-adapter",
@@ -12993,13 +13418,13 @@ dependencies = [
  "sdkwork-api-iam-assembly",
  "sdkwork-api-invoice-assembly",
  "sdkwork-api-membership-assembly",
+ "sdkwork-api-memory-assembly",
  "sdkwork-api-models-assembly",
  "sdkwork-api-order-assembly",
  "sdkwork-api-partner-assembly",
  "sdkwork-api-payment-assembly",
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-skills-assembly",
- "sdkwork-catalog-database-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
  "sdkwork-cloudrouter-http",
@@ -13060,6 +13485,7 @@ dependencies = [
  "sdkwork-models-contract-service",
  "sdkwork-routes-base-data-backend-api",
  "sdkwork-routes-community-backend-api",
+ "sdkwork-routes-course-backend-api",
  "sdkwork-routes-edu-data-backend-api",
  "sdkwork-routes-iam-backend-api",
  "sdkwork-routes-inventory-backend-api",
@@ -13512,11 +13938,12 @@ dependencies = [
  "axum 0.8.9",
  "chrono",
  "futures-util",
- "http 1.5.0",
+ "http",
  "httpdate",
  "sdkwork-drive-config",
  "sdkwork-drive-contract",
  "sdkwork-drive-http",
+ "sdkwork-drive-object-runtime",
  "sdkwork-drive-observability",
  "sdkwork-drive-sandbox-local",
  "sdkwork-drive-security",
@@ -13544,7 +13971,7 @@ name = "sdkwork-routes-drive-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-drive-config",
  "sdkwork-drive-contract",
  "sdkwork-drive-http",
@@ -13571,7 +13998,7 @@ dependencies = [
  "axum 0.8.9",
  "chrono",
  "futures-util",
- "http 1.5.0",
+ "http",
  "httpdate",
  "sdkwork-drive-http",
  "sdkwork-drive-object-runtime",
@@ -13594,7 +14021,7 @@ name = "sdkwork-routes-drive-open-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-drive-config",
  "sdkwork-drive-http",
  "sdkwork-drive-observability",
@@ -13811,7 +14238,7 @@ name = "sdkwork-routes-github-app-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-github-integration-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-routes-github-common",
@@ -13828,7 +14255,7 @@ name = "sdkwork-routes-github-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-github-integration-service",
  "sdkwork-iam-web-adapter",
  "sdkwork-routes-github-common",
@@ -13842,7 +14269,7 @@ name = "sdkwork-routes-github-common"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-github-integration-service",
  "sdkwork-utils-rust",
  "sdkwork-web-core",
@@ -13893,6 +14320,7 @@ dependencies = [
 name = "sdkwork-routes-iam-backend-api"
 version = "0.1.0"
 dependencies = [
+ "argon2",
  "axum 0.8.9",
  "chrono",
  "sdkwork-database-sqlx",
@@ -14289,6 +14717,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -14540,7 +14969,7 @@ name = "sdkwork-routes-log-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-log-core",
  "sdkwork-utils-rust",
  "sdkwork-web-contract",
@@ -14796,6 +15225,77 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-memory-app-api"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-memory-service",
+ "sdkwork-memory-contract",
+ "sdkwork-routes-memory-support",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-memory-backend-api"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-memory-service",
+ "sdkwork-memory-contract",
+ "sdkwork-routes-memory-support",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-memory-open-api"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-memory-service",
+ "sdkwork-memory-contract",
+ "sdkwork-routes-memory-support",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-memory-support"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "futures",
+ "sdkwork-database-sqlx",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-memory-contract",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-routes-merchandise-backend-api"
 version = "0.1.0"
 dependencies = [
@@ -14865,7 +15365,7 @@ name = "sdkwork-routes-modelkit-http-auth"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-modelkit-catalog-service",
  "sdkwork-modelkit-preferences-service",
  "sdkwork-utils-rust",
@@ -14994,7 +15494,7 @@ name = "sdkwork-routes-notary-http-auth"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-iam-web-adapter",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -15008,7 +15508,7 @@ name = "sdkwork-routes-notes-app-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-database-config",
  "sdkwork-iam-web-adapter",
  "sdkwork-notes-pages-service",
@@ -15027,7 +15527,7 @@ name = "sdkwork-routes-notes-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-database-config",
  "sdkwork-iam-web-adapter",
  "sdkwork-notes-pages-service",
@@ -15046,7 +15546,7 @@ name = "sdkwork-routes-notes-http-auth"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-notes-pages-service",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -15198,6 +15698,7 @@ dependencies = [
  "sha2 0.10.9",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -15443,6 +15944,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-routes-sandbox-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-intelligence-sandbox-service",
+ "sdkwork-sandbox-provider-spi",
+ "sdkwork-utils-rust",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
+name = "sdkwork-routes-sandbox-internal-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "base64 0.22.1",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-sandbox-service",
+ "sdkwork-sandbox-provider-spi",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-routes-search-app-api"
 version = "0.1.0"
 dependencies = [
@@ -15510,6 +16043,7 @@ version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-contract-service",
+ "sdkwork-database-id",
  "sdkwork-database-sqlx",
  "sdkwork-iam-context-service",
  "sdkwork-iam-web-adapter",
@@ -15594,11 +16128,13 @@ dependencies = [
 name = "sdkwork-routes-storage-backend-api"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-drive-config",
  "sdkwork-drive-contract",
  "sdkwork-drive-http",
+ "sdkwork-drive-object-runtime",
  "sdkwork-drive-observability",
  "sdkwork-drive-security",
  "sdkwork-drive-storage-contract",
@@ -15729,7 +16265,7 @@ name = "sdkwork-routes-voice-http-auth"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-iam-web-adapter",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
@@ -15743,7 +16279,7 @@ name = "sdkwork-routes-web-framework-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "sdkwork-utils-rust",
  "sdkwork-web-contract",
  "sdkwork-web-core",
@@ -15994,11 +16530,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-sandbox-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-drift",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+ "sqlx",
+ "thiserror 2.0.20",
+]
+
+[[package]]
 name = "sdkwork-sandbox-provider-spi"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sha2 0.10.9",
  "thiserror 2.0.20",
+ "tokio",
  "uuid",
  "zeroize",
 ]
@@ -16144,6 +16696,8 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "bytes",
+ "cap-fs-ext",
+ "cap-std",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
@@ -16250,11 +16804,15 @@ dependencies = [
 name = "sdkwork-shop-service-host"
 version = "0.1.0"
 dependencies = [
+ "sdkwork-database-id",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
  "sdkwork-shop-database-host",
  "sdkwork-shop-repository-sqlx",
  "sdkwork-shop-service",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tracing",
 ]
 
 [[package]]
@@ -16273,6 +16831,7 @@ version = "0.1.0"
 dependencies = [
  "dotenvy",
  "sdkwork-database-config",
+ "sdkwork-database-drift",
  "sdkwork-database-id",
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
@@ -16284,17 +16843,17 @@ dependencies = [
 name = "sdkwork-utils-rust"
 version = "0.11.0"
 dependencies = [
- "aes-gcm",
- "base64 0.22.1",
+ "aes-gcm 0.11.1",
+ "base64 0.23.1",
  "chrono",
- "hkdf 0.12.4",
- "hmac 0.12.1",
+ "hkdf 0.13.0",
+ "hmac 0.13.0",
  "rand 0.8.8",
  "redis 0.27.6",
  "regex",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "urlencoding",
  "uuid",
 ]
@@ -16427,7 +16986,7 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "futures-util",
- "http 1.5.0",
+ "http",
  "sdkwork-web-core",
  "serde_json",
  "tokio",
@@ -16442,7 +17001,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
- "http 1.5.0",
+ "http",
  "opentelemetry 0.27.1",
  "opentelemetry-otlp 0.27.0",
  "opentelemetry_sdk 0.27.1",
@@ -16501,7 +17060,7 @@ dependencies = [
  "axum 0.8.9",
  "getrandom 0.2.17",
  "hmac 0.12.1",
- "http 1.5.0",
+ "http",
  "percent-encoding",
  "rsa",
  "sdkwork-utils-rust",
@@ -16561,26 +17120,27 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "base64 0.22.1",
+ "base64 0.23.1",
  "bytes",
  "chrono",
- "hmac 0.12.1",
- "http 1.5.0",
- "http-body 1.1.0",
+ "hmac 0.13.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-rustls",
  "hyper-util",
  "instant-acme",
  "percent-encoding",
- "rand 0.8.8",
+ "rand 0.10.2",
  "rcgen",
  "rustls",
  "rustls-pki-types",
+ "sdkwork-deploy-core",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
- "sha1 0.10.7",
+ "sha1 0.11.0",
  "tempfile",
  "thiserror 2.0.20",
  "time",
@@ -16598,10 +17158,10 @@ dependencies = [
  "sdkwork-server-files-service",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "thiserror 2.0.20",
  "tokio",
- "toml 0.8.23",
+ "toml 1.1.4+spec-1.1.0",
  "tracing",
 ]
 
@@ -16610,6 +17170,7 @@ name = "sdkwork-webserver-contract"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sdkwork-deploy-core",
  "sdkwork-utils-rust",
  "sdkwork-webserver-core",
  "serde",
@@ -16622,21 +17183,22 @@ name = "sdkwork-webserver-core"
 version = "0.1.0"
 dependencies = [
  "arc-swap",
- "base64 0.22.1",
+ "base64 0.23.1",
  "bcrypt",
  "ipnet",
- "jsonschema 0.56.0",
- "md-5 0.10.6",
+ "jsonschema 0.58.6",
+ "md-5 0.11.0",
  "rcgen",
  "regex",
  "sdkwork-deploy-core",
  "sdkwork-utils-rust",
  "sdkwork-webserver-resolver-cache",
+ "sdkwork-webserver-tunnel-core",
  "serde",
  "serde_json",
- "sha1 0.10.7",
+ "sha1 0.11.0",
  "thiserror 2.0.20",
- "toml 0.8.23",
+ "toml 1.1.4+spec-1.1.0",
  "tracing",
  "url",
 ]
@@ -16661,6 +17223,7 @@ dependencies = [
  "anyhow",
  "rustls",
  "sdkwork-utils-rust",
+ "sdkwork-webserver-core",
  "serde",
  "serde_json",
  "tempfile",
@@ -16687,7 +17250,7 @@ dependencies = [
 name = "sdkwork-webserver-internal-sdk-generated-rust"
 version = "1.0.0"
 dependencies = [
- "http 1.5.0",
+ "http",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -16720,12 +17283,23 @@ dependencies = [
  "sdkwork-intelligence-webserver-service",
  "sdkwork-utils-rust",
  "sdkwork-webserver-contract",
- "sha2 0.10.9",
+ "sha2 0.11.0",
  "sqlx",
  "tempfile",
  "tokio",
  "url",
  "zip",
+]
+
+[[package]]
+name = "sdkwork-webserver-tunnel-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "ipnet",
+ "sdkwork-utils-rust",
+ "serde",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
@@ -17450,7 +18024,7 @@ checksum = "c25ac7aff0abd1dbc474536e40416e1102c7dd9bfba0b9861c6d357f835dcfb4"
 dependencies = [
  "bytes",
  "futures-util",
- "http-body 1.1.0",
+ "http-body",
  "http-body-util",
  "pin-project-lite",
 ]
@@ -17868,8 +18442,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-tungstenite"
-version = "0.28.0"
-source = "git+https://github.com/openai-oss-forks/tokio-tungstenite?rev=0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186#0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f72a05e828585856dacd553fba484c242c46e391fb0e58917c942ee9202915c"
 dependencies = [
  "futures-util",
  "log",
@@ -17877,20 +18452,8 @@ dependencies = [
  "rustls-pki-types",
  "tokio",
  "tokio-rustls",
- "tungstenite 0.27.0",
- "webpki-roots 0.26.11",
-]
-
-[[package]]
-name = "tokio-tungstenite"
-version = "0.29.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f72a05e828585856dacd553fba484c242c46e391fb0e58917c942ee9202915c"
-dependencies = [
- "futures-util",
- "log",
- "tokio",
  "tungstenite 0.29.0",
+ "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -18000,8 +18563,8 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "h2",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-timeout",
@@ -18027,8 +18590,8 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "bytes",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "percent-encoding",
  "pin-project",
@@ -18050,8 +18613,8 @@ dependencies = [
  "base64 0.22.1",
  "bytes",
  "h2",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "hyper",
  "hyper-timeout",
@@ -18170,8 +18733,8 @@ dependencies = [
  "bitflags",
  "bytes",
  "futures-util",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "pin-project-lite",
  "tower 0.5.3",
  "tower-layer",
@@ -18188,8 +18751,8 @@ checksum = "b11f75e912b0c2be01b63d8cf8057b8c3f97cf34abb3d431a3a4c8675498e233"
 dependencies = [
  "bitflags",
  "bytes",
- "http 1.5.0",
- "http-body 1.1.0",
+ "http",
+ "http-body",
  "http-body-util",
  "percent-encoding",
  "pin-project-lite",
@@ -18320,6 +18883,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-opentelemetry"
+version = "0.34.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a904802a1b902f43638b677ff2a650847e3b4404101b6c586d648e8c1e3e8fe"
+dependencies = [
+ "js-sys",
+ "opentelemetry 0.33.0",
+ "smallvec",
+ "tracing",
+ "tracing-core",
+ "tracing-log",
+ "tracing-subscriber",
+ "web-time",
+]
+
+[[package]]
 name = "tracing-serde"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18364,26 +18943,7 @@ checksum = "4793cb5e56680ecbb1d843515b23b6de9a75eb04b66643e256a396d43be33c13"
 dependencies = [
  "bytes",
  "data-encoding",
- "http 1.5.0",
- "httparse",
- "log",
- "rand 0.9.5",
- "rustls",
- "rustls-pki-types",
- "sha1 0.10.7",
- "thiserror 2.0.20",
- "utf-8",
-]
-
-[[package]]
-name = "tungstenite"
-version = "0.27.0"
-source = "git+https://github.com/openai-oss-forks/tungstenite-rs?rev=4fffad30fe373adbdcffab9545e9e9bf4f2fc19f#4fffad30fe373adbdcffab9545e9e9bf4f2fc19f"
-dependencies = [
- "bytes",
- "data-encoding",
- "headers",
- "http 1.5.0",
+ "http",
  "httparse",
  "log",
  "rand 0.9.5",
@@ -18402,10 +18962,12 @@ checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
 dependencies = [
  "bytes",
  "data-encoding",
- "http 1.5.0",
+ "http",
  "httparse",
  "log",
  "rand 0.9.5",
+ "rustls",
+ "rustls-pki-types",
  "sha1 0.10.7",
  "thiserror 2.0.20",
 ]
@@ -18481,6 +19043,16 @@ checksum = "fc1de2c688dc15305988b563c3854064043356019f97a4b46276fe734c4f07ea"
 dependencies = [
  "crypto-common 0.1.7",
  "subtle",
+]
+
+[[package]]
+name = "universal-hash"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4987bdc12753382e0bec4a65c50738ffaabc998b9cdd1f952fb5f39b0048a96"
+dependencies = [
+ "crypto-common 0.2.2",
+ "ctutils",
 ]
 
 [[package]]
@@ -19294,3 +19866,13 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[patch.unused]]
+name = "tokio-tungstenite"
+version = "0.28.0"
+source = "git+https://github.com/openai-oss-forks/tokio-tungstenite?rev=0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186#0e5b2d73aa18dd9f0a50ee9ff199d5aef7594186"
+
+[[patch.unused]]
+name = "tungstenite"
+version = "0.27.0"
+source = "git+https://github.com/openai-oss-forks/tungstenite-rs?rev=4fffad30fe373adbdcffab9545e9e9bf4f2fc19f#4fffad30fe373adbdcffab9545e9e9bf4f2fc19f"

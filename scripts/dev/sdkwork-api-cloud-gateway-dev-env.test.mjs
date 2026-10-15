@@ -1,11 +1,15 @@
 // WORKSPACE-PATH:allow-fixture: fixtures name a foreign checkout root, drive, or home directory to exercise path handling, so the literal is the value under assertion rather than a binding this build resolves
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import test from 'node:test';
 
 import {
+  describeCloudRouterCredentialKeyRingSource,
+  resolveCloudRouterCredentialKeyRing,
   resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
+  resolveEmbeddedMemoryObjectStoreRoot,
   resolveEmbeddedPostgresUrl,
   resolveTemporaryDatabaseDriverEnv,
 } from './sdkwork-api-cloud-gateway-dev-env.mjs';
@@ -186,6 +190,16 @@ test('embedded modules receive the selected lifecycle environment', () => {
   assert.equal(resolved.SDKWORK_IM_ENVIRONMENT, 'development');
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, 'development');
   assert.equal(resolved.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT, 'development');
+  assert.equal(resolved.SDKWORK_MEMORY_ENVIRONMENT, 'development');
+});
+
+test('embedded memory keeps an explicit lifecycle environment over the gateway one', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_ENVIRONMENT: 'development',
+    SDKWORK_MEMORY_ENVIRONMENT: 'staging',
+  });
+
+  assert.equal(resolved.SDKWORK_MEMORY_ENVIRONMENT, 'staging');
 });
 
 test('embedded module environment overrides remain independent', () => {
@@ -244,4 +258,112 @@ test('embedded dependency env ignores the gateway bind when deriving dependency 
   });
 
   assert.equal(resolved.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL, undefined);
+});
+
+test('embedded memory exports default into the private runtime state directory', () => {
+  const resolved = resolveEmbeddedMemoryObjectStoreRoot({
+    env: {},
+    runtimeStateDirectory: 'C:\\state\\sdkwork-api-cloud-gateway',
+  });
+
+  assert.equal(
+    resolved,
+    path.join('C:\\state\\sdkwork-api-cloud-gateway', 'memory-drive-objects'),
+  );
+});
+
+test('embedded memory exports preserve an explicit object store root', () => {
+  assert.equal(
+    resolveEmbeddedMemoryObjectStoreRoot({
+      env: { SDKWORK_MEMORY_DRIVE_OBJECT_STORE_ROOT: 'D:\\objects' },
+      runtimeStateDirectory: 'C:\\state',
+    }),
+    'D:\\objects',
+  );
+});
+
+test('embedded cloudrouter reuses the shared workspace development key ring', () => {
+  // The upstream credentials in the shared development database were encrypted
+  // by CloudRouter's own development ring, so a different inline ring fails at
+  // startup with "catalog row mapping failed: failed to decrypt".
+  const sharedRing = JSON.stringify({
+    activeKeyId: 'development-local-v1',
+    activeKey: 'shared-ring-key',
+    fingerprintKey: 'shared-ring-fingerprint',
+    decryptionKeys: [],
+  });
+  const resolved = resolveCloudRouterCredentialKeyRing({
+    env: {},
+    fileExists: (filePath) => filePath.endsWith(
+      'upstream-credential-key-ring.development.json',
+    ),
+    readFile: () => sharedRing,
+    repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+  });
+
+  assert.equal(resolved, sharedRing);
+});
+
+test('embedded cloudrouter falls back to the inline ring without the shared file', () => {
+  const resolved = resolveCloudRouterCredentialKeyRing({
+    env: {},
+    fileExists: () => false,
+    repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+  });
+  const parsed = JSON.parse(resolved);
+
+  assert.equal(parsed.activeKeyId, 'development-local-v1');
+  assert.match(parsed.activeKey, /^[A-Za-z0-9_-]{32,}$/u);
+});
+
+test('an explicit cloudrouter key ring is never overridden', () => {
+  const explicit = '{"activeKeyId":"explicit","activeKey":"explicit-key"}';
+  assert.equal(
+    resolveCloudRouterCredentialKeyRing({
+      env: { SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING: explicit },
+      fileExists: () => true,
+      repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+    }),
+    undefined,
+  );
+  assert.equal(
+    resolveCloudRouterCredentialKeyRing({
+      env: {
+        SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE: 'D:\\ring.json',
+      },
+      fileExists: () => true,
+      repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+    }),
+    undefined,
+  );
+});
+
+test('a malformed shared key ring falls back instead of breaking startup', () => {
+  const resolved = resolveCloudRouterCredentialKeyRing({
+    env: {},
+    fileExists: () => true,
+    readFile: () => 'not json',
+    repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+  });
+
+  assert.equal(JSON.parse(resolved).activeKeyId, 'development-local-v1');
+});
+
+test('the reported key-ring source names the shared ring when it is used', () => {
+  assert.match(
+    describeCloudRouterCredentialKeyRingSource({
+      env: {},
+      fileExists: () => true,
+      repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+    }),
+    /shared CloudRouter development key ring/u,
+  );
+  assert.match(
+    describeCloudRouterCredentialKeyRingSource({
+      env: {},
+      fileExists: () => false,
+      repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
+    }),
+    /inline development fallback/u,
+  );
 });

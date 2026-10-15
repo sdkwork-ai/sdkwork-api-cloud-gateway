@@ -31,6 +31,7 @@
     "check:container-deployment": "node scripts/validate-docker-deployment.mjs --matrix --compose",
     "check:cors-carriers": "node scripts/derive-cors-allowed-origins.mjs --check",
     "db:postgres:provision": "bash bin/host/provision-external-databases.sh",
+    "build:native-deps:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-libopus.ps1",
     "install:hosts": "powershell -ExecutionPolicy Bypass -File bin/host/bind-windows-hosts.ps1",
     "deploy:host:prepare": "bash bin/host/prepare-host.sh",
     "db:postgres:init": "node ../sdkwork-specs/tools/postgres/postgres-db-cli.mjs --mode init --config .env.postgres --app-root .",
@@ -61,7 +62,7 @@
     "topology:validate": "node ../sdkwork-app-topology/scripts/sdkwork-topology.mjs validate --root . --spec specs/topology.spec.json",
     "check:app-composition": "node ../sdkwork-specs/tools/verify-repo.mjs --root .",
     "_sdkwork:build": "cargo build --workspace",
-    "_sdkwork:test": "cargo test --workspace && node --test scripts/check-gateway-api-closure.test.mjs scripts/deployment-contract.test.mjs scripts/package-server.test.mjs scripts/cors-allowed-origins.test.mjs scripts/dev/sdkwork-api-cloud-gateway-dev-env.test.mjs scripts/dev/sdkwork-api-cloud-gateway-source-config.test.mjs && node scripts/dev/sdkwork-api-cloud-gateway-database-bootstrap-standard.test.mjs",
+    "_sdkwork:test": "cargo test --workspace && node --test scripts/check-gateway-api-closure.test.mjs scripts/deployment-contract.test.mjs scripts/package-server.test.mjs scripts/cors-allowed-origins.test.mjs scripts/dev/sdkwork-api-cloud-gateway-dev-cargo-env.test.mjs scripts/dev/sdkwork-api-cloud-gateway-dev-env.test.mjs scripts/dev/sdkwork-api-cloud-gateway-source-config.test.mjs && node scripts/dev/sdkwork-api-cloud-gateway-database-bootstrap-standard.test.mjs",
     "_sdkwork:check": "pnpm run check:standards && pnpm topology:validate && pnpm run check:app-composition && pnpm gateway:api:validate && pnpm db:pool:validate && pnpm check:cors-carriers && pnpm format:check && pnpm check:all-features && pnpm check:foundation-community && pnpm check:foundation-suite && pnpm workflow:validate && cargo metadata --no-deps --format-version 1",
     "_sdkwork:verify": "pnpm check && pnpm test && pnpm test:iam-application-bootstrap-standard && pnpm lint && pnpm run check:app-composition && pnpm check:cors-standard",
     "_sdkwork:clean": "cargo clean"

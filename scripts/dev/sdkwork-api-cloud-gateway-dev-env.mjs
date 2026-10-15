@@ -1,22 +1,32 @@
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const cloudRouterDevelopmentSecret =
   'sdkwork-cloudrouter-local-dev-secret-20260507';
 
-// Local-development upstream credential key ring. Mirrors
-// docker/env/development.env (GATEWAY_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING)
-// so the embedded standalone dev deployment can decrypt the upstream
-// credentials that the docker dev stack already provisioned into the shared
-// sdkwork_ai_dev database; a mismatched activeKeyId is what produces
-// "credential secret key id is unavailable" when the cloudrouter router build
-// maps the catalog. Required by the cloudrouter embedded routers because
-// PostgreSQL upstream routing encrypts stored upstream credentials with it.
+// Fallback local-development upstream credential key ring. The router keys must
+// match whatever encrypted the credentials already stored in the shared
+// development database; CloudRouter owns that key ring and writes it to its own
+// ignored secrets directory (`scripts/generate-dev-secrets.mjs`). A mismatch
+// fails at startup with "catalog row mapping failed: failed to decrypt
+// credential secret", so the shared ring is preferred whenever it is findable
+// and this inline value is only the last resort.
 const cloudRouterDevelopmentKeyRing = JSON.stringify({
   activeKeyId: 'development-local-v1',
   activeKey: '-H9WLZu6Ou7TZHIOSrl5axiRAK10KOkjrcFbYnWZabk',
   fingerprintKey: 'HiYnoe11mwTzAyCWK0JVfhLahiVMRvZNi_IrxaZgh5o',
   decryptionKeys: [],
 });
+
+// CloudRouter's ignored development key ring, resolved as a sibling checkout of
+// this repository inside the active workspace.
+const cloudRouterDevelopmentKeyRingRelativePath = path.join(
+  'sdkwork-cloudrouter',
+  '.sdkwork',
+  'secrets',
+  'upstream-credential-key-ring.development.json',
+);
 
 export function resolveTemporaryDatabaseDriverEnv(env = process.env) {
   return {
@@ -77,7 +87,38 @@ export function resolveEmbeddedCanvasSqliteUrl({
   return `sqlite:${sqlitePath}?mode=rwc`;
 }
 
-export function resolveEmbeddedDependencyEnv(env = process.env) {
+/**
+ * Resolve the local object-store root used by the embedded memory assembly's
+ * Drive-backed exports.
+ *
+ * The assembly fails its router build with "SDKWORK_MEMORY_DRIVE_OBJECT_STORE_ROOT
+ * is required for local filesystem drive export" when no root is configured.
+ * Exported objects are disposable runtime state, so the development default
+ * lives under the private runtime state directory
+ * (`RUNTIME_DIRECTORY_SPEC.md`), never inside the source tree.
+ */
+export function resolveEmbeddedMemoryObjectStoreRoot({
+  runtimeStateDirectory,
+  env = process.env,
+}) {
+  if (!firstNonEmpty(runtimeStateDirectory)) {
+    throw new Error('embedded memory runtime state directory is required');
+  }
+  const existing = firstNonEmpty(env.SDKWORK_MEMORY_DRIVE_OBJECT_STORE_ROOT);
+  if (existing) {
+    return existing;
+  }
+  return path.join(runtimeStateDirectory, 'memory-drive-objects');
+}
+
+export function resolveEmbeddedDependencyEnv(
+  env = process.env,
+  {
+    repoRoot = defaultRepoRoot(),
+    fileExists = existsSync,
+    readFile = (filePath) => readFileSync(filePath, 'utf8'),
+  } = {},
+) {
   const configuredCloudRouterBaseUrl = firstNonEmpty(
     env.SDKWORK_CLOUDROUTER_OPEN_API_BASE_URL,
     env.CLOUDROUTER_OPEN_API_BASE_URL,
@@ -91,6 +132,17 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     env.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT,
     environment,
   );
+  // The Memory server runtime refuses to start without an explicit lifecycle
+  // environment: the historical implicit 'development' default silently
+  // disabled authorization, tenant isolation, Redis-backed rate limiting, and
+  // request deadlines.
+  const memoryEnvironment = firstNonEmpty(env.SDKWORK_MEMORY_ENVIRONMENT, environment);
+  const credentialKeyRing = resolveCloudRouterCredentialKeyRing({
+    env,
+    repoRoot,
+    fileExists,
+    readFile,
+  });
 
   return {
     // APPLICATION_GATEWAY_SPEC §2.3: this gateway composes the CloudRouter
@@ -146,20 +198,88 @@ export function resolveEmbeddedDependencyEnv(env = process.env) {
     SDKWORK_RTC_HYDRATE_TENANT_ID: env.SDKWORK_RTC_HYDRATE_TENANT_ID ?? '100001',
     SDKWORK_RTC_HYDRATE_ORGANIZATION_ID:
       env.SDKWORK_RTC_HYDRATE_ORGANIZATION_ID ?? '0',
-    ...(!firstNonEmpty(
-      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING,
-      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE,
-    )
-      ? {
-          SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING:
-            cloudRouterDevelopmentKeyRing,
-        }
+    ...(credentialKeyRing
+      ? { SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING: credentialKeyRing }
       : {}),
     ...(imEnvironment ? { SDKWORK_IM_ENVIRONMENT: imEnvironment } : {}),
     ...(knowledgebaseEnvironment
       ? { SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: knowledgebaseEnvironment }
       : {}),
+    ...(memoryEnvironment ? { SDKWORK_MEMORY_ENVIRONMENT: memoryEnvironment } : {}),
   };
+}
+
+/**
+ * Resolve the upstream credential key ring for the embedded CloudRouter.
+ *
+ * An explicit `SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING(_FILE)` always
+ * wins. Otherwise the shared CloudRouter development ring is read from the
+ * sibling checkout so both processes decrypt the same rows, and the inline
+ * development ring is used only when that file cannot be read.
+ *
+ * @returns {string | undefined} Key-ring JSON, or undefined when the caller
+ *   already configured one.
+ */
+export function resolveCloudRouterCredentialKeyRing({
+  env = process.env,
+  repoRoot = defaultRepoRoot(),
+  fileExists = existsSync,
+  readFile = (filePath) => readFileSync(filePath, 'utf8'),
+} = {}) {
+  if (
+    firstNonEmpty(
+      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING,
+      env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE,
+    )
+  ) {
+    return undefined;
+  }
+  const sharedKeyRingPath = path.join(
+    repoRoot,
+    '..',
+    cloudRouterDevelopmentKeyRingRelativePath,
+  );
+  if (fileExists(sharedKeyRingPath)) {
+    try {
+      const parsed = JSON.parse(readFile(sharedKeyRingPath));
+      if (firstNonEmpty(parsed?.activeKeyId) && firstNonEmpty(parsed?.activeKey)) {
+        return JSON.stringify(parsed);
+      }
+    } catch {
+      // Fall through to the inline development ring below; the caller reports
+      // which ring was selected.
+    }
+  }
+  return cloudRouterDevelopmentKeyRing;
+}
+
+/**
+ * Report which key ring the embedded CloudRouter will use, so a decryption
+ * failure at startup names its cause instead of only the symptom.
+ */
+export function describeCloudRouterCredentialKeyRingSource({
+  env = process.env,
+  repoRoot = defaultRepoRoot(),
+  fileExists = existsSync,
+} = {}) {
+  if (firstNonEmpty(env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING)) {
+    return 'explicit environment key ring';
+  }
+  if (firstNonEmpty(env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE)) {
+    return `key ring file ${firstNonEmpty(env.SDKWORK_CLOUDROUTER_UPSTREAM_CREDENTIAL_KEY_RING_FILE)}`;
+  }
+  const sharedKeyRingPath = path.join(
+    repoRoot,
+    '..',
+    cloudRouterDevelopmentKeyRingRelativePath,
+  );
+  return fileExists(sharedKeyRingPath)
+    ? `shared CloudRouter development key ring (${sharedKeyRingPath})`
+    : 'inline development fallback key ring (shared CloudRouter ring not found)';
+}
+
+function defaultRepoRoot() {
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 }
 
 function firstNonEmpty(...values) {
