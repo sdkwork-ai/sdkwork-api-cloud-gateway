@@ -492,7 +492,7 @@
       {
         "name": "Package server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  $imageTag = \"$($env:SDKWORK_CONTAINER_IMAGE_REPOSITORY):$($env:SDKWORK_PACKAGE_VERSION)-$($env:SDKWORK_DEPLOYMENT_PROFILE)\"\n  node scripts/build-api-cloud-gateway-container.mjs --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE --tag $imageTag --push\n  exit $LASTEXITCODE\n}\npnpm gateway:package",
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  $imageTag = \"$($env:SDKWORK_CONTAINER_IMAGE_REPOSITORY):$($env:SDKWORK_PACKAGE_VERSION)-$($env:SDKWORK_DEPLOYMENT_PROFILE)\"\n  $pushArgs = @()\n  if ($env:SDKWORK_CONTAINER_REGISTRY_USERNAME -and $env:SDKWORK_CONTAINER_REGISTRY_PASSWORD) {\n    $pushArgs = @(\"--push\")\n  } else {\n    Write-Host \"[container-image-build] registry credentials absent: building the image and recording a local manifest without pushing\"\n  }\n  node scripts/build-api-cloud-gateway-container.mjs --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE --tag $imageTag @pushArgs\n  exit $LASTEXITCODE\n}\npnpm gateway:package",
         "env": {
           "SDKWORK_CONTAINER_IMAGE_REPOSITORY": "registry.sdkwork.com/apps/sdkwork-api-cloud-gateway"
         }
@@ -516,7 +516,7 @@
       {
         "name": "Validate server archive",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  node scripts/build-api-cloud-gateway-container.mjs --validate-manifest --require-repo-digest --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE\n} else {\n  pnpm gateway:validate\n}\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs evidence\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs verify"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\nif ($env:SDKWORK_RUNTIME_TARGET -eq \"container\") {\n  $digestArgs = @()\n  if ($env:SDKWORK_CONTAINER_REGISTRY_USERNAME -and $env:SDKWORK_CONTAINER_REGISTRY_PASSWORD) {\n    $digestArgs = @(\"--require-repo-digest\")\n  } else {\n    Write-Host \"[container-image-build] registry credentials absent: validating a local image manifest without a repository digest\"\n  }\n  node scripts/build-api-cloud-gateway-container.mjs --validate-manifest @digestArgs --version $env:SDKWORK_PACKAGE_VERSION --deployment-profile $env:SDKWORK_DEPLOYMENT_PROFILE\n} else {\n  pnpm gateway:validate\n}\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs evidence\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\nnode scripts/release-evidence.mjs verify"
       }
     ]
   },
