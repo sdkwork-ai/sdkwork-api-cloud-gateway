@@ -485,7 +485,7 @@
       {
         "name": "Verify Rust gateway workspace",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm check:assembly-parity\ncargo fmt -- --check\ncargo test --workspace"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\npnpm gateway:api:validate\ncargo fmt -- --check\ncargo test --workspace"
       }
     ],
     "package": [

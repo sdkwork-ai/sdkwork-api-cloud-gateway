@@ -2,8 +2,28 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { parse as parseYaml } from "yaml";
+
+const require = createRequire(import.meta.url);
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const applicationRoot = path.resolve(scriptDir, "..");
+
+// Resolve the YAML parser from the installed workspace first and fall back to
+// the vendored copy under `vendor/yaml` (yaml 2.x has no runtime
+// dependencies). The CI build lifecycle runs this check before any
+// `pnpm install`, so the vendored copy is what keeps the gate runnable there;
+// a developer with node_modules transparently uses the installed package.
+function resolveYamlParser() {
+  try {
+    return require("yaml");
+  } catch (error) {
+    if (error?.code !== "MODULE_NOT_FOUND") throw error;
+    return require(path.join(applicationRoot, "vendor", "yaml", "dist", "index.js"));
+  }
+}
+
+const { parse: parseYaml } = resolveYamlParser();
 
 const HTTP_METHODS = new Set(["*", "DELETE", "GET", "PATCH", "POST", "PUT"]);
 const STRUCTURED_EXTENSIONS = new Set([".json", ".yaml", ".yml"]);

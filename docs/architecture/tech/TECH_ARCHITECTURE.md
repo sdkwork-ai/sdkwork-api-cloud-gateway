@@ -122,8 +122,8 @@ implementation dependencies, gateway-local database lifecycle catalogs, and per-
 URLs are rejected by `check-api-assembly-integration-closure.mjs`.
 
 Catalog is embedded through `foundation-catalog` and `sdkwork-api-catalog-assembly`. The
-`sdkwork-catalog-app-api` authority is dispatched for `/app/v3/api/addresses`,
-`/app/v3/api/cart`, and `/app/v3/api/catalog`; route details remain owned by the Catalog assembly.
+`sdkwork-catalog-app-api` authority is dispatched for `/app/v3/api/catalog`; route details remain
+owned by the Catalog assembly.
 
 ## 6. Security, Privacy, And Observability
 

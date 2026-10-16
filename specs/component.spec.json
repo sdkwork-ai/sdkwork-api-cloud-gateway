@@ -1195,13 +1195,6 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/user-store",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appstore-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
       "prefix": "/app/v3/api/user_store",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-app-api",
@@ -1272,6 +1265,13 @@
     },
     {
       "surface": "open",
+      "prefix": "/store/v3/api/user_stores",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
       "prefix": "/store/v3/api/catalog",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-open-api",
@@ -1294,20 +1294,6 @@
     {
       "surface": "open",
       "prefix": "/store/v3/api/artifacts",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appstore-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/store/v3/api/user-stores",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-appstore-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/store/v3/api/user_stores",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1427,13 +1413,6 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/domain_zones",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-deploy-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/sites",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1611,20 +1590,6 @@
       "prefix": "/backend/v3/api/wallet",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-account-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/addresses",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-catalog-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/cart",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-catalog-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
@@ -2390,7 +2355,6 @@
         "/app/v3/api/download_grants",
         "/app/v3/api/library",
         "/app/v3/api/wishlist",
-        "/app/v3/api/user-store",
         "/app/v3/api/user_store"
       ],
       "cargoFeature": "foundation-appstore",
@@ -2432,11 +2396,10 @@
       "apiPrefixes": [
         "/store/v3/api/releases",
         "/store/v3/api/catalog",
+        "/store/v3/api/user_stores",
         "/store/v3/api/listings",
         "/store/v3/api/automation",
-        "/store/v3/api/artifacts",
-        "/store/v3/api/user-stores",
-        "/store/v3/api/user_stores"
+        "/store/v3/api/artifacts"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -2907,6 +2870,7 @@
         "/app/v3/api/shipments",
         "/app/v3/api/recharges",
         "/app/v3/api/memberships/orders",
+        "/app/v3/api/app_template_orders",
         "/app/v3/api/withdrawals"
       ],
       "cargoFeature": "foundation-order",
@@ -3117,7 +3081,6 @@
         "/app/v3/api/cloud_accounts",
         "/app/v3/api/domain_zones",
         "/app/v3/api/signing_identities",
-        "/app/v3/api/sites",
         "/app/v3/api/template_categories",
         "/app/v3/api/marketplace",
         "/app/v3/api/upload_sessions",
@@ -3457,8 +3420,6 @@
       "apiAuthority": "sdkwork-catalog-app-api",
       "sdkFamily": "sdkwork-catalog-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/addresses",
-        "/app/v3/api/cart",
         "/app/v3/api/catalog"
       ],
       "coverage": "sdkwork-catalog-app-api-embedded-assembly-routes",

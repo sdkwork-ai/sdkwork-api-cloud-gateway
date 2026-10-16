@@ -489,14 +489,7 @@ fn catalog_app_authority_publishes_every_owned_prefix() {
         .map(|surface| surface.api_prefix.as_str())
         .collect::<HashSet<_>>();
 
-    assert_eq!(
-        prefixes,
-        HashSet::from([
-            "/app/v3/api/addresses",
-            "/app/v3/api/cart",
-            "/app/v3/api/catalog",
-        ])
-    );
+    assert_eq!(prefixes, HashSet::from(["/app/v3/api/catalog"]));
     assert!(catalog.iter().all(|surface| {
         surface.workspace == "sdkwork-catalog"
             && surface.cargo_feature.as_deref() == Some("foundation-catalog")

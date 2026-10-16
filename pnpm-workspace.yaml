@@ -1,0 +1,11 @@
+# SDKWork application workspace (PNPM_WORKSPACE_DEPENDENCY_SPEC section 1).
+#
+# This application root carries no TypeScript workspace members of its own, but
+# it consumes one sibling SDKWork package (the application-topology CLI used by
+# `pnpm topology:validate`). The sibling is declared exactly once here as a
+# `../sdkwork-*` relative path and referenced with `workspace:*` in
+# package.json, so local development and the CI dependency checkout resolve the
+# same way (GITHUB_WORKFLOW_SPEC section 6 clones siblings into the same
+# sibling layout).
+packages:
+  - "../sdkwork-app-topology"
