@@ -81,7 +81,6 @@ permissions:
   contents: write
   actions: read
   id-token: write
-  attestations: write
 
 jobs:
   package:
