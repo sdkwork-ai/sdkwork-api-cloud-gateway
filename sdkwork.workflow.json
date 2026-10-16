@@ -693,7 +693,7 @@
     }
   ],
   "security": {
-    "artifactAttestations": true,
+    "artifactAttestations": false,
     "sbomRequired": true,
     "signingRequired": true
   },

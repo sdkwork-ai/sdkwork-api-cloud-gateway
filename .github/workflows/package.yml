@@ -76,12 +76,12 @@ on:
         description: Optional JSON object overriding dependency refs, for example {"SDKWORK_IAM_REF":"abc123"}. Omitted entries resolve from the SDKWORK_*_REF repository variables, then main.
         required: false
         default: '{}'
+
 permissions:
   contents: write
   actions: read
   id-token: write
   attestations: write
-  artifact-metadata: write
 
 jobs:
   package:

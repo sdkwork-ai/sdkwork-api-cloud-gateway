@@ -291,8 +291,13 @@ test('application manifest declares explicit package build targets', () => {
   });
 
   const workflow = JSON.parse(readFileSync(path.join(appRoot, 'sdkwork.workflow.json')));
+  // GitHub artifact attestations are unavailable for user-owned private
+  // repositories ("Feature not available for user-owned private
+  // repositories"), so the framework attestation step is disabled and release
+  // provenance is carried by the SLSA statement, the detached signature, and
+  // the CycloneDX SBOM that the sign/sbom lifecycle produce.
   assert.deepEqual(workflow.security, {
-    artifactAttestations: true,
+    artifactAttestations: false,
     sbomRequired: true,
     signingRequired: true,
   });
