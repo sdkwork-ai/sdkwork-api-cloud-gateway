@@ -495,7 +495,7 @@ fn catalog_app_authority_publishes_every_owned_prefix() {
             && surface.cargo_feature.as_deref() == Some("foundation-catalog")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-catalog-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_catalog_assembly::assemble_api_router_with_pool")
+                == Some("sdkwork_api_catalog_assembly::web_module_with_pool")
     }));
 }
 
@@ -524,7 +524,7 @@ fn assets_app_authority_publishes_assets_prefix() {
             && surface.cargo_feature.as_deref() == Some("foundation-assets")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-assets-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_assets_assembly::assemble_api_router_with_pool")
+                == Some("sdkwork_api_assets_assembly::web_module_with_pool")
     }));
 }
 
@@ -553,7 +553,7 @@ fn drive_app_authority_publishes_the_drive_prefix() {
             && surface.cargo_feature.as_deref() == Some("foundation-drive")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-drive-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_drive_assembly::assemble_api_router")
+                == Some("sdkwork_api_drive_assembly::web_module_with_postgres_pool")
     }));
 }
 
@@ -653,7 +653,7 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
         (surface.cargo_feature.as_deref() == Some("foundation-im")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-im-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_im_assembly::assemble_api_router"))
+                == Some("sdkwork_api_im_assembly::web_module_with_realtime_bootstrap"))
             || (surface.cargo_feature.as_deref() == Some("foundation-im-realtime")
                 && surface.cargo_dependency.as_deref() == Some("session-gateway")
                 && surface.executable_export.as_deref()
@@ -697,6 +697,8 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/midjourney/v1",
             "/nano-banana/v1",
             "/elevenlabs/v1",
+            "/typesafe/v1",
+            "/minimax/v1",
             "/v1",
         ])
     );
@@ -788,7 +790,7 @@ fn membership_app_and_backend_use_one_embedded_api_assembly() {
             && surface.cargo_feature.as_deref() == Some("foundation-membership")
             && surface.cargo_dependency.as_deref() == Some("sdkwork-api-membership-assembly")
             && surface.executable_export.as_deref()
-                == Some("sdkwork_api_membership_assembly::assemble_api_router_with_pool")
+                == Some("sdkwork_api_membership_assembly::web_module_with_pool")
     }));
 }
 
@@ -883,12 +885,22 @@ fn production_profile_ships_enforceable_operational_rules() {
             "label `{label}` must be registered"
         );
     }
-    assert!(config
-        .cors
-        .allowed_origins
-        .iter()
-        .all(|origin| origin.starts_with("http://localhost:")
-            || origin.starts_with("http://127.0.0.1:")));
+    // The production profile declares loopback development origins and the
+    // loader merges the registered SDKWork client origins (desktop shells and
+    // the mini program runtime) on top, so this asserts that a loopback origin
+    // is present for local diagnostics rather than that loopback is the only
+    // entry. Exact-origin validity is enforced by `GatewayRuntimeConfig::
+    // validate()` for every production-like profile and is covered by the
+    // profile-parsing tests, so it is not duplicated here.
+    assert!(
+        config
+            .cors
+            .allowed_origins
+            .iter()
+            .any(|origin| origin.starts_with("http://localhost:")
+                || origin.starts_with("http://127.0.0.1:")),
+        "the production profile must ship a loopback origin for local diagnostics"
+    );
 }
 
 #[test]
