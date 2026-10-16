@@ -485,7 +485,7 @@
       {
         "name": "Verify Rust gateway workspace",
         "shell": "pwsh",
-        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\n$env:CARGO_PROFILE_RELEASE_DEBUG = \"0\"\n$env:CARGO_PROFILE_RELEASE_STRIP = \"true\"\nnode scripts/ci/reclaim-runner-disk.mjs\npnpm gateway:api:validate\ncargo fmt -- --check\ncargo test --workspace"
+        "run": "$ErrorActionPreference = \"Stop\"\n$PSNativeCommandUseErrorActionPreference = $true\n$env:CARGO_INCREMENTAL = \"0\"\n$env:CARGO_PROFILE_RELEASE_DEBUG = \"0\"\n$env:CARGO_PROFILE_RELEASE_STRIP = \"true\"\nnode scripts/ci/install-build-dependencies.mjs\nnode scripts/ci/reclaim-runner-disk.mjs\npnpm gateway:api:validate\ncargo fmt -- --check\ncargo test --workspace"
       }
     ],
     "package": [
