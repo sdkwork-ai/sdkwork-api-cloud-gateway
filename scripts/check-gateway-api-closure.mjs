@@ -14,12 +14,15 @@ const applicationRoot = path.resolve(scriptDir, "..");
 // dependencies). The CI build lifecycle runs this check before any
 // `pnpm install`, so the vendored copy is what keeps the gate runnable there;
 // a developer with node_modules transparently uses the installed package.
+// The vendored tree lives under `lib/`, not the package's own `dist/`, because
+// the repository .gitignore excludes `**/dist/` and a vendored `dist/` would
+// silently stay out of the checkout.
 function resolveYamlParser() {
   try {
     return require("yaml");
   } catch (error) {
     if (error?.code !== "MODULE_NOT_FOUND") throw error;
-    return require(path.join(applicationRoot, "vendor", "yaml", "dist", "index.js"));
+    return require(path.join(applicationRoot, "vendor", "yaml", "lib", "index.js"));
   }
 }
 
