@@ -2,7 +2,9 @@
 
 use std::{collections::HashMap, fs, path::Path};
 
-use sdkwork_web_core::registered_client_origins::merge_registered_sdkwork_client_origins;
+use sdkwork_web_core::registered_client_origins::{
+    is_registered_sdkwork_client_origin, merge_registered_sdkwork_client_origins,
+};
 use sdkwork_web_core::registered_console_hosts::{
     registered_console_hosts_from_lookup, RegisteredConsoleHosts,
 };
@@ -1434,8 +1436,15 @@ fn is_exact_http_origin(origin: &str) -> bool {
     validate_exact_http_origin("cors.allowedOrigins[]", origin).is_ok()
 }
 
+/// A first-party client shell origin: either a generic `app://` / `tauri://`
+/// authority or one of the canonical registered SDKWork client origins the
+/// shared registry publishes (`CORS_SPEC.md` section 3 fixes that set; it
+/// includes the `dsh-app://app` desktop host, whose scheme is not `app://`).
 fn is_exact_desktop_origin(origin: &str) -> bool {
     let trimmed = origin.trim();
+    if is_registered_sdkwork_client_origin(trimmed) {
+        return true;
+    }
     let Some(authority) = trimmed
         .strip_prefix("app://")
         .or_else(|| trimmed.strip_prefix("tauri://"))

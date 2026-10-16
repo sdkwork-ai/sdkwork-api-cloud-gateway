@@ -416,3 +416,21 @@ test('server package source declares the official Knowledgebase RPC sidecar', ()
   assert.match(packager, /sdkwork-knowledgebase-rpc\.service/u);
   assert.match(packager, /knowledgebase-rpc-entrypoint/u);
 });
+
+test('container targets declare the architecture the packager builds', () => {
+  const workflow = JSON.parse(readFileSync(path.resolve('.', 'sdkwork.workflow.json'), 'utf8'));
+  const containerTargets = workflow.targets.filter((target) => target.runtimeTarget === 'container');
+  assert.deepEqual(
+    containerTargets.map((target) => target.id).sort(),
+    ['container-x64-cloud-container-oci', 'container-x64-standalone-container-oci'],
+  );
+  for (const target of containerTargets) {
+    assert.equal(target.architecture, 'x64');
+    assert.equal(target.format ?? target.formats.join(','), 'oci');
+    assert.equal(
+      resolveContainerPackageId(target.deploymentProfile, target.architecture),
+      target.id,
+    );
+  }
+  assert.throws(() => resolveContainerPackageId('unknown-profile'), /Unsupported container deployment profile/u);
+});

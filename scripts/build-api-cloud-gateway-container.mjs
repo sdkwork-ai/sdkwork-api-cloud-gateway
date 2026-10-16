@@ -61,6 +61,7 @@ const DEFAULT_IMAGE_TAG = ['sdkwork-api-cloud-gateway', 'local'].join(':');
 const IMAGE_BUILD_DIR = 'dist/container-image-build';
 const IMAGE_MANIFEST_FILE = 'dist/container-image.json';
 const CONTAINER_PLATFORM = 'container';
+const CONTAINER_RUNTIME_TARGET = 'container';
 const CONTAINER_PROFILE = 'container';
 const CONTAINER_FORMAT = 'oci';
 const DEFAULT_DEPLOYMENT_PROFILE = 'standalone';
@@ -216,11 +217,43 @@ async function resolveDatabaseModules(metadata) {
   return modules;
 }
 
+// The container lifecycle step is one workflow target: the packager must build
+// the architecture that target declares, so the published package id, the
+// image label, and the built bytes always describe the same platform
+// (GITHUB_WORKFLOW_SPEC section 5).
+async function loadDeclaredContainerArchitecture(deploymentProfile) {
+  const workflowPath = path.join(appRoot, 'sdkwork.workflow.json');
+  let workflow;
+  try {
+    workflow = JSON.parse(await readFile(workflowPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`cannot read ${workflowPath}: ${error.message}`);
+  }
+  const matches = (workflow.targets ?? []).filter(
+    (target) =>
+      target?.runtimeTarget === CONTAINER_RUNTIME_TARGET
+      && target?.deploymentProfile === deploymentProfile
+      && Array.isArray(target?.formats)
+      && target.formats.includes(CONTAINER_FORMAT),
+  );
+  if (matches.length !== 1) {
+    throw new Error(
+      `sdkwork.workflow.json must declare exactly one ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' (found ${matches.length})`,
+    );
+  }
+  const architecture = String(matches[0].architecture ?? '').trim();
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(architecture)) {
+    throw new Error(`container target ${matches[0].id} declares an invalid architecture: ${architecture}`);
+  }
+  return architecture;
+}
+
 async function createBuildPlan(settings) {
   const packageJson = await loadPackageJson();
   const version = normalizeVersion(settings.version || process.env.SDKWORK_PACKAGE_VERSION || packageJson.version || '0.1.0');
   const deploymentProfile = settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE;
-  const packageId = resolveContainerPackageId(deploymentProfile);
+  const declaredArchitecture = await loadDeclaredContainerArchitecture(deploymentProfile);
+  const packageId = resolveContainerPackageId(deploymentProfile, declaredArchitecture);
   const releaseDir = resolveCargoReleaseDir(appRoot, process.env.CARGO_TARGET_DIR);
   const binaryPath = path.join(releaseDir, BINARY_NAME);
   const knowledgebaseRpcBinaryPath = path.join(releaseDir, KNOWLEDGEBASE_RPC_BINARY_NAME);
@@ -237,10 +270,11 @@ async function createBuildPlan(settings) {
       version,
       deploymentProfile,
       platform: CONTAINER_PLATFORM,
-      architecture: 'x64',
-      runtimeTarget: 'container',
+      architecture: declaredArchitecture,
+      runtimeTarget: CONTAINER_RUNTIME_TARGET,
       format: CONTAINER_FORMAT,
     },
+    declaredArchitecture,
     imageTag: settings.tag,
     imageFile: path.join(appRoot, 'Dockerfile'),
     imageBuildDir,
@@ -436,8 +470,12 @@ async function validateRecordedImageManifest(settings) {
     throw new Error(`missing container image manifest: ${manifestPath}`);
   }
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const deploymentProfile = settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE;
   const issues = validateImageManifestRecord(manifest, {
-    packageId: resolveContainerPackageId(settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE),
+    packageId: resolveContainerPackageId(
+      deploymentProfile,
+      await loadDeclaredContainerArchitecture(deploymentProfile),
+    ),
     version,
     requireRepoDigest: settings.requireRepoDigest,
   });
@@ -620,6 +658,48 @@ async function dockerVersion() {
   return stdout.trim();
 }
 
+// The workflow declares one architecture per container target; the docker
+// daemon decides the architecture actually built. Mapping the daemon value to
+// the canonical package segment and comparing it with the declared one keeps a
+// package from being published under a platform it was not built for
+// (GITHUB_WORKFLOW_SPEC section 5: package metadata and artifact must agree).
+const DAEMON_ARCHITECTURE_TOKENS = Object.freeze({
+  x86_64: 'x64',
+  amd64: 'x64',
+  aarch64: 'arm64',
+  arm64: 'arm64',
+  armv7l: 'armv7',
+});
+
+async function dockerDaemonArchitecture() {
+  const { stdout } = await execFileAsync('docker', ['version', '--format', '{{.Server.Arch}}']);
+  const raw = stdout.trim().toLowerCase();
+  const token = DAEMON_ARCHITECTURE_TOKENS[raw];
+  if (!token) {
+    throw new Error(
+      `unsupported docker daemon architecture '${raw || 'unknown'}'; supported: ${[...new Set(Object.values(DAEMON_ARCHITECTURE_TOKENS))].join(', ')}`,
+    );
+  }
+  return { raw, token };
+}
+
+export function declaredContainerArchitecture(plan) {
+  const declared = String(plan?.declaredArchitecture ?? '').trim();
+  if (!declared) {
+    throw new Error('container image build plan must declare the workflow target architecture');
+  }
+  return declared;
+}
+
+function validateArchitectureMatch(plan, daemon) {
+  const declared = declaredContainerArchitecture(plan);
+  if (declared !== daemon.token) {
+    throw new Error(
+      `declared container architecture '${declared}' does not match the docker daemon architecture '${daemon.token}' (${daemon.raw}); build on a matching runner or update the workflow target architecture`,
+    );
+  }
+}
+
 async function buildImage(plan) {
   const args = [
     'build',
@@ -629,6 +709,8 @@ async function buildImage(plan) {
     '--no-cache',
     '--build-arg',
     `VERSION=${plan.package.version}`,
+    '--build-arg',
+    `ARCHITECTURE=${plan.package.architecture}`,
     '-f',
     plan.imageFile,
     '-t',
@@ -780,12 +862,20 @@ async function main(argv = process.argv.slice(2)) {
     throw new Error(`container image build plan is invalid: ${plan.issues.join('; ')}`);
   }
 
+  let daemonArchitecture;
   try {
     const serverVersion = await dockerVersion();
     console.log(`[container-image-build] docker server: ${serverVersion}`);
+    daemonArchitecture = await dockerDaemonArchitecture();
   } catch {
     throw new Error('docker is not available or the daemon is not running; start docker first');
   }
+  // Architecture mismatch is a packaging error, not an environment error: the
+  // workflow target declares which platform this package may be published as.
+  validateArchitectureMatch(plan, daemonArchitecture);
+  console.log(
+    `[container-image-build] docker architecture: ${daemonArchitecture.token} (${daemonArchitecture.raw}) matches the declared target`,
+  );
 
   if (!plan.skipBuild) {
     console.log('[container-image-build] building release binary...');

@@ -78,6 +78,7 @@ mod tests {
             cors: CorsConfig {
                 allow_any_origin: false,
                 allowed_origins: vec!["https://api.sdkwork.com".to_owned()],
+                registered_console_hosts: None,
             },
             ..GatewayRuntimeConfig::default()
         };
@@ -110,6 +111,7 @@ mod tests {
             cors: CorsConfig {
                 allow_any_origin: false,
                 allowed_origins: vec!["https://console.sdkwork.com".to_owned()],
+                registered_console_hosts: None,
             },
             ..GatewayRuntimeConfig::default()
         };

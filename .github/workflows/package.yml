@@ -13,11 +13,11 @@ on:
       tag:
         description: Release tag or source ref to package.
         required: true
-        default: v0.1.0
+        default: v0.1.11
       package_version:
-        description: Package version used in artifact names and manifests.
-        required: true
-        default: 0.1.0
+        description: Package version used in artifact names and manifests; empty derives it from the tag.
+        required: false
+        default: ''
       platform:
         description: Platform filter.
         required: true
@@ -68,7 +68,7 @@ on:
         required: true
         default: all
       deploy:
-        description: Run configured deployment environments after packaging.
+        description: Run configured deployment environments after packaging (no deployments[] are declared; see sdkwork.workflow.json).
         required: true
         default: false
         type: boolean
@@ -386,7 +386,7 @@ permissions:
 
 jobs:
   package:
-    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@b0829529b9277a3da32b90c2d36ff34ff09fa832
+    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@77edc9d27aedbd7370d34eae4d3e946526f5be25
     with:
       config_path: sdkwork.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
@@ -397,9 +397,9 @@ jobs:
       format: ${{ github.event.inputs.format || 'all' }}
       publish_release: true
       upload_artifact: true
-      deploy: ${{ github.event.inputs.deploy == 'true' || github.event_name == 'release' }}
+      deploy: ${{ github.event.inputs.deploy == 'true' }}
       retention_days: 30
-      framework_ref: b0829529b9277a3da32b90c2d36ff34ff09fa832
+      framework_ref: 77edc9d27aedbd7370d34eae4d3e946526f5be25
       dependency_refs_json: >-
         {
           "SDKWORK_IAM_REF": "${{ github.event.inputs.sdkwork_iam_ref || vars.SDKWORK_IAM_REF }}",

@@ -466,13 +466,12 @@ pub async fn bootstrap_embedded_dependency_contributions(
                 let dispatcher: sdkwork_agents_tool_cloudrouter::EmbeddedSurfaceDispatcher =
                     std::sync::Arc::new(move |request: axum::extract::Request| {
                         let router = router.clone();
-                        Box::pin(async move {
-                            tower::ServiceExt::oneshot(router, request).await
-                        })
+                        Box::pin(async move { tower::ServiceExt::oneshot(router, request).await })
                     });
-                let installed = sdkwork_agents_tool_cloudrouter::install_embedded_cloudrouter_surface(
-                    dispatcher,
-                );
+                let installed =
+                    sdkwork_agents_tool_cloudrouter::install_embedded_cloudrouter_surface(
+                        dispatcher,
+                    );
                 // `false` means an earlier installation was kept, so turns keep
                 // using the first surface. The transport layer already logged an
                 // error for it; do not claim this installation took effect.

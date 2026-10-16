@@ -2,13 +2,13 @@
   "license": "AGPL-3.0-or-later",
   "name": "sdkwork-api-cloud-gateway",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.11",
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "yaml": "^2.8.0"
   },
   "scripts": {
-    "stop": "node ../sdkwork-specs/tools/stop-sdkwork-workspace-processes.mjs --workspace .",
+    "stop": "pnpm exec sdkwork-app stop",
     "dev": "pnpm dev:standalone",
     "dev:standalone": "node scripts/dev/run-sdkwork-api-cloud-gateway-dev.mjs --deployment-profile standalone --environment development --database postgres",
     "dev:cloud": "node scripts/dev/run-sdkwork-api-cloud-gateway-dev.mjs --deployment-profile cloud --environment development",

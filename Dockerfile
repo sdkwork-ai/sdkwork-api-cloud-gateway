@@ -12,14 +12,48 @@
 # (scripts/build-api-cloud-gateway-container.mjs). Build the image first with
 # `pnpm build:container` (produces sdkwork-api-cloud-gateway:local), then
 # `docker compose up -d` (external PostgreSQL + Redis by default).
+#
+# Local quick start without compose (the image bakes the production template at
+# CONFIG_FILE, so no config mount is required):
+#   docker run -d --name sdkwork-gateway -p 3910:3900 \
+#     -e GATEWAY_ENVIRONMENT=development \
+#     -e SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT=development \
+#     -e SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID=standalone.development \
+#     -e SDKWORK_DATABASE_URL='postgresql://<user>:<pass>@host.docker.internal:5432/sdkwork_ai_dev?sslmode=disable&options=-c%20search_path%3Dsdkwork_ai_dev' \
+#     -e SDKWORK_IAM_SIGNING_MASTER_SECRET="$(openssl rand -hex 32)" \
+#     -e SDKWORK_IAM_PROVIDER_CREDENTIAL_MASTER_SECRET="$(openssl rand -hex 32)" \
+#     -e SDKWORK_CLOUDROUTER_REDIS_HOST=host.docker.internal \
+#     -e SDKWORK_CLOUDROUTER_REDIS_PASSWORD='<redis-password>' \
+#     registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:<version>
+#   curl -fsS http://127.0.0.1:3910/healthz
+# The entrypoint runs `--migrate-databases` before serving unless
+# SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START=false.
+#
+# The `development` environment above is the zero-extra-dependency local shape.
+# The production posture is also verified and needs three more inputs: a
+# reachable Redis (`SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL` for the shared
+# rate-limit/idempotency/admission stores), `SDKWORK_IAM_SIGNING_MASTER_SECRET`
+# (or the *_FILE provisioning the entrypoint performs when
+# SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET=true) and
+# SDKWORK_IAM_PROVIDER_CREDENTIAL_MASTER_SECRET. In production the Host header
+# must be a registered API domain (the production template enforces the
+# allow-list and answers 421 otherwise), so probe health with
+# `curl -H 'Host: api.sdkwork.com' ...`.
 
-FROM debian:bookworm-slim
+# Base image is pinned to an immutable multi-arch index digest
+# (SUPPLY_CHAIN_SECURITY_SPEC: reproducible builds must not resolve a moving
+# tag). The index covers linux/amd64 and linux/arm64, so the build follows the
+# daemon platform; `scripts/build-api-cloud-gateway-container.mjs` records that
+# architecture in the image manifest and refuses a mislabeled package.
+# Refresh deliberately: it is the only place the base image version is fixed.
+FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 
 ARG GATEWAY_BINARY=sdkwork-api-cloud-gateway
 ARG KNOWLEDGEBASE_RPC_BINARY=sdkwork-intelligence-knowledgebase-rpc-bin
 ARG INSTALL_ROOT=/opt/sdkwork/api-gateway
 ARG CONFIG_FILE=/etc/sdkwork/api-gateway/config.toml
 ARG VERSION=0.0.0
+ARG ARCHITECTURE=x64
 
 # Runtime directory layout (RUNTIME_DIRECTORY_SPEC §4.5 Container Scope):
 #   config    /etc/sdkwork/api-gateway/<process>.toml   (config mount)
@@ -151,6 +185,7 @@ ENV SDKWORK_MODELS_CATALOG_ROOT=${INSTALL_ROOT}/data/sdkwork-models
 
 LABEL org.opencontainers.image.title="sdkwork-api-cloud-gateway (standalone container)"
 LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.architecture="${ARCHITECTURE}"
 LABEL org.opencontainers.image.vendor="sdkwork"
 
 USER sdkwork

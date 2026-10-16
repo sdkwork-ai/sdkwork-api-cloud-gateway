@@ -370,8 +370,15 @@ fn production_cors_accepts_registered_console_host_pattern() {
     assert_eq!(hosts.schemes, vec!["https".to_owned()]);
     // Omitted `baseDomains` falls back to the registered platform registry, so
     // a deployment can never widen the rule by accident.
-    assert_eq!(hosts.base_domains.len(), 16, "registered base domain registry");
-    assert!(hosts.base_domains.iter().any(|domain| domain == "sdkwork.com"));
+    assert_eq!(
+        hosts.base_domains.len(),
+        16,
+        "registered base domain registry"
+    );
+    assert!(hosts
+        .base_domains
+        .iter()
+        .any(|domain| domain == "sdkwork.com"));
 }
 
 #[test]
@@ -421,10 +428,7 @@ fn console_host_pattern_env_override_is_fail_closed() {
         "SDKWORK_CORS_CONSOLE_HOST_LABELS".to_owned(),
         "im,shop".to_owned(),
     );
-    complete.insert(
-        "SDKWORK_CORS_CONSOLE_HOST_SUFFIX".to_owned(),
-        String::new(),
-    );
+    complete.insert("SDKWORK_CORS_CONSOLE_HOST_SUFFIX".to_owned(), String::new());
     complete.insert(
         "SDKWORK_CORS_CONSOLE_HOST_SCHEMES".to_owned(),
         "https".to_owned(),
@@ -886,9 +890,12 @@ fn production_profile_ships_enforceable_operational_rules() {
             "label `{label}` must be registered"
         );
     }
-    assert!(config.cors.allowed_origins.iter().all(|origin| origin
-        .starts_with("http://localhost:")
-        || origin.starts_with("http://127.0.0.1:")));
+    assert!(config
+        .cors
+        .allowed_origins
+        .iter()
+        .all(|origin| origin.starts_with("http://localhost:")
+            || origin.starts_with("http://127.0.0.1:")));
 }
 
 #[test]
