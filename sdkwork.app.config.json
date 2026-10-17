@@ -138,7 +138,7 @@
           "install-manifest.json: configFile/envFile/secretsDir corrected to config.toml, api-gateway.env, and secrets/ so automation no longer targets paths the installer never writes",
           "config: SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND / _REDIS_URL / _REDIS_KEY_PREFIX environment overrides with fail-closed validation",
           "etc/: removed the stray no-op `bind` key from every [database] section that duplicated [server] bind and misled operators",
-          "workflow: every runtime dependency exposes a workflow_dispatch ref input that falls back to its SDKWORK_*_REF variable and then main (GITHUB_WORKFLOW_SPEC dependency plan)",
+          "workflow: dependency refs are declared as fixed `ref: main` entries in sdkwork.workflow.json (GITHUB_WORKFLOW_SPEC allows a fixed ref or a declared refInput), keeping every runtime dependency on its repository's main branch and the dispatch surface inside GitHub's 25-input limit",
           "tests: deployment contract no longer requires gitignored docker/env/*.env files, so the suite passes on a clean checkout"
         ],
         "packageIds": [
