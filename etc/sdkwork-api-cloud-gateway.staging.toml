@@ -9,7 +9,6 @@ bind = "0.0.0.0:3907"
 
 [database]
 autoMigrate = false
-bind = "0.0.0.0:3907"
 
 [cors]
 allowAnyOrigin = false

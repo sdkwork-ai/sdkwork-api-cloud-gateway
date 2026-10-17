@@ -791,6 +791,29 @@ impl GatewayRuntimeConfig {
             self.traffic.rate_limit_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED", enabled)?;
         }
+        // Installation-time rate-limit backend selection (PACKAGING_SPEC §5.5:
+        // installation-generated values live in the service EnvironmentFile,
+        // never in the shipped config template). `redis` is validated by
+        // `validate()` below, which requires a Redis URL as well.
+        if let Some(backend) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND") {
+            self.traffic.rate_limit_backend = backend.trim().to_owned();
+        }
+        if let Some(redis_url) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_URL") {
+            let trimmed = redis_url.trim();
+            self.traffic.redis_url = if trimmed.is_empty() {
+                None
+            } else {
+                Some(trimmed.to_owned())
+            };
+        }
+        if let Some(redis_key_prefix) =
+            env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_KEY_PREFIX")
+        {
+            let trimmed = redis_key_prefix.trim();
+            if !trimmed.is_empty() {
+                self.traffic.redis_key_prefix = trimmed.to_owned();
+            }
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED") {
             self.policy.enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_POLICY_ENABLED", enabled)?;

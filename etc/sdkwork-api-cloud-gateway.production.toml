@@ -11,7 +11,6 @@ bind = "0.0.0.0:3900"
 # Production installation runs the explicit `--migrate-databases` lifecycle
 # command before service startup. Runtime auto-migration remains disabled.
 autoMigrate = false
-bind = "0.0.0.0:3900"
 
 [cors]
 allowAnyOrigin = false

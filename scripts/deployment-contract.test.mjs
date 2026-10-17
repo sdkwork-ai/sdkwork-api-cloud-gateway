@@ -622,17 +622,23 @@ test('compose passes the cloudrouter web environment through to the container', 
   const expected = /SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT: \$\{GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT:-\}/u;
   assert.match(repo, expected);
   assert.match(bundle, expected);
-  // Every env file (and example) declares its router environment explicitly:
+  // Every tracked env example declares its router environment explicitly:
   // unset or unknown values fail closed to the production posture inside
-  // cloudrouter's web_security parse_environment.
+  // cloudrouter's web_security parse_environment. Operator-local `.env` files
+  // are gitignored (`.gitignore` keeps only `*.env.example`), so they are
+  // validated only when this machine actually has one.
   const envDir = path.join(appRoot, 'docker', 'env');
   for (const name of ['development', 'test', 'staging', 'demo', 'production']) {
-    for (const suffix of ['.env', '.env.example']) {
-      const file = readFileSync(path.join(envDir, `${name}${suffix}`), 'utf8');
+    const candidates = [`${name}.env.example`];
+    if (existsSync(path.join(envDir, `${name}.env`))) {
+      candidates.push(`${name}.env`);
+    }
+    for (const file of candidates) {
+      const contents = readFileSync(path.join(envDir, file), 'utf8');
       assert.match(
-        file,
+        contents,
         new RegExp(`^GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT=${name}$`, 'mu'),
-        `${name}${suffix} must declare GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT=${name}`,
+        `${file} must declare GATEWAY_CLOUDROUTER_ROUTER_ENVIRONMENT=${name}`,
       );
     }
   }

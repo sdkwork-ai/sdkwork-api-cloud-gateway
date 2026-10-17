@@ -661,8 +661,10 @@ ${binaryPath} --config config/sdkwork-api-cloud-gateway.production.toml
 ## Health Checks
 
 \`\`\`sh
-curl http://127.0.0.1:3900/healthz
-curl http://127.0.0.1:3900/readyz
+# <port> is the configured listener port (template default 3900; override at
+# install time with --port/--bind or SDKWORK_API_CLOUD_GATEWAY_BIND).
+curl http://127.0.0.1:<port>/healthz
+curl http://127.0.0.1:<port>/readyz
 \`\`\`
 
 ## Production deployment (systemd service)
@@ -671,22 +673,40 @@ Service deployments install the binary and runtime layout per
 RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
 (\`/usr/lib/systemd/system/${serviceName}.service\`, PACKAGING_SPEC §5.5):
 
-1. Materialize \`config/sdkwork-api-cloud-gateway.production.toml\` at the
-   canonical config path \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml\`
-   (\`root:sdkwork\`, 0640).
-2. Put installation-generated overrides in
-   \`/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env\` (0640) — never
-   embed them in the unit file.
-3. Inject the unified PostgreSQL profile through \`SDKWORK_DATABASE_*\` with
-   password material via \`password_file\` or
-   \`/etc/sdkwork/database/database.secret\`; never write credentials into env
-   files, unit files, or config templates (PACKAGING_SPEC §5.5).
-4. The package installs and enables the bundled
-   \`sdkwork-knowledgebase-rpc.service\` before the gateway service.
-5. \`sudo systemctl enable --now ${serviceName}\`
+\`\`\`sh
+sudo ./install/install-ubuntu.sh \\
+  --environment production \\
+  --bind 0.0.0.0:3900 \\
+  --database-config-dir /etc/sdkwork/database \\
+  --redis-url redis://127.0.0.1:6379/0 \\
+  --rate-limit-backend redis
+\`\`\`
 
-See docs/guides/operator/docker-install.md for the complete per-OS
-installation and configuration standards (Linux/macOS/Windows/container).
+1. The installer materializes the runtime template at the canonical config path
+   \`/etc/sdkwork/api-gateway/config.toml\` (\`root:sdkwork\`, 0640) and never
+   overwrites an operator-edited file.
+2. Installation-generated values go to
+   \`/etc/sdkwork/api-gateway/api-gateway.env\` (0640) — never into the unit
+   file. \`--bind\`/\`--host\`/\`--port\`, \`--database-config-dir\`,
+   \`--redis-url\`, \`--rate-limit-backend\`, and \`--redis-key-prefix\` are
+   written there, so the same package installs on any port, database, or Redis
+   topology without editing the template.
+3. PostgreSQL is resolved from the workspace profile in
+   \`/etc/sdkwork/database/database.toml\` (override with
+   \`--database-config-dir\`) with \`password_file\` pointing at a
+   \`root:sdkwork\` 0640 secret; credentials are never written into env files,
+   unit files, or config templates (PACKAGING_SPEC §5.5).
+4. Production-like environments (\`production\`, \`staging\`) require
+   \`SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL\`; the installer fails before
+   enabling the unit when it is missing instead of leaving a crash loop.
+5. The package installs and enables the bundled
+   \`sdkwork-knowledgebase-rpc.service\` before the gateway service.
+6. \`sudo systemctl enable --now ${serviceName}\`
+
+The shipped template's remaining knobs (CORS origins, WAF, policy, traffic
+budgets, observability) stay in \`config.toml\`; every value also has a
+\`SDKWORK_API_CLOUD_GATEWAY_*\` environment override (see
+\`docs/architecture/tech/TECH_ARCHITECTURE.md\`).
 `;
 }
 
@@ -731,9 +751,13 @@ async function createInstallManifest(context) {
         run: '/run/sdkwork/api-gateway',
         installRoot: '/opt/sdkwork/api-gateway',
       },
-      configFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.toml',
-      envFile: '/etc/sdkwork/api-gateway/sdkwork-api-cloud-gateway.env',
-      secretsDir: '/etc/sdkwork/api-gateway',
+      // Canonical runtime paths (APPLICATION_DEPLOY_LAYOUT_SPEC): the primary
+      // runtime file is `config.toml`, and installation-generated values live in
+      // `api-gateway.env`, which the packaged systemd unit consumes via
+      // EnvironmentFile. Both names must match `bin/packaging/install-ubuntu.sh`.
+      configFile: '/etc/sdkwork/api-gateway/config.toml',
+      envFile: '/etc/sdkwork/api-gateway/api-gateway.env',
+      secretsDir: '/etc/sdkwork/api-gateway/secrets',
       container: {
         configMount: '/etc/sdkwork/api-gateway',
         secretsMount: '/run/secrets/sdkwork/api-gateway',

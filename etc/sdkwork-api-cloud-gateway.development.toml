@@ -12,7 +12,6 @@ bind = "127.0.0.1:3900"
 # (fresh install or version upgrade). Set false to manage schema
 # lifecycle explicitly; SDKWORK_DATABASE_AUTO_MIGRATE still overrides.
 autoMigrate = true
-bind = "127.0.0.1:3900"
 
 # Platform gateway realtime hosting (ADR-20260809-platform-gateway-realtime-hosting):
 # embeds the IM session-gateway realtime plane (WebSocket upgrade on this HTTP

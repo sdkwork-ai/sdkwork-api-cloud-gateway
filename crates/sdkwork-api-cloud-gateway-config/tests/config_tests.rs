@@ -741,6 +741,61 @@ fn lifecycle_environment_env_override_is_canonical_and_validated() {
         .is_err());
 }
 
+/// Installation-time knobs operators set through the service EnvironmentFile
+/// (PACKAGING_SPEC §5.5): bind address, rate-limit backend, and the Redis URLs
+/// behind both the rate-limit store and the Web Framework shared stores.
+#[test]
+fn install_time_bind_and_redis_overrides_are_applied() {
+    let mut env = HashMap::new();
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_BIND".to_owned(),
+        "127.0.0.1:3977".to_owned(),
+    );
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND".to_owned(),
+        "redis".to_owned(),
+    );
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_URL".to_owned(),
+        "redis://127.0.0.1:6380/1".to_owned(),
+    );
+    env.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_KEY_PREFIX".to_owned(),
+        "sdkwork:test:rl".to_owned(),
+    );
+
+    let config = GatewayRuntimeConfig::default()
+        .with_env_overrides(&env)
+        .expect("install-time overrides");
+    assert_eq!(config.server.bind, "127.0.0.1:3977");
+    assert_eq!(config.traffic.rate_limit_backend, "redis");
+    assert_eq!(
+        config.traffic.redis_url.as_deref(),
+        Some("redis://127.0.0.1:6380/1")
+    );
+    assert_eq!(config.traffic.redis_key_prefix, "sdkwork:test:rl");
+
+    // A redis backend without a URL is a configuration defect, not a silent
+    // fallback: the gateway must refuse to start rather than pretend.
+    let mut missing_url = HashMap::new();
+    missing_url.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND".to_owned(),
+        "redis".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::default()
+        .with_env_overrides(&missing_url)
+        .is_err());
+
+    let mut unsupported = HashMap::new();
+    unsupported.insert(
+        "SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND".to_owned(),
+        "memcached".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::default()
+        .with_env_overrides(&unsupported)
+        .is_err());
+}
+
 #[test]
 fn local_router_uses_conflict_free_canonical_open_api_prefixes() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))

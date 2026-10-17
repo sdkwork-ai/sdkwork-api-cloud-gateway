@@ -17,12 +17,6 @@ bind = "127.0.0.1:3906"
 # (fresh install or version upgrade). Set false to manage schema
 # lifecycle explicitly; SDKWORK_DATABASE_AUTO_MIGRATE still overrides.
 autoMigrate = true
-# Test environment bind. Fixed port so deployed test instances are reachable
-# at a known address; the port matrix (docker/README port plan) reserves:
-#   3906  WSL/Ubuntu direct test deployment (127.0.0.1)
-#   3911  container test deployment (host side -> 3900)
-# Concurrency-safe alternative for ephemeral test runs remains `127.0.0.1:0`.
-bind = "127.0.0.1:3906"
 
 [cors]
 allowAnyOrigin = false

@@ -5,6 +5,13 @@ environment=production
 deployment_profile=standalone
 destdir=
 start_service=true
+bind_value=
+bind_host=
+bind_port=
+database_config_dir=
+redis_url=
+rate_limit_backend=
+redis_key_prefix=
 
 usage() {
   cat <<'EOF'
@@ -16,6 +23,22 @@ Options:
   --destdir <path>   Stage under a package root without touching the host.
   --no-start         Install files without enabling or starting systemd.
   -h, --help         Show this help.
+
+Installation-time runtime overrides (written to the service EnvironmentFile,
+never into the shipped config template — PACKAGING_SPEC §5.5):
+
+  --bind <host:port>            HTTP listener bind, for example 0.0.0.0:3901.
+  --host <host>                 Listener host only; keeps the template port.
+  --port <port>                 Listener port only; keeps the template host.
+  --database-config-dir <path>  PostgreSQL profile directory holding
+                                database.toml (or database.env) and
+                                database.secret. Default /etc/sdkwork/database.
+  --redis-url <url>             Redis URL for the Web Framework shared stores.
+                                Required for production-like environments.
+  --rate-limit-backend <memory|redis>
+                                Rate-limit backend; redis additionally needs
+                                --redis-url.
+  --redis-key-prefix <prefix>   Key namespace for Redis rate-limit buckets.
 EOF
 }
 
@@ -43,6 +66,41 @@ while [ "$#" -gt 0 ]; do
       destdir=${2%/}
       shift 2
       ;;
+    --bind)
+      require_value "$@"
+      bind_value=$2
+      shift 2
+      ;;
+    --host)
+      require_value "$@"
+      bind_host=$2
+      shift 2
+      ;;
+    --port)
+      require_value "$@"
+      bind_port=$2
+      shift 2
+      ;;
+    --database-config-dir)
+      require_value "$@"
+      database_config_dir=${2%/}
+      shift 2
+      ;;
+    --redis-url)
+      require_value "$@"
+      redis_url=$2
+      shift 2
+      ;;
+    --rate-limit-backend)
+      require_value "$@"
+      rate_limit_backend=$2
+      shift 2
+      ;;
+    --redis-key-prefix)
+      require_value "$@"
+      redis_key_prefix=$2
+      shift 2
+      ;;
     --no-start)
       start_service=false
       shift
@@ -68,6 +126,44 @@ case "$deployment_profile" in
   *) echo "unsupported deployment profile: $deployment_profile" >&2; exit 2 ;;
 esac
 
+if [ -n "$bind_port" ]; then
+  case "$bind_port" in
+    ''|*[!0-9]*) echo "--port must be numeric: $bind_port" >&2; exit 2 ;;
+  esac
+  if [ "$bind_port" -lt 1 ] || [ "$bind_port" -gt 65535 ]; then
+    echo "--port must be in 1..65535: $bind_port" >&2
+    exit 2
+  fi
+fi
+if [ -n "$bind_value" ]; then
+  case "$bind_value" in
+    *:*) ;;
+    *) echo "--bind must be <host:port>: $bind_value" >&2; exit 2 ;;
+  esac
+fi
+if [ -n "$redis_url" ]; then
+  case "$redis_url" in
+    redis://*|rediss://*) ;;
+    *) echo "--redis-url must start with redis:// or rediss://: $redis_url" >&2; exit 2 ;;
+  esac
+fi
+if [ -n "$rate_limit_backend" ]; then
+  case "$rate_limit_backend" in
+    memory|redis) ;;
+    *) echo "unsupported --rate-limit-backend: $rate_limit_backend" >&2; exit 2 ;;
+  esac
+fi
+if [ "$rate_limit_backend" = redis ] && [ -z "$redis_url" ]; then
+  echo "--rate-limit-backend redis requires --redis-url" >&2
+  exit 2
+fi
+if [ -n "$database_config_dir" ]; then
+  case "$database_config_dir" in
+    /*) ;;
+    *) echo "--database-config-dir must be an absolute path" >&2; exit 2 ;;
+  esac
+fi
+
 if [ -z "$destdir" ] && [ "$(id -u)" -ne 0 ]; then
   echo "host installation requires root; run with sudo or use --destdir" >&2
   exit 1
@@ -87,6 +183,47 @@ knowledgebase_rpc_entrypoint_source=$script_dir/knowledgebase-rpc-entrypoint
 unit_source=$script_dir/sdkwork-api-gateway.service
 knowledgebase_rpc_unit_source=$script_dir/sdkwork-knowledgebase-rpc.service
 config_source=$package_root/config/sdkwork-api-cloud-gateway.$environment.toml
+
+# Installation-time listener override: `--bind` wins; `--host`/`--port` compose
+# against the shipped template so an operator only states what changes.
+template_bind=$(sed -n 's/^[[:space:]]*bind[[:space:]]*=[[:space:]]*"\(.*\)"[[:space:]]*$/\1/p' "$config_source" 2>/dev/null | head -n 1)
+if [ -z "$bind_value" ] && { [ -n "$bind_host" ] || [ -n "$bind_port" ]; }; then
+  template_host=${template_bind%:*}
+  template_port=${template_bind##*:}
+  [ -n "$template_host" ] || template_host=0.0.0.0
+  [ -n "$template_port" ] || template_port=3900
+  if [ -n "$bind_host" ]; then
+    effective_host=$bind_host
+  else
+    effective_host=$template_host
+  fi
+  if [ -n "$bind_port" ]; then
+    effective_port=$bind_port
+  else
+    effective_port=$template_port
+  fi
+  bind_value=$effective_host:$effective_port
+fi
+
+# Upsert a key in the service EnvironmentFile without disturbing operator edits
+# to other keys. Keeps the existing inode so ownership and 0640 mode survive.
+set_env() {
+  set_env_key=$1
+  set_env_value=$2
+  set_env_file=$3
+  set_env_tmp=$set_env_file.tmp
+  SET_ENV_KEY=$set_env_key SET_ENV_VALUE=$set_env_value awk '
+    BEGIN { done = 0 }
+    index($0, ENVIRON["SET_ENV_KEY"] "=") == 1 {
+      if (!done) { print ENVIRON["SET_ENV_KEY"] "=" ENVIRON["SET_ENV_VALUE"]; done = 1 }
+      next
+    }
+    { print }
+    END { if (!done) print ENVIRON["SET_ENV_KEY"] "=" ENVIRON["SET_ENV_VALUE"] }
+  ' "$set_env_file" > "$set_env_tmp"
+  cat "$set_env_tmp" > "$set_env_file"
+  rm -f "$set_env_tmp"
+}
 
 for required in "$binary_source" "$knowledgebase_rpc_binary_source" \
   "$knowledgebase_rpc_entrypoint_source" "$unit_source" \
@@ -160,6 +297,7 @@ if [ ! -e "$env_target" ]; then
     echo "SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=/etc/sdkwork/api-gateway/config.toml"
     echo "SDKWORK_APP_ROOT=/opt/sdkwork/api-gateway"
     echo "SDKWORK_DATABASE_MODULES_ROOT=/opt/sdkwork/api-gateway/database-modules"
+    echo "SDKWORK_DATABASE_CONFIG_DIR=${database_config_dir:-/etc/sdkwork/database}"
     echo "SDKWORK_MODELS_APP_ROOT=/opt/sdkwork/api-gateway/database-modules/sdkwork-models"
     echo "SDKWORK_MODELS_CATALOG_ROOT=/opt/sdkwork/api-gateway/data/sdkwork-models"
     echo "SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC=false"
@@ -180,6 +318,26 @@ if [ ! -e "$env_target" ]; then
     echo "SDKWORK_SECRETS_DIR=/etc/sdkwork/api-gateway/secrets"
   } > "$env_target"
   chmod 0640 "$env_target"
+fi
+
+# Installation-time overrides (PACKAGING_SPEC §5.5): the EnvironmentFile is the
+# only place installation-generated values land, so config.toml stays the
+# shipped, reviewable template and re-running the installer is idempotent.
+if [ -n "$bind_value" ]; then
+  set_env SDKWORK_API_CLOUD_GATEWAY_BIND "$bind_value" "$env_target"
+fi
+if [ -n "$database_config_dir" ]; then
+  set_env SDKWORK_DATABASE_CONFIG_DIR "$database_config_dir" "$env_target"
+fi
+if [ -n "$redis_url" ]; then
+  set_env SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL "$redis_url" "$env_target"
+  set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_URL "$redis_url" "$env_target"
+fi
+if [ -n "$rate_limit_backend" ]; then
+  set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND "$rate_limit_backend" "$env_target"
+fi
+if [ -n "$redis_key_prefix" ]; then
+  set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_KEY_PREFIX "$redis_key_prefix" "$env_target"
 fi
 
 knowledgebase_rpc_env_target=$config_root/sdkwork-knowledgebase-rpc.env
@@ -212,6 +370,12 @@ if [ ! -e "$knowledgebase_rpc_env_target" ]; then
   chmod 0640 "$knowledgebase_rpc_env_target"
 fi
 
+# Keep the bundled knowledgebase RPC sidecar on the same PostgreSQL profile the
+# gateway was installed with.
+if [ -n "$database_config_dir" ]; then
+  set_env SDKWORK_DATABASE_CONFIG_DIR "$database_config_dir" "$knowledgebase_rpc_env_target"
+fi
+
 install -m 0644 "$unit_source" "$unit_root/sdkwork-api-gateway.service"
 install -m 0644 "$knowledgebase_rpc_unit_source" \
   "$unit_root/sdkwork-knowledgebase-rpc.service"
@@ -236,10 +400,28 @@ if [ -z "$destdir" ]; then
   chmod 0600 "$secrets_root/knowledgebase-rpc/ca.key"
   chown -R sdkwork:sdkwork "$data_root" "$log_root" "$cache_root" "$run_root"
   if [ "$start_service" = true ]; then
-    if [ ! -s /etc/sdkwork/database/database.url.secret ]; then
-      echo "missing /etc/sdkwork/database/database.url.secret; create the root:sdkwork 0640 PostgreSQL URL secret or rerun with --no-start" >&2
+    # Canonical PostgreSQL profile (DATABASE_SPEC / sdkwork-database-config):
+    # `database.toml` (or `database.env`) in the workspace config dir, with
+    # secret material referenced by `password_file`. The legacy standalone
+    # `database.url.secret` stays accepted for pre-migration hosts.
+    database_profile_dir=${database_config_dir:-/etc/sdkwork/database}
+    if [ ! -f "$database_profile_dir/database.toml" ] \
+      && [ ! -f "$database_profile_dir/database.env" ] \
+      && [ ! -s "$database_profile_dir/database.url.secret" ]; then
+      echo "missing PostgreSQL profile in $database_profile_dir: expected database.toml (or database.env) with password_file pointing at a root:sdkwork 0640 secret, or the legacy database.url.secret; pass --database-config-dir to point elsewhere, or rerun with --no-start" >&2
       exit 1
     fi
+    # Production-like environments compose the Web Framework shared stores on
+    # Redis; without a URL the gateway refuses to start, so fail at install time
+    # instead of leaving a crash-looping unit behind.
+    case "$environment" in
+      prod|production|stage|staging|live)
+        if ! grep -q '^SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL=..*' "$env_target" 2>/dev/null; then
+          echo "production-like installs require SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL for the Web Framework shared stores; rerun with --redis-url <url>, or rerun with --no-start" >&2
+          exit 1
+        fi
+        ;;
+    esac
     systemctl daemon-reload
     systemctl enable --now sdkwork-knowledgebase-rpc.service sdkwork-api-gateway.service
   fi
