@@ -384,6 +384,7 @@ function runCargoBuild(context) {
     CARGO_TARGET_DIR: context.cargoTargetDir,
     CARGO_INCREMENTAL: '0',
     PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
+    ...opusLinkEnvironment(),
   };
   for (const command of createCargoBuildCommands(context)) {
     run('cargo', command.args, {
@@ -391,6 +392,40 @@ function runCargoBuild(context) {
       env: buildEnvironment,
     });
   }
+}
+
+/**
+ * Resolves `LIBOPUS_LIB_DIR` for hosts that cannot build Opus from source.
+ *
+ * The foundation suite reaches `audiopus_sys`, whose vendored source build
+ * shells out to `cp`, `sh autogen.sh` and `make`. On Windows that path is
+ * unusable: Git Bash's MSYS `cp` strips the backslashes from the `\\?\C:\...`
+ * verbatim path it receives, so the copy fails and the build script panics at
+ * `Failed to copy Opus files.` The crate's documented escape hatch is
+ * `LIBOPUS_LIB_DIR`, which links a prebuilt archive and skips that path, so
+ * Windows links `target/prebuilt-opus/lib` once it has been produced by
+ * scripts/build-windows-libopus.ps1.
+ *
+ * Returning an empty object everywhere else keeps the previous behaviour:
+ * Linux finds Opus through pkg-config and macOS builds it from source with the
+ * autotools toolchain that scripts/ci/install-build-dependencies.mjs installs.
+ * An explicit `LIBOPUS_LIB_DIR` from the environment always wins.
+ */
+function opusLinkEnvironment() {
+  if (process.platform !== 'win32') return {};
+  if (process.env.LIBOPUS_LIB_DIR) return {};
+
+  const libraryPath = path.join(appRoot, 'target', 'prebuilt-opus', 'lib', 'libopus.a');
+  if (!existsSync(libraryPath)) {
+    throw new Error(
+      `Missing prebuilt Opus at ${libraryPath}. Run \`pnpm build:native-deps:windows\` first; ` +
+        'audiopus_sys cannot build Opus from source on Windows.',
+    );
+  }
+
+  const libDirectory = path.dirname(libraryPath);
+  console.log(`[sdkwork-api-cloud-gateway] linking prebuilt Opus from ${libDirectory}`);
+  return { LIBOPUS_LIB_DIR: libDirectory };
 }
 
 export function createCargoBuildCommands(context) {
