@@ -28,7 +28,18 @@ $libDestination = Join-Path $outputRoot 'lib/libopus.a'
 $workRoot = Join-Path $repoRoot 'target/prebuilt-opus-build'
 
 $crateName = 'audiopus_sys-0.1.8'
-$crateArchive = Join-Path $env:USERPROFILE ".cargo/registry/cache/rsproxy.cn-e3de039b2554c837/$crateName.crate"
+# The registry cache directory is named after the index in use
+# (`index.crates.io-*` on CI, a mirror such as `rsproxy.cn-*` on a developer
+# machine), so search them all instead of pinning one mirror. The caller may
+# also hand over the archive it already resolved.
+if ($env:AUDIOPUS_CRATE_ARCHIVE) {
+    $crateArchive = $env:AUDIOPUS_CRATE_ARCHIVE
+} else {
+    $cargoHome = if ($env:CARGO_HOME) { $env:CARGO_HOME } else { Join-Path $env:USERPROFILE '.cargo' }
+    $crateArchive = Get-ChildItem -Path (Join-Path $cargoHome 'registry/cache') -Filter "$crateName.crate" `
+        -Recurse -File -ErrorAction SilentlyContinue |
+        Select-Object -First 1 -ExpandProperty FullName
+}
 
 function Resolve-Tool {
     param([string]$Name, [string[]]$Candidates)
@@ -45,7 +56,7 @@ if ((Test-Path $libDestination) -and -not $Force) {
     exit 0
 }
 
-if (-not (Test-Path $crateArchive)) {
+if (-not $crateArchive -or -not (Test-Path $crateArchive)) {
     throw "Vendored Opus source archive not found: $crateArchive. Run any build that needs audiopus_sys first so cargo caches the crate."
 }
 

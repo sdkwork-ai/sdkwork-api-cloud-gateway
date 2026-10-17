@@ -28,10 +28,12 @@
  *   macro/libtoolize environment the build needs, and proves the recipe with a
  *   real `autoreconf -i` run before the long build starts.
  *
- * - Windows fails earlier and differently. `audiopus_sys` reaches its
- *   Unix-only source path (`cp`, `sh autogen.sh`, `make`), and Git Bash's MSYS
- *   `cp` strips the backslashes out of the `\\?\C:\...` verbatim path it is
- *   handed, so the copy never happens:
+ * - Windows only needs help on the GNU target. `audiopus_sys` chooses its Opus
+ *   strategy from the target environment: `windows-msvc` links the `opus.lib`
+ *   the crate ships under `msvc/x64`, while `windows-gnu` takes the Unix-only
+ *   source path (`cp`, `sh autogen.sh`, `make`), and Git Bash's MSYS `cp`
+ *   strips the backslashes out of the `\\?\C:\...` verbatim path it is handed,
+ *   so the copy never happens:
  *
  *     cargo:info=`pkg_config` could not find `Opus`.
  *     cargo:info=Opus will be built as static-library.
@@ -39,20 +41,24 @@
  *     thread 'main' panicked at audiopus_sys-0.1.8/build.rs:90:
  *     Failed to copy Opus files.
  *
- *   That source path cannot succeed on Windows at any toolchain level, so this
- *   script instead builds `libopus.a` from the same vendored sources with
- *   MinGW gcc/ar + CMake (scripts/build-windows-libopus.ps1) and exports
- *   `LIBOPUS_LIB_DIR` for the rest of the job.
+ *   That source path cannot succeed on Windows at any toolchain level, so for
+ *   the GNU target this script instead builds `libopus.a` from the same
+ *   vendored sources with MinGW gcc/ar + CMake
+ *   (scripts/build-windows-libopus.ps1) and exports `LIBOPUS_LIB_DIR` for the
+ *   rest of the job. GitHub's `windows-2022` runner is MSVC, where the crate's
+ *   bundled archive is used and this branch is skipped entirely.
  *
  * Linux runners already provide Opus through pkg-config, so they log a skip.
  *
  * Usage: node scripts/ci/install-build-dependencies.mjs
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+
+import { needsPrebuiltWindowsOpus, resolveRustTargetTriple } from './rust-host-target.mjs';
 
 /** Tools required to autogen and build the vendored Opus sources. */
 const MACOS_TOOLS = ['cmake', 'autoconf', 'automake', 'libtool'];
@@ -241,6 +247,28 @@ function probeAutoreconfLibtool() {
 /** Relative location of the prebuilt libopus the Windows script produces. */
 const PREBUILT_OPUS_LIB_DIR = 'target/prebuilt-opus/lib';
 
+/** The vendored Opus sources ship inside this crate. */
+const AUDIOPUS_CRATE = 'audiopus_sys-0.1.8';
+
+/**
+ * Finds the cached `.crate` archive across every configured registry.
+ *
+ * The registry directory is named after the index in use (`index.crates.io-*`
+ * on CI, a mirror such as `rsproxy.cn-*` on a developer machine), so hardcoding
+ * one of them made the Windows build depend on the author's cargo mirror.
+ */
+function findAudiopusCrateArchive() {
+  const cacheRoot = path.join(process.env.CARGO_HOME || path.join(process.env.USERPROFILE || '', '.cargo'), 'registry', 'cache');
+  if (!existsSync(cacheRoot)) return null;
+
+  for (const registry of readdirSync(cacheRoot)) {
+    const candidate = path.join(cacheRoot, registry, `${AUDIOPUS_CRATE}.crate`);
+    if (existsSync(candidate)) return candidate;
+  }
+
+  return null;
+}
+
 /**
  * Builds the prebuilt Windows Opus archive and exports `LIBOPUS_LIB_DIR` so the
  * `audiopus_sys` build script links it instead of taking its Unix-only source
@@ -248,14 +276,35 @@ const PREBUILT_OPUS_LIB_DIR = 'target/prebuilt-opus/lib';
  * that runs afterwards must inherit it: the caller has to run this script and
  * the build in the same shell, which `sdkwork.workflow.json` does by invoking
  * it from the same lifecycle `run` block.
+ *
+ * Only the GNU target needs this. An MSVC target links the archive the crate
+ * already ships, so building a MinGW archive there would fail for no benefit.
  */
 function installWindowsPrebuiltOpus() {
+  if (!needsPrebuiltWindowsOpus()) {
+    console.log(
+      `[install-build-dependencies] skipping Windows Opus build: ${resolveRustTargetTriple() || 'the MSVC host'} ` +
+        'links the archive audiopus_sys ships',
+    );
+    return 0;
+  }
+
   const repositoryRoot = path.resolve(import.meta.dirname, '..', '..');
   const scriptPath = path.join(repositoryRoot, 'scripts', 'build-windows-libopus.ps1');
   if (!existsSync(scriptPath)) {
     console.error(`[install-build-dependencies] missing ${scriptPath}`);
     return 1;
   }
+
+  const crateArchive = findAudiopusCrateArchive();
+  if (!crateArchive) {
+    console.error(
+      `[install-build-dependencies] no cached ${AUDIOPUS_CRATE}.crate under CARGO_HOME; ` +
+        'run a build that needs audiopus_sys first so cargo caches the crate',
+    );
+    return 1;
+  }
+  console.log(`[install-build-dependencies] vendored Opus archive: ${crateArchive}`);
 
   // PowerShell 7 (`pwsh`) is the documented interpreter, but GitHub's windows
   // runners only guarantee Windows PowerShell 5.1, so fall back to it. The
@@ -280,6 +329,7 @@ function installWindowsPrebuiltOpus() {
         stdio: 'inherit',
         cwd: repositoryRoot,
         timeout: 30 * 60 * 1000,
+        env: { ...process.env, AUDIOPUS_CRATE_ARCHIVE: crateArchive },
       },
     );
   } catch (error) {

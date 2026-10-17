@@ -9,6 +9,8 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { needsPrebuiltWindowsOpus, resolveRustTargetTriple } from './ci/rust-host-target.mjs';
+
 const APP_ID = 'sdkwork-api-cloud-gateway';
 const BINARY_NAME = 'sdkwork-api-cloud-gateway';
 const KNOWLEDGEBASE_RPC_BINARY_NAME = 'sdkwork-intelligence-knowledgebase-rpc-bin';
@@ -397,29 +399,39 @@ function runCargoBuild(context) {
 /**
  * Resolves `LIBOPUS_LIB_DIR` for hosts that cannot build Opus from source.
  *
- * The foundation suite reaches `audiopus_sys`, whose vendored source build
- * shells out to `cp`, `sh autogen.sh` and `make`. On Windows that path is
- * unusable: Git Bash's MSYS `cp` strips the backslashes from the `\\?\C:\...`
- * verbatim path it receives, so the copy fails and the build script panics at
- * `Failed to copy Opus files.` The crate's documented escape hatch is
- * `LIBOPUS_LIB_DIR`, which links a prebuilt archive and skips that path, so
- * Windows links `target/prebuilt-opus/lib` once it has been produced by
- * scripts/build-windows-libopus.ps1.
+ * The foundation suite reaches `audiopus_sys`, and that crate picks its Opus
+ * strategy from the target environment rather than the operating system. A
+ * `windows-gnu` target takes the vendored source build, which shells out to
+ * `cp`, `sh autogen.sh` and `make`; Git Bash's MSYS `cp` strips the backslashes
+ * from the `\\?\C:\...` verbatim path it receives, so the copy fails and the
+ * build script panics at `Failed to copy Opus files.` The crate's documented
+ * escape hatch is `LIBOPUS_LIB_DIR`, which links a prebuilt archive and skips
+ * that path, so the GNU target links `target/prebuilt-opus/lib` once it has
+ * been produced by scripts/build-windows-libopus.ps1.
  *
- * Returning an empty object everywhere else keeps the previous behaviour:
- * Linux finds Opus through pkg-config and macOS builds it from source with the
- * autotools toolchain that scripts/ci/install-build-dependencies.mjs installs.
- * An explicit `LIBOPUS_LIB_DIR` from the environment always wins.
+ * A `windows-msvc` target never enters that path: the crate ships `opus.lib`
+ * under `msvc/x64` and the build script links it directly, so no prebuilt
+ * archive is required. Returning an empty object everywhere else keeps the
+ * previous behaviour: Linux finds Opus through pkg-config and macOS builds it
+ * from source with the autotools toolchain that
+ * scripts/ci/install-build-dependencies.mjs installs. An explicit
+ * `LIBOPUS_LIB_DIR` from the environment always wins.
  */
 function opusLinkEnvironment() {
   if (process.platform !== 'win32') return {};
   if (process.env.LIBOPUS_LIB_DIR) return {};
+  if (!needsPrebuiltWindowsOpus()) {
+    console.log(
+      `[sdkwork-api-cloud-gateway] ${resolveRustTargetTriple()} links the Opus archive audiopus_sys ships`,
+    );
+    return {};
+  }
 
   const libraryPath = path.join(appRoot, 'target', 'prebuilt-opus', 'lib', 'libopus.a');
   if (!existsSync(libraryPath)) {
     throw new Error(
       `Missing prebuilt Opus at ${libraryPath}. Run \`pnpm build:native-deps:windows\` first; ` +
-        'audiopus_sys cannot build Opus from source on Windows.',
+        'audiopus_sys cannot build Opus from source on the windows-gnu target.',
     );
   }
 
