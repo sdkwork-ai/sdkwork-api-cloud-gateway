@@ -16,7 +16,17 @@
  *     error: failed to run custom build command for `audiopus_sys v0.1.8`
  *     Failed to autogen Opus.
  *
- *   Installing the autotools/cmake toolchain lets that build proceed.
+ *   Installing the autotools/cmake toolchain lets that build proceed. The
+ *   `libtool` half of that toolchain is easy to get wrong: macOS ships Apple's
+ *   unrelated `/usr/bin/libtool`, so probing the `libtool` name reported the
+ *   tool as present and Homebrew's GNU libtool was never installed. Without
+ *   `libtool.m4` on aclocal's path, Opus's autogen still died with:
+ *
+ *     configure.ac:38: error: undefined or overquoted macro: AM_PROG_LIBTOOL
+ *
+ *   This script therefore probes GNU libtool's own executables, exports the
+ *   macro/libtoolize environment the build needs, and proves the recipe with a
+ *   real `autoreconf -i` run before the long build starts.
  *
  * - Windows fails earlier and differently. `audiopus_sys` reaches its
  *   Unix-only source path (`cp`, `sh autogen.sh`, `make`), and Git Bash's MSYS
@@ -39,28 +49,59 @@
  * Usage: node scripts/ci/install-build-dependencies.mjs
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 /** Tools required to autogen and build the vendored Opus sources. */
 const MACOS_TOOLS = ['cmake', 'autoconf', 'automake', 'libtool'];
 
+/**
+ * Executables that prove the tool the build actually needs is installed.
+ *
+ * macOS ships Apple's `/usr/bin/libtool`, which shares a name with GNU libtool
+ * but provides none of the autoconf macros Opus needs. That name collision is
+ * what made an earlier run install autoconf and automake only, leaving
+ * `libtool.m4` missing. GNU libtool is the package that ships
+ * `glibtoolize`/`libtoolize`, so those are the probes.
+ */
+const MACOS_TOOL_PROBES = {
+  libtool: ['glibtoolize', 'libtoolize'],
+};
+
 /** Homebrew prefixes to search before running `brew install`. */
 const MACOS_TOOL_PATHS = {
   cmake: ['/opt/homebrew/bin/cmake', '/usr/local/bin/cmake'],
   autoconf: ['/opt/homebrew/bin/autoconf', '/usr/local/bin/autoconf'],
   automake: ['/opt/homebrew/bin/automake', '/usr/local/bin/automake'],
-  libtool: ['/opt/homebrew/bin/libtool', '/usr/local/bin/libtool'],
+  libtool: [
+    '/opt/homebrew/bin/glibtoolize',
+    '/usr/local/bin/glibtoolize',
+    '/opt/homebrew/bin/libtoolize',
+    '/usr/local/bin/libtoolize',
+  ],
 };
 
-function present(tool) {
+/** Prefixes whose `share/aclocal` holds GNU libtool's m4 macros. */
+const MACOS_ACLOCAL_DIRS = ['/opt/homebrew/share/aclocal', '/usr/local/share/aclocal'];
+
+/** GNU libtoolize entry points, in Homebrew naming order. */
+const MACOS_LIBTOOLIZE_PATHS = ['/opt/homebrew/bin/glibtoolize', '/usr/local/bin/glibtoolize'];
+
+function commandExists(command) {
   try {
-    execFileSync('which', [tool], { stdio: 'ignore' });
+    execFileSync('which', [command], { stdio: 'ignore' });
     return true;
   } catch {
-    return (MACOS_TOOL_PATHS[tool] ?? []).some((candidate) => existsSync(candidate));
+    return false;
   }
+}
+
+function present(tool) {
+  const probes = MACOS_TOOL_PROBES[tool] ?? [tool];
+  if (probes.some((probe) => commandExists(probe))) return true;
+  return (MACOS_TOOL_PATHS[tool] ?? []).some((candidate) => existsSync(candidate));
 }
 
 function brewPrefix() {
@@ -74,40 +115,128 @@ function installMacOsBuildTools() {
   const missing = MACOS_TOOLS.filter((tool) => !present(tool));
   if (missing.length === 0) {
     console.log('[install-build-dependencies] all macOS build tools already present');
-    return 0;
+  } else {
+    const brew = brewPrefix();
+    if (!brew) {
+      console.error(
+        `[install-build-dependencies] Homebrew not found; cannot install ${missing.join(', ')}`,
+      );
+      return 1;
+    }
+
+    console.log(`[install-build-dependencies] installing via Homebrew: ${missing.join(' ')}`);
+    try {
+      // `libtool` here is GNU libtool (glibtoolize), not Apple's Xcode shim.
+      execFileSync(brew, ['install', ...missing], {
+        stdio: 'inherit',
+        timeout: 20 * 60 * 1000,
+        env: { ...process.env, HOMEBREW_NO_AUTO_UPDATE: '1', HOMEBREW_NO_INSTALL_CLEANUP: '1' },
+      });
+    } catch (error) {
+      console.error(`[install-build-dependencies] brew install failed: ${error.message}`);
+      return 1;
+    }
+
+    const stillMissing = MACOS_TOOLS.filter((tool) => !present(tool));
+    if (stillMissing.length > 0) {
+      console.error(
+        `[install-build-dependencies] still missing after install: ${stillMissing.join(', ')}`,
+      );
+      return 1;
+    }
+    console.log('[install-build-dependencies] macOS build tools ready');
   }
 
-  const brew = brewPrefix();
-  if (!brew) {
-    console.error(
-      `[install-build-dependencies] Homebrew not found; cannot install ${missing.join(', ')}`,
-    );
-    return 1;
-  }
+  return configureMacOsLibtoolEnvironment();
+}
 
-  console.log(`[install-build-dependencies] installing via Homebrew: ${missing.join(' ')}`);
+/** aclocal's macro directory as the installed automake sees it. */
+function aclocalMacroDir() {
   try {
-    // `libtool` on macOS is `libtool` (a separate formula from the Xcode shim).
-    execFileSync(brew, ['install', ...missing], {
-      stdio: 'inherit',
-      timeout: 20 * 60 * 1000,
-      env: { ...process.env, HOMEBREW_NO_AUTO_UPDATE: '1', HOMEBREW_NO_INSTALL_CLEANUP: '1' },
-    });
-  } catch (error) {
-    console.error(`[install-build-dependencies] brew install failed: ${error.message}`);
-    return 1;
+    return execFileSync('aclocal', ['--print-ac-dir'], { encoding: 'utf8' }).trim();
+  } catch {
+    return '';
   }
+}
 
-  const stillMissing = MACOS_TOOLS.filter((tool) => !present(tool));
-  if (stillMissing.length > 0) {
+/**
+ * Export the GNU libtool environment Opus's autogen needs, then prove it works.
+ *
+ * `audiopus_sys` shells out to `autoreconf -i`, which resolves `libtool.m4`
+ * through aclocal and invokes libtoolize. Homebrew installs both under names
+ * aclocal and autoreconf only find when told where to look, so the paths are
+ * exported here. The export lives in this process, so the caller must run the
+ * build in the same shell - both the build and package lifecycle blocks in
+ * `sdkwork.workflow.json` do.
+ *
+ * The probe is the point: it runs the same `autoreconf -i` recipe against a
+ * throwaway `configure.ac` that uses `AM_PROG_LIBTOOL`, so a broken toolchain
+ * fails in seconds instead of surfacing twenty minutes into the package step.
+ */
+function configureMacOsLibtoolEnvironment() {
+  const macroDirs = [...new Set([aclocalMacroDir(), ...MACOS_ACLOCAL_DIRS])]
+    .filter((dir) => dir && existsSync(path.join(dir, 'libtool.m4')));
+  if (macroDirs.length === 0) {
     console.error(
-      `[install-build-dependencies] still missing after install: ${stillMissing.join(', ')}`,
+      '[install-build-dependencies] GNU libtool is installed but no libtool.m4 was found in ' +
+        `${MACOS_ACLOCAL_DIRS.join(', ')}; Opus autogen would fail with AM_PROG_LIBTOOL undefined`,
     );
     return 1;
   }
-  console.log('[install-build-dependencies] macOS build tools ready');
+
+  const aclocalPath = (process.env.ACLOCAL_PATH ?? '').split(':').filter(Boolean);
+  process.env.ACLOCAL_PATH = [...new Set([...aclocalPath, ...macroDirs])].join(':');
+  console.log(`[install-build-dependencies] ACLOCAL_PATH=${process.env.ACLOCAL_PATH}`);
+
+  const libtoolize = MACOS_LIBTOOLIZE_PATHS.find((candidate) => existsSync(candidate));
+  if (libtoolize) {
+    process.env.LIBTOOLIZE = libtoolize;
+    console.log(`[install-build-dependencies] LIBTOOLIZE=${libtoolize}`);
+  }
+
+  const probe = probeAutoreconfLibtool();
+  if (!probe.ok) {
+    console.error(
+      '[install-build-dependencies] autoreconf probe failed; Opus autogen would fail the same way',
+    );
+    console.error(probe.detail);
+    return 1;
+  }
+
+  console.log('[install-build-dependencies] autoreconf + AM_PROG_LIBTOOL probe passed');
   return 0;
 }
+
+/**
+ * Runs the autogen recipe `audiopus_sys` uses against a minimal `configure.ac`
+ * that declares `AM_PROG_LIBTOOL`, so the toolchain is proven before the long
+ * release build depends on it.
+ */
+function probeAutoreconfLibtool() {
+  const probeDir = mkdtempSync(path.join(tmpdir(), 'sdkwork-libtool-probe-'));
+  try {
+    writeFileSync(
+      path.join(probeDir, 'configure.ac'),
+      'AC_INIT([sdkwork-libtool-probe], [0.0.0])\nAM_PROG_LIBTOOL\nAC_OUTPUT\n',
+    );
+    execFileSync('autoreconf', ['-i'], {
+      cwd: probeDir,
+      stdio: 'pipe',
+      timeout: 5 * 60 * 1000,
+      env: process.env,
+    });
+    return { ok: true, detail: '' };
+  } catch (error) {
+    const output = [error.stdout?.toString(), error.stderr?.toString()]
+      .filter(Boolean)
+      .join('\n')
+      .trim();
+    return { ok: false, detail: output.slice(-2000) || error.message };
+  } finally {
+    rmSync(probeDir, { recursive: true, force: true });
+  }
+}
+
 
 /** Relative location of the prebuilt libopus the Windows script produces. */
 const PREBUILT_OPUS_LIB_DIR = 'target/prebuilt-opus/lib';
@@ -190,4 +319,11 @@ if (process.argv[1] && process.argv[1].endsWith('install-build-dependencies.mjs'
   process.exitCode = main();
 }
 
-export { main, installMacOsBuildTools, installWindowsPrebuiltOpus, MACOS_TOOLS };
+export {
+  main,
+  installMacOsBuildTools,
+  installWindowsPrebuiltOpus,
+  configureMacOsLibtoolEnvironment,
+  probeAutoreconfLibtool,
+  MACOS_TOOLS,
+};
