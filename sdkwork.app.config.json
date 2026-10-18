@@ -114,32 +114,97 @@
           "url": "https://registry.sdkwork.com/apps/sdkwork-api-cloud-gateway@sha256:d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08",
           "checksumAlgorithm": "SHA-256",
           "checksum": "d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08"
+        },
+        {
+          "id": "windows-x64-standalone-server-tar-gz",
+          "name": "SDKWork API Gateway Windows x64 Standalone Server",
+          "sourceType": "SCRIPT",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "architecture": "x64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "runtimeTarget": "server",
+          "targetPlatform": "windows",
+          "enabled": true
+        },
+        {
+          "id": "windows-x64-cloud-server-tar-gz",
+          "name": "SDKWork API Gateway Windows x64 Cloud Server",
+          "sourceType": "SCRIPT",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "architecture": "x64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "cloud",
+          "runtimeTarget": "server",
+          "targetPlatform": "windows",
+          "enabled": true
+        },
+        {
+          "id": "macos-arm64-standalone-server-tar-gz",
+          "name": "SDKWork API Gateway macOS arm64 Standalone Server",
+          "sourceType": "SCRIPT",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "architecture": "arm64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "standalone",
+          "runtimeTarget": "server",
+          "targetPlatform": "macos",
+          "enabled": true
+        },
+        {
+          "id": "macos-arm64-cloud-server-tar-gz",
+          "name": "SDKWork API Gateway macOS arm64 Cloud Server",
+          "sourceType": "SCRIPT",
+          "packageFormat": "TAR_GZ",
+          "platform": "API",
+          "architecture": "arm64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "cloud",
+          "runtimeTarget": "server",
+          "targetPlatform": "macos",
+          "enabled": true
+        },
+        {
+          "id": "container-x64-cloud-container-oci",
+          "name": "SDKWork API Gateway Linux x64 Cloud Container",
+          "sourceType": "CONTAINER_IMAGE",
+          "packageFormat": "DOCKER_IMAGE",
+          "platform": "API",
+          "architecture": "x64",
+          "profileBinding": "fixed",
+          "deploymentProfile": "cloud",
+          "runtimeTarget": "container",
+          "targetPlatform": "linux",
+          "enabled": true,
+          "url": "https://registry.sdkwork.com/apps/sdkwork-api-cloud-gateway@sha256:d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08",
+          "checksumAlgorithm": "SHA-256",
+          "checksum": "d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08"
         }
       ]
     }
   },
   "release": {
-    "currentVersion": "0.1.11",
+    "currentVersion": "0.1.12",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.11"
+      "BETA": "0.1.12"
     },
     "notes": [
       {
-        "version": "0.1.11",
+        "version": "0.1.12",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.11",
-        "summary": "Install-time configurability and packaging-path correctness for the standalone and cloud server packages. `install/install-ubuntu.sh` now accepts --bind/--host/--port, --database-config-dir, --redis-url, --rate-limit-backend, and --redis-key-prefix, and writes them into the service EnvironmentFile instead of the shipped config template, so one package installs on any port, PostgreSQL profile, or Redis topology. Production-like installs fail at install time when SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL is absent (the runtime already required it) instead of leaving a crash-looping unit. The installer now gates on the canonical PostgreSQL profile (database.toml/database.env) rather than a non-canonical URL secret file.",
+        "title": "sdkwork-api-cloud-gateway-v0.1.12",
+        "summary": "Container image packaging now completes on a fresh registry. v0.1.11 shipped 6 of 8 package targets: both container targets failed in the Package step after a successful `docker build` because `docker image inspect --format '{{index .RepoDigests 0}}'` aborts on an image that was built locally and never pushed — its RepoDigests slice is empty, and the Go template raises `slice index out of range` before the manifest is written. The identity probe now guards the index so the manifest falls back to the image Id and Size, and the OCI targets are declared in the app manifest alongside the server targets so release notes and package declarations agree.",
         "highlights": [
-          "install-ubuntu.sh: port/database/Redis customization at install time; values land in api-gateway.env (PACKAGING_SPEC 5.5), never in config.toml",
-          "install-ubuntu.sh: production-like installs require --redis-url, failing before systemd enable instead of crash-looping",
-          "install-ubuntu.sh: PostgreSQL pre-start gate uses the canonical database.toml/database.env profile (legacy database.url.secret still accepted)",
-          "install-manifest.json: configFile/envFile/secretsDir corrected to config.toml, api-gateway.env, and secrets/ so automation no longer targets paths the installer never writes",
-          "config: SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND / _REDIS_URL / _REDIS_KEY_PREFIX environment overrides with fail-closed validation",
-          "etc/: removed the stray no-op `bind` key from every [database] section that duplicated [server] bind and misled operators",
-          "workflow: dependency refs are declared as fixed `ref: main` entries in sdkwork.workflow.json (GITHUB_WORKFLOW_SPEC allows a fixed ref or a declared refInput), keeping every runtime dependency on its repository's main branch and the dispatch surface inside GitHub's 25-input limit",
-          "tests: deployment contract no longer requires gitignored docker/env/*.env files, so the suite passes on a clean checkout"
+          "build-api-cloud-gateway-container.mjs: the image identity probe tolerates an empty RepoDigests list (`{{if .RepoDigests}}`), so a locally built, unpushed image resolves from Id/Size instead of aborting the whole inspect",
+          "sdkwork.app.config.json: artifacts.installConfig.packages declares all six server targets (windows/macos x standalone+cloud) plus the cloud container target, so release.notes packageIds resolve against real package declarations (check-app-manifest-standard was rejecting five unknown ids)",
+          "sdkwork.app.config.json: windows/macos server packages declare their real targetPlatform/architecture, which previously mislabelled every non-Linux target as linux x64",
+          "sdkwork.workflow.json + package.json: version advanced to 0.1.12 across the workflow matrix artifact paths, the release default version, and the dispatch default tag",
+          "release notes for 0.1.12 cover only this version; earlier versions remain in the manifest history but are never re-published"
         ],
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
@@ -268,9 +333,9 @@
           "packageId": "linux-x64-standalone-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.11-linux-x64-standalone-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.12-linux-x64-standalone-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.11-linux-x64-standalone-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.12-linux-x64-standalone-server.tar.gz"
             }
           ]
         },
@@ -280,9 +345,9 @@
           "packageId": "linux-x64-cloud-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.11-linux-x64-cloud-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.12-linux-x64-cloud-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.11-linux-x64-cloud-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.12-linux-x64-cloud-server.tar.gz"
             }
           ]
         }

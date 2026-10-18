@@ -17,7 +17,7 @@ on:
       tag:
         description: Release tag or source ref to package.
         required: true
-        default: v0.1.11
+        default: v0.1.12
       package_version:
         description: Package version used in artifact names and manifests; empty derives it from the tag.
         required: false

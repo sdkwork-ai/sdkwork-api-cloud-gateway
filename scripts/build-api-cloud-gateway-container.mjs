@@ -782,7 +782,10 @@ async function imageIdentity(imageTag, repoDigest = null) {
     'image',
     'inspect',
     '--format',
-    '{{index .RepoDigests 0}}|{{.Id}}|{{.Size}}',
+    // A locally built image that was never pushed has an empty RepoDigests list, and
+    // `{{index .RepoDigests 0}}` aborts the whole inspect on that empty slice. Guard the
+    // index so the identity still resolves from Id/Size when no registry digest exists.
+    '{{if .RepoDigests}}{{index .RepoDigests 0}}{{end}}|{{.Id}}|{{.Size}}',
     imageTag,
   ]);
   const [inspectedRepoDigest, imageId, sizeBytes] = stdout.trim().split('|');
