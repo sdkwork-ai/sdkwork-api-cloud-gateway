@@ -9,6 +9,13 @@ bind_value=
 bind_host=
 bind_port=
 database_config_dir=
+database_host=
+database_port=
+database_name=
+database_username=
+database_password=
+database_password_file=
+database_ssl_mode=
 redis_url=
 rate_limit_backend=
 redis_key_prefix=
@@ -24,8 +31,9 @@ Options:
   --no-start         Install files without enabling or starting systemd.
   -h, --help         Show this help.
 
-Installation-time runtime overrides (written to the service EnvironmentFile,
-never into the shipped config template — PACKAGING_SPEC §5.5):
+Installation-time runtime overrides (written to the service EnvironmentFile or
+the PostgreSQL profile directory, never into the shipped config template —
+PACKAGING_SPEC §5.5):
 
   --bind <host:port>            HTTP listener bind, for example 0.0.0.0:3901.
   --host <host>                 Listener host only; keeps the template port.
@@ -33,6 +41,23 @@ never into the shipped config template — PACKAGING_SPEC §5.5):
   --database-config-dir <path>  PostgreSQL profile directory holding
                                 database.toml (or database.env) and
                                 database.secret. Default /etc/sdkwork/database.
+  --database-host <host>        PostgreSQL host; implies a generated
+                                database.env profile.
+  --database-port <port>        PostgreSQL port (default 5432).
+  --database-name <database>    PostgreSQL database (and schema) name.
+  --database-username <user>    PostgreSQL user.
+  --database-password <value>   PostgreSQL password, written to
+                                <database-config-dir>/database.secret with
+                                0640 root:sdkwork and referenced through
+                                SDKWORK_DATABASE_PASSWORD_FILE. Prefer
+                                pre-creating the secret and using
+                                --database-password-file instead of a
+                                process-visible argument.
+  --database-password-file <path>
+                                Existing password file; referenced through
+                                SDKWORK_DATABASE_PASSWORD_FILE.
+  --database-ssl-mode <mode>    disable|allow|prefer|require|verify-ca|
+                                verify-full (default disable).
   --redis-url <url>             Redis URL for the Web Framework shared stores.
                                 Required for production-like environments.
   --rate-limit-backend <memory|redis>
@@ -84,6 +109,41 @@ while [ "$#" -gt 0 ]; do
     --database-config-dir)
       require_value "$@"
       database_config_dir=${2%/}
+      shift 2
+      ;;
+    --database-host)
+      require_value "$@"
+      database_host=$2
+      shift 2
+      ;;
+    --database-port)
+      require_value "$@"
+      database_port=$2
+      shift 2
+      ;;
+    --database-name)
+      require_value "$@"
+      database_name=$2
+      shift 2
+      ;;
+    --database-username)
+      require_value "$@"
+      database_username=$2
+      shift 2
+      ;;
+    --database-password)
+      require_value "$@"
+      database_password=$2
+      shift 2
+      ;;
+    --database-password-file)
+      require_value "$@"
+      database_password_file=$2
+      shift 2
+      ;;
+    --database-ssl-mode)
+      require_value "$@"
+      database_ssl_mode=$2
       shift 2
       ;;
     --redis-url)
@@ -161,6 +221,48 @@ if [ -n "$database_config_dir" ]; then
   case "$database_config_dir" in
     /*) ;;
     *) echo "--database-config-dir must be an absolute path" >&2; exit 2 ;;
+  esac
+fi
+
+database_profile_requested=false
+if [ -n "$database_host" ] || [ -n "$database_port" ] || [ -n "$database_name" ] \
+  || [ -n "$database_username" ] || [ -n "$database_password" ] \
+  || [ -n "$database_password_file" ] || [ -n "$database_ssl_mode" ]; then
+  database_profile_requested=true
+fi
+if [ "$database_profile_requested" = true ]; then
+  if [ -z "$database_name" ] || [ -z "$database_username" ]; then
+    echo "--database-name and --database-username are required when generating a PostgreSQL profile" >&2
+    exit 2
+  fi
+  if [ -n "$database_password" ] && [ -n "$database_password_file" ]; then
+    echo "use either --database-password or --database-password-file, not both" >&2
+    exit 2
+  fi
+  if [ -n "$database_password_file" ]; then
+    case "$database_password_file" in
+      /*) ;;
+      *) echo "--database-password-file must be an absolute path" >&2; exit 2 ;;
+    esac
+    if [ -z "$destdir" ] && [ ! -s "$database_password_file" ]; then
+      echo "--database-password-file does not exist or is empty: $database_password_file" >&2
+      exit 2
+    fi
+  fi
+fi
+if [ -n "$database_port" ]; then
+  case "$database_port" in
+    ''|*[!0-9]*) echo "--database-port must be numeric: $database_port" >&2; exit 2 ;;
+  esac
+  if [ "$database_port" -lt 1 ] || [ "$database_port" -gt 65535 ]; then
+    echo "--database-port must be in 1..65535: $database_port" >&2
+    exit 2
+  fi
+fi
+if [ -n "$database_ssl_mode" ]; then
+  case "$database_ssl_mode" in
+    disable|allow|prefer|require|verify-ca|verify-full) ;;
+    *) echo "unsupported --database-ssl-mode: $database_ssl_mode" >&2; exit 2 ;;
   esac
 fi
 
@@ -374,6 +476,55 @@ fi
 # gateway was installed with.
 if [ -n "$database_config_dir" ]; then
   set_env SDKWORK_DATABASE_CONFIG_DIR "$database_config_dir" "$knowledgebase_rpc_env_target"
+fi
+
+# Installation-time PostgreSQL profile: --database-* connection options write
+# the canonical database.env profile. The password stays in a root:sdkwork 0640
+# secret file referenced through SDKWORK_DATABASE_PASSWORD_FILE, so credentials
+# never enter an EnvironmentFile, a systemd unit, or the config template
+# (PACKAGING_SPEC §5.5).
+if [ "$database_profile_requested" = true ]; then
+  database_profile_dir=${database_config_dir:-/etc/sdkwork/database}
+  # `--destdir` stages a filesystem image: the profile lands under the stage
+  # root while every generated reference keeps the runtime path the deployed
+  # host will read.
+  database_profile_stage_dir=$destdir$database_profile_dir
+  if [ -f "$database_profile_stage_dir/database.toml" ]; then
+    echo "$database_profile_dir/database.toml already defines the PostgreSQL profile; edit it directly or pass a different --database-config-dir" >&2
+    exit 1
+  fi
+  database_host=${database_host:-127.0.0.1}
+  database_port=${database_port:-5432}
+  database_ssl_mode=${database_ssl_mode:-disable}
+  install -d -m 0750 "$database_profile_stage_dir"
+  if [ -n "$database_password" ]; then
+    umask 027
+    printf '%s\n' "$database_password" > "$database_profile_stage_dir/database.secret"
+    database_password_file=$database_profile_dir/database.secret
+  fi
+  umask 027
+  {
+    echo "SDKWORK_DATABASE_ENGINE=postgresql"
+    echo "SDKWORK_DATABASE_HOST=$database_host"
+    echo "SDKWORK_DATABASE_PORT=$database_port"
+    echo "SDKWORK_DATABASE_NAME=$database_name"
+    echo "SDKWORK_DATABASE_SCHEMA=$database_name"
+    echo "SDKWORK_DATABASE_USERNAME=$database_username"
+    [ -z "$database_password_file" ] || echo "SDKWORK_DATABASE_PASSWORD_FILE=$database_password_file"
+    echo "SDKWORK_DATABASE_SSL_MODE=$database_ssl_mode"
+  } > "$database_profile_stage_dir/database.env"
+  chmod 0640 "$database_profile_stage_dir/database.env"
+  if [ -n "$database_password" ]; then
+    chmod 0640 "$database_profile_stage_dir/database.secret"
+  fi
+  if [ -z "$destdir" ]; then
+    chown root:sdkwork "$database_profile_stage_dir/database.env"
+    if [ -n "$database_password" ]; then
+      chown root:sdkwork "$database_profile_stage_dir/database.secret"
+    fi
+  fi
+  set_env SDKWORK_DATABASE_CONFIG_DIR "$database_profile_dir" "$env_target"
+  set_env SDKWORK_DATABASE_CONFIG_DIR "$database_profile_dir" "$knowledgebase_rpc_env_target"
 fi
 
 install -m 0644 "$unit_source" "$unit_root/sdkwork-api-gateway.service"

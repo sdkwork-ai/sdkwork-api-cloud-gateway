@@ -5,9 +5,11 @@ on:
     tags:
       - v*
       - '*.*.*'
-  release:
-    types:
-      - published
+  # `release.published` is intentionally absent: this workflow publishes its own
+  # aggregate release at the end of a tag run, and a release event would start a
+  # second full matrix for that same tag (the v0.1.12 tag produced both a push
+  # run and a release run). Manual releases are packaged by pushing a tag or by
+  # dispatching this workflow.
   workflow_dispatch:
     # GitHub accepts at most 25 workflow_dispatch inputs, so dependency refs are
     # declared as fixed refs in sdkwork.workflow.json (GITHUB_WORKFLOW_SPEC:
@@ -17,7 +19,7 @@ on:
       tag:
         description: Release tag or source ref to package.
         required: true
-        default: v0.1.12
+        default: v0.1.13
       package_version:
         description: Package version used in artifact names and manifests; empty derives it from the tag.
         required: false
@@ -87,7 +89,7 @@ permissions:
 jobs:
   package:
     name: Package
-    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@77edc9d27aedbd7370d34eae4d3e946526f5be25
+    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@893a49fba5f1e26a05558b031b2fd52ebbfe2c7f
     with:
       config_path: sdkwork.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
@@ -100,5 +102,5 @@ jobs:
       upload_artifact: true
       deploy: ${{ github.event.inputs.deploy == 'true' }}
       retention_days: 30
-      framework_ref: 77edc9d27aedbd7370d34eae4d3e946526f5be25
+      framework_ref: 893a49fba5f1e26a05558b031b2fd52ebbfe2c7f
     secrets: inherit

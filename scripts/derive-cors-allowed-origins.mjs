@@ -325,10 +325,13 @@ for (const environment of ENVIRONMENTS) {
 }
 carriers.push(tomlCarrier('docker/config/config.toml', 'production'));
 
-// Family 3: gateway env files and their committed templates.
+// Family 3: gateway env files and their committed templates. The concrete
+// `<env>.env` files are gitignored runtime carriers, so a clean checkout has
+// only the committed `.env.example` templates; validate the runtime file when
+// it exists (deploy hosts) and never fail on its absence.
 for (const environment of ENVIRONMENTS) {
   const groups = [{ prefix: GATEWAY_ENV_PREFIX }];
-  carriers.push(envCarrier(`docker/env/${environment}.env`, environment, groups));
+  carriers.push(envCarrier(`docker/env/${environment}.env`, environment, groups, { optional: true }));
   carriers.push(envCarrier(`docker/env/${environment}.env.example`, environment, groups));
 }
 carriers.push(

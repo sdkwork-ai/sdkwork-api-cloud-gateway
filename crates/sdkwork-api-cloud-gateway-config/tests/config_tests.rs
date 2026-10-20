@@ -694,8 +694,6 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
             "/suno/v1",
             "/volcengine/api",
             "/kling/v1",
-            "/midjourney/v1",
-            "/nano-banana/v1",
             "/elevenlabs/v1",
             "/typesafe/v1",
             "/minimax/v1",

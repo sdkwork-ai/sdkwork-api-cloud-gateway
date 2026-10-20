@@ -257,14 +257,28 @@ endif()
 Set-Content -Path (Join-Path $sourceDir 'CMakeLists.txt') -Value $cmakeLists -Encoding ascii
 
 # 4. Configure and build.
+#
+# Windows PowerShell 5.1 promotes every native stderr write - including the
+# compiler warnings this vendored C source emits - to a terminating error while
+# $ErrorActionPreference is 'Stop'. This host has no PowerShell 7, so relax the
+# preference across the native invocations and decide success from
+# $LASTEXITCODE, which is the only signal CMake provides.
 $buildDir = Join-Path $workRoot 'build'
-Write-Host '[libopus] configuring (MinGW Makefiles)'
-& $cmake -S $sourceDir -B $buildDir -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="$make"
-if ($LASTEXITCODE -ne 0) { throw "cmake configure failed with exit code $LASTEXITCODE" }
+$cmdletErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    Write-Host '[libopus] configuring (MinGW Makefiles)'
+    & $cmake -S $sourceDir -B $buildDir -G 'MinGW Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM="$make"
+    $configureExitCode = $LASTEXITCODE
 
-Write-Host '[libopus] compiling'
-& $cmake --build $buildDir --parallel
-if ($LASTEXITCODE -ne 0) { throw "cmake build failed with exit code $LASTEXITCODE" }
+    Write-Host '[libopus] compiling'
+    & $cmake --build $buildDir --parallel
+    $buildExitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $cmdletErrorActionPreference
+}
+if ($configureExitCode -ne 0) { throw "cmake configure failed with exit code $configureExitCode" }
+if ($buildExitCode -ne 0) { throw "cmake build failed with exit code $buildExitCode" }
 
 $builtLibrary = Get-ChildItem -Path $buildDir -Filter 'libopus.a' -Recurse -File |
     Select-Object -First 1

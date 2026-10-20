@@ -772,13 +772,6 @@
     },
     {
       "surface": "open",
-      "prefix": "/midjourney/v1",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
       "prefix": "/minimax/v1",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-open-api",
@@ -787,13 +780,6 @@
     {
       "surface": "open",
       "prefix": "/typesafe/v1",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "open",
-      "prefix": "/nano-banana/v1",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-open-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -2327,9 +2313,7 @@
         "/suno/v1",
         "/volcengine/api",
         "/kling/v1",
-        "/midjourney/v1",
         "/minimax/v1",
-        "/nano-banana/v1",
         "/elevenlabs/v1",
         "/typesafe/v1",
         "/v1"

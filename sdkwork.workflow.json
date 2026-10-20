@@ -10,7 +10,7 @@
   },
   "release": {
     "artifactPrefix": "sdkwork-api-cloud-gateway",
-    "defaultVersion": "0.1.12",
+    "defaultVersion": "0.1.13",
     "changelog": {
       "source": "auto",
       "maxCommitSubjects": 50
@@ -546,7 +546,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-linux-x64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-linux-x64-standalone-server.tar.gz"
     },
     {
       "id": "linux-x64-cloud-server-tar-gz",
@@ -567,7 +567,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-linux-x64-cloud-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-linux-x64-cloud-server.tar.gz"
     },
     {
       "id": "windows-x64-standalone-server-tar-gz",
@@ -588,7 +588,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-windows-x64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-windows-x64-standalone-server.tar.gz"
     },
     {
       "id": "windows-x64-cloud-server-tar-gz",
@@ -609,7 +609,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-windows-x64-cloud-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-windows-x64-cloud-server.tar.gz"
     },
     {
       "id": "macos-arm64-standalone-server-tar-gz",
@@ -630,7 +630,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-macos-arm64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-macos-arm64-standalone-server.tar.gz"
     },
     {
       "id": "macos-arm64-cloud-server-tar-gz",
@@ -651,51 +651,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.12-macos-arm64-cloud-server.tar.gz"
-    },
-    {
-      "id": "container-x64-standalone-container-oci",
-      "profileBinding": "fixed",
-      "profile": "container",
-      "platform": "container",
-      "architecture": "x64",
-      "formats": [
-        "oci"
-      ],
-      "runner": "ubuntu-24.04",
-      "deploymentProfile": "standalone",
-      "runtimeTarget": "container",
-      "outputGlobs": [
-        "dist/container-image.json",
-        "dist/container-image.digest",
-        "dist/container-image.sig",
-        "dist/container-image.pub.pem",
-        "dist/container-image.cdx.json",
-        "dist/container-image.intoto.jsonl"
-      ],
-      "artifactPath": "dist/container-image.json"
-    },
-    {
-      "id": "container-x64-cloud-container-oci",
-      "profileBinding": "fixed",
-      "profile": "container",
-      "platform": "container",
-      "architecture": "x64",
-      "formats": [
-        "oci"
-      ],
-      "runner": "ubuntu-24.04",
-      "deploymentProfile": "cloud",
-      "runtimeTarget": "container",
-      "outputGlobs": [
-        "dist/container-image.json",
-        "dist/container-image.digest",
-        "dist/container-image.sig",
-        "dist/container-image.pub.pem",
-        "dist/container-image.cdx.json",
-        "dist/container-image.intoto.jsonl"
-      ],
-      "artifactPath": "dist/container-image.json"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.13-macos-arm64-cloud-server.tar.gz"
     }
   ],
   "security": {
@@ -706,6 +662,7 @@
   "publish": {
     "workflowArtifact": true,
     "githubRelease": true,
+    "aggregateRelease": true,
     "retentionDays": 30
   }
 }

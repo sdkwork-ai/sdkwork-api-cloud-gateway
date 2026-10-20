@@ -677,6 +677,11 @@ RUNTIME_DIRECTORY_SPEC and enable the \`${serviceName}\` systemd service
 sudo ./install/install-ubuntu.sh \\
   --environment production \\
   --bind 0.0.0.0:3900 \\
+  --database-host 127.0.0.1 \\
+  --database-port 5432 \\
+  --database-name sdkwork_api_cloud_gateway \\
+  --database-username sdkwork_gateway \\
+  --database-password-file /etc/sdkwork/secrets/database.password \\
   --database-config-dir /etc/sdkwork/database \\
   --redis-url redis://127.0.0.1:6379/0 \\
   --rate-limit-backend redis
@@ -688,14 +693,18 @@ sudo ./install/install-ubuntu.sh \\
 2. Installation-generated values go to
    \`/etc/sdkwork/api-gateway/api-gateway.env\` (0640) — never into the unit
    file. \`--bind\`/\`--host\`/\`--port\`, \`--database-config-dir\`,
-   \`--redis-url\`, \`--rate-limit-backend\`, and \`--redis-key-prefix\` are
-   written there, so the same package installs on any port, database, or Redis
-   topology without editing the template.
+   \`--database-*\`, \`--redis-url\`, \`--rate-limit-backend\`, and
+   \`--redis-key-prefix\` are written there, so the same package installs on any
+   port, database, or Redis topology without editing the template.
 3. PostgreSQL is resolved from the workspace profile in
-   \`/etc/sdkwork/database/database.toml\` (override with
-   \`--database-config-dir\`) with \`password_file\` pointing at a
-   \`root:sdkwork\` 0640 secret; credentials are never written into env files,
-   unit files, or config templates (PACKAGING_SPEC §5.5).
+   \`/etc/sdkwork/database/database.toml\` (or a generated \`database.env\`;
+   override the directory with \`--database-config-dir\`) with
+   \`password_file\` pointing at a \`root:sdkwork\` 0640 secret. Passing
+   \`--database-host/--database-port/--database-name/--database-username\`
+   generates that profile; \`--database-password\` writes the secret file,
+   while \`--database-password-file\` references an existing one. Credentials
+   are never written into env files, unit files, or config templates
+   (PACKAGING_SPEC §5.5).
 4. Production-like environments (\`production\`, \`staging\`) require
    \`SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL\`; the installer fails before
    enabling the unit when it is missing instead of leaving a crash loop.

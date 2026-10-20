@@ -417,20 +417,18 @@ test('server package source declares the official Knowledgebase RPC sidecar', ()
   assert.match(packager, /knowledgebase-rpc-entrypoint/u);
 });
 
-test('container targets declare the architecture the packager builds', () => {
+test('workflow package matrix publishes only targets that can carry release evidence', () => {
   const workflow = JSON.parse(readFileSync(path.resolve('.', 'sdkwork.workflow.json'), 'utf8'));
+  // OCI release evidence must bind to a pushed repository@sha256 digest and
+  // SUPPLY_CHAIN_SECURITY_SPEC forbids substituting a local image id. The
+  // GitHub workflow has no registry credentials, so container images stay on
+  // the bin/docker-image.sh channel and must not appear in the release matrix.
   const containerTargets = workflow.targets.filter((target) => target.runtimeTarget === 'container');
-  assert.deepEqual(
-    containerTargets.map((target) => target.id).sort(),
-    ['container-x64-cloud-container-oci', 'container-x64-standalone-container-oci'],
-  );
-  for (const target of containerTargets) {
-    assert.equal(target.architecture, 'x64');
-    assert.equal(target.format ?? target.formats.join(','), 'oci');
-    assert.equal(
-      resolveContainerPackageId(target.deploymentProfile, target.architecture),
-      target.id,
-    );
+  assert.deepEqual(containerTargets, []);
+  for (const target of workflow.targets) {
+    assert.equal(target.runtimeTarget, 'server');
+    assert.equal(target.profile, 'server');
+    assert.ok(['linux', 'windows', 'macos'].includes(target.platform));
   }
   assert.throws(() => resolveContainerPackageId('unknown-profile'), /Unsupported container deployment profile/u);
 });
