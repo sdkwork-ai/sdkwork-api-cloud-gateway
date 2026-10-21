@@ -205,6 +205,14 @@ export function resolveEmbeddedDependencyEnv(
     ...(knowledgebaseEnvironment
       ? { SDKWORK_KNOWLEDGEBASE_ENVIRONMENT: knowledgebaseEnvironment }
       : {}),
+    // The embedded knowledgebase assembly scopes tenant-owned rows and rejects
+    // a principal from another tenant with 40303. A hosted gateway serves one
+    // deployment tenant, so the KB runtime must run under the same tenant the
+    // IAM app and its users log in with; the development default mirrors the
+    // app manifest's backend tenant and the knowledgebase repo's own
+    // development topology.
+    SDKWORK_KNOWLEDGEBASE_TENANT_ID:
+      env.SDKWORK_KNOWLEDGEBASE_TENANT_ID ?? env.SDKWORK_APP_TENANT_ID ?? '100001',
     ...(memoryEnvironment ? { SDKWORK_MEMORY_ENVIRONMENT: memoryEnvironment } : {}),
   };
 }

@@ -88,3 +88,8 @@ docker/ca/
 /demo.env
 # NOTE: bin/ (the MODULE_BIN_SPEC.md entrypoint family and its lib/) is
 # source-controlled — it MUST be tracked. Build output belongs in target/.
+
+# Runtime drive object storage: objects written by the local gateway drive
+# surface (never commit). Added by repo-commit sweep; targeted rules only.
+/data/drive-objects/
+**/data/drive-objects/

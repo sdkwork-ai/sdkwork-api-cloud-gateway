@@ -176,6 +176,22 @@ test('embedded birdcoder assembly preserves explicit runtime overrides', () => {
   assert.equal(resolved.SDKWORK_BIRDCODER_RUNTIME_TARGET, 'container');
 });
 
+test('embedded knowledgebase runtime defaults to the development tenant', () => {
+  // The runtime rejects principals from another tenant with 40303, so a
+  // development launch must scope it to the same tenant the IAM app logs in
+  // with (sdkwork.app.config.json backend.tenantId).
+  const resolved = resolveEmbeddedDependencyEnv({});
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_TENANT_ID, '100001');
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, undefined);
+});
+
+test('embedded knowledgebase tenant preserves explicit overrides', () => {
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_KNOWLEDGEBASE_TENANT_ID: '1',
+  });
+  assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_TENANT_ID, '1');
+});
+
 test('embedded webserver assembly preserves an explicit snowflake node id', () => {
   const resolved = resolveEmbeddedDependencyEnv({
     SDKWORK_WEBSERVER_SNOWFLAKE_NODE_ID: '7',
