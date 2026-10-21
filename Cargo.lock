@@ -17452,6 +17452,7 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "sdkwork-server-files-service",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "sha2 0.11.0",
