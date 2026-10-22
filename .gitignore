@@ -93,3 +93,8 @@ docker/ca/
 # surface (never commit). Added by repo-commit sweep; targeted rules only.
 /data/drive-objects/
 **/data/drive-objects/
+
+# Agent scratch / one-off helper scripts (dot-prefixed tmp files). Added by
+# repo-commit sweep; the existing `.tmp/` rule only matches a directory.
+.tmp-*
+.tmp_*

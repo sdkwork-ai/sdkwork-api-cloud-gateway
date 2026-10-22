@@ -1,5 +1,6 @@
 //! Runtime router builders for the SDKWork API Gateway.
 
+mod comments_proxy;
 /// Embedded dependency database lifecycle shared by platform runtime consumers.
 pub mod dependency_error_observer;
 mod diagnostics;

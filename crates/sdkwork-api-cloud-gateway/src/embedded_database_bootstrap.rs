@@ -155,25 +155,95 @@ async fn bootstrap_discovered_module(
 
 /// Maps enabled dependency surfaces to their application roots via
 /// `SDKWORK_<MODULE>_APP_ROOT` (workspace `sdkwork-course` →
-/// `SDKWORK_COURSE_APP_ROOT`). Surfaces without the env var are skipped:
-/// standalone deployments own their roots through the module repositories.
+/// `SDKWORK_COURSE_APP_ROOT`). When that explicit variable is absent, packaged
+/// installs resolve the module from `SDKWORK_DATABASE_MODULES_ROOT`, the
+/// install root's `database-modules/` directory, or a sibling checkout. This is
+/// what lets a packaged gateway initialize every embedded module from the
+/// assets it ships, instead of silently skipping them when only
+/// `SDKWORK_DATABASE_MODULES_ROOT` is set.
 fn enabled_surface_app_roots(config: &GatewayRuntimeConfig) -> Vec<(String, PathBuf)> {
     let mut surfaces = Vec::new();
     for surface in &config.dependency_surfaces {
-        let Some(env_key) = surface_app_root_env_key(&surface.workspace) else {
+        let Some(root) = resolve_surface_app_root(&surface.workspace) else {
             continue;
         };
-        let Some(value) = std::env::var_os(&env_key) else {
-            continue;
-        };
-        if value.is_empty() {
-            continue;
-        }
-        surfaces.push((surface.workspace.clone(), PathBuf::from(value)));
+        surfaces.push((surface.workspace.clone(), root));
     }
     surfaces.sort();
     surfaces.dedup_by(|a, b| a.1 == b.1);
     surfaces
+}
+
+fn resolve_surface_app_root(workspace: &str) -> Option<PathBuf> {
+    if let Some(env_key) = surface_app_root_env_key(workspace) {
+        if let Some(value) = std::env::var_os(&env_key) {
+            if !value.is_empty() {
+                return Some(PathBuf::from(value));
+            }
+        }
+    }
+
+    let mut candidates = Vec::new();
+    for root in database_module_roots() {
+        candidates.push(root.join(workspace));
+    }
+    if let Ok(current_dir) = std::env::current_dir() {
+        candidates.push(current_dir.join(workspace));
+        if let Some(parent) = current_dir.parent() {
+            candidates.push(parent.join(workspace));
+        }
+    }
+    resolve_surface_app_root_from_candidates(candidates)
+}
+
+/// Candidate module roots, in priority order: the packaged asset root first,
+/// then the install root, then the executable directory and the working
+/// directory. `resolve_surface_app_root_from_candidates` keeps only roots that
+/// actually ship `database/database.manifest.json`.
+fn database_module_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(configured) = std::env::var_os("SDKWORK_DATABASE_MODULES_ROOT") {
+        if !configured.is_empty() {
+            roots.push(PathBuf::from(configured));
+        }
+    }
+    if let Some(app_root) = std::env::var_os("SDKWORK_APP_ROOT") {
+        if !app_root.is_empty() {
+            roots.push(PathBuf::from(app_root).join("database-modules"));
+        }
+    }
+    if let Ok(executable) = std::env::current_exe() {
+        if let Some(binary_dir) = executable.parent() {
+            roots.push(binary_dir.join("database-modules"));
+            if let Some(install_root) = binary_dir.parent() {
+                roots.push(install_root.join("database-modules"));
+            }
+        }
+    }
+    if let Ok(current_dir) = std::env::current_dir() {
+        roots.push(current_dir.join("database-modules"));
+        if let Some(parent) = current_dir.parent() {
+            roots.push(parent.join("database-modules"));
+        }
+    }
+    roots
+}
+
+fn resolve_surface_app_root_from_candidates(
+    candidates: impl IntoIterator<Item = PathBuf>,
+) -> Option<PathBuf> {
+    use sdkwork_database_lifecycle::app_root_has_database_assets;
+
+    let mut seen = std::collections::HashSet::new();
+    for candidate in candidates {
+        if !seen.insert(candidate.clone()) {
+            continue;
+        }
+        if app_root_has_database_assets(&candidate) {
+            return Some(candidate);
+        }
+    }
+    None
 }
 
 fn surface_app_root_env_key(workspace: &str) -> Option<String> {
@@ -231,7 +301,7 @@ async fn process_database_pool() -> Result<DatabasePool, GatewayRuntimeError> {
 
 #[cfg(test)]
 mod tests {
-    use super::surface_app_root_env_key;
+    use super::{resolve_surface_app_root_from_candidates, surface_app_root_env_key};
 
     #[test]
     fn workspace_to_app_root_env_key_uses_upper_snake() {
@@ -250,5 +320,44 @@ mod tests {
         assert_eq!(surface_app_root_env_key("sdkwork-"), None);
         assert_eq!(surface_app_root_env_key("gateway-core"), None);
         assert_eq!(surface_app_root_env_key("sdkwork-Course"), None);
+    }
+
+    #[test]
+    fn component_spec_declares_the_documents_database_surface() {
+        let component_spec = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../specs/component.spec.json");
+        let config =
+            sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig::from_component_spec_path(
+                component_spec,
+            )
+            .expect("gateway component spec must parse");
+        assert!(
+            config
+                .dependency_surfaces
+                .iter()
+                .any(|surface| surface.workspace == "sdkwork-documents"),
+            "the documents dependency surface must be selected so gateway startup bootstraps its catalog"
+        );
+    }
+
+    #[test]
+    fn resolves_the_first_candidate_that_ships_database_assets() {
+        let base = std::env::temp_dir().join("sdkwork-gateway-db-root-resolution");
+        let _ = std::fs::remove_dir_all(&base);
+        let packaged = base.join("packaged").join("sdkwork-documents");
+        std::fs::create_dir_all(packaged.join("database")).expect("create database dir");
+        std::fs::write(
+            packaged.join("database").join("database.manifest.json"),
+            "{}",
+        )
+        .expect("write manifest");
+        let empty = base.join("empty").join("sdkwork-documents");
+        std::fs::create_dir_all(&empty).expect("create empty dir");
+
+        let resolved =
+            resolve_surface_app_root_from_candidates(vec![empty.clone(), packaged.clone()]);
+
+        assert_eq!(resolved, Some(packaged));
+        let _ = std::fs::remove_dir_all(&base);
     }
 }

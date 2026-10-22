@@ -898,6 +898,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/studio",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/courses",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-app-api",
@@ -913,13 +920,6 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/course_categories",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-course-app-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "app",
-      "prefix": "/app/v3/api/course_comments",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1003,13 +1003,6 @@
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/course_comments",
-      "ownership": "dependency",
-      "dependencyServiceId": "sdkwork-course-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route"
-    },
-    {
-      "surface": "backend",
       "prefix": "/backend/v3/api/course_enrollments",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-backend-api",
@@ -1053,6 +1046,13 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/course_reactions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/course_reviews",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -2136,6 +2136,13 @@
       "prefix": "/settings/v1/backend-api",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-settings-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/course_entitlements",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
     }
   ],

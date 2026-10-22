@@ -787,6 +787,9 @@ async fn gateway_fallback(
     let headers = request.headers().clone();
     let path = uri.path().to_string();
     let instance = format!("{} {}", method.as_str(), path.as_str());
+    if crate::comments_proxy::is_comments_path(path.as_str()) {
+        return crate::comments_proxy::proxy_comments_request(request).await;
+    }
     let descriptor = state
         .registry
         .resolve(method.as_str(), path.as_str())
