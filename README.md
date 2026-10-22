@@ -125,6 +125,16 @@ Equivalent Cargo command:
 cargo run -p sdkwork-api-cloud-gateway --bin sdkwork-api-cloud-gateway -- --config etc/sdkwork-api-cloud-gateway.development.toml
 ```
 
+## Developer catalog bootstrap
+
+Gateway startup also initializes the platform developer catalog (API market and SDK market) through
+the documents database module. The bootstrap resolves the documents assets from
+`SDKWORK_DOCUMENTS_APP_ROOT`, `SDKWORK_DATABASE_MODULES_ROOT/sdkwork-documents`, the packaged
+`database-modules/` directory, or a sibling `sdkwork-documents` checkout. It runs the module's
+init/migrate/seed lifecycle with the same checksum-guarded idempotency as other embedded modules, so
+catalog seeds are applied once and skipped on later starts until the seed content changes. Set
+`SDKWORK_DEVELOPER_CATALOG_BOOTSTRAP=false` to opt out.
+
 ## Server Packaging
 
 The gateway integrates with `sdkwork-github-workflow` through `sdkwork.workflow.json` and the thin

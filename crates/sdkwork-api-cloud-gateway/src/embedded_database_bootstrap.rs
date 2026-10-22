@@ -13,6 +13,7 @@ use crate::GatewayRuntimeError;
 
 const PROCESS_DATABASE_SERVICE_CODE: &str = "CLOUD";
 const DATABASE_BOOTSTRAP_APPLIED_BY: &str = "sdkwork-api-cloud-gateway";
+const DEVELOPER_CATALOG_WORKSPACE: &str = "sdkwork-documents";
 
 /// Creates the process-shared pool used by every selected owner assembly.
 ///
@@ -50,9 +51,6 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
     force_migrate: bool,
 ) -> Result<(), GatewayRuntimeError> {
     let surfaces = enabled_surface_app_roots(config);
-    if surfaces.is_empty() {
-        return Ok(());
-    }
     let app_roots: Vec<PathBuf> = surfaces.iter().map(|(_, root)| root.clone()).collect();
     let workspace_by_root: std::collections::HashMap<PathBuf, String> = surfaces
         .iter()
@@ -73,11 +71,23 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         );
     }
 
+    let mut bootstrapped_workspaces = std::collections::HashSet::new();
     for (discovered, module) in report.registered.iter().zip(registry.modules().iter()) {
         let Some(workspace) = workspace_by_root.get(&discovered.app_root) else {
             continue;
         };
         bootstrap_discovered_module(workspace, module.clone(), pool, force_migrate).await?;
+        bootstrapped_workspaces.insert(workspace.clone());
+    }
+
+    // The developer catalog is platform-wide content owned by the documents
+    // module. It is initialized even when the deployment does not export an
+    // explicit SDKWORK_DOCUMENTS_APP_ROOT, because packaged installs carry the
+    // documents database assets under SDKWORK_DATABASE_MODULES_ROOT. When the
+    // surface is already selected through its explicit root, the loop above has
+    // already bootstrapped it.
+    if !bootstrapped_workspaces.contains(DEVELOPER_CATALOG_WORKSPACE) {
+        bootstrap_developer_catalog(pool, force_migrate).await?;
     }
 
     tracing::info!(
@@ -86,6 +96,66 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         skipped = report.skipped_without_database_assets.len(),
         force_migrate,
         "embedded database module discovery and bootstrap completed"
+    );
+    Ok(())
+}
+
+/// Initializes the developer catalog through the documents module lifecycle.
+///
+/// The catalog powers the API market and SDK market. It is idempotent: the
+/// lifecycle records each seed file's checksum, so an unchanged catalog is
+/// skipped and a changed catalog is upserted. Set
+/// `SDKWORK_DEVELOPER_CATALOG_BOOTSTRAP=false` to opt out.
+async fn bootstrap_developer_catalog(
+    pool: &DatabasePool,
+    force_migrate: bool,
+) -> Result<(), GatewayRuntimeError> {
+    if std::env::var("SDKWORK_DEVELOPER_CATALOG_BOOTSTRAP")
+        .is_ok_and(|value| value.eq_ignore_ascii_case("false"))
+    {
+        tracing::info!(
+            target: "sdkwork.api.cloud_gateway.database",
+            "developer catalog bootstrap disabled by SDKWORK_DEVELOPER_CATALOG_BOOTSTRAP"
+        );
+        return Ok(());
+    }
+    let Some(app_root) = resolve_developer_catalog_app_root() else {
+        tracing::debug!(
+            target: "sdkwork.api.cloud_gateway.database",
+            "developer catalog database assets not found; skipping catalog bootstrap"
+        );
+        return Ok(());
+    };
+    let (registry, report) =
+        discover_database_modules(std::slice::from_ref(&app_root)).map_err(|error| {
+            GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+                workspace: DEVELOPER_CATALOG_WORKSPACE.to_owned(),
+                module_id: "(discovery)".to_owned(),
+                message: error.to_string(),
+            }
+        })?;
+    if report.registered.is_empty() {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway.database",
+            app_root = %app_root.display(),
+            "developer catalog app root ships no database manifest; catalog data will be missing"
+        );
+        return Ok(());
+    }
+
+    for module in registry.modules() {
+        bootstrap_discovered_module(
+            DEVELOPER_CATALOG_WORKSPACE,
+            module.clone(),
+            pool,
+            force_migrate,
+        )
+        .await?;
+    }
+    tracing::info!(
+        target: "sdkwork.api.cloud_gateway.database",
+        app_root = %app_root.display(),
+        "developer catalog database bootstrap completed"
     );
     Ok(())
 }
@@ -155,27 +225,34 @@ async fn bootstrap_discovered_module(
 
 /// Maps enabled dependency surfaces to their application roots via
 /// `SDKWORK_<MODULE>_APP_ROOT` (workspace `sdkwork-course` →
-/// `SDKWORK_COURSE_APP_ROOT`). When that explicit variable is absent, packaged
-/// installs resolve the module from `SDKWORK_DATABASE_MODULES_ROOT`, the
-/// install root's `database-modules/` directory, or a sibling checkout. This is
-/// what lets a packaged gateway initialize every embedded module from the
-/// assets it ships, instead of silently skipping them when only
-/// `SDKWORK_DATABASE_MODULES_ROOT` is set.
+/// `SDKWORK_COURSE_APP_ROOT`). Surfaces without the env var are skipped:
+/// standalone deployments own their roots through the module repositories.
 fn enabled_surface_app_roots(config: &GatewayRuntimeConfig) -> Vec<(String, PathBuf)> {
     let mut surfaces = Vec::new();
     for surface in &config.dependency_surfaces {
-        let Some(root) = resolve_surface_app_root(&surface.workspace) else {
+        let Some(env_key) = surface_app_root_env_key(&surface.workspace) else {
             continue;
         };
-        surfaces.push((surface.workspace.clone(), root));
+        let Some(value) = std::env::var_os(&env_key) else {
+            continue;
+        };
+        if value.is_empty() {
+            continue;
+        }
+        surfaces.push((surface.workspace.clone(), PathBuf::from(value)));
     }
     surfaces.sort();
     surfaces.dedup_by(|a, b| a.1 == b.1);
     surfaces
 }
 
-fn resolve_surface_app_root(workspace: &str) -> Option<PathBuf> {
-    if let Some(env_key) = surface_app_root_env_key(workspace) {
+/// Resolves the documents application root for the developer catalog.
+///
+/// Packaged installs place module assets under `database-modules/`; source
+/// checkouts keep each module in a sibling directory. The explicit
+/// `SDKWORK_DOCUMENTS_APP_ROOT` always wins.
+fn resolve_developer_catalog_app_root() -> Option<PathBuf> {
+    if let Some(env_key) = surface_app_root_env_key(DEVELOPER_CATALOG_WORKSPACE) {
         if let Some(value) = std::env::var_os(&env_key) {
             if !value.is_empty() {
                 return Some(PathBuf::from(value));
@@ -185,12 +262,12 @@ fn resolve_surface_app_root(workspace: &str) -> Option<PathBuf> {
 
     let mut candidates = Vec::new();
     for root in database_module_roots() {
-        candidates.push(root.join(workspace));
+        candidates.push(root.join(DEVELOPER_CATALOG_WORKSPACE));
     }
     if let Ok(current_dir) = std::env::current_dir() {
-        candidates.push(current_dir.join(workspace));
+        candidates.push(current_dir.join(DEVELOPER_CATALOG_WORKSPACE));
         if let Some(parent) = current_dir.parent() {
-            candidates.push(parent.join(workspace));
+            candidates.push(parent.join(DEVELOPER_CATALOG_WORKSPACE));
         }
     }
     resolve_surface_app_root_from_candidates(candidates)
