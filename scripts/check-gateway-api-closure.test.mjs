@@ -27,6 +27,32 @@ test("embedded gateway dependency APIs form a complete collision-free route clos
   );
 });
 
+test("developer catalog routes stay declared on the documents app-api surface", () => {
+  const result = validateGatewayApiClosure(root);
+  assert.deepEqual(result.errors, []);
+
+  const catalogRoutes = result.routes
+    .filter(
+      (route) =>
+        route.serviceId === "sdkwork-documents-app-api" &&
+        route.path.startsWith("/app/v3/api/developer_catalog/"),
+    )
+    .map((route) => `${route.method} ${route.path}`)
+    .sort();
+
+  assert.deepEqual(catalogRoutes, [
+    "GET /app/v3/api/developer_catalog/apis",
+    "GET /app/v3/api/developer_catalog/apis/{surfaceId}",
+    "GET /app/v3/api/developer_catalog/apis/{surfaceId}/operations",
+    "GET /app/v3/api/developer_catalog/apis/{surfaceId}/schema",
+    "GET /app/v3/api/developer_catalog/categories",
+    "GET /app/v3/api/developer_catalog/languages",
+    "GET /app/v3/api/developer_catalog/overview",
+    "GET /app/v3/api/developer_catalog/sdks",
+    "GET /app/v3/api/developer_catalog/sdks/{sdkId}",
+  ]);
+});
+
 test("Rust route manifests resolve constants from imported sibling modules", () => {
   const fixtureRoot = fs.mkdtempSync(
     path.join(os.tmpdir(), "sdkwork-gateway-rust-manifest-"),

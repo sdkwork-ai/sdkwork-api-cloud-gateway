@@ -9519,6 +9519,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "serde_json",
  "sqlx",
+ "tracing",
  "uuid",
 ]
 

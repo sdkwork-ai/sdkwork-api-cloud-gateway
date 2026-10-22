@@ -1341,6 +1341,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/developer_catalog",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-documents-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/documents",
       "ownership": "dependency",
