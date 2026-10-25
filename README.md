@@ -98,7 +98,7 @@ Environment overrides are then applied:
 - `SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION`
 - `SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT`
 
-`sdkwork.app.config.json` declares application and release identity. `specs/component.spec.json`
+`agent.app.config.json` declares application and release identity. `specs/component.spec.json`
 declares dependency surfaces and Cargo assembly evidence. Source TOML under `etc/` owns bind,
 security, traffic, policy, diagnostics, and observability values.
 

@@ -19,18 +19,18 @@ The canonical standards entrypoint is `../sdkwork-specs/README.md`. Agent entryp
 - Application id: `sdkwork-api-cloud-gateway`
 - Runtime family: Rust/Axum platform cloud gateway
 - Primary process and public crate: `crates/sdkwork-api-cloud-gateway`
-- Application declaration: `sdkwork.app.config.json`
+- Application declaration: `agent.app.config.json`
 - Source configuration entrypoint: `etc/sdkwork.deployment.config.json`
 - Component and dependency surface contract: `specs/component.spec.json`
 
-`sdkwork.app.config.json` declares application and release identity. Concrete environment, profile,
+`agent.app.config.json` declares application and release identity. Concrete environment, profile,
 bind, database selection, and runtime TOML values live under `etc/`.
 
 ## Local Dictionary Structure
 
 - `AGENTS.md`: repository agent execution entrypoint.
 - `CLAUDE.md`, `GEMINI.md`, `CODEX.md`: compatibility shims that point back here.
-- `sdkwork.app.config.json`: SDKWork App Standard v3 identity and release declaration.
+- `agent.app.config.json`: SDKWork App Standard v3 identity and release declaration.
 - `etc/`: safe source-controlled deployment profiles and gateway runtime configuration.
 - `specs/component.spec.json`: executable exports, dependency surfaces, Cargo evidence, and checks.
 - `specs/process-database-pool.spec.json`: process-shared PostgreSQL pool contract.
@@ -52,7 +52,7 @@ Documentation Canon:
 Use dynamic progressive loading before reading implementation files:
 
 1. Read the nearest `AGENTS.md`.
-2. Read `sdkwork.app.config.json` when application identity, runtime, release, or packaging is in scope.
+2. Read `agent.app.config.json` when application identity, runtime, release, or packaging is in scope.
 3. Read the nearest module `specs/` and this root `specs/` when their contracts are touched.
 4. Read `.sdkwork/README.md` and only the relevant local skill/plugin metadata when applicable.
 5. Resolve the task row in `../sdkwork-specs/README.md`.
@@ -148,7 +148,7 @@ outside this repository authority. When `pnpm dev` changes, start it on a tempor
 **All image build, package, deploy, rollback, log, backup, and config operations MUST go through
 the `bin/` entrypoints.** Never invoke `docker build`, `docker compose`, `cargo build --release`,
 or hand-edit a deployed bundle directly — the entrypoints resolve the image tag from
-`sdkwork.app.config.json` → `release.currentVersion`, bridge Windows→WSL automatically
+`agent.app.config.json` → `release.currentVersion`, bridge Windows→WSL automatically
 (`sdkwork_local_run`), pass the full registry reference required by `DOCKER_SPEC.md` §2.1, and
 append audit evidence to `target/bin-evidence/evidence.log`. Raw `docker`/`cargo` calls bypass
 version pinning, WSL bridging, and the evidence trap.
@@ -159,7 +159,7 @@ Full reference: [`bin/README.md`](bin/README.md). Entrypoint contract:
 ### Release workflow (build → deploy → verify)
 
 ```sh
-# 0. Bump release.currentVersion in sdkwork.app.config.json FIRST (tag source of truth).
+# 0. Bump release.currentVersion in agent.app.config.json FIRST (tag source of truth).
 # 1. Build the container image (cargo release + docker build, runs in WSL; 10-30 min).
 bin/docker-image.sh build --image-tag 0.1.3
 # 2. Verify + deploy per environment (deployment mutations in production require --yes).

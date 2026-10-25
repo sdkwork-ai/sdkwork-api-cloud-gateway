@@ -86,7 +86,7 @@ Phase 1 is the first implementation target.
 
 ### Config And Docs
 
-- Update `sdkwork.app.config.json` env bindings.
+- Update `agent.app.config.json` env bindings.
 - Update `specs/component.spec.json` runtime behavior.
 - Update config TOML examples.
 - Update README.

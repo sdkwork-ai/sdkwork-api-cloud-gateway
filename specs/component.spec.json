@@ -20,7 +20,7 @@
       "Cargo.toml",
       "Cargo.lock",
       "package.json",
-      "sdkwork.app.config.json",
+      "agent.app.config.json",
       "sdkwork.workflow.json",
       "specs/component.spec.json",
       "specs/topology.spec.json"

@@ -463,20 +463,20 @@ struct RawGatewayServerConfig {
 #[serde(rename_all = "camelCase")]
 struct SdkworkAppManifest {
     app_id: Option<String>,
-    app: Option<SdkworkManifestApp>,
-    backend: Option<SdkworkManifestBackend>,
-    sdk_dependencies: Option<Vec<SdkworkManifestDependency>>,
+    app: Option<AgentManifestApp>,
+    backend: Option<AgentManifestBackend>,
+    sdk_dependencies: Option<Vec<AgentManifestDependency>>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct SdkworkManifestApp {
+struct AgentManifestApp {
     key: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct SdkworkManifestBackend {
+struct AgentManifestBackend {
     app_id: Option<String>,
     service_id: Option<String>,
     default_bind: Option<String>,
@@ -484,7 +484,7 @@ struct SdkworkManifestBackend {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct SdkworkManifestDependency {
+struct AgentManifestDependency {
     service_id: String,
     workspace: String,
     sdk_family: String,
@@ -617,9 +617,9 @@ impl GatewayRuntimeConfig {
         Ok(config)
     }
 
-    pub fn from_sdkwork_manifest_str(input: &str) -> Result<Self, GatewayConfigError> {
+    pub fn from_agent_manifest_str(input: &str) -> Result<Self, GatewayConfigError> {
         let manifest = serde_json::from_str::<SdkworkAppManifest>(input)?;
-        let mut config = Self::from_sdkwork_manifest(manifest);
+        let mut config = Self::from_agent_manifest(manifest);
         config.finalize_registered_client_cors();
         config.validate()?;
         Ok(config)
@@ -632,19 +632,19 @@ impl GatewayRuntimeConfig {
             source,
         })?;
         if is_json_path(path) {
-            Self::from_sdkwork_manifest_str(input.as_str())
+            Self::from_agent_manifest_str(input.as_str())
         } else {
             Self::from_toml_str(input.as_str())
         }
     }
 
-    pub fn from_sdkwork_manifest_path(path: impl AsRef<Path>) -> Result<Self, GatewayConfigError> {
+    pub fn from_agent_manifest_path(path: impl AsRef<Path>) -> Result<Self, GatewayConfigError> {
         let path = path.as_ref();
         let input = fs::read_to_string(path).map_err(|source| GatewayConfigError::ReadFile {
             path: path.display().to_string(),
             source,
         })?;
-        Self::from_sdkwork_manifest_str(input.as_str())
+        Self::from_agent_manifest_str(input.as_str())
     }
 
     pub fn from_component_spec_str(input: &str) -> Result<Self, GatewayConfigError> {
@@ -669,7 +669,7 @@ impl GatewayRuntimeConfig {
     pub fn from_application_root(path: impl AsRef<Path>) -> Result<Self, GatewayConfigError> {
         let application_root = path.as_ref();
         let config =
-            Self::from_sdkwork_manifest_path(application_root.join("sdkwork.app.config.json"))?;
+            Self::from_agent_manifest_path(application_root.join("agent.app.config.json"))?;
         config.with_application_component_surfaces(application_root)
     }
 
@@ -976,7 +976,7 @@ impl GatewayRuntimeConfig {
         Ok(())
     }
 
-    fn from_sdkwork_manifest(manifest: SdkworkAppManifest) -> Self {
+    fn from_agent_manifest(manifest: SdkworkAppManifest) -> Self {
         let mut config = Self::default();
         let backend = manifest.backend;
         let service_name = backend
@@ -1181,7 +1181,7 @@ impl Default for GatewayDiagnosticsConfig {
 }
 
 impl DependencyApiSurfaceConfig {
-    fn from_manifest_dependency(dependency: SdkworkManifestDependency) -> Self {
+    fn from_manifest_dependency(dependency: AgentManifestDependency) -> Self {
         let executable_export = dependency
             .executable_export
             .or_else(|| default_executable_export_for_service(dependency.service_id.as_str()));

@@ -41,7 +41,7 @@ provider assemblies, Cargo graph, API contracts, runtime-parity evidence, and te
 
 ## 2. Normative Baseline
 
-The review used the repository `AGENTS.md`, `sdkwork.app.config.json`, root component contract,
+The review used the repository `AGENTS.md`, `agent.app.config.json`, root component contract,
 process-pool contract, and these canonical standards:
 
 - `SOUL.md`

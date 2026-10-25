@@ -19,7 +19,7 @@ development / test / staging / demo / production 五个环境**，**5/5 通过�
 | 镜像构建 | `bash bin/docker-image.sh build --image-tag 0.1.9` | `…:0.1.9` @ `sha256:96bda1bcbd5b…`，364.3 MB，耗时 267s |
 | 安装 bundle | `pnpm build:container:install -- --skip-image-build` | `dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.9.bundle/` |
 
-源码基线：`644a316`（`fix(release): resolve committed merge conflict in sdkwork.app.config.json`）。
+源码基线：`644a316`（`fix(release): resolve committed merge conflict in agent.app.config.json`）。
 
 > **源码基线与并发改动说明**：镜像构建前的预检确认工作区**干净**（`git status --porcelain` 为空），
 > 故 0.1.9 完全基于 `644a316`。构建完成后，工作区出现了**另一条工作流**的改动（Rust lint 基线：
@@ -71,7 +71,7 @@ DDL baseline / seed / `.down.sql` 不在门禁范围内（`sdkwork-database-drif
 让 `migration_unknown`（源码 `default_severity()` → `error`，两份 drift policy 均未覆盖）
 直接 fail-closed 拒绝启动。已从 0.1.7 镜像恢复字节，与账本完全一致。
 
-同时 `sdkwork.app.config.json` 在 origin/main 上**带着未解决的 git 冲突标记**
+同时 `agent.app.config.json` 在 origin/main 上**带着未解决的 git 冲突标记**
 （`<<<<<<< HEAD` / `=======` / `>>>>>>>`），导致任何构建都无法解析版本号
 （`package-install-bundle.mjs` 报 JSON 解析错误）。已做并集合并并提交 `644a316`，
 修正后 `currentVersion = 0.1.9`、零冲突标记。

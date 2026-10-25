@@ -179,7 +179,7 @@ test('embedded birdcoder assembly preserves explicit runtime overrides', () => {
 test('embedded knowledgebase runtime defaults to the development tenant', () => {
   // The runtime rejects principals from another tenant with 40303, so a
   // development launch must scope it to the same tenant the IAM app logs in
-  // with (sdkwork.app.config.json backend.tenantId).
+  // with (agent.app.config.json backend.tenantId).
   const resolved = resolveEmbeddedDependencyEnv({});
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_TENANT_ID, '100001');
   assert.equal(resolved.SDKWORK_KNOWLEDGEBASE_ENVIRONMENT, undefined);

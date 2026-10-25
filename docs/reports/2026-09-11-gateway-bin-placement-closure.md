@@ -94,7 +94,7 @@ bin/                                 九入口（唯一 operator surface）
 
 1. 上述 6 条新暴露违规待逐条判定「迁 `bin/`」还是「豁免」，属舰队范围（非 gateway）。
 2. `MODULE_BIN_SPEC.md` §2 的「薄包装 ≤8 非注释行」当前只作用于九个必需入口；把该规则扩展到全部 `bin/*.{sh,ps1,cmd}` 仍是待办（须在各模块 `bin/` 全部落到合规族之后）。
-3. `sdkwork.app.config.json` 历史 release 说明仍写「bundle source moved … to deployments/docker/bundle」，现已再进一步到 `bin/` 平铺；历史条目不改写，随下次发布更新描述。
+3. `agent.app.config.json` 历史 release 说明仍写「bundle source moved … to deployments/docker/bundle」，现已再进一步到 `bin/` 平铺；历史条目不改写，随下次发布更新描述。
 
 ## 8. 事故复盘（程序性教训，非代码问题）
 

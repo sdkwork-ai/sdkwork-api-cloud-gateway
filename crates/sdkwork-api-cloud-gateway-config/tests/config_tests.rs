@@ -74,7 +74,7 @@ fn per_dependency_base_urls_are_rejected() {
         "coverage": "embedded-assembly-routes"
       }]
     }"#;
-    assert!(GatewayRuntimeConfig::from_sdkwork_manifest_str(manifest).is_err());
+    assert!(GatewayRuntimeConfig::from_agent_manifest_str(manifest).is_err());
 }
 
 #[test]
@@ -864,7 +864,7 @@ fn repository_contracts_contain_no_retired_runtime_markers() {
         .parent()
         .and_then(std::path::Path::parent)
         .expect("workspace root");
-    for relative in ["sdkwork.app.config.json", "specs/component.spec.json"] {
+    for relative in ["agent.app.config.json", "specs/component.spec.json"] {
         let source = fs::read_to_string(root.join(relative)).expect("contract source");
         assert!(!source.contains("split-or-embedded"));
         assert!(!source.contains("\"split\""));

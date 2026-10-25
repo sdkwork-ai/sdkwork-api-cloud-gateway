@@ -6,7 +6,7 @@
     "name": "SDKWork API Gateway",
     "repository": "sdkwork-ai/sdkwork-api-cloud-gateway",
     "sourcePath": ".",
-    "configPath": "sdkwork.app.config.json"
+    "configPath": "agent.app.config.json"
   },
   "release": {
     "artifactPrefix": "sdkwork-api-cloud-gateway",

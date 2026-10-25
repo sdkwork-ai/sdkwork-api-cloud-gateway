@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "kind": "sdkwork.app",
+  "kind": "agent.app",
   "app": {
     "key": "sdkwork-api-cloud-gateway",
     "name": "SDKWork API Gateway",
@@ -224,8 +224,8 @@
         "summary": "Container image packaging now completes on a fresh registry. v0.1.11 shipped 6 of 8 package targets: both container targets failed in the Package step after a successful `docker build` because `docker image inspect --format '{{index .RepoDigests 0}}'` aborts on an image that was built locally and never pushed — its RepoDigests slice is empty, and the Go template raises `slice index out of range` before the manifest is written. The identity probe now guards the index so the manifest falls back to the image Id and Size, and the OCI targets are declared in the app manifest alongside the server targets so release notes and package declarations agree.",
         "highlights": [
           "build-api-cloud-gateway-container.mjs: the image identity probe tolerates an empty RepoDigests list (`{{if .RepoDigests}}`), so a locally built, unpushed image resolves from Id/Size instead of aborting the whole inspect",
-          "sdkwork.app.config.json: artifacts.installConfig.packages declares all six server targets (windows/macos x standalone+cloud) plus the cloud container target, so release.notes packageIds resolve against real package declarations (check-app-manifest-standard was rejecting five unknown ids)",
-          "sdkwork.app.config.json: windows/macos server packages declare their real targetPlatform/architecture, which previously mislabelled every non-Linux target as linux x64",
+          "agent.app.config.json: artifacts.installConfig.packages declares all six server targets (windows/macos x standalone+cloud) plus the cloud container target, so release.notes packageIds resolve against real package declarations (check-app-manifest-standard was rejecting five unknown ids)",
+          "agent.app.config.json: windows/macos server packages declare their real targetPlatform/architecture, which previously mislabelled every non-Linux target as linux x64",
           "sdkwork.workflow.json + package.json: version advanced to 0.1.12 across the workflow matrix artifact paths, the release default version, and the dispatch default tag",
           "release notes for 0.1.12 cover only this version; earlier versions remain in the manifest history but are never re-published"
         ],

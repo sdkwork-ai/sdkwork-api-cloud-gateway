@@ -5,7 +5,7 @@
 
 **Goal:** Land the shared SDKWork API Gateway integration standard in `sdkwork-cloudrouter` and `sdkwork-im` without introducing a parallel gateway catalog.
 
-**Architecture:** Foundation API integration evidence stays in native build tools and existing SDKWork specs: Cargo workspace dependencies/features, `sdkwork.app.config.json`, `specs/component.spec.json`, local dependency surface specs, SDK assembly metadata, and runtime config. Product apps document the gateway-backed target state and enforce static guardrails while legacy product-local foundation mounts remain only as migration compatibility.
+**Architecture:** Foundation API integration evidence stays in native build tools and existing SDKWork specs: Cargo workspace dependencies/features, `agent.app.config.json`, `specs/component.spec.json`, local dependency surface specs, SDK assembly metadata, and runtime config. Product apps document the gateway-backed target state and enforce static guardrails while legacy product-local foundation mounts remain only as migration compatibility.
 
 **Tech Stack:** Rust Cargo workspaces, SDKWork application manifests, component specs, Node.js governance tests, JSON/TOML config examples.
 

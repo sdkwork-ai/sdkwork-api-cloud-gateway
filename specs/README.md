@@ -18,7 +18,7 @@ Forbidden content:
 - Do not place generated SDK transport output, live runtime config, secrets, local overrides, or
   dependency implementation code here.
 - Gateway dependency facts must continue to come from Cargo workspace metadata,
-  `sdkwork.app.config.json`, and `specs/component.spec.json`.
+  `agent.app.config.json`, and `specs/component.spec.json`.
 
 Related specs:
 

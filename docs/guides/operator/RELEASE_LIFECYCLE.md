@@ -9,7 +9,7 @@
 日常发布只需要记住两条命令：
 
 ```bash
-bin/docker-image.sh build                                          # 构建规范镜像（tag 取自 sdkwork.app.config.json）
+bin/docker-image.sh build                                          # 构建规范镜像（tag 取自 agent.app.config.json）
 bin/docker-deploy.sh upgrade --environment production --image-tag <版本号>   # 升级（含健康门禁 + 失败自动回滚 + 台账）
 ```
 

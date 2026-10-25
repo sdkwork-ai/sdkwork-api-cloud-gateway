@@ -14,7 +14,7 @@
 Daily release is two commands:
 
 ```bash
-bin/docker-image.sh build                                          # build the canonical image (tag from sdkwork.app.config.json)
+bin/docker-image.sh build                                          # build the canonical image (tag from agent.app.config.json)
 bin/docker-deploy.sh upgrade --environment production --image-tag <version>   # upgrade (health gate + auto-rollback + ledger)
 ```
 

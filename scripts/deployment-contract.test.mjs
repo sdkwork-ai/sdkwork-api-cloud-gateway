@@ -277,7 +277,7 @@ test('ubuntu and container share api-gateway config layout; gateway does not own
 });
 
 test('application manifest declares explicit package build targets', () => {
-  const manifest = JSON.parse(readFileSync(path.join(appRoot, 'sdkwork.app.config.json')));
+  const manifest = JSON.parse(readFileSync(path.join(appRoot, 'agent.app.config.json')));
   const targets = manifest.devApp.build.targets;
   assert.deepEqual(targets.map((target) => target.packageId), [
     'linux-x64-standalone-server-tar-gz',

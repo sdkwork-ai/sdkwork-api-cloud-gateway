@@ -7,7 +7,7 @@
  *      modules resolved from cargo metadata)
  *   2. assemble dist/container-image-build — the docker build context laid out
  *      like the server install package (bin/, config/, specs/,
- *      database-modules/, sdkwork.app.config.json, INSTALL.md,
+ *      database-modules/, agent.app.config.json, INSTALL.md,
  *      install-manifest.json, checksums.sha256) plus container/ (entrypoint +
  *      metadata.json)
  *   3. docker build -f Dockerfile -t <imageTag> <build context>
@@ -316,8 +316,8 @@ async function validateBuildPlan(plan) {
   if (!existsSync(plan.imageFile)) {
     issues.push(`missing Dockerfile: ${plan.imageFile}`);
   }
-  if (!existsSync(path.join(appRoot, 'sdkwork.app.config.json'))) {
-    issues.push('missing sdkwork.app.config.json');
+  if (!existsSync(path.join(appRoot, 'agent.app.config.json'))) {
+    issues.push('missing agent.app.config.json');
   }
   if (!existsSync(path.join(appRoot, 'specs', 'component.spec.json'))) {
     issues.push('missing specs/component.spec.json');
@@ -515,7 +515,7 @@ async function assembleBuildContext(plan) {
 
   // Component contract and application identity manifest.
   await cp(path.join(appRoot, 'specs', 'component.spec.json'), path.join(plan.imageBuildDir, 'specs', 'component.spec.json'));
-  await cp(path.join(appRoot, 'sdkwork.app.config.json'), path.join(plan.imageBuildDir, 'sdkwork.app.config.json'));
+  await cp(path.join(appRoot, 'agent.app.config.json'), path.join(plan.imageBuildDir, 'agent.app.config.json'));
   await cp(path.join(appRoot, 'README.md'), path.join(plan.imageBuildDir, 'README.md'));
 
   // Container entrypoint + metadata. Authored sources live under

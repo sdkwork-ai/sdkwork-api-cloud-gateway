@@ -97,7 +97,7 @@ dependency-owned and are mounted only through their executable assembly exports.
 
 Authoritative layout follows `../sdkwork-specs/SDKWORK_WORKSPACE_SPEC.md`:
 
-- `sdkwork.app.config.json` — SDKWork App Standard v3 identity and release declaration
+- `agent.app.config.json` — SDKWork App Standard v3 identity and release declaration
 - `specs/component.spec.json` — executable exports, dependency surfaces, Cargo evidence, observability series
 - `etc/sdkwork.deployment.config.json` — typed source deployment profile index
 - `etc/sdkwork-api-cloud-gateway.{development,test,production}.toml` — safe runtime config

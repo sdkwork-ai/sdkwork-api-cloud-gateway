@@ -23,7 +23,7 @@
 #   --skip-image-build     reuse the existing <repository>:<version> image
 #                          (skip steps 2-3; use for env/compose-only changes)
 #   --version <semver>     override version (default: release.currentVersion
-#                          from sdkwork.app.config.json)
+#                          from agent.app.config.json)
 #   --dry-run              bundle step prints its plan only (build steps still
 #                          run unless skipped)
 #   -h, --help             show this help
@@ -46,8 +46,8 @@ usage() { sed -n '2,/^set -euo pipefail$/p' "$0" | sed '$d' | sed 's/^# \{0,1\}/
 SKIP_SERVER_PACKAGE=0
 SKIP_IMAGE_BUILD=0
 DRY_RUN=0
-VERSION="$(sed -n 's/.*"currentVersion"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' sdkwork.app.config.json | head -1)"
-[[ -n "$VERSION" ]] || die "cannot read release.currentVersion from sdkwork.app.config.json"
+VERSION="$(sed -n 's/.*"currentVersion"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' agent.app.config.json | head -1)"
+[[ -n "$VERSION" ]] || die "cannot read release.currentVersion from agent.app.config.json"
 IMAGE_REPOSITORY="registry.sdkwork.com/apps/sdkwork-api-cloud-gateway"
 IMAGE_REF="${IMAGE_REPOSITORY}:${VERSION}"
 

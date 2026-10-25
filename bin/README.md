@@ -15,7 +15,7 @@ identity and delegation.
 | `apps-deploy.sh` | install the server package on WSL Ubuntu / remote Ubuntu |
 
 Declared app types: `server`. Default image tag comes from
-`sdkwork.app.config.json` → `release.currentVersion`.
+`agent.app.config.json` → `release.currentVersion`.
 
 ## Sub-layout (`MODULE_BIN_SPEC.md` §2.1)
 

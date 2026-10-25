@@ -32,7 +32,7 @@ style helpers. Start with memory-only stores; leave Redis for Phase 2.
 - Create: `crates/sdkwork-api-cloud-gateway/src/metrics.rs`
 - Modify: `crates/sdkwork-api-cloud-gateway/tests/runtime_tests.rs`
 - Modify: `config/*.toml.example`
-- Modify: `sdkwork.app.config.json`
+- Modify: `agent.app.config.json`
 - Modify: `specs/component.spec.json`
 - Modify: `README.md`
 

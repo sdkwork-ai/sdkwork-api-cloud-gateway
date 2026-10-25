@@ -33,7 +33,7 @@ WSL 五环境部署：
 `107/107 IDENTICAL` 是漂移门禁的前置保障：`checksum_mismatch` / `migration_unknown`
 属于启动即 fail-closed 的 error 级差异，字节等价即不会拒启。
 
-版本口径唯一来源是 `sdkwork.app.config.json` 的 `release.currentVersion`（同时驱动镜像
+版本口径唯一来源是 `agent.app.config.json` 的 `release.currentVersion`（同时驱动镜像
 tag、bundle 目录名、manifest 镜像 ref）；bump 到 0.1.10 后
 `check-app-manifest-standard.mjs` 与 `check-app-manifest-deployment-standard.mjs
 --strict-release-targets` 均通过。

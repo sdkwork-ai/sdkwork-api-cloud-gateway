@@ -5,7 +5,7 @@
 # Public reverse proxy is owned by the independent sdkwork-webserver deployment —
 # this image does not install or start nginx site mappings.
 # Build context: an unpacked server install package directory containing
-# bin/, config/, specs/, database-modules/, sdkwork.app.config.json,
+# bin/, config/, specs/, database-modules/, agent.app.config.json,
 # INSTALL.md, install-manifest.json and container/ (entrypoint + metadata.json).
 #
 # This file is the build input for `pnpm build:container`
@@ -105,7 +105,7 @@ ENV SDKWORK_API_GATEWAY_CONFIG_FILE=${CONFIG_FILE}
 ENV SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE=${CONFIG_FILE}
 ENV SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone
 ENV SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
-# Application identity root: sdkwork.app.config.json + specs/component.spec.json
+# Application identity root: agent.app.config.json + specs/component.spec.json
 # are installed at the install root; the gateway resolves the component
 # contract and IAM tenant provisioning through it (application root ".").
 ENV SDKWORK_APP_ROOT=${INSTALL_ROOT}

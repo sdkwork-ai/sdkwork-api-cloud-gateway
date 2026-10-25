@@ -5,7 +5,7 @@
 
 **Goal:** Make SDKWork API Gateway integration standards rely on Cargo workspace/features and existing SDKWork specs, without adding a separate gateway catalog file.
 
-**Architecture:** `sdkwork-api-cloud-gateway` keeps runtime dependency execution in Cargo manifests and router exports. `sdkwork-specs` defines how Cargo evidence, `sdkwork.app.config.json`, `component.spec.json`, and SDK assembly metadata align. Business applications consume `sdkwork-api-cloud-gateway` instead of each independently composing foundation API runtimes.
+**Architecture:** `sdkwork-api-cloud-gateway` keeps runtime dependency execution in Cargo manifests and router exports. `sdkwork-specs` defines how Cargo evidence, `agent.app.config.json`, `component.spec.json`, and SDK assembly metadata align. Business applications consume `sdkwork-api-cloud-gateway` instead of each independently composing foundation API runtimes.
 
 **Tech Stack:** Rust Cargo workspace, Axum gateway runtime, JSON component specs, Markdown SDKWork standards.
 
@@ -42,7 +42,7 @@ Expected: PASS and `cargo metadata` exposes `foundation-appbase`.
 **Files:**
 - Modify: `README.md`
 - Modify: `specs/component.spec.json`
-- Modify: `sdkwork.app.config.json`
+- Modify: `agent.app.config.json`
 
 - [ ] **Step 1: Document no-catalog policy**
 

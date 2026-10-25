@@ -28,14 +28,14 @@ where
     {
         let config = GatewayRuntimeConfig::from_path(resolve_config_path(application_root, path))
             .context("failed to load explicit gateway config")?;
-        if application_root.join("sdkwork.app.config.json").exists() {
+        if application_root.join("agent.app.config.json").exists() {
             config
                 .with_application_component_surfaces(application_root)
                 .context("failed to synchronize gateway dependency surfaces from component spec")?
         } else {
             config
         }
-    } else if application_root.join("sdkwork.app.config.json").exists() {
+    } else if application_root.join("agent.app.config.json").exists() {
         GatewayRuntimeConfig::from_application_root(application_root)
             .context("failed to load sdkwork app manifest")?
     } else {

@@ -39,7 +39,7 @@ or verified runtime context.
 ## Extension Points
 
 Add route descriptor fields only when they are needed by runtime routing, diagnostics, or policy
-enforcement. New dependency surfaces should be declared in `../../sdkwork.app.config.json` and then
+enforcement. New dependency surfaces should be declared in `../../agent.app.config.json` and then
 projected through this registry.
 
 ## Verification

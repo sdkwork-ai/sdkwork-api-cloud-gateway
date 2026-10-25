@@ -68,7 +68,7 @@ bin/docker-deploy.sh down     --environment <env> [--purge]   # --purge 需 --ye
 ## 4. 按环境命令速查（可直接复制）
 
 > 以下每一块都可以整段复制执行。`<version>` 用实际版本号替换（当前
-> `sdkwork.app.config.json` → `release.currentVersion`，**省略 `--image-tag`
+> `agent.app.config.json` → `release.currentVersion`，**省略 `--image-tag`
 > 时自动取该值**）；`ops@10.0.0.8` 换成你的远程 Ubuntu 主机；`--host` 省略时
 > 默认为 `wsl`（本机 WSL）。
 > 全部变更类命令都可先加 `--dry-run` 打印计划而不执行。

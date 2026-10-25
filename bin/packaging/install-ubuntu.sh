@@ -330,7 +330,7 @@ set_env() {
 for required in "$binary_source" "$knowledgebase_rpc_binary_source" \
   "$knowledgebase_rpc_entrypoint_source" "$unit_source" \
   "$knowledgebase_rpc_unit_source" "$config_source" \
-  "$package_root/database-modules" "$package_root/sdkwork.app.config.json" \
+  "$package_root/database-modules" "$package_root/agent.app.config.json" \
   "$package_root/specs/component.spec.json"; do
   if [ ! -e "$required" ]; then
     echo "package is missing required install asset: $required" >&2
@@ -368,7 +368,7 @@ install -m 0755 "$knowledgebase_rpc_binary_source" \
   "$install_root/bin/sdkwork-intelligence-knowledgebase-rpc-bin"
 install -m 0755 "$knowledgebase_rpc_entrypoint_source" \
   "$install_root/bin/knowledgebase-rpc-entrypoint"
-install -m 0644 "$package_root/sdkwork.app.config.json" "$install_root/sdkwork.app.config.json"
+install -m 0644 "$package_root/agent.app.config.json" "$install_root/agent.app.config.json"
 install -m 0644 "$package_root/specs/component.spec.json" "$install_root/specs/component.spec.json"
 cp -R "$package_root/database-modules/." "$install_root/database-modules/"
 if [ -d "$package_root/data" ]; then

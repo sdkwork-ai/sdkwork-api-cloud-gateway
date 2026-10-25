@@ -20,7 +20,7 @@ standard assembly routers without duplicating a catalog in the app manifest or p
 
 ## Configuration
 
-Configuration inputs are application identity from `../../sdkwork.app.config.json`, dependency
+Configuration inputs are application identity from `../../agent.app.config.json`, dependency
 surfaces from `../../specs/component.spec.json`, safe runtime TOML under `../../etc/`, and process
 environment overrides. Local secret-bearing overrides must stay outside source control.
 

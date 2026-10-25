@@ -28,7 +28,7 @@
    以 release 模式编译全部基础组件、收集数据库模块、生成 SHA-256 校验清单，并在
    `dist/server/` 生成各自的 `tar.gz` 安装包。
 4. 服务进程的当前工作目录必须是安装包根目录。程序从 `.` 查找
-   `sdkwork.app.config.json` 和 `specs/component.spec.json`，相对配置路径也以该目录解析。
+   `agent.app.config.json` 和 `specs/component.spec.json`，相对配置路径也以该目录解析。
 5. `etc/` 和安装包中的 `config/` 只是安全模板。数据库密码、TLS 私钥和其他秘密必须由运维环境
    单独注入，不能写回 Git、安装包或日志。
 6. 网关监听 HTTP。生产 TLS 应在 Nginx、IIS、云负载均衡或其他受管入口终止，只向外开放
