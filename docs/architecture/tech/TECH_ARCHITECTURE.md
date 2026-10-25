@@ -43,7 +43,7 @@ profiles package the same embedded assembly graph with different deployment meta
 | Utilities | `sdkwork-utils-rust` | Boolean parsing, path normalization |
 | IAM embedding | `foundation-appbase` feature | Optional embedded IAM router via `sdkwork-api-iam-assembly` |
 | Dependency embedding | 45 `foundation-*` features | Every declared application is embedded through the single owner assembly export declared by `specs/component.spec.json`; entrypoint names may differ by owner context |
-| Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `sdkwork.workflow.json` |
+| Packaging | `tar.gz` server archive | `scripts/package-server.mjs`; workflow in `agent.workflow.json` |
 
 Intentionally **not** integrated at this stage:
 
@@ -161,7 +161,7 @@ flowchart LR
 
 | Profile | Use case | Packaging |
 | --- | --- | --- |
-| `cloud` | Multi-service production topology | CI matrix via `sdkwork.workflow.json` |
+| `cloud` | Multi-service production topology | CI matrix via `agent.workflow.json` |
 | `standalone` | Single-node or edge deployment | `pnpm gateway:package:standalone` |
 
 ### 7.1 Platform Gateway Realtime Hosting

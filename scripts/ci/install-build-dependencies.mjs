@@ -173,7 +173,7 @@ function aclocalMacroDir() {
  * aclocal and autoreconf only find when told where to look, so the paths are
  * exported here. The export lives in this process, so the caller must run the
  * build in the same shell - both the build and package lifecycle blocks in
- * `sdkwork.workflow.json` do.
+ * `agent.workflow.json` do.
  *
  * The probe is the point: it runs the same `autoreconf -i` recipe against a
  * throwaway `configure.ac` that uses `AM_PROG_LIBTOOL`, so a broken toolchain
@@ -274,7 +274,7 @@ function findAudiopusCrateArchive() {
  * `audiopus_sys` build script links it instead of taking its Unix-only source
  * path. The export only affects this process and its children, so the build step
  * that runs afterwards must inherit it: the caller has to run this script and
- * the build in the same shell, which `sdkwork.workflow.json` does by invoking
+ * the build in the same shell, which `agent.workflow.json` does by invoking
  * it from the same lifecycle `run` block.
  *
  * Only the GNU target needs this. An MSVC target links the archive the crate

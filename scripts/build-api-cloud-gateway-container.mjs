@@ -222,7 +222,7 @@ async function resolveDatabaseModules(metadata) {
 // image label, and the built bytes always describe the same platform
 // (GITHUB_WORKFLOW_SPEC section 5).
 async function loadDeclaredContainerArchitecture(deploymentProfile) {
-  const workflowPath = path.join(appRoot, 'sdkwork.workflow.json');
+  const workflowPath = path.join(appRoot, 'agent.workflow.json');
   let workflow;
   try {
     workflow = JSON.parse(await readFile(workflowPath, 'utf8'));
@@ -238,7 +238,7 @@ async function loadDeclaredContainerArchitecture(deploymentProfile) {
   );
   if (matches.length !== 1) {
     throw new Error(
-      `sdkwork.workflow.json must declare exactly one ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' (found ${matches.length})`,
+      `agent.workflow.json must declare exactly one ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' (found ${matches.length})`,
     );
   }
   const architecture = String(matches[0].architecture ?? '').trim();

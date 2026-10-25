@@ -98,3 +98,14 @@ docker/ca/
 # repo-commit sweep; the existing `.tmp/` rule only matches a directory.
 .tmp-*
 .tmp_*
+
+# ---- auto-audited: local artifacts that must never be committed ----
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+temp/
+*.tmp
+*.temp
+.next/

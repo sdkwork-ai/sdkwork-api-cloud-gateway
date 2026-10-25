@@ -137,7 +137,7 @@ catalog seeds are applied once and skipped on later starts until the seed conten
 
 ## Server Packaging
 
-The gateway integrates with `sdkwork-github-workflow` through `sdkwork.workflow.json` and the thin
+The gateway integrates with `sdkwork-github-workflow` through `agent.workflow.json` and the thin
 `.github/workflows/package.yml` reusable workflow call. The standard targets are
 `linux-x64-standalone-server-tar-gz` and `linux-x64-cloud-server-tar-gz`; workflow dependencies make
 the sibling Cargo assemblies available in CI.

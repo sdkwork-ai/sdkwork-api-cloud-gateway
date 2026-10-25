@@ -21,7 +21,7 @@
       "Cargo.lock",
       "package.json",
       "agent.app.config.json",
-      "sdkwork.workflow.json",
+      "agent.workflow.json",
       "specs/component.spec.json",
       "specs/topology.spec.json"
     ]
@@ -181,7 +181,7 @@
       "etc/sdkwork-api-cloud-gateway.*.toml",
       "specs/topology.spec.json",
       ".env.postgres",
-      "sdkwork.workflow.json"
+      "agent.workflow.json"
     ],
     "resolvedDedup": [
       {
@@ -955,6 +955,13 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/course_reactions",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-course-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/question_bank",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-app-api",
       "routeGeneration": "dependency-surface-prefix-route"

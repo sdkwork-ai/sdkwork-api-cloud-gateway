@@ -201,8 +201,8 @@
         "summary": "Complete the v0.1.12 package matrix. Both windows-2022 jobs were cancelled at the shared workflow's 120-minute bound while cargo was still compiling the foundation graph, and the dependency checkout ignored failed git checkouts on MAX_PATH-length generated SDK trees; the framework package bound is now 240 minutes and every dependency checkout enables core.longpaths and fails on a non-zero git exit. The two container targets leave the GitHub release matrix: OCI release evidence requires a pushed repository@sha256 digest, this repository has no registry credentials, and SUPPLY_CHAIN_SECURITY_SPEC forbids substituting a local image id, so container images remain on the bin/docker-image.sh channel while this release ships the six Windows, Linux, and macOS server packages. The host installer also gains direct PostgreSQL host/port/name/user/password/SSL overrides next to the existing port, database-directory, and Redis options.",
         "highlights": [
           "sdkwork-github-workflow (pinned ref 893a49f): the package job timeout moves from 120 to 240 minutes so a cold windows-2022 runner can finish the foundation graph, the dependency checkout enables core.longpaths and throws on a failed clone/fetch/checkout/submodule instead of building from a truncated tree, and the release uploader expands globstar globs in PowerShell so the aggregate `release-assets/**/*` set is not silently empty",
-          "sdkwork.workflow.json: the container-x64 standalone and cloud targets leave the GitHub matrix (registry credentials are absent and SUPPLY_CHAIN_SECURITY_SPEC forbids a local image id as container evidence); the bin/docker-image.sh channel still builds, pushes, and deploys those images",
-          "sdkwork.workflow.json + .github/workflows/package.yml: publish.aggregateRelease is enabled, so one aggregate job downloads all six package artifacts, renders the release notes once, and publishes a single release instead of racing six per-job uploads; the workflow also stops triggering on its own release.published event, so a tag run packages the matrix once",
+          "agent.workflow.json: the container-x64 standalone and cloud targets leave the GitHub matrix (registry credentials are absent and SUPPLY_CHAIN_SECURITY_SPEC forbids a local image id as container evidence); the bin/docker-image.sh channel still builds, pushes, and deploys those images",
+          "agent.workflow.json + .github/workflows/package.yml: publish.aggregateRelease is enabled, so one aggregate job downloads all six package artifacts, renders the release notes once, and publishes a single release instead of racing six per-job uploads; the workflow also stops triggering on its own release.published event, so a tag run packages the matrix once",
           "bin/packaging/install-ubuntu.sh: --database-host/-port/-name/-username/-password/-password-file/-ssl-mode generate /etc/sdkwork/database/database.env and a root:sdkwork 0640 secret referenced by SDKWORK_DATABASE_PASSWORD_FILE, so PostgreSQL is configurable at install time without hand-writing the profile",
           "Cargo.lock regenerated against every dependency repository's main; scripts/build-windows-libopus.ps1 tolerates native stderr under Windows PowerShell 5.1 and decides success from the CMake exit code",
           "version advanced to 0.1.13 across the app manifest, the workflow matrix artifact paths, package.json, and the dispatch default tag; the release notes cover only this version"
@@ -226,7 +226,7 @@
           "build-api-cloud-gateway-container.mjs: the image identity probe tolerates an empty RepoDigests list (`{{if .RepoDigests}}`), so a locally built, unpushed image resolves from Id/Size instead of aborting the whole inspect",
           "agent.app.config.json: artifacts.installConfig.packages declares all six server targets (windows/macos x standalone+cloud) plus the cloud container target, so release.notes packageIds resolve against real package declarations (check-app-manifest-standard was rejecting five unknown ids)",
           "agent.app.config.json: windows/macos server packages declare their real targetPlatform/architecture, which previously mislabelled every non-Linux target as linux x64",
-          "sdkwork.workflow.json + package.json: version advanced to 0.1.12 across the workflow matrix artifact paths, the release default version, and the dispatch default tag",
+          "agent.workflow.json + package.json: version advanced to 0.1.12 across the workflow matrix artifact paths, the release default version, and the dispatch default tag",
           "release notes for 0.1.12 cover only this version; earlier versions remain in the manifest history but are never re-published"
         ],
         "packageIds": [
@@ -387,6 +387,6 @@
     "deploymentConfig": "etc/sdkwork.deployment.config.json",
     "componentSpec": "specs/component.spec.json",
     "topologySpec": "specs/topology.spec.json",
-    "workflowManifest": "sdkwork.workflow.json"
+    "workflowManifest": "agent.workflow.json"
   }
 }

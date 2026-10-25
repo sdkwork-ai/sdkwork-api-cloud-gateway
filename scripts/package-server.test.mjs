@@ -418,7 +418,7 @@ test('server package source declares the official Knowledgebase RPC sidecar', ()
 });
 
 test('workflow package matrix publishes only targets that can carry release evidence', () => {
-  const workflow = JSON.parse(readFileSync(path.resolve('.', 'sdkwork.workflow.json'), 'utf8'));
+  const workflow = JSON.parse(readFileSync(path.resolve('.', 'agent.workflow.json'), 'utf8'));
   // OCI release evidence must bind to a pushed repository@sha256 digest and
   // SUPPLY_CHAIN_SECURITY_SPEC forbids substituting a local image id. The
   // GitHub workflow has no registry credentials, so container images stay on

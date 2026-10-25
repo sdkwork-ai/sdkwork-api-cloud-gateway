@@ -290,7 +290,7 @@ test('application manifest declares explicit package build targets', () => {
     sbomRequired: true,
   });
 
-  const workflow = JSON.parse(readFileSync(path.join(appRoot, 'sdkwork.workflow.json')));
+  const workflow = JSON.parse(readFileSync(path.join(appRoot, 'agent.workflow.json')));
   // GitHub artifact attestations are unavailable for user-owned private
   // repositories ("Feature not available for user-owned private
   // repositories"), so the framework attestation step is disabled and release

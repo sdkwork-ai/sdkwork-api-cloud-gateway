@@ -12,7 +12,7 @@ on:
   # dispatching this workflow.
   workflow_dispatch:
     # GitHub accepts at most 25 workflow_dispatch inputs, so dependency refs are
-    # declared as fixed refs in sdkwork.workflow.json (GITHUB_WORKFLOW_SPEC:
+    # declared as fixed refs in agent.workflow.json (GITHUB_WORKFLOW_SPEC:
     # "Dependency refs may come from a fixed ref or from a declared refInput").
     # Every runtime dependency therefore tracks its repository's main branch.
     inputs:
@@ -74,7 +74,7 @@ on:
         required: true
         default: all
       deploy:
-        description: Run configured deployment environments after packaging (no deployments[] are declared; see sdkwork.workflow.json).
+        description: Run configured deployment environments after packaging (no deployments[] are declared; see agent.workflow.json).
         required: true
         default: false
         type: boolean
@@ -91,7 +91,7 @@ jobs:
     name: Package
     uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@2a003154f4e227a057a9c26d720375f7c340311f
     with:
-      config_path: sdkwork.workflow.json
+      config_path: agent.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
       package_version: ${{ github.event.inputs.package_version || '' }}
       platform: ${{ github.event.inputs.platform || 'all' }}

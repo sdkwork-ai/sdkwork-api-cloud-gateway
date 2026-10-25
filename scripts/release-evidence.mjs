@@ -347,7 +347,7 @@ export async function writeProvenance(binding) {
           artifactKind: binding.artifactKind,
         },
         internalParameters: {
-          workflow: 'sdkwork.workflow.json',
+          workflow: 'agent.workflow.json',
           cargoLocked: true,
           sourceTreeDirty: dirty,
         },
@@ -379,14 +379,14 @@ export async function writeArtifactEvidence(binding, env = process.env) {
   verifyArtifactSignature(binding);
   if (!existsSync(binding.sbomPath)) throw new Error(`missing SBOM: ${toRelative(binding.sbomPath)}`);
   const workflowCli = env.SDKWORK_WORKFLOW_CLI
-    || path.resolve(appRoot, '..', 'sdkwork-github-workflow', 'scripts', 'sdkwork-workflow.mjs');
+    || path.resolve(appRoot, '..', 'sdkwork-github-workflow', 'scripts', 'agent-workflow.mjs');
   if (!existsSync(workflowCli)) throw new Error(`SDKWork workflow CLI does not exist: ${workflowCli}`);
   let evidence;
   for (const outputPath of evidencePaths(env)) {
     run('node', [
       workflowCli,
       'evidence:create',
-      '--config', 'sdkwork.workflow.json',
+      '--config', 'agent.workflow.json',
       '--target-id', requiredEnv('SDKWORK_PACKAGE_TARGET_ID', env),
       '--deployment-profile', binding.deploymentProfile,
       '--runtime-target', binding.runtimeTarget,
