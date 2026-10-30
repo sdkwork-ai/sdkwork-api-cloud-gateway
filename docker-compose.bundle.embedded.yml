@@ -122,6 +122,7 @@ services:
       SDKWORK_CLOUDROUTER_REDIS_PASSWORD: ""
       SDKWORK_RTC_STATE_REDIS_URL: redis://redis:6379/1
       SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL: redis://redis:6379/2
+      SDKWORK_MEMORY_WEB_REDIS_URL: redis://redis:6379/3
     volumes:
       - postgres-tls:/run/sdkwork/postgres-tls:ro
 
