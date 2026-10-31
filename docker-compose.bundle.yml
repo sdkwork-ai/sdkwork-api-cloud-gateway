@@ -134,6 +134,10 @@ x-gateway-common: &gateway-common
     # deps-project knowledgebase-rpc singleton resolves by service DNS name.
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
     SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST: ${GATEWAY_KNOWLEDGEBASE_RPC_WAIT_HOST:-knowledgebase-rpc}
+    # Knowledgebase outbox webhook dispatcher: production fails closed when unset.
+    SDKWORK_KNOWLEDGEBASE_OUTBOX_WEBHOOK_URL: ${GATEWAY_KNOWLEDGEBASE_OUTBOX_WEBHOOK_URL:-}
+    SDKWORK_KNOWLEDGEBASE_OUTBOX_WEBHOOK_SECRET_FILE: ${GATEWAY_KNOWLEDGEBASE_OUTBOX_WEBHOOK_SECRET_FILE:-}
+    SDKWORK_KNOWLEDGEBASE_OUTBOX_WEBHOOK_TIMEOUT_SECS: ${GATEWAY_KNOWLEDGEBASE_OUTBOX_WEBHOOK_TIMEOUT_SECS:-10}
     SDKWORK_KNOWLEDGEBASE_RPC_WAIT_PORT: "50054"
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
