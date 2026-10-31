@@ -217,10 +217,20 @@ async function resolveDatabaseModules(metadata) {
   return modules;
 }
 
-// The container lifecycle step is one workflow target: the packager must build
-// the architecture that target declares, so the published package id, the
-// image label, and the built bytes always describe the same platform
+// The container release matrix declares one container target per deployment
+// profile in agent.workflow.json. When a target is declared the packager MUST
+// build the architecture it names, so the published package id, the image
+// label, and the built bytes always describe the same platform
 // (GITHUB_WORKFLOW_SPEC section 5).
+//
+// Since v0.1.13 the GitHub release matrix deliberately ships no container
+// target: OCI release evidence requires a pushed repository@sha256 digest and
+// this repository has no registry credentials, while `bin/docker-image.sh`
+// remains the container delivery channel. In that bin-channel-only posture the
+// architecture is resolved from the docker daemon — the same value
+// validateArchitectureMatch compares against — instead of failing a build for
+// a target the release matrix intentionally no longer declares. More than one
+// matching target is still an error (ambiguous declaration).
 async function loadDeclaredContainerArchitecture(deploymentProfile) {
   const workflowPath = path.join(appRoot, 'agent.workflow.json');
   let workflow;
@@ -236,10 +246,13 @@ async function loadDeclaredContainerArchitecture(deploymentProfile) {
       && Array.isArray(target?.formats)
       && target.formats.includes(CONTAINER_FORMAT),
   );
-  if (matches.length !== 1) {
+  if (matches.length > 1) {
     throw new Error(
-      `agent.workflow.json must declare exactly one ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' (found ${matches.length})`,
+      `agent.workflow.json must declare at most one ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' (found ${matches.length})`,
     );
+  }
+  if (matches.length === 0) {
+    return '';
   }
   const architecture = String(matches[0].architecture ?? '').trim();
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(architecture)) {
@@ -248,11 +261,37 @@ async function loadDeclaredContainerArchitecture(deploymentProfile) {
   return architecture;
 }
 
+// Bin-channel-only posture: resolve the package architecture from the docker
+// daemon when the release matrix declares no container target.
+async function resolveBinChannelArchitecture(deploymentProfile) {
+  try {
+    const daemon = await dockerDaemonArchitecture();
+    return daemon.token;
+  } catch (error) {
+    throw new Error(
+      `agent.workflow.json declares no ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' and the docker daemon architecture is unavailable (${error.message}); declare the target or start docker`,
+    );
+  }
+}
+
+// Recover the architecture segment from a canonical container package id
+// (`container-<arch>-<deploymentProfile>-container-oci`); used by
+// --validate-manifest when the release matrix declares no container target.
+export function resolveArchitectureFromPackageId(packageId) {
+  const match = /^container-([a-z0-9]+(?:-[a-z0-9]+)*)-(?:standalone|cloud)-container-oci$/u.exec(
+    String(packageId ?? ''),
+  );
+  return match ? match[1] : '';
+}
+
 async function createBuildPlan(settings) {
   const packageJson = await loadPackageJson();
   const version = normalizeVersion(settings.version || process.env.SDKWORK_PACKAGE_VERSION || packageJson.version || '0.1.0');
   const deploymentProfile = settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE;
-  const declaredArchitecture = await loadDeclaredContainerArchitecture(deploymentProfile);
+  const workflowArchitecture = await loadDeclaredContainerArchitecture(deploymentProfile);
+  const architectureSource = workflowArchitecture ? 'workflow' : 'docker-daemon';
+  const declaredArchitecture = workflowArchitecture
+    || await resolveBinChannelArchitecture(deploymentProfile);
   const packageId = resolveContainerPackageId(deploymentProfile, declaredArchitecture);
   const releaseDir = resolveCargoReleaseDir(appRoot, process.env.CARGO_TARGET_DIR);
   const binaryPath = path.join(releaseDir, BINARY_NAME);
@@ -275,6 +314,7 @@ async function createBuildPlan(settings) {
       format: CONTAINER_FORMAT,
     },
     declaredArchitecture,
+    architectureSource,
     imageTag: settings.tag,
     imageFile: path.join(appRoot, 'Dockerfile'),
     imageBuildDir,
@@ -345,6 +385,7 @@ function renderBuildPlan(plan) {
   return [
     '[container-image-build] Build Plan',
     `[container-image-build]   package id: ${plan.package.id} (${plan.package.platform}-${plan.package.architecture} v${plan.package.version})`,
+    `[container-image-build]   architecture source: ${plan.architectureSource}`,
     `[container-image-build]   image tag: ${plan.imageTag}`,
     `[container-image-build]   push: ${plan.push}`,
     `[container-image-build]   Dockerfile: ${plan.imageFile}`,
@@ -471,11 +512,18 @@ async function validateRecordedImageManifest(settings) {
   }
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   const deploymentProfile = settings.deploymentProfile || DEFAULT_DEPLOYMENT_PROFILE;
+  // Bin-channel-only posture: with no container target declared, the recorded
+  // manifest's package id is the architecture authority for validation.
+  const workflowArchitecture = await loadDeclaredContainerArchitecture(deploymentProfile);
+  const architecture = workflowArchitecture
+    || resolveArchitectureFromPackageId(manifest?.packageId);
+  if (!architecture) {
+    throw new Error(
+      `agent.workflow.json declares no ${CONTAINER_PLATFORM}/${CONTAINER_FORMAT} target for deployment profile '${deploymentProfile}' and ${IMAGE_MANIFEST_FILE} has no resolvable package id architecture`,
+    );
+  }
   const issues = validateImageManifestRecord(manifest, {
-    packageId: resolveContainerPackageId(
-      deploymentProfile,
-      await loadDeclaredContainerArchitecture(deploymentProfile),
-    ),
+    packageId: resolveContainerPackageId(deploymentProfile, architecture),
     version,
     requireRepoDigest: settings.requireRepoDigest,
   });
@@ -874,10 +922,11 @@ async function main(argv = process.argv.slice(2)) {
     throw new Error('docker is not available or the daemon is not running; start docker first');
   }
   // Architecture mismatch is a packaging error, not an environment error: the
-  // workflow target declares which platform this package may be published as.
+  // workflow target (or, on the bin-channel-only posture, the daemon-derived
+  // package architecture) declares which platform this package may be built as.
   validateArchitectureMatch(plan, daemonArchitecture);
   console.log(
-    `[container-image-build] docker architecture: ${daemonArchitecture.token} (${daemonArchitecture.raw}) matches the declared target`,
+    `[container-image-build] docker architecture: ${daemonArchitecture.token} (${daemonArchitecture.raw}) ${plan.architectureSource === 'workflow' ? 'matches the declared workflow target' : 'resolved from the daemon (agent.workflow.json declares no container target; bin channel)'}`,
   );
 
   if (!plan.skipBuild) {

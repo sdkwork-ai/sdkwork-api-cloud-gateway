@@ -1,10 +1,12 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_lifecycle::{
     discover_database_modules, lifecycle_options_from_env, LifecycleOrchestrator,
 };
-use sdkwork_database_spi::DatabaseManifest;
+use sdkwork_database_spi::traits::DatabaseModuleDescriptorProvider;
+use sdkwork_database_spi::{DatabaseAssetProvider, DatabaseManifest, DefaultDatabaseModule};
 use sdkwork_database_sqlx::{
     create_process_shared_pool_from_env, process_shared_database_pool, DatabasePool,
 };
@@ -71,6 +73,16 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
     pool: &DatabasePool,
     force_migrate: bool,
 ) -> Result<(), GatewayRuntimeError> {
+    // Standalone container/install packages ship every dependency's database
+    // module under SDKWORK_DATABASE_MODULES_ROOT. Provision them before surface
+    // discovery so a fresh database reaches a complete schema regardless of
+    // which surfaces the runtime configuration selects: declared sub-modules
+    // first (their schemas are prerequisites of the owning module's later
+    // migrations, e.g. the cloudrouter payment tables), then every root module.
+    // Idempotent: installed modules return early and applied migrations are
+    // recorded in ops_schema_migration_history.
+    provision_packaged_database_modules(pool).await?;
+
     let surfaces = enabled_surface_app_roots(config);
     let app_roots: Vec<PathBuf> = surfaces.iter().map(|(_, root)| root.clone()).collect();
     let workspace_by_root: std::collections::HashMap<PathBuf, String> = surfaces
@@ -185,6 +197,308 @@ async fn bootstrap_models_catalog(
         app_root = %app_root.display(),
         "models catalog database bootstrap completed"
     );
+    Ok(())
+}
+
+/// Database modules provisioned from a packaged standalone installation.
+struct PackagedDatabaseModule {
+    app_root: PathBuf,
+    workspace: String,
+    module: Arc<dyn sdkwork_database_spi::DatabaseModule>,
+    manifest: DatabaseManifest,
+}
+
+/// Lists the packaged database application roots (`<root>/database/database.manifest.json`).
+fn packaged_database_app_roots() -> Result<Vec<PathBuf>, GatewayRuntimeError> {
+    let Some(root) = std::env::var_os("SDKWORK_DATABASE_MODULES_ROOT").filter(|value| !value.is_empty())
+    else {
+        return Ok(Vec::new());
+    };
+    let root = PathBuf::from(root);
+    if !root.is_dir() {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway.database",
+            root = %root.display(),
+            "SDKWORK_DATABASE_MODULES_ROOT is not a directory; skipping packaged database provisioning"
+        );
+        return Ok(Vec::new());
+    }
+    let mut app_roots = Vec::new();
+    let entries = std::fs::read_dir(&root).map_err(|error| {
+        GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+            workspace: "(packaged)".to_owned(),
+            module_id: "(packaged)".to_owned(),
+            message: format!("cannot read {}: {error}", root.display()),
+        }
+    })?;
+    for entry in entries {
+        let entry = entry.map_err(|error| GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+            workspace: "(packaged)".to_owned(),
+            module_id: "(packaged)".to_owned(),
+            message: format!("cannot read entry under {}: {error}", root.display()),
+        })?;
+        let path = entry.path();
+        if path.join("database").join("database.manifest.json").is_file() {
+            app_roots.push(path);
+        }
+    }
+    app_roots.sort();
+    Ok(app_roots)
+}
+
+/// Lifecycle-safe module id guard (mirrors the packaged module directory contract).
+fn valid_packaged_module_id(value: &str) -> bool {
+    !value.is_empty()
+        && value.bytes().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'-' | b'_')
+        })
+}
+
+fn packaged_module_error(
+    workspace: &str,
+    module_id: &str,
+    message: impl Into<String>,
+) -> GatewayRuntimeError {
+    GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+        workspace: workspace.to_owned(),
+        module_id: module_id.to_owned(),
+        message: message.into(),
+    }
+}
+
+/// Provisions every database module shipped inside a packaged standalone tree.
+///
+/// Standalone container images and server packages carry the dependency-owned
+/// database assets under `SDKWORK_DATABASE_MODULES_ROOT` instead of the source
+/// checkout layout the dependency surfaces resolve. Without this pass a fresh
+/// database only gets the surfaces the runtime configuration selected, so
+/// embedded app routers fail their schema preflight (memory, models, ...) and
+/// modules whose later migrations depend on a declared sub-module baseline
+/// (cloudrouter payment tables) fail with "relation does not exist".
+///
+/// Declared sub-modules are provisioned first, then every root module; both
+/// phases force migrations so a fresh install reaches `schema_current` without
+/// a separate release job. Re-runs are cheap: installed modules skip their
+/// baseline and applied migrations are skipped by the history table.
+async fn provision_packaged_database_modules(
+    pool: &DatabasePool,
+) -> Result<(), GatewayRuntimeError> {
+    let mut modules: Vec<PackagedDatabaseModule> = Vec::new();
+    for app_root in packaged_database_app_roots()? {
+        let workspace = app_root
+            .file_name()
+            .and_then(|value| value.to_str())
+            .unwrap_or("(packaged)")
+            .to_owned();
+        let module = DefaultDatabaseModule::from_app_root(&app_root)
+            .map_err(|error| packaged_module_error(&workspace, "(packaged)", error.to_string()))?;
+        let manifest = DatabaseManifest::from_file(module.manifest_path())
+            .map_err(|error| packaged_module_error(&workspace, &module.descriptor().module_id, error.to_string()))?;
+        modules.push(PackagedDatabaseModule {
+            app_root,
+            workspace,
+            module: Arc::new(module),
+            manifest,
+        });
+    }
+    if modules.is_empty() {
+        return Ok(());
+    }
+
+    // Pass 1 and 2 run in dependency-tolerant rounds: packaged baselines can
+    // reference tables owned by a sibling module that appears later in the
+    // manifest order (for example appbase `edu-data` referencing the `base-data`
+    // country table, or cloudrouter migrations referencing a sub-module
+    // baseline). A round retries only the modules whose previous attempt failed;
+    // a round without progress is a hard failure.
+    let mut root_modules: Vec<(String, Arc<dyn sdkwork_database_spi::DatabaseModule>)> =
+        Vec::with_capacity(modules.len());
+    let mut submodule_modules: Vec<(String, Arc<dyn sdkwork_database_spi::DatabaseModule>)> =
+        Vec::new();
+    for packaged in &modules {
+        for submodule_id in &packaged.manifest.modules {
+            if !valid_packaged_module_id(submodule_id) {
+                return Err(packaged_module_error(
+                    &packaged.workspace,
+                    submodule_id,
+                    "invalid database sub-module id",
+                ));
+            }
+            let submodule_root = packaged
+                .app_root
+                .join("database")
+                .join("modules")
+                .join(submodule_id);
+            if !submodule_root.join("database.manifest.json").is_file() {
+                continue;
+            }
+            let label = format!("{}/{}", packaged.workspace, submodule_id);
+            let submodule = DefaultDatabaseModule::from_module_root(&submodule_root)
+                .map_err(|error| packaged_module_error(&label, submodule_id, error.to_string()))?;
+            let submodule_manifest = DatabaseManifest::from_file(submodule.manifest_path())
+                .map_err(|error| packaged_module_error(&label, submodule_id, error.to_string()))?;
+            if submodule_manifest.module_id != *submodule_id {
+                return Err(packaged_module_error(
+                    &label,
+                    submodule_id,
+                    format!(
+                        "sub-module directory declares moduleId {}",
+                        submodule_manifest.module_id
+                    ),
+                ));
+            }
+            submodule_modules.push((label, Arc::new(submodule)));
+        }
+        root_modules.push((
+            packaged.workspace.clone(),
+            packaged.module.clone(),
+        ));
+    }
+
+    // Dependency ordering across packaged modules is not guaranteed by the
+    // manifests: an owning module's baseline can be a prerequisite of a
+    // declared sub-module baseline (appbase `base-data` -> `edu-data`), while a
+    // sub-module baseline can be a prerequisite of the owner's later migrations
+    // (cloudrouter payment-control-plane -> migration 0043). Provision in three
+    // dependency-tolerant stages: root baselines, sub-modules, root migrations.
+    bootstrap_packaged_modules_until_stable(
+        root_modules.clone(),
+        pool,
+        "root baselines",
+        ProvisionStage::InitOnly,
+    )
+    .await?;
+    bootstrap_packaged_modules_until_stable(
+        submodule_modules,
+        pool,
+        "sub-modules",
+        ProvisionStage::MigrateOnly,
+    )
+    .await?;
+    let provisioned = root_modules.len();
+    bootstrap_packaged_modules_until_stable(
+        root_modules,
+        pool,
+        "root modules",
+        ProvisionStage::MigrateOnly,
+    )
+    .await?;
+    tracing::info!(
+        target: "sdkwork.api.cloud_gateway.database",
+        modules = provisioned,
+        "packaged database module provisioning completed"
+    );
+    Ok(())
+}
+
+/// Provisioning stage for a packaged module.
+#[derive(Clone, Copy)]
+enum ProvisionStage {
+    /// Apply the module baseline only (used to make root tables available to
+    /// declared sub-module baselines before any migration runs).
+    InitOnly,
+    /// Baseline plus pending migrations, without applying seeds. Seeds stay
+    /// owned by the surface/bootstrap paths so each declared seed runs once
+    /// through its own locale/profile policy instead of on every packaged
+    /// module (course/document catalogs are large and slow).
+    MigrateOnly,
+}
+
+async fn init_packaged_module(
+    label: &str,
+    module: Arc<dyn sdkwork_database_spi::DatabaseModule>,
+    pool: &DatabasePool,
+) -> Result<(), GatewayRuntimeError> {
+    let manifest = DatabaseManifest::from_file(module.manifest_path()).map_err(|error| {
+        packaged_module_error(label, "(packaged)", error.to_string())
+    })?;
+    let descriptor = module.descriptor();
+    let _options = lifecycle_options_from_env(&descriptor.service_code, &manifest);
+    LifecycleOrchestrator::new(pool.clone(), module)
+        .with_applied_by(DATABASE_BOOTSTRAP_APPLIED_BY)
+        .init()
+        .await
+        .map_err(|error| {
+            packaged_module_error(label, &descriptor.module_id, format!("init failed: {error}"))
+        })
+}
+
+/// Applies the baseline (if needed) and pending migrations without seeding.
+async fn migrate_packaged_module(
+    label: &str,
+    module: Arc<dyn sdkwork_database_spi::DatabaseModule>,
+    pool: &DatabasePool,
+) -> Result<(), GatewayRuntimeError> {
+    let manifest = DatabaseManifest::from_file(module.manifest_path()).map_err(|error| {
+        packaged_module_error(label, "(packaged)", error.to_string())
+    })?;
+    let descriptor = module.descriptor();
+    let _options = lifecycle_options_from_env(&descriptor.service_code, &manifest);
+    let orchestrator = LifecycleOrchestrator::new(pool.clone(), module)
+        .with_applied_by(DATABASE_BOOTSTRAP_APPLIED_BY);
+    orchestrator.init().await.map_err(|error| {
+        packaged_module_error(label, &descriptor.module_id, format!("init failed: {error}"))
+    })?;
+    orchestrator.migrate().await.map_err(|error| {
+        packaged_module_error(label, &descriptor.module_id, format!("migrate failed: {error}"))
+    })?;
+    Ok(())
+}
+
+/// Bootstraps a set of packaged modules in dependency-tolerant rounds.
+async fn bootstrap_packaged_modules_until_stable(
+    mut pending: Vec<(String, Arc<dyn sdkwork_database_spi::DatabaseModule>)>,
+    pool: &DatabasePool,
+    phase: &'static str,
+    stage: ProvisionStage,
+) -> Result<(), GatewayRuntimeError> {
+    const MAX_ROUNDS: usize = 8;
+    let mut rounds = 0usize;
+    while !pending.is_empty() {
+        rounds += 1;
+        let attempted = pending.len();
+        let mut failed: Vec<(String, Arc<dyn sdkwork_database_spi::DatabaseModule>)> = Vec::new();
+        let mut first_error: Option<String> = None;
+        for (label, module) in pending {
+            let result = match stage {
+                ProvisionStage::InitOnly => {
+                    init_packaged_module(&label, module.clone(), pool).await
+                }
+                ProvisionStage::MigrateOnly => {
+                    migrate_packaged_module(&label, module.clone(), pool).await
+                }
+            };
+            match result {
+                Ok(()) => {}
+                Err(error) => {
+                    let message = error.to_string();
+                    if first_error.is_none() {
+                        first_error = Some(format!("{label}: {message}"));
+                    }
+                    failed.push((label, module));
+                }
+            }
+        }
+        if failed.is_empty() {
+            return Ok(());
+        }
+        if failed.len() == attempted || rounds >= MAX_ROUNDS {
+            let detail = first_error.unwrap_or_default();
+            return Err(packaged_module_error(
+                "(packaged)",
+                "(packaged)",
+                format!("{phase} provisioning failed after {rounds} round(s): {detail}"),
+            ));
+        }
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway.database",
+            phase,
+            remaining = failed.len(),
+            rounds,
+            "packaged database modules retrying after dependency ordering"
+        );
+        pending = failed;
+    }
     Ok(())
 }
 

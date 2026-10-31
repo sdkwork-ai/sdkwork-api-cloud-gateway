@@ -104,6 +104,14 @@ x-gateway-common: &gateway-common
     # apps (canvas pages) persist here while every other module uses PostgreSQL.
     # mode=rwc creates the file on first start inside the gateway-data volume.
     SDKWORK_DATABASE_SQLITE_URL: ${GATEWAY_DATABASE_SQLITE_URL:-sqlite:///var/lib/sdkwork/api-gateway/canvas-pages.db?mode=rwc}
+    SDKWORK_DRIVE_OBJECT_STORE_ROOT: ${GATEWAY_DRIVE_OBJECT_STORE_ROOT:-/var/lib/sdkwork/api-gateway/drive}
+    SDKWORK_MEMORY_ENVIRONMENT: ${GATEWAY_MEMORY_ENVIRONMENT:-production}
+    SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE:-http}
+    SDKWORK_MEMORY_OUTBOX_DELIVERY_URL: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_URL:-}
+    SDKWORK_MEMORY_OUTBOX_DELIVERY_TIMEOUT_SECS: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_TIMEOUT_SECS:-10}
+    SDKWORK_MEMORY_WEB_REDIS_URL: ${GATEWAY_MEMORY_WEB_REDIS_URL:-redis://host.docker.internal:6379/3}
+    SDKWORK_MEMORY_CURSOR_SIGNING_KEY: ${GATEWAY_MEMORY_CURSOR_SIGNING_KEY:-}
+    SDKWORK_IAM_PROVIDER_CREDENTIAL_MASTER_SECRET: ${GATEWAY_IAM_PROVIDER_CREDENTIAL_MASTER_SECRET:-}
     # IM principal directory (dynamic PostgreSQL directory in containers).
     SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
     # Memory server runtime refuses to start without an explicit lifecycle
@@ -246,6 +254,9 @@ services:
       SDKWORK_KNOWLEDGEBASE_TENANT_ID: ${GATEWAY_KNOWLEDGEBASE_TENANT_ID:-100001}
       SDKWORK_KNOWLEDGEBASE_ORGANIZATION_ID: ${GATEWAY_KNOWLEDGEBASE_ORGANIZATION_ID:-1}
       SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
+      # The sidecar owns its knowledgebase/drive schemas and must apply their
+      # post-baseline migrations before the drift gate on a fresh database.
+      SDKWORK_DATABASE_AUTO_MIGRATE: "true"
       SDKWORK_API_CLOUD_GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS: ${GATEWAY_PROVISION_KNOWLEDGEBASE_RPC_SECRETS:-true}
       RUST_LOG: ${RUST_LOG:-info}
     healthcheck:

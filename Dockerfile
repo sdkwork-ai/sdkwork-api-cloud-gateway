@@ -99,6 +99,7 @@ RUN chmod 0755 ${INSTALL_ROOT}/bin/${GATEWAY_BINARY} \
   && mkdir -p /etc/sdkwork/api-gateway \
   && cp ${INSTALL_ROOT}/config/sdkwork-api-cloud-gateway.production.toml \
     ${CONFIG_FILE} \
+  && chown -R sdkwork:sdkwork ${INSTALL_ROOT} \
   && chown sdkwork:sdkwork ${CONFIG_FILE}
 
 ENV SDKWORK_API_GATEWAY_CONFIG_FILE=${CONFIG_FILE}
