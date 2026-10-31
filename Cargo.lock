@@ -9000,7 +9000,6 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-iam-bootstrap",
  "sdkwork-iam-web-adapter",
- "sdkwork-intelligence-generations-service",
  "sdkwork-invoice-database-bootstrap",
  "sdkwork-invoice-service",
  "sdkwork-models 0.1.0",
