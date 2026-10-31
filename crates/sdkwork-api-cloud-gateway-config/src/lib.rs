@@ -126,6 +126,14 @@ pub struct GatewayRuntimeConfig {
     pub mode: GatewayMode,
     #[serde(default = "default_dependency_surfaces")]
     pub dependency_surfaces: Vec<DependencyApiSurfaceConfig>,
+    /// Explicit workspace order for installed database bootstrap.
+    ///
+    /// Cross-module migrations may reference tables owned by another workspace
+    /// (for example Cloud Router re-asserting payment reconciliation columns).
+    /// The component contract declares the prerequisite order; workspaces not
+    /// listed keep their deterministic alphabetical position after it.
+    #[serde(default)]
+    pub database_bootstrap_order: Vec<String>,
     #[serde(default)]
     pub request: GatewayRequestConfig,
     #[serde(default)]
@@ -511,6 +519,8 @@ struct SdkworkComponentSpec {
     #[serde(default)]
     api_surfaces: Vec<SdkworkComponentApiSurface>,
     #[serde(default)]
+    database_bootstrap_order: Vec<String>,
+    #[serde(default)]
     dependencies: Vec<SdkworkComponentDependency>,
 }
 
@@ -551,6 +561,7 @@ impl Default for GatewayRuntimeConfig {
             database: GatewayDatabaseConfig::default(),
             mode: GatewayMode::default(),
             dependency_surfaces: default_dependency_surfaces(),
+            database_bootstrap_order: Vec::new(),
             request: GatewayRequestConfig::default(),
             observability: GatewayObservabilityConfig::default(),
             security: GatewaySecurityConfig::default(),
@@ -649,8 +660,10 @@ impl GatewayRuntimeConfig {
 
     pub fn from_component_spec_str(input: &str) -> Result<Self, GatewayConfigError> {
         let component = serde_json::from_str::<SdkworkComponentSpec>(input)?;
+        let database_bootstrap_order = component.database_bootstrap_order.clone();
         let config = Self {
             dependency_surfaces: dependency_surfaces_from_component(component)?,
+            database_bootstrap_order,
             ..Self::default()
         };
         config.validate()?;
@@ -686,6 +699,7 @@ impl GatewayRuntimeConfig {
             application_root.as_ref().join("specs/component.spec.json"),
         )?;
         self.dependency_surfaces = component.dependency_surfaces;
+        self.database_bootstrap_order = component.database_bootstrap_order;
         self.finalize_registered_client_cors();
         self.validate()?;
         Ok(self)

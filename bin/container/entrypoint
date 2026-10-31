@@ -146,6 +146,55 @@ provision_iam_signing_master_secret
 load_iam_signing_master_secret
 
 if [ "${SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:-true}" = "true" ]; then
+  # Workspace provisioning (role / database / schema / extensions) is a
+  # separate phase from module migration (DATABASE_FRAMEWORK_SPEC §4.1/§4.4):
+  # instance 1 owns both, instances 2..N start with MIGRATE_ON_START=false.
+  if [ "${SDKWORK_DATABASE_PROVISION:-true}" != "false" ]; then
+    /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --provision-databases
+  fi
+  # Create every module schema before the Knowledgebase RPC sidecar validates
+  # drive/knowledgebase tables; the sidecar is a prerequisite for the owner
+  # assembly phase of --migrate-databases.
+  /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --bootstrap-databases
+  # The sidecar entrypoint provisions the shared mTLS material into the
+  # gateway-secrets volume before it validates the database. Wait for those
+  # files first, otherwise the gateway can race ahead of the sidecar.
+  rpc_client_ca=${SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH:-}
+  rpc_client_cert=${SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH:-}
+  rpc_client_key=${SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH:-}
+  rpc_caller_key=${SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE:-}
+  if [ -n "$rpc_client_ca" ] && [ -n "$rpc_client_cert" ] \
+    && [ -n "$rpc_client_key" ] && [ -n "$rpc_caller_key" ]; then
+    rpc_material_attempts=${SDKWORK_KNOWLEDGEBASE_RPC_WAIT_ATTEMPTS:-60}
+    rpc_material_elapsed=0
+    while [ "$rpc_material_elapsed" -lt "$rpc_material_attempts" ]; do
+      if [ -s "$rpc_client_ca" ] && [ -s "$rpc_client_cert" ] \
+        && [ -s "$rpc_client_key" ] && [ -s "$rpc_caller_key" ]; then
+        break
+      fi
+      rpc_material_elapsed=$((rpc_material_elapsed + 1))
+      sleep 2
+    done
+  fi
+  # The Knowledgebase RPC sidecar validates drive tables created by the schema
+  # bootstrap and may still be restarting. Wait briefly for its port so a fresh
+  # install converges in one gateway start instead of a restart race.
+  rpc_wait_host=${SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST:-}
+  if [ -n "$rpc_wait_host" ]; then
+    rpc_wait_port=${SDKWORK_KNOWLEDGEBASE_RPC_WAIT_PORT:-50054}
+    rpc_wait_attempts=${SDKWORK_KNOWLEDGEBASE_RPC_WAIT_ATTEMPTS:-60}
+    rpc_wait_elapsed=0
+    while [ "$rpc_wait_elapsed" -lt "$rpc_wait_attempts" ]; do
+      if timeout 2 bash -c "</dev/tcp/${rpc_wait_host}/${rpc_wait_port}" 2>/dev/null; then
+        break
+      fi
+      rpc_wait_elapsed=$((rpc_wait_elapsed + 1))
+      sleep 2
+    done
+    if [ "$rpc_wait_elapsed" -ge "$rpc_wait_attempts" ]; then
+      echo "warning: knowledgebase-rpc ${rpc_wait_host}:${rpc_wait_port} not ready; owner assembly will report the dependency" >&2
+    fi
+  fi
   /opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
 fi
 

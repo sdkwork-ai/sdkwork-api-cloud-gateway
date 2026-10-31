@@ -14,6 +14,7 @@ use crate::GatewayRuntimeError;
 const PROCESS_DATABASE_SERVICE_CODE: &str = "CLOUD";
 const DATABASE_BOOTSTRAP_APPLIED_BY: &str = "sdkwork-api-cloud-gateway";
 const DEVELOPER_CATALOG_WORKSPACE: &str = "sdkwork-documents";
+const MODELS_CATALOG_WORKSPACE: &str = "sdkwork-models";
 
 /// Creates the process-shared pool used by every selected owner assembly.
 ///
@@ -33,6 +34,26 @@ pub async fn bootstrap_embedded_databases(
     }
 
     process_database_pool().await.map(Some)
+}
+
+/// Creates the process pool and migrates every discovered module schema
+/// **without** composing owner assemblies or routers.
+///
+/// Fresh installs need this phase before the Knowledgebase RPC sidecar starts:
+/// the sidecar validates drive/knowledgebase tables, while the full migration's
+/// owner-assembly phase validates the sidecar. Running schema bootstrap first
+/// breaks that cycle; `--migrate-databases` then re-runs discovery idempotently
+/// and composes the assemblies.
+pub async fn bootstrap_embedded_database_schemas(
+    config: &GatewayRuntimeConfig,
+) -> Result<(), GatewayRuntimeError> {
+    let pool = bootstrap_embedded_databases(config).await?.ok_or_else(|| {
+        GatewayRuntimeError::DatabasePoolBootstrap {
+            message: "the embedded cloud gateway requires a process-shared PostgreSQL pool"
+                .to_owned(),
+        }
+    })?;
+    discover_and_bootstrap_embedded_database_modules(config, &pool, true).await
 }
 
 /// Discovers database modules for every enabled dependency surface and runs
@@ -71,6 +92,15 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         );
     }
 
+    for registered in &report.registered {
+        tracing::debug!(
+            target: "sdkwork.api.cloud_gateway.database",
+            module_id = %registered.module_id,
+            app_root = %registered.app_root.display(),
+            "database module registered for lifecycle bootstrap"
+        );
+    }
+
     let mut bootstrapped_workspaces = std::collections::HashSet::new();
     for (discovered, module) in report.registered.iter().zip(registry.modules().iter()) {
         let Some(workspace) = workspace_by_root.get(&discovered.app_root) else {
@@ -78,6 +108,14 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         };
         bootstrap_discovered_module(workspace, module.clone(), pool, force_migrate).await?;
         bootstrapped_workspaces.insert(workspace.clone());
+    }
+
+    // The Models catalog is a platform-wide dependency of CloudRouter and is
+    // not itself a component API surface, so discovery would never select it.
+    // Its schema must be current before the CloudRouter owner assembly loads
+    // the catalog (the assembly fails closed otherwise).
+    if !bootstrapped_workspaces.contains(MODELS_CATALOG_WORKSPACE) {
+        bootstrap_models_catalog(pool, force_migrate).await?;
     }
 
     // The developer catalog is platform-wide content owned by the documents
@@ -96,6 +134,56 @@ pub async fn discover_and_bootstrap_embedded_database_modules(
         skipped = report.skipped_without_database_assets.len(),
         force_migrate,
         "embedded database module discovery and bootstrap completed"
+    );
+    Ok(())
+}
+
+/// Initializes the Models catalog through the models module lifecycle.
+///
+/// CloudRouter's owner assembly requires the Models schema before it loads the
+/// shared model catalog. `sdkwork-models` is not a component API surface, so
+/// this platform-level bootstrap is the only discovery path that covers it.
+async fn bootstrap_models_catalog(
+    pool: &DatabasePool,
+    force_migrate: bool,
+) -> Result<(), GatewayRuntimeError> {
+    let Some(app_root) = resolve_models_catalog_app_root() else {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway.database",
+            "models database assets not found; CloudRouter catalog bootstrap will fail closed"
+        );
+        return Ok(());
+    };
+    let (registry, report) =
+        discover_database_modules(std::slice::from_ref(&app_root)).map_err(|error| {
+            GatewayRuntimeError::EmbeddedDatabaseBootstrap {
+                workspace: MODELS_CATALOG_WORKSPACE.to_owned(),
+                module_id: "(discovery)".to_owned(),
+                message: error.to_string(),
+            }
+        })?;
+    if report.registered.is_empty() {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway.database",
+            app_root = %app_root.display(),
+            "models app root ships no database manifest; catalog schema will be missing"
+        );
+        return Ok(());
+    }
+
+    for module in registry.modules() {
+        bootstrap_discovered_module(
+            MODELS_CATALOG_WORKSPACE,
+            module.clone(),
+            pool,
+            force_migrate,
+        )
+        .await?;
+    }
+    tracing::info!(
+        target: "sdkwork.api.cloud_gateway.database",
+        app_root = %app_root.display(),
+        "models catalog database bootstrap completed"
     );
     Ok(())
 }
@@ -241,7 +329,20 @@ fn enabled_surface_app_roots(config: &GatewayRuntimeConfig) -> Vec<(String, Path
         }
         surfaces.push((surface.workspace.clone(), PathBuf::from(value)));
     }
-    surfaces.sort();
+    // Cross-module migrations may reference tables owned by another workspace
+    // (Cloud Router re-asserts payment reconciliation columns). The component
+    // contract declares the prerequisite order; unlisted workspaces keep the
+    // deterministic alphabetical order after the declared prerequisites.
+    surfaces.sort_by(|(left, _), (right, _)| {
+        let rank = |workspace: &str| {
+            config
+                .database_bootstrap_order
+                .iter()
+                .position(|candidate| candidate == workspace)
+                .unwrap_or(usize::MAX)
+        };
+        rank(left).cmp(&rank(right)).then_with(|| left.cmp(right))
+    });
     surfaces.dedup_by(|a, b| a.1 == b.1);
     surfaces
 }
@@ -252,7 +353,16 @@ fn enabled_surface_app_roots(config: &GatewayRuntimeConfig) -> Vec<(String, Path
 /// checkouts keep each module in a sibling directory. The explicit
 /// `SDKWORK_DOCUMENTS_APP_ROOT` always wins.
 fn resolve_developer_catalog_app_root() -> Option<PathBuf> {
-    if let Some(env_key) = surface_app_root_env_key(DEVELOPER_CATALOG_WORKSPACE) {
+    resolve_platform_workspace_app_root(DEVELOPER_CATALOG_WORKSPACE)
+}
+
+/// Resolves a platform-level module root that is not a component API surface.
+///
+/// Packaged installs place module assets under `database-modules/`; source
+/// checkouts keep each module in a sibling directory. The explicit
+/// `SDKWORK_<MODULE>_APP_ROOT` always wins.
+fn resolve_platform_workspace_app_root(workspace: &str) -> Option<PathBuf> {
+    if let Some(env_key) = surface_app_root_env_key(workspace) {
         if let Some(value) = std::env::var_os(&env_key) {
             if !value.is_empty() {
                 return Some(PathBuf::from(value));
@@ -262,15 +372,19 @@ fn resolve_developer_catalog_app_root() -> Option<PathBuf> {
 
     let mut candidates = Vec::new();
     for root in database_module_roots() {
-        candidates.push(root.join(DEVELOPER_CATALOG_WORKSPACE));
+        candidates.push(root.join(workspace));
     }
     if let Ok(current_dir) = std::env::current_dir() {
-        candidates.push(current_dir.join(DEVELOPER_CATALOG_WORKSPACE));
+        candidates.push(current_dir.join(workspace));
         if let Some(parent) = current_dir.parent() {
-            candidates.push(parent.join(DEVELOPER_CATALOG_WORKSPACE));
+            candidates.push(parent.join(workspace));
         }
     }
     resolve_surface_app_root_from_candidates(candidates)
+}
+
+fn resolve_models_catalog_app_root() -> Option<PathBuf> {
+    resolve_platform_workspace_app_root(MODELS_CATALOG_WORKSPACE)
 }
 
 /// Candidate module roots, in priority order: the packaged asset root first,
@@ -414,6 +528,29 @@ mod tests {
                 .iter()
                 .any(|surface| surface.workspace == "sdkwork-documents"),
             "the documents dependency surface must be selected so gateway startup bootstraps its catalog"
+        );
+    }
+
+    #[test]
+    fn component_spec_declares_cross_module_bootstrap_prerequisites() {
+        let component_spec = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../specs/component.spec.json");
+        let config =
+            sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig::from_component_spec_path(
+                component_spec,
+            )
+            .expect("gateway component spec must parse");
+        let position = |workspace: &str| {
+            config
+                .database_bootstrap_order
+                .iter()
+                .position(|candidate| candidate == workspace)
+        };
+        let payment = position("sdkwork-payment").expect("payment must be declared");
+        let cloudrouter = position("sdkwork-cloudrouter").expect("cloudrouter must be declared");
+        assert!(
+            payment < cloudrouter,
+            "payment must migrate before cloudrouter: {payment} < {cloudrouter}"
         );
     }
 

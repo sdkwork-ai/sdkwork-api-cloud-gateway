@@ -8,6 +8,8 @@ environment = "staging"
 bind = "0.0.0.0:3907"
 
 [database]
+# Staging uses the same installer orchestration as production:
+# `--provision-databases` then `--migrate-databases` before service startup.
 autoMigrate = false
 
 [cors]

@@ -8,8 +8,9 @@ environment = "production"
 bind = "0.0.0.0:3900"
 
 [database]
-# Production installation runs the explicit `--migrate-databases` lifecycle
-# command before service startup. Runtime auto-migration remains disabled.
+# Production installation runs the explicit `--provision-databases` step
+# (role/database/schema/grants/extensions) and then `--migrate-databases`
+# before service startup. Runtime auto-migration remains disabled.
 autoMigrate = false
 
 [cors]

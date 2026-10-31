@@ -2160,6 +2160,15 @@
       "routeGeneration": "dependency-surface-prefix-route"
     }
   ],
+  "databaseBootstrapOrder": [
+    "sdkwork-payment",
+    "sdkwork-mcp",
+    "sdkwork-iam",
+    "sdkwork-account",
+    "sdkwork-drive",
+    "sdkwork-assets",
+    "sdkwork-cloudrouter"
+  ],
   "dependencies": [
     {
       "serviceId": "sdkwork-iam-app-api",

@@ -34,7 +34,8 @@ environment = "production"
 bind = "0.0.0.0:3900"
 
 [database]
-# Container entrypoint runs the explicit `--migrate-databases` lifecycle step
+# Container entrypoint runs the explicit `--provision-databases` step
+# (role/database/schema/grants/extensions) and then `--migrate-databases`
 # before service startup. Runtime auto-migration remains disabled.
 autoMigrate = false
 bind = "0.0.0.0:3900"

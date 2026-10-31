@@ -227,7 +227,10 @@ bin/config.sh diff --environment production
 
 **env 文件键契约（`env/<environment>.env`）**：
 - 宿主侧键一律使用 `GATEWAY_` 前缀；compose 负责映射为容器侧 `SDKWORK_*` 名。compose 只插值它显式引用的变量——env 文件里 compose 未引用的键是死键，到不了容器。
-- compose 模板从 env 文件消费的 `SDKWORK_*` 键**只有**数据库池参数（`SDKWORK_DATABASE_AUTO_MIGRATE` / `MAX_CONNECTIONS` / `MIN_CONNECTIONS` / `ACQUIRE_TIMEOUT` / `IDLE_TIMEOUT` / `MAX_LIFETIME` / `TEMPORARY_*`）以及可选的 `SDKWORK_DATABASE_URL` 凭据覆盖。除此之外不要在 env 文件里放任何 `SDKWORK_*` 键（容器环境变量来自镜像 ENV + compose environment 段）。
+- compose 模板从 env 文件消费的 `SDKWORK_*` 键**只有**数据库池参数（`SDKWORK_DATABASE_AUTO_MIGRATE` / `MAX_CONNECTIONS` / `MIN_CONNECTIONS` / `ACQUIRE_TIMEOUT` / `IDLE_TIMEOUT` / `MAX_LIFETIME` / `TEMPORARY_*`）、可选的 `SDKWORK_DATABASE_URL` 凭据覆盖，以及安装期数据库供给开关与管理员连接（宿主侧 `GATEWAY_DATABASE_PROVISION` / `GATEWAY_POSTGRES_ADMIN_*` → 容器侧 `SDKWORK_DATABASE_PROVISION` / `SDKWORK_DATABASE_ADMIN_*`）。除此之外不要在 env 文件里放任何 `SDKWORK_*` 键（容器环境变量来自镜像 ENV + compose environment 段）。
+- 安装/启动时按 `--provision-databases`（角色、数据库、schema、扩展、授权）→ `--bootstrap-databases`（仅建模块表）→ 等待 Knowledgebase RPC sidecar → `--migrate-databases`（owner 装配）执行；fresh 宿主需要管理员连接，已有库可由应用角色完成。`GATEWAY_DATABASE_PROVISION=false` 可显式关闭供给阶段（运维自管 schema 时）。
+- test/staging/demo/production 还必须配置 `GATEWAY_MEMORY_CURSOR_SIGNING_KEY`（≥32 字节）与 `GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE=http` / 可解析的 HTTPS `GATEWAY_MEMORY_OUTBOX_DELIVERY_URL`；部署预检会一次性报告缺失项。
+- foundation suite 默认进程池预算为 `SDKWORK_DATABASE_MAX_CONNECTIONS=150`；embedded PostgreSQL 默认 `PG_MAX_CONNECTIONS=400`。外部 PostgreSQL 必须按进程池 + 临时驱动池 + 管理/运维预留扩容，否则首次装配可能报 `pool timed out`。
 - 预检失败时收集**全部**缺口一次性报告，并给出傻瓜式修复指引（`--set` 或直接编辑 env 文件）。
 
 ## 6. 与 webserver 的对接

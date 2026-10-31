@@ -8,7 +8,11 @@ use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
 #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
 use sdkwork_api_cloud_gateway::{
-    embedded_database_bootstrap::migrate_embedded_databases, load_gateway_config,
+    database_provisioning::provision_databases,
+    embedded_database_bootstrap::{
+        bootstrap_embedded_database_schemas, migrate_embedded_databases,
+    },
+    load_gateway_config,
 };
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use tokio::net::TcpListener;
@@ -18,6 +22,8 @@ use tracing_subscriber::{
 };
 
 const GATEWAY_RUNTIME_STACK_SIZE: usize = 16 * 1024 * 1024;
+const PROVISION_DATABASES_ARG: &str = "--provision-databases";
+const BOOTSTRAP_DATABASES_ARG: &str = "--bootstrap-databases";
 const MIGRATE_DATABASES_ARG: &str = "--migrate-databases";
 const HELP_ARGS: [&str; 2] = ["-h", "--help"];
 const VERSION_ARGS: [&str; 2] = ["-V", "--version"];
@@ -25,6 +31,8 @@ const VERSION_ARGS: [&str; 2] = ["-V", "--version"];
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ProcessMode {
     Serve,
+    ProvisionDatabases,
+    BootstrapDatabases,
     MigrateDatabases,
     Help,
     Version,
@@ -41,11 +49,17 @@ fn main() -> anyhow::Result<()> {
             println!("sdkwork-api-cloud-gateway {}", env!("CARGO_PKG_VERSION"));
             return Ok(());
         }
-        ProcessMode::Serve | ProcessMode::MigrateDatabases => {}
+        ProcessMode::Serve
+        | ProcessMode::ProvisionDatabases
+        | ProcessMode::BootstrapDatabases
+        | ProcessMode::MigrateDatabases => {}
     }
 
     install_process_crypto_provider()?;
-    if process_mode == ProcessMode::MigrateDatabases {
+    if matches!(
+        process_mode,
+        ProcessMode::BootstrapDatabases | ProcessMode::MigrateDatabases
+    ) {
         // SAFETY: this happens before the Tokio runtime or any worker thread is
         // created. The explicit lifecycle command must apply pending modules
         // even when the service runtime keeps auto-migration disabled.
@@ -79,6 +93,23 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     let env = env::vars().collect::<HashMap<_, _>>();
     let config = load_gateway_config(env::args().skip(1), &env, ".")?;
     init_tracing(&config)?;
+    if process_mode == ProcessMode::ProvisionDatabases {
+        let report = provision_databases(&config).await?;
+        info!(
+            role_created = report.role_created,
+            database_created = report.database_created,
+            schema_created = report.schema_created,
+            extensions = ?report.extensions_converged,
+            warnings = report.warnings,
+            "sdkwork api gateway database provisioning completed"
+        );
+        return Ok(());
+    }
+    if process_mode == ProcessMode::BootstrapDatabases {
+        bootstrap_embedded_database_schemas(&config).await?;
+        info!("sdkwork api gateway database schema bootstrap completed");
+        return Ok(());
+    }
     if process_mode == ProcessMode::MigrateDatabases {
         migrate_embedded_databases(&config)
             .await?
@@ -130,6 +161,12 @@ where
         if VERSION_ARGS.contains(&argument) {
             return ProcessMode::Version;
         }
+        if argument == PROVISION_DATABASES_ARG {
+            mode = ProcessMode::ProvisionDatabases;
+        }
+        if argument == BOOTSTRAP_DATABASES_ARG {
+            mode = ProcessMode::BootstrapDatabases;
+        }
         if argument == MIGRATE_DATABASES_ARG {
             mode = ProcessMode::MigrateDatabases;
         }
@@ -145,6 +182,10 @@ fn print_help() {
          \n\
          Options:\n\
            --config <PATH>       Load the gateway runtime TOML file\n\
+           --provision-databases Ensure the workspace PostgreSQL role, database,\n\
+                                 schema, grants, and extensions, then exit\n\
+           --bootstrap-databases Create/migrate every module schema without\n\
+                                 composing owner assemblies, then exit\n\
            --migrate-databases   Run owner assembly database lifecycles and exit\n\
            -h, --help            Print help without initializing the runtime\n\
            -V, --version         Print version without initializing the runtime",
@@ -454,6 +495,26 @@ mod tests {
         assert_eq!(
             process_mode_from_args(["--config=gateway.toml"]),
             ProcessMode::Serve
+        );
+    }
+
+    #[test]
+    fn recognizes_explicit_database_schema_bootstrap_mode() {
+        assert_eq!(
+            process_mode_from_args(["--config", "gateway.toml", BOOTSTRAP_DATABASES_ARG]),
+            ProcessMode::BootstrapDatabases
+        );
+    }
+
+    #[test]
+    fn recognizes_explicit_database_provisioning_mode() {
+        assert_eq!(
+            process_mode_from_args(["--config", "gateway.toml", PROVISION_DATABASES_ARG]),
+            ProcessMode::ProvisionDatabases
+        );
+        assert_eq!(
+            process_mode_from_args([PROVISION_DATABASES_ARG]),
+            ProcessMode::ProvisionDatabases
         );
     }
 

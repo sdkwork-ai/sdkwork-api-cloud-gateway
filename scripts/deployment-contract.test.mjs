@@ -215,7 +215,10 @@ test('container composition wires the IM Knowledgebase client through strict RPC
     compose,
     /SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CALLER_CONTEXT_SIGNING_KEY_FILE:/u,
   );
-  assert.match(compose, /gateway:\s+[\s\S]*knowledgebase-rpc:\s+condition: service_healthy/u);
+  // Fresh installs must not deadlock: the sidecar validates drive tables that
+  // only the gateway bootstrap creates, so ordering is service_started and the
+  // gateway entrypoint performs the bounded RPC-port wait.
+  assert.match(compose, /gateway:\s+[\s\S]*knowledgebase-rpc:\s+condition: service_started/u);
   assert.match(entrypoint, /URI:spiffe:\/\/sdkwork\.internal\/sdkwork\/service\/sdkwork-im/u);
   assert.match(entrypoint, /subjectAltName=DNS:knowledgebase\.local,DNS:knowledgebase-rpc/u);
   assert.match(entrypoint, /openssl rand -base64 32/u);
@@ -349,7 +352,10 @@ test('Ubuntu installer uses canonical runtime paths and preserves operator confi
   assert.match(installer, /knowledgebase-rpc-entrypoint.*--provision-only/u);
   assert.match(installer, /"\$binary_source" --version >\/dev\/null/u);
   assert.match(gatewayUnit, /EnvironmentFile=\/etc\/sdkwork\/api-gateway\/api-gateway\.env/u);
-  assert.match(gatewayUnit, /Requires=sdkwork-knowledgebase-rpc\.service/u);
+  // Wants, not Requires: the sidecar can fail on a fresh host until the
+  // gateway schema bootstrap creates the drive tables it validates.
+  assert.match(gatewayUnit, /Wants=sdkwork-knowledgebase-rpc\.service/u);
+  assert.doesNotMatch(gatewayUnit, /Requires=sdkwork-knowledgebase-rpc\.service/u);
   assert.match(knowledgebaseUnit, /ExecStart=.*knowledgebase-rpc-entrypoint/u);
 });
 
@@ -377,8 +383,38 @@ test('database lifecycle is explicit and delegated to owner assemblies', () => {
 
   assert.match(compose, /SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START:/u);
   assert.match(compose, /SDKWORK_DATABASE_AUTO_MIGRATE:-false/u);
+  assert.match(compose, /SDKWORK_DATABASE_PROVISION:/u);
+  assert.match(compose, /SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST/u);
+  assert.doesNotMatch(
+    compose,
+    /knowledgebase-rpc:\s*\n\s+condition: service_healthy/u,
+    'gateway startup must not deadlock on the sidecar that needs gateway-created tables',
+  );
+  assert.match(entrypoint, /SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST/u);
+  assert.match(entrypoint, /sdkwork-api-cloud-gateway --provision-databases/u);
+  assert.match(entrypoint, /sdkwork-api-cloud-gateway --bootstrap-databases/u);
   assert.match(entrypoint, /sdkwork-api-cloud-gateway --migrate-databases/u);
+  assert.match(systemd, /ExecStartPre=.* --provision-databases/u);
+  assert.match(systemd, /ExecStartPre=.* --bootstrap-databases/u);
   assert.match(systemd, /ExecStartPre=.* --migrate-databases/u);
+  assert.ok(
+    entrypoint.indexOf('sdkwork-api-cloud-gateway --provision-databases')
+      < entrypoint.indexOf('sdkwork-api-cloud-gateway --bootstrap-databases'),
+    'container workspace provisioning must run before module schema bootstrap',
+  );
+  assert.ok(
+    entrypoint.indexOf('sdkwork-api-cloud-gateway --bootstrap-databases')
+      < entrypoint.indexOf('sdkwork-api-cloud-gateway --migrate-databases'),
+    'container module schema bootstrap must run before owner assembly migration',
+  );
+  assert.ok(
+    systemd.indexOf('--provision-databases') < systemd.indexOf('--bootstrap-databases'),
+    'systemd workspace provisioning must run before module schema bootstrap',
+  );
+  assert.ok(
+    systemd.indexOf('--bootstrap-databases') < systemd.indexOf('--migrate-databases'),
+    'systemd module schema bootstrap must run before owner assembly migration',
+  );
   assert.doesNotMatch(gatewayCargo, /database-host/u);
   assert.doesNotMatch(bootstrap, /_database_host::/u);
   assert.match(

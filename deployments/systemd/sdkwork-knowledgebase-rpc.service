@@ -5,6 +5,9 @@ Description=SDKWork API Gateway Knowledgebase RPC
 After=network-online.target
 Wants=network-online.target
 Before=sdkwork-api-gateway.service
+# A fresh host has no drive tables until the gateway schema bootstrap runs; the
+# sidecar must keep retrying instead of tripping systemd's default start limit.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple

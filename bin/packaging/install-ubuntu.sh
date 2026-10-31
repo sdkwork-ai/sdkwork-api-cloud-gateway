@@ -403,7 +403,10 @@ if [ ! -e "$env_target" ]; then
     echo "SDKWORK_MODELS_APP_ROOT=/opt/sdkwork/api-gateway/database-modules/sdkwork-models"
     echo "SDKWORK_MODELS_CATALOG_ROOT=/opt/sdkwork/api-gateway/data/sdkwork-models"
     echo "SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC=false"
+    echo "SDKWORK_DATABASE_PROVISION=true"
+    echo "SDKWORK_DATABASE_MAX_CONNECTIONS=150"
     echo "SDKWORK_IM_PRINCIPAL_DIRECTORY=postgres"
+    echo "SDKWORK_MEMORY_ENVIRONMENT=$environment"
     echo "SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE=/etc/sdkwork/api-gateway/secrets/iam-signing-master.key"
     echo "SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE=/etc/sdkwork/api-gateway/secrets/payment-credential-master.key"
     echo "SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE=/etc/sdkwork/api-gateway/secrets/knowledgebase-rpc/im-launch-ticket.key"
@@ -431,15 +434,102 @@ fi
 if [ -n "$database_config_dir" ]; then
   set_env SDKWORK_DATABASE_CONFIG_DIR "$database_config_dir" "$env_target"
 fi
+# Foundation-suite startup needs a process budget large enough for the 55+
+# module roots plus the bounded temporary-driver exceptions. 150 is the
+# regression-tested minimum; preserve an explicit operator override.
+set_env SDKWORK_DATABASE_MAX_CONNECTIONS \
+  "${SDKWORK_DATABASE_MAX_CONNECTIONS:-150}" "$env_target"
+# Memory requires an explicit lifecycle environment on every start; write it on
+# both fresh installs and upgrades.
+set_env SDKWORK_MEMORY_ENVIRONMENT "$environment" "$env_target"
 if [ -n "$redis_url" ]; then
   set_env SDKWORK_API_CLOUD_GATEWAY_WEB_REDIS_URL "$redis_url" "$env_target"
   set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_URL "$redis_url" "$env_target"
+  set_env SDKWORK_MEMORY_WEB_REDIS_URL "$redis_url" "$env_target"
 fi
 if [ -n "$rate_limit_backend" ]; then
   set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_BACKEND "$rate_limit_backend" "$env_target"
 fi
 if [ -n "$redis_key_prefix" ]; then
   set_env SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_REDIS_KEY_PREFIX "$redis_key_prefix" "$env_target"
+fi
+# Memory cursor signing key: production-like environments require >=32 bytes.
+# Reuse an operator-provided value, otherwise generate a durable host key and
+# persist it in the root:sdkwork 0640 EnvironmentFile (Memory has no *_FILE
+# contract for this value).
+memory_cursor_signing_key=${SDKWORK_MEMORY_CURSOR_SIGNING_KEY:-}
+if [ -z "$memory_cursor_signing_key" ]; then
+  memory_cursor_signing_key=$(openssl rand -hex 32)
+fi
+set_env SDKWORK_MEMORY_CURSOR_SIGNING_KEY "$memory_cursor_signing_key" "$env_target"
+
+# Memory outbox delivery is mandatory for production-like environments.
+memory_outbox_mode=${SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE:-}
+memory_outbox_url=${SDKWORK_MEMORY_OUTBOX_DELIVERY_URL:-}
+case "$environment" in
+  prod|production|stage|staging|test)
+    if [ "$memory_outbox_mode" != "http" ]; then
+      echo "production-like installs require SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE=http (Memory event delivery)" >&2
+      exit 1
+    fi
+    case "$memory_outbox_url" in
+      https://*) ;;
+      *) echo "production-like installs require an approved HTTPS SDKWORK_MEMORY_OUTBOX_DELIVERY_URL" >&2; exit 1 ;;
+    esac ;;
+esac
+if [ -n "$memory_outbox_mode" ]; then
+  set_env SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE "$memory_outbox_mode" "$env_target"
+fi
+if [ -n "$memory_outbox_url" ]; then
+  set_env SDKWORK_MEMORY_OUTBOX_DELIVERY_URL "$memory_outbox_url" "$env_target"
+fi
+# Installer-time workspace provisioning admin connection: pass the standard
+# SDKWORK_DATABASE_ADMIN_* values in the installer environment and they are
+# persisted as systemd EnvironmentFile keys consumed by the
+# ExecStartPre --provision-databases step. The password itself lands in a
+# root:sdkwork 0640 secret file referenced through *_PASSWORD_FILE; prefer that
+# (or SDKWORK_DATABASE_ADMIN_URL) over an inline password.
+if [ -n "${SDKWORK_DATABASE_ADMIN_URL:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_URL "$SDKWORK_DATABASE_ADMIN_URL" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_HOST:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_HOST "$SDKWORK_DATABASE_ADMIN_HOST" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_PORT:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_PORT "$SDKWORK_DATABASE_ADMIN_PORT" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_DATABASE:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_DATABASE "$SDKWORK_DATABASE_ADMIN_DATABASE" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_USERNAME:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_USERNAME "$SDKWORK_DATABASE_ADMIN_USERNAME" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_PASSWORD_FILE:-}" ] \
+  && [ -n "${SDKWORK_DATABASE_ADMIN_PASSWORD:-}" ]; then
+  echo "use either SDKWORK_DATABASE_ADMIN_PASSWORD or SDKWORK_DATABASE_ADMIN_PASSWORD_FILE, not both" >&2
+  exit 2
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_PASSWORD:-}" ]; then
+  # Never place the admin password in the EnvironmentFile. Persist it as a
+  # root:sdkwork 0640 secret and reference it through the standard *_FILE key.
+  admin_password_target=$secrets_root/database-admin.secret
+  (umask 077; printf '%s\n' "$SDKWORK_DATABASE_ADMIN_PASSWORD" > "$admin_password_target")
+  chmod 0640 "$admin_password_target"
+  if [ -z "$destdir" ]; then
+    chown root:sdkwork "$admin_password_target"
+    admin_password_reference=$admin_password_target
+  else
+    # Staged install (--destdir): the artifact records the runtime path, never
+    # the build-host staging path.
+    admin_password_reference=/etc/sdkwork/api-gateway/secrets/database-admin.secret
+  fi
+  set_env SDKWORK_DATABASE_ADMIN_PASSWORD_FILE "$admin_password_reference" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_PASSWORD_FILE:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_PASSWORD_FILE "$SDKWORK_DATABASE_ADMIN_PASSWORD_FILE" "$env_target"
+fi
+if [ -n "${SDKWORK_DATABASE_ADMIN_SSL_MODE:-}" ]; then
+  set_env SDKWORK_DATABASE_ADMIN_SSL_MODE "$SDKWORK_DATABASE_ADMIN_SSL_MODE" "$env_target"
 fi
 
 knowledgebase_rpc_env_target=$config_root/sdkwork-knowledgebase-rpc.env
@@ -541,6 +631,11 @@ if [ -z "$destdir" ]; then
       openssl rand -base64 48 > "$secrets_root/$secret_file"
     fi
   done
+  # IAM reads only the direct variable (no *_FILE contract), while the container
+  # entrypoint loads the file itself. systemd starts the binary directly, so put
+  # the value in the root:sdkwork 0640 EnvironmentFile as well.
+  set_env SDKWORK_IAM_SIGNING_MASTER_SECRET \
+    "$(tr -d '\r\n' < "$secrets_root/iam-signing-master.key")" "$env_target"
   chown -R root:sdkwork "$config_root"
   chown root:root "$secrets_root/knowledgebase-rpc/ca.key"
   chmod 0750 "$config_root" "$secrets_root" "$secrets_root/knowledgebase-rpc"
@@ -574,7 +669,11 @@ if [ -z "$destdir" ]; then
         ;;
     esac
     systemctl daemon-reload
-    systemctl enable --now sdkwork-knowledgebase-rpc.service sdkwork-api-gateway.service
+    systemctl enable sdkwork-knowledgebase-rpc.service sdkwork-api-gateway.service
+    # Start the gateway (Wants pulls the sidecar). Starting both with --now
+    # would make the installer fail when the sidecar is still waiting for the
+    # gateway schema bootstrap on a fresh host.
+    systemctl start sdkwork-api-gateway.service
   fi
 fi
 

@@ -285,6 +285,29 @@ resolve_ca_source() {  # echo the host-side CA bundle path for the mount value
   printf '%s' "${src}"
 }
 
+# Installer-time provisioning owns role/database/schema/extension creation
+# (entrypoint --provision-databases). A fresh host therefore passes preflight
+# when admin credentials are configured, instead of demanding a hand-created
+# database before the bundle can start.
+provisioning_admin_configured() {
+  # Creating the role/database (or converging an existing role password) needs
+  # a distinct admin identity, not just an admin password for the app role.
+  local admin_user
+  admin_user="$(env_key GATEWAY_POSTGRES_ADMIN_USERNAME)"
+  [ -n "$(env_key GATEWAY_POSTGRES_ADMIN_URL)" ] && return 0
+  [ -n "${admin_user}" ] && [ "${admin_user}" != "$(env_key GATEWAY_POSTGRES_USER)" ]
+}
+
+provisioning_admin_can_converge_password() {
+  local admin_user app_user
+  admin_user="$(env_key GATEWAY_POSTGRES_ADMIN_USERNAME)"
+  app_user="$(env_key GATEWAY_POSTGRES_USER)"
+  [ -n "$(env_key GATEWAY_POSTGRES_ADMIN_URL)" ] && return 0
+  [ -n "${admin_user}" ] && [ "${admin_user}" != "${app_user}" ] || return 1
+  [ -n "$(env_key GATEWAY_POSTGRES_ADMIN_PASSWORD)" ] \
+    || [ -n "$(env_key GATEWAY_POSTGRES_ADMIN_PASSWORD_FILE)" ]
+}
+
 probe_external_postgres() {
   local host port user db pass url ssl ca_mount ca_src probe out rc=0
   host="$(env_key GATEWAY_POSTGRES_HOST)"
@@ -322,9 +345,17 @@ probe_external_postgres() {
   fi
   case "${out}" in
     *"password authentication failed"*)
-      die "external PostgreSQL rejected the configured credentials (${user}@${host}:${port}/${db}). On the database host, align the role password with the deploy env, e.g.: sudo -u postgres psql -c \"ALTER ROLE ${user} PASSWORD '<the GATEWAY_POSTGRES_PASSWORD value from ${ENV_FILE}>'\" — then re-run this command." ;;
+      if provisioning_admin_can_converge_password; then
+        info "external PostgreSQL rejected the application credentials; the start-time --provision-databases step will converge the role password from the configured admin identity"
+        return 0
+      fi
+      die "external PostgreSQL rejected the configured credentials (${user}@${host}:${port}/${db}). Configure GATEWAY_POSTGRES_ADMIN_USERNAME/GATEWAY_POSTGRES_ADMIN_PASSWORD (or an admin password file) so the start-time --provision-databases step can converge the role, or align the role password on the database host, then re-run this command." ;;
     *"does not exist"*)
-      die "external PostgreSQL database not found (${db} on ${host}:${port}). Create it on the database host, e.g.: sudo -u postgres psql -c \"CREATE DATABASE ${db} OWNER ${user};\" — then re-run this command." ;;
+      if provisioning_admin_configured; then
+        info "external PostgreSQL database ${db} does not exist yet; the start-time --provision-databases step will create it owned by ${user}"
+        return 0
+      fi
+      die "external PostgreSQL database not found (${db} on ${host}:${port}). Configure GATEWAY_POSTGRES_ADMIN_USERNAME/GATEWAY_POSTGRES_ADMIN_PASSWORD (or an admin password file) so the start-time --provision-databases step can create it, or create it on the database host with: sudo -u postgres psql -c \"CREATE DATABASE ${db} OWNER ${user};\" — then re-run this command." ;;
     *"Peer authentication failed"*)
       die "external PostgreSQL pg_hba.conf rejects password auth for ${user} from this host. Add a host-based scram-sha-256 line for ${user} in pg_hba.conf and reload PostgreSQL." ;;
     *"no pg_hba.conf entry"*)
@@ -504,6 +535,24 @@ case "${ACTION}" in
             PREFLIGHT_FAIL="1"
           fi ;;
       esac
+      # Optional installer-time provisioning admin connection: validate the
+      # shapes deploy.sh forwards to --provision-databases.
+      pre_admin_port="$(env_key GATEWAY_POSTGRES_ADMIN_PORT)"
+      if [ -n "${pre_admin_port}" ]; then
+        case "${pre_admin_port}" in ''|*[!0-9]*) die "env preflight: GATEWAY_POSTGRES_ADMIN_PORT must be numeric (got '${pre_admin_port}')" ;; esac
+      fi
+      pre_admin_ssl="$(env_key GATEWAY_POSTGRES_ADMIN_SSL_MODE)"
+      if [ -n "${pre_admin_ssl}" ]; then
+        case "${pre_admin_ssl}" in
+          disable|allow|prefer|require|verify-ca|verify-full) ;;
+          *) die "env preflight: GATEWAY_POSTGRES_ADMIN_SSL_MODE='${pre_admin_ssl}' is invalid (disable|allow|prefer|require|verify-ca|verify-full)" ;;
+        esac
+      fi
+      if provisioning_admin_configured; then
+        info "OK: installer-time database provisioning admin connection configured"
+      else
+        info "NOTE: no GATEWAY_POSTGRES_ADMIN_* configured — provisioning will use the application role (fresh hosts need pre-created role/database)"
+      fi
     else
       info "dependency mode is embedded — external database host/SSL checks skipped"
     fi
@@ -520,6 +569,34 @@ case "${ACTION}" in
         fi
       done
     fi
+    case "${ENVIRONMENT}" in
+      test|staging|production)
+        pre_memory_cursor="$(env_key GATEWAY_MEMORY_CURSOR_SIGNING_KEY)"
+        if is_unconfigured "${pre_memory_cursor}"; then
+          info "MISSING: GATEWAY_MEMORY_CURSOR_SIGNING_KEY (Memory cursor signing, >=32 bytes) is not configured"
+          info "  fix: $0 --environment ${ENVIRONMENT} --set GATEWAY_MEMORY_CURSOR_SIGNING_KEY '<at-least-32-bytes>'"
+          PREFLIGHT_FAIL="1"
+        elif [ "${#pre_memory_cursor}" -lt 32 ]; then
+          die "env preflight: GATEWAY_MEMORY_CURSOR_SIGNING_KEY must be at least 32 bytes (got ${#pre_memory_cursor})"
+        else
+          info "OK: GATEWAY_MEMORY_CURSOR_SIGNING_KEY configured"
+        fi
+        pre_memory_outbox_mode="$(env_key GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE)"
+        pre_memory_outbox_url="$(env_key GATEWAY_MEMORY_OUTBOX_DELIVERY_URL)"
+        if [ "${pre_memory_outbox_mode}" != "http" ]; then
+          info "MISSING: GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE=http is required for production-like Memory"
+          info "  fix: $0 --environment ${ENVIRONMENT} --set GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE http"
+          PREFLIGHT_FAIL="1"
+        fi
+        case "${pre_memory_outbox_url}" in
+          ""|*"<CHANGE_ME>"*)
+            info "MISSING: GATEWAY_MEMORY_OUTBOX_DELIVERY_URL must be an approved HTTPS endpoint"
+            info "  fix: $0 --environment ${ENVIRONMENT} --set GATEWAY_MEMORY_OUTBOX_DELIVERY_URL 'https://<host>/<path>'"
+            PREFLIGHT_FAIL="1" ;;
+          https://*) info "OK: GATEWAY_MEMORY_OUTBOX_DELIVERY_URL configured" ;;
+          *) die "env preflight: GATEWAY_MEMORY_OUTBOX_DELIVERY_URL must use https://" ;;
+        esac ;;
+    esac
     if [ "${ENVIRONMENT}" = "production" ] || [ "${ENVIRONMENT}" = "staging" ]; then
       case "$(env_key GATEWAY_CLOUDROUTER_API_KEY_PEPPER)" in
         *development-only*)
@@ -661,7 +738,10 @@ start_deps() {
   export_instance_env 1
   run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
     "${COMPOSE_FILES[@]}" --profile deps up -d
-  wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
+  # Do not block on knowledgebase-rpc health here. On a fresh install it needs
+  # the drive schema created by the gateway entrypoint's --bootstrap-databases
+  # phase; instance 1 starts that phase and its entrypoint then waits for the
+  # RPC port before owner assembly migration.
 }
 
 start_instance() {
@@ -808,7 +888,9 @@ start_fleet() {
   export_instance_env 1
   run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
     "${COMPOSE_FILES[@]}" --profile deps start
-  wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
+  # Do not gate on sidecar health here: a wiped/recreated database needs the
+  # gateway schema bootstrap first. The gateway entrypoint waits for the RPC
+  # port and the final gateway health probe decides convergence.
   local index
   for index in $(seq 1 "${REPLICAS}"); do
     export_instance_env "${index}"
@@ -824,7 +906,7 @@ restart_fleet() {
   info "restarting the deps singleton (knowledgebase-rpc + built-in databases if any)"
   run docker compose -p "${DEPS_PROJECT}" --env-file "${ENV_FILE}" \
     "${COMPOSE_FILES[@]}" --profile deps restart
-  wait_container_healthy "${DEPS_PROJECT}" knowledgebase-rpc "${HEALTH_TIMEOUT}"
+  # Same as start: the gateway entrypoint owns sidecar convergence.
   local index
   for index in $(seq 1 "${REPLICAS}"); do
     export_instance_env "${index}"

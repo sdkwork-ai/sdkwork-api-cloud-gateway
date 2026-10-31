@@ -50,7 +50,10 @@ The operator channel is the `bin/` nine-entrypoint family (`MODULE_BIN_SPEC.md`)
 this directory holds the deployment assets those entrypoints drive.
 
 ```bash
-# 1. Provision databases (sdkwork_ai_dev/test/staging/prod)
+# 1. (Optional) pre-provision host databases (sdkwork_ai_dev/test/staging/prod).
+#    Install/start also runs --provision-databases, --bootstrap-databases, and
+#    --migrate-databases, so a fresh host can instead supply
+#    GATEWAY_POSTGRES_ADMIN_* in the env file.
 pnpm db:postgres:provision
 
 # 2. Configure secrets (docker/env/<environment>.env from *.env.example)

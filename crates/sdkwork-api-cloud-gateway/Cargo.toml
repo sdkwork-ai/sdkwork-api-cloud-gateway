@@ -218,6 +218,9 @@ sdkwork-web-core.workspace = true
 sdkwork-web-axum.workspace = true
 sdkwork-web-bootstrap = { workspace = true, features = ["redis"] }
 sdkwork-utils-rust = { workspace = true, features = ["redis"] }
+sqlx.workspace = true
+url.workspace = true
+sdkwork-database-config.workspace = true
 sdkwork-database-sqlx.workspace = true
 sdkwork-database-lifecycle.workspace = true
 sdkwork-database-spi.workspace = true

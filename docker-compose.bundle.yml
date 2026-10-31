@@ -78,7 +78,22 @@ x-gateway-common: &gateway-common
     SDKWORK_DATABASE_URL: ${SDKWORK_DATABASE_URL:-postgresql://${GATEWAY_POSTGRES_USER:-sdkwork_ai_dev}:${GATEWAY_POSTGRES_PASSWORD:-sdkworkdev123}@${GATEWAY_POSTGRES_HOST:-host.docker.internal}:${GATEWAY_POSTGRES_PORT:-5432}/${GATEWAY_POSTGRES_DB:-sdkwork_ai_dev}?sslmode=${GATEWAY_POSTGRES_SSL_MODE:-disable}&options=-c%20search_path%3D${GATEWAY_POSTGRES_SCHEMA:-sdkwork_ai_dev}}
     SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
     SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
-    SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-50}
+    # Installer-time workspace provisioning (entrypoint: --provision-databases).
+    # Admin credentials are required only when the role/database must be
+    # created or the role password must be converged on a fresh host. Leave
+    # them empty when the application role already owns the database.
+    SDKWORK_DATABASE_PROVISION: ${GATEWAY_DATABASE_PROVISION:-true}
+    SDKWORK_DATABASE_ADMIN_URL: ${GATEWAY_POSTGRES_ADMIN_URL:-}
+    SDKWORK_DATABASE_ADMIN_HOST: ${GATEWAY_POSTGRES_ADMIN_HOST:-}
+    SDKWORK_DATABASE_ADMIN_PORT: ${GATEWAY_POSTGRES_ADMIN_PORT:-}
+    SDKWORK_DATABASE_ADMIN_DATABASE: ${GATEWAY_POSTGRES_ADMIN_DATABASE:-postgres}
+    SDKWORK_DATABASE_ADMIN_USERNAME: ${GATEWAY_POSTGRES_ADMIN_USERNAME:-}
+    SDKWORK_DATABASE_ADMIN_PASSWORD: ${GATEWAY_POSTGRES_ADMIN_PASSWORD:-}
+    # A *_FILE value must exist INSIDE the container (mount it under
+    # /run/secrets/sdkwork/api-gateway) or use the inline password / admin URL.
+    SDKWORK_DATABASE_ADMIN_PASSWORD_FILE: ${GATEWAY_POSTGRES_ADMIN_PASSWORD_FILE:-}
+    SDKWORK_DATABASE_ADMIN_SSL_MODE: ${GATEWAY_POSTGRES_ADMIN_SSL_MODE:-}
+    SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-150}
     SDKWORK_DATABASE_MIN_CONNECTIONS: ${SDKWORK_DATABASE_MIN_CONNECTIONS:-5}
     SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${SDKWORK_DATABASE_ACQUIRE_TIMEOUT:-30}
     SDKWORK_DATABASE_IDLE_TIMEOUT: ${SDKWORK_DATABASE_IDLE_TIMEOUT:-600}
@@ -91,6 +106,17 @@ x-gateway-common: &gateway-common
     SDKWORK_DATABASE_SQLITE_URL: ${GATEWAY_DATABASE_SQLITE_URL:-sqlite:///var/lib/sdkwork/api-gateway/canvas-pages.db?mode=rwc}
     # IM principal directory (dynamic PostgreSQL directory in containers).
     SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
+    # Memory server runtime refuses to start without an explicit lifecycle
+    # environment; inherit the gateway environment for every deployment.
+    SDKWORK_MEMORY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
+    # Production-like Memory hardening (authorization, tenant isolation,
+    # rate limiting, idempotency, admission) requires a Redis URL.
+    SDKWORK_MEMORY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6379/2}
+    # Required (>=32 bytes) for test/staging/production Memory cursor signing.
+    SDKWORK_MEMORY_CURSOR_SIGNING_KEY: ${GATEWAY_MEMORY_CURSOR_SIGNING_KEY:-}
+    # Production-like Memory outbox delivery: http mode + approved HTTPS URL.
+    SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE:-disabled}
+    SDKWORK_MEMORY_OUTBOX_DELIVERY_URL: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_URL:-}
     SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
     SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
     # BirdCoder embedded app: fail-closed config requires all three explicitly.
@@ -104,6 +130,8 @@ x-gateway-common: &gateway-common
     # IM -> Knowledgebase RPC over the per-environment shared network: the
     # deps-project knowledgebase-rpc singleton resolves by service DNS name.
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
+    SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST: ${GATEWAY_KNOWLEDGEBASE_RPC_WAIT_HOST:-knowledgebase-rpc}
+    SDKWORK_KNOWLEDGEBASE_RPC_WAIT_PORT: "50054"
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
     SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.key
@@ -191,8 +219,10 @@ x-default-logging: &default-logging
     max-file: "3"
 services:
   # One knowledgebase-rpc singleton per environment (shared by all gateway
-  # instances over the per-environment network). Started and awaited before
-  # instance 1; it provisions the shared mTLS/secrets material.
+  # instances over the per-environment network). Started before instance 1; it
+  # provisions the shared mTLS/secrets material. On a fresh install its schema
+  # validation waits for the gateway bootstrap, so startup must not require it
+  # healthy before instance 1 (the gateway entrypoint waits for its port).
   knowledgebase-rpc:
     <<: *gateway-common
     profiles: [deps]

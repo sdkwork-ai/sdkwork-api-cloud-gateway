@@ -47,8 +47,9 @@ without side effects; production requires explicit `--yes`.
 - **Bundle integrity check**: when the local image is missing and must be loaded from the
   bundle's `image.tar.gz`, the sha256 sidecar is verified first (corrupted/tampered bundles
   are rejected); the target tag is also checked against the tag the bundle carries.
-- **Health gate**: rolling apply per instance (instance 1 migrates and turns healthy before
-  instances 2..N start), each instance probed on `/healthz` (180s budget).
+- **Health gate**: rolling apply per instance (instance 1 provisions the workspace database,
+  migrates, and turns healthy before instances 2..N start), each instance probed on `/healthz`
+  (180s budget).
 - **Release ledger**: append-only record of every release/rollback (who released what when,
   with what result); a failed upgrade auto-rolls back to the pre-change version and records
   `failed`.

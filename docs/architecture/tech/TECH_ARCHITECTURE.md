@@ -52,6 +52,11 @@ Intentionally **not** integrated at this stage:
 The host uses `sdkwork-database` only to create the process-shared pool. Each owner assembly manages
 its domain database lifecycle, service/repository/provider wiring, readiness, and retained runtime
 handles. The host owns no domain tables, migrations, or module database-host dependencies.
+It does own the workspace-level provisioning phase (`--provision-databases`: role, database,
+schema, extensions, grants) and the schema-only discovery phase (`--bootstrap-databases`) that
+precede owner-assembly migration on install/start for every environment. Splitting bootstrap from
+assembly lets the Knowledgebase RPC sidecar validate drive tables before IM/CloudRouter composition;
+both phases stay separate from module lifecycle per `DATABASE_FRAMEWORK_SPEC.md` §4.1/§4.4.
 
 ### 2.1 Building-Block Integration Point
 

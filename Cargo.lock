@@ -7107,6 +7107,7 @@ dependencies = [
  "sdkwork-api-voice-assembly",
  "sdkwork-api-webserver-assembly",
  "sdkwork-api-xiangqi-assembly",
+ "sdkwork-database-config",
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
@@ -7122,6 +7123,7 @@ dependencies = [
  "serde",
  "serde_json",
  "session-gateway",
+ "sqlx",
  "thiserror 2.0.20",
  "tokio",
  "tokio-tungstenite 0.29.0",
@@ -7130,6 +7132,7 @@ dependencies = [
  "tracing",
  "tracing-opentelemetry 0.32.1",
  "tracing-subscriber",
+ "url",
 ]
 
 [[package]]

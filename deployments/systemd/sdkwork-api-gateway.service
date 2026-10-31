@@ -28,7 +28,12 @@
 Description=SDKWork API Cloud Gateway
 After=network-online.target
 Wants=network-online.target
-Requires=sdkwork-knowledgebase-rpc.service
+# Cold migrations plus sidecar convergence can exceed the default start limit.
+StartLimitIntervalSec=0
+# Wants, not Requires: on a fresh host the sidecar may fail until the gateway
+# schema bootstrap creates the drive tables; the gateway must still start and
+# wait for the sidecar to restart healthy.
+Wants=sdkwork-knowledgebase-rpc.service
 After=sdkwork-knowledgebase-rpc.service
 
 [Service]
@@ -37,10 +42,23 @@ User=sdkwork
 Group=sdkwork
 EnvironmentFile=/etc/sdkwork/api-gateway/api-gateway.env
 WorkingDirectory=/opt/sdkwork/api-gateway
+# Workspace provisioning must run before module migration: a fresh database
+# needs its role, database, schema, grants, and extensions before any module
+# baseline executes (DATABASE_FRAMEWORK_SPEC §4.1/§4.4).
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --provision-databases
+# Schema-only phase: the Knowledgebase RPC sidecar validates drive tables and
+# must come up before owner assemblies can compose.
+ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --bootstrap-databases
+# The sidecar validates the drive schema created above and may still be
+# restarting; wait briefly before owner assembly migration.
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do if (exec 3<>/dev/tcp/127.0.0.1/50054) 2>/dev/null; then exit 0; fi; sleep 2; done; exit 0'
 ExecStartPre=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway --migrate-databases
 ExecStart=/opt/sdkwork/api-gateway/bin/sdkwork-api-cloud-gateway
 Restart=on-failure
 RestartSec=5
+# First install runs provisioning, schema bootstrap, and owner assembly; the
+# default 90s start timeout is too short for a cold foundation-suite database.
+TimeoutStartSec=900
 TimeoutStopSec=60
 KillSignal=SIGTERM
 

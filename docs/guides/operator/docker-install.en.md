@@ -235,9 +235,28 @@ bin/config.sh diff --environment production
 - The **only** `SDKWORK_*` keys the compose templates consume from the env
   file are the database pool tunables (`SDKWORK_DATABASE_AUTO_MIGRATE` /
   `MAX_CONNECTIONS` / `MIN_CONNECTIONS` / `ACQUIRE_TIMEOUT` / `IDLE_TIMEOUT`
-  / `MAX_LIFETIME` / `TEMPORARY_*`) plus the optional `SDKWORK_DATABASE_URL`
-  credential override. Do not put any other `SDKWORK_*` keys in the env file
-  (container env comes from the image ENV + the compose environment section).
+  / `MAX_LIFETIME` / `TEMPORARY_*`), the optional `SDKWORK_DATABASE_URL`
+  credential override, and the install-time provisioning switch/admin
+  connection (host-side `GATEWAY_DATABASE_PROVISION` /
+  `GATEWAY_POSTGRES_ADMIN_*` map to container-side
+  `SDKWORK_DATABASE_PROVISION` / `SDKWORK_DATABASE_ADMIN_*`). Do not put any
+  other `SDKWORK_*` keys in the env file (container env comes from the image
+  ENV + the compose environment section).
+- Install/start runs `--provision-databases` (role, database, schema,
+  extensions, grants), then `--bootstrap-databases` (module tables only), then
+  waits for the Knowledgebase RPC sidecar, then runs `--migrate-databases`
+  (owner assembly). A fresh host needs the admin connection; an existing
+  database can be converged by the application role. Set
+  `GATEWAY_DATABASE_PROVISION=false` to opt out when schema lifecycle is owned
+  out of band.
+- `test`/`staging`/`demo`/`production` also require
+  `GATEWAY_MEMORY_CURSOR_SIGNING_KEY` (>=32 bytes) and
+  `GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE=http` with a resolvable HTTPS
+  `GATEWAY_MEMORY_OUTBOX_DELIVERY_URL`; preflight reports every missing value.
+- The foundation suite defaults to `SDKWORK_DATABASE_MAX_CONNECTIONS=150`;
+  embedded PostgreSQL defaults to `PG_MAX_CONNECTIONS=400`. External PostgreSQL
+  must size for the process pool plus temporary-driver pools plus admin/operator
+  reserve, otherwise first assembly can fail with `pool timed out`.
 - When preflight fails it collects **all** gaps in one run and prints
   foolproof fix instructions (`--set` or edit the env file directly).
 

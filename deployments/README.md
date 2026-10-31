@@ -56,5 +56,8 @@ listener is skipped with a warning.
 Database per environment: development → `sdkwork_ai_dev`, test →
 `sdkwork_ai_test`, staging → `sdkwork_ai_staging`, production → `sdkwork_ai_prod`
 (same-named schema), injected via `SDKWORK_DATABASE_*`. Containers and systemd
-run the explicit `--migrate-databases` lifecycle command before service startup;
-runtime auto-migration remains disabled for production-like environments.
+run the explicit `--provision-databases` step (role/database/schema/grants/
+extensions), `--bootstrap-databases` (module tables only), and
+`--migrate-databases` (owner assembly) before service startup; the Knowledgebase
+RPC sidecar starts between bootstrap and migration. Runtime auto-migration
+remains disabled for production-like environments.

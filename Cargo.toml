@@ -117,6 +117,13 @@ opentelemetry_sdk = { version = "0.31", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.31", default-features = false, features = ["trace", "grpc-tonic"] }
 tracing-opentelemetry = "0.32"
 async-trait = "0.1"
+# Installer-time PostgreSQL provisioning (`--provision-databases`) connects to
+# the workspace's admin database. The runtime process pool stays owned by
+# sdkwork-database-sqlx; this direct dependency supplies only the single
+# admin connection used before migration. Version/features align with
+# sdkwork-database's `sqlx` declaration so the dependency graph unifies.
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "tls-rustls", "postgres"] }
+url = "2"
 
 sdkwork-api-cloud-gateway-config = { path = "crates/sdkwork-api-cloud-gateway-config" }
 sdkwork-api-cloud-gateway-observability = { path = "crates/sdkwork-api-cloud-gateway-observability" }
@@ -132,6 +139,7 @@ sdkwork-web-bootstrap = { path = "../sdkwork-web-framework/crates/sdkwork-web-bo
 sdkwork-iam-web-adapter = { path = "../sdkwork-iam/crates/sdkwork-iam-web-adapter" }
 sdkwork-iam-embedded-application-bootstrap = { path = "../sdkwork-iam/crates/sdkwork-iam-embedded-application-bootstrap" }
 sdkwork-utils-rust = { path = "../sdkwork-utils/packages/sdkwork-utils-rust" }
+sdkwork-database-config = { path = "../sdkwork-database/crates/sdkwork-database-config" }
 sdkwork-database-sqlx = { path = "../sdkwork-database/crates/sdkwork-database-sqlx" }
 sdkwork-database-lifecycle = { path = "../sdkwork-database/crates/sdkwork-database-lifecycle" }
 sdkwork-database-spi = { path = "../sdkwork-database/crates/sdkwork-database-spi" }

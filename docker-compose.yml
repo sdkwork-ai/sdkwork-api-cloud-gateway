@@ -37,7 +37,7 @@ services:
     command:
       - postgres
       - -c
-      - max_connections=${PG_MAX_CONNECTIONS:-200}
+      - max_connections=${PG_MAX_CONNECTIONS:-400}
       - -c
       - ssl=on
       - -c
@@ -187,10 +187,25 @@ services:
       # when sslmode=require against an internal CA.
       SDKWORK_API_CLOUD_GATEWAY_POSTGRES_CA_FILE: ${GATEWAY_POSTGRES_CA_FILE:-}
       SSL_CERT_FILE: ${GATEWAY_POSTGRES_SSL_CERT_FILE:-/etc/ssl/certs/ca-certificates.crt}
-      # Connection pool sizing: the foundation suite bootstraps 46 database
-      # modules through the process-shared pool at startup; keep the server
-      # max_connections comfortably above the pool ceiling.
-      SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-50}
+      # Installer-time workspace provisioning (entrypoint: --provision-databases).
+      # Admin credentials are required only when the role/database must be
+      # created or the role password must be converged on a fresh host.
+      SDKWORK_DATABASE_PROVISION: ${GATEWAY_DATABASE_PROVISION:-true}
+      SDKWORK_DATABASE_ADMIN_URL: ${GATEWAY_POSTGRES_ADMIN_URL:-}
+      SDKWORK_DATABASE_ADMIN_HOST: ${GATEWAY_POSTGRES_ADMIN_HOST:-}
+      SDKWORK_DATABASE_ADMIN_PORT: ${GATEWAY_POSTGRES_ADMIN_PORT:-}
+      SDKWORK_DATABASE_ADMIN_DATABASE: ${GATEWAY_POSTGRES_ADMIN_DATABASE:-postgres}
+      SDKWORK_DATABASE_ADMIN_USERNAME: ${GATEWAY_POSTGRES_ADMIN_USERNAME:-}
+      SDKWORK_DATABASE_ADMIN_PASSWORD: ${GATEWAY_POSTGRES_ADMIN_PASSWORD:-}
+      # A *_FILE value must exist INSIDE the container (mount it under
+      # /run/secrets/sdkwork/api-gateway) or use the inline password / admin URL.
+      SDKWORK_DATABASE_ADMIN_PASSWORD_FILE: ${GATEWAY_POSTGRES_ADMIN_PASSWORD_FILE:-}
+      SDKWORK_DATABASE_ADMIN_SSL_MODE: ${GATEWAY_POSTGRES_ADMIN_SSL_MODE:-}
+      # Connection pool sizing: the foundation suite bootstraps 55+ database
+      # roots and CloudRouter federated modules through the process-shared
+      # pool. A 150 process budget is the regression-tested minimum; keep
+      # PostgreSQL max_connections above the combined temporary-driver budget.
+      SDKWORK_DATABASE_MAX_CONNECTIONS: ${SDKWORK_DATABASE_MAX_CONNECTIONS:-150}
       SDKWORK_DATABASE_MIN_CONNECTIONS: ${SDKWORK_DATABASE_MIN_CONNECTIONS:-5}
       SDKWORK_DATABASE_ACQUIRE_TIMEOUT: ${SDKWORK_DATABASE_ACQUIRE_TIMEOUT:-30}
       SDKWORK_DATABASE_IDLE_TIMEOUT: ${SDKWORK_DATABASE_IDLE_TIMEOUT:-600}
@@ -208,6 +223,17 @@ services:
       # PostgreSQL directory. This admits IAM-authenticated principals on
       # first sight and persists the decision for audit.
       SDKWORK_IM_ENVIRONMENT: ${GATEWAY_IM_ENVIRONMENT:-development}
+      # Memory server runtime refuses to start without an explicit lifecycle
+      # environment; inherit the gateway environment for every deployment.
+      SDKWORK_MEMORY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
+      # Production-like Memory hardening (authorization, tenant isolation,
+      # rate limiting, idempotency, admission) requires a Redis URL.
+      SDKWORK_MEMORY_WEB_REDIS_URL: ${GATEWAY_WEB_REDIS_URL:-redis://host.docker.internal:6379/2}
+      # Required (>=32 bytes) for test/staging/production Memory cursor signing.
+      SDKWORK_MEMORY_CURSOR_SIGNING_KEY: ${GATEWAY_MEMORY_CURSOR_SIGNING_KEY:-}
+      # Production-like Memory outbox delivery: http mode + approved HTTPS URL.
+      SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_MODE:-disabled}
+      SDKWORK_MEMORY_OUTBOX_DELIVERY_URL: ${GATEWAY_MEMORY_OUTBOX_DELIVERY_URL:-}
       SDKWORK_IM_PRINCIPAL_DIRECTORY: ${GATEWAY_IM_PRINCIPAL_DIRECTORY:-postgres}
       SDKWORK_IM_ID_NODE_ID: ${GATEWAY_IM_ID_NODE_ID:-2}
       # BirdCoder embedded app: fail-closed config requires all three explicitly.
@@ -221,6 +247,8 @@ services:
       # IM -> Knowledgebase lifecycle uses the generated RPC SDK over the
       # single-node composition's persistent mTLS and signed caller context.
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_ENDPOINT: ${GATEWAY_KNOWLEDGEBASE_RPC_ENDPOINT:-https://knowledgebase-rpc:50054}
+      SDKWORK_KNOWLEDGEBASE_RPC_WAIT_HOST: ${GATEWAY_KNOWLEDGEBASE_RPC_WAIT_HOST:-knowledgebase-rpc}
+      SDKWORK_KNOWLEDGEBASE_RPC_WAIT_PORT: "50054"
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CA_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/ca.crt
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_CERT_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.crt
       SDKWORK_IM_KNOWLEDGEBASE_RPC_CLIENT_KEY_PATH: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/client.key
@@ -325,9 +353,12 @@ services:
       # and a real file mount here would collide with the entrypoint's merged
       # trust-bundle write target when SSL_CERT_FILE points at the same path.
       - ${GATEWAY_POSTGRES_CA_FILE_MOUNT:-/dev/null}:/run/sdkwork/api-gateway/postgres-ca-bundle.crt:ro
+    # Do not gate gateway startup on sidecar health: on a fresh install the
+    # sidecar needs the drive schema that the gateway entrypoint creates during
+    # --bootstrap-databases. The entrypoint waits for the RPC port after that.
     depends_on:
       knowledgebase-rpc:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     logging:
       driver: json-file
