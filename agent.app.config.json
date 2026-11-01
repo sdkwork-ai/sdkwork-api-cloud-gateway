@@ -187,16 +187,41 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.17",
+    "currentVersion": "0.1.18",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.17"
+      "BETA": "0.1.18"
     },
     "notes": [
       {
-        "version": "0.1.17",
+        "version": "0.1.18",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.18",
+        "summary": "Database surface discovery closure: the container image and host-native installer now declare an SDKWORK_<MODULE>_APP_ROOT discovery key for every packaged database surface (customerservice/deployments/gameengine/generations/appbase/webserver plus the surfaces that already had one), so embedded lifecycle discovery no longer skips surfaces whose owners opt into lifecycle.seedOnBoot. The dev harness derives the same roots from the workspace so source checkouts match the packaged install, with a contract test covering the derivation. This wave also advanced 26 sdkwork-space submodules (aiot, appbase, appstore, canvas, cloudrouter, comments, community, company, compute, documents, drive, forum, gameengine, iam, mail, mcp, membership, merchandise, missory, partner, payment, settings, skills, webserver, daxuedazi, birdcoder2) to current main. The container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
+        "highlights": [
+          "Dockerfile: declare SDKWORK_CUSTOMERSERVICE/DEPLOYMENTS/GAMEENGINE/GENERATIONS/APPBASE/WEBSERVER_APP_ROOT discovery keys next to the legacy aliases so every packaged database surface is discovered by the embedded lifecycle",
+          "bin/packaging/install-ubuntu.sh: host-native installs derive the same per-surface discovery roots from the packaged module tree instead of leaving seedOnBoot surfaces uninitialized",
+          "scripts/dev: the dev harness resolves SDKWORK_<MODULE>_APP_ROOT from every sibling workspace that ships database/database.manifest.json, with a unit test for the derivation",
+          "workspace sync: 26 submodules fast-forwarded to current main (0 diverged/blocked/failed); gateway merged origin/main database surface discovery fixes over its local 0.1.17 release commits",
+          "Cargo.lock validated for the platform-foundation-suite-container feature graph; cargo metadata --locked passes",
+          "release: agent.app.config.json/package.json/agent.workflow.json/.github workflow bumped to 0.1.18 with release notes",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.18 rebuilt on the bookworm toolchain and packaged into the install bundle; remote production upgraded in place with its live operator env preserved",
+          "verification: gateway/knowledgebase-rpc/postgres/redis containers healthy, /healthz and /readyz 200, public nginx api.sdkwork.com and api.birdcoder.com endpoints 200"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.17",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.17",
         "summary": "IAM persona surface refresh: sdkwork-iam main advanced to 181abe2 (extend persona routes, update app API OpenAPI/manifest and persona handlers, regenerate local and TypeScript SDK artifacts, align database contract and IAM generator tooling) and is the only submodule that moved in this wave — the other 104 registered submodules were already current. The gateway container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
         "highlights": [
