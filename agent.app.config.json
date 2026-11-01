@@ -187,16 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.16",
+    "currentVersion": "0.1.17",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.16"
+      "BETA": "0.1.17"
     },
     "notes": [
       {
-        "version": "0.1.16",
+        "version": "0.1.17",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.17",
+        "summary": "IAM persona surface refresh: sdkwork-iam main advanced to 181abe2 (extend persona routes, update app API OpenAPI/manifest and persona handlers, regenerate local and TypeScript SDK artifacts, align database contract and IAM generator tooling) and is the only submodule that moved in this wave — the other 104 registered submodules were already current. The gateway container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
+        "highlights": [
+          "workspace sync: 1 of 106 sub-projects advanced (sdkwork-iam 34d7c05a → 181abe2d); 104 up-to-date; the gateway sub-project stays ahead of upstream only by its local 0.1.16 release commit",
+          "sdkwork-iam: extend persona routes and app SDK artifacts; app API OpenAPI/manifest, persona handlers, database contract and IAM generator tooling aligned; new router tests cover the extended persona surface",
+          "Cargo.lock stays in sync with the container feature graph; cargo metadata --locked passes for the platform-foundation-suite-container features",
+          "release: agent.app.config.json/package.json/agent.workflow.json/.github workflow bumped to 0.1.17 with release notes",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.17 rebuilt on the bookworm toolchain and packaged into the install bundle; remote production upgraded in place with its live operator env preserved",
+          "verification: gateway/knowledgebase-rpc/postgres/redis containers healthy, /healthz and /readyz 200, public nginx api.sdkwork.com and api.birdcoder.com endpoints 200"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.16",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.16",
         "summary": "Workspace dependency wave: every registered sdkwork-space submodule was re-fetched and advanced to current main (99 fast-forwarded, 7 already current, 0 diverged/blocked/failed), with the two pre-existing dirty worktrees preserved untouched. The gateway meanwhile fast-forwarded three commits (host PostgreSQL profile consolidated to config/host/postgres.env, packaged database bootstrap cleanup, membership token-plan seed deployment-contract test). Cargo.lock stays locked-clean for the container feature graph; the 0.1.16 container image and install bundle were rebuilt with the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
         "highlights": [
