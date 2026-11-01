@@ -187,16 +187,40 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.15",
+    "currentVersion": "0.1.16",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.15"
+      "BETA": "0.1.16"
     },
     "notes": [
       {
-        "version": "0.1.15",
+        "version": "0.1.16",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.16",
+        "summary": "Workspace dependency wave: every registered sdkwork-space submodule was re-fetched and advanced to current main (99 fast-forwarded, 7 already current, 0 diverged/blocked/failed), with the two pre-existing dirty worktrees preserved untouched. The gateway meanwhile fast-forwarded three commits (host PostgreSQL profile consolidated to config/host/postgres.env, packaged database bootstrap cleanup, membership token-plan seed deployment-contract test). Cargo.lock stays locked-clean for the container feature graph; the 0.1.16 container image and install bundle were rebuilt with the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
+        "highlights": [
+          "workspace sync: 99 of 105 registered submodules fast-forwarded to current main, 7 already current, 0 diverged/blocked/failed; sdkwork-agents and sdkwork-birdcoder2 local modifications preserved untouched",
+          "sdkwork-api-cloud-gateway: fast-forwarded 396705a to 97f2c36 — host PostgreSQL profile moved to config/host/postgres.env, packaged database bootstrap cleanup, membership token-plan seed deployment-contract test",
+          "sdkwork-specs: advanced to c3b2a15 with the env-file naming gate, migrator, and two-segment template rule documentation",
+          "Cargo.lock stays in sync with the container feature graph; cargo metadata --locked passes",
+          "release: agent.app.config.json/package.json/agent.workflow.json/.github workflow bumped to 0.1.16 with release notes",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.16 rebuilt on the bookworm toolchain and packaged into the install bundle; remote production upgraded in place with its live operator env preserved",
+          "verification: gateway/knowledgebase-rpc/postgres/redis containers healthy, /healthz and /readyz 200, public nginx api.sdkwork.com and api.birdcoder.com endpoints 200"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.15",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.15",
         "summary": "Complete the workspace dependency wave: the generations pricing API landed on generations main, so cloudrouter main builds again and no coordinated pin is needed. All sdkwork-space submodules were re-fetched and synced (birdcoder2, customerservice, documents, drive, generations, knowledgebase, mcp, memory, models, search, skills, voice, iam, specs, daxuedazi and the webserver stream-plane merge); Cargo.lock was refreshed for the container feature graph and the 0.1.15 container image and install bundle were rebuilt and deployed to the remote production host with the embedded PostgreSQL/Redis stack and nginx 80/443 edge.",
         "highlights": [
