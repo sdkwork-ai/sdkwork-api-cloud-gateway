@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   describeCloudRouterCredentialKeyRingSource,
   resolveCloudRouterCredentialKeyRing,
+  resolveDatabaseSurfaceAppRootsEnv,
   resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
@@ -381,5 +382,40 @@ test('the reported key-ring source names the shared ring when it is used', () =>
       repoRoot: 'D:\\workspace\\sdkwork-api-cloud-gateway',
     }),
     /inline development fallback/u,
+  );
+});
+
+test('development surface roots derive from sibling database manifests', () => {
+  const roots = resolveDatabaseSurfaceAppRootsEnv({
+    repoRoot: path.join('D:\\workspace', 'sdkwork-api-cloud-gateway'),
+    readdir: () => [
+      { name: 'sdkwork-appstore', isDirectory: () => true },
+      { name: 'sdkwork-local-router', isDirectory: () => true },
+      { name: 'sdkwork-api-only', isDirectory: () => true },
+      { name: 'sdkwork-agentstudio', isDirectory: () => true },
+      { name: 'not-a-module', isDirectory: () => true },
+      { name: 'README.md', isDirectory: () => false },
+    ],
+    fileExists: (filePath) =>
+      filePath.includes('database.manifest.json') &&
+      !filePath.includes('sdkwork-api-only'),
+  });
+
+  assert.deepEqual(roots, {
+    SDKWORK_APPSTORE_APP_ROOT: path.join('D:\\workspace', 'sdkwork-appstore'),
+    SDKWORK_LOCAL_ROUTER_APP_ROOT: path.join('D:\\workspace', 'sdkwork-local-router'),
+    SDKWORK_AGENTSTUDIO_APP_ROOT: path.join('D:\\workspace', 'sdkwork-agentstudio'),
+  });
+});
+
+test('development surface roots stay empty when the workspace cannot be read', () => {
+  assert.deepEqual(
+    resolveDatabaseSurfaceAppRootsEnv({
+      repoRoot: path.join('D:\\workspace', 'sdkwork-api-cloud-gateway'),
+      readdir: () => {
+        throw new Error('unreadable workspace');
+      },
+    }),
+    {},
   );
 });
