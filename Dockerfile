@@ -127,7 +127,12 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_COMMUNITY_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-community \
     SDKWORK_COMPANY_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-company \
     SDKWORK_COURSE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-course \
+    # Discovery keys mirror surface_app_root_env_key (workspace name with the
+    # `sdkwork-` prefix stripped, uppercased, `-` -> `_`). Legacy aliases used by
+    # the owner assemblies' own bootstrap stay declared below them.
+    SDKWORK_CUSTOMERSERVICE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-customerservice \
     SDKWORK_CUSTOMER_SERVICE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-customerservice \
+    SDKWORK_DEPLOYMENTS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-deployments \
     SDKWORK_DEPLOY_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-deployments \
     SDKWORK_DEZHOU_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-dezhou \
     SDKWORK_DOCUMENTS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-documents \
@@ -135,7 +140,9 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_DRIVE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-drive \
     SDKWORK_FORUM_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-forum \
     SDKWORK_FEEDS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-feeds \
+    SDKWORK_GAMEENGINE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-gameengine \
     SDKWORK_GAMES_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-gameengine \
+    SDKWORK_GENERATIONS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-generations \
     SDKWORK_IAM_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-iam \
     SDKWORK_IM_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-im \
     SDKWORK_IMAGE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-image \
@@ -173,11 +180,14 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_VOICE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-voice \
     SDKWORK_XIANGQI_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-xiangqi \
     # appbase hosts (base/edu/med data) all resolve the same packaged module
-    # (mirrors sdkwork-cloudrouter's install plan).
+    # (mirrors sdkwork-cloudrouter's install plan). SDKWORK_APPBASE_APP_ROOT is
+    # the discovery key for the sdkwork-appbase component surface.
+    SDKWORK_APPBASE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-appbase \
     SDKWORK_BASE_DATA_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-appbase \
     SDKWORK_EDU_DATA_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-appbase \
     SDKWORK_MED_DATA_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-appbase \
     SDKWORK_PARTNER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-partner \
+    SDKWORK_WEBSERVER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-webserver \
     SDKWORK_WEB_STORE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-web-framework
 # Models catalog (sdkwork-models.json + models/ + overlays/) installed under
 # <install root>/data/sdkwork-models; the cloudrouter foundation module loads

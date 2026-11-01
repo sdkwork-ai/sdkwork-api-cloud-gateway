@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -284,6 +284,48 @@ export function describeCloudRouterCredentialKeyRingSource({
   return fileExists(sharedKeyRingPath)
     ? `shared CloudRouter development key ring (${sharedKeyRingPath})`
     : 'inline development fallback key ring (shared CloudRouter ring not found)';
+}
+
+/**
+ * Resolve `SDKWORK_<MODULE>_APP_ROOT` for every sibling database module in the
+ * workspace.
+ *
+ * `DATABASE_FRAMEWORK_SPEC.md` §4.4 makes discovery depend on these variables,
+ * and the container image declares them explicitly in its Dockerfile. A source
+ * checkout has no such declaration, so without this the development gateway
+ * discovers only the documents/models catalog fallbacks and never migrates or
+ * seeds the other embedded surfaces. The key derivation mirrors
+ * `surface_app_root_env_key` in `embedded_database_bootstrap.rs`: strip the
+ * `sdkwork-` prefix, uppercase it, and replace `-` with `_`.
+ *
+ * Only directories that actually ship `database/database.manifest.json` are
+ * declared; API-only siblings stay undiscovered, exactly like the packaged
+ * install.
+ */
+export function resolveDatabaseSurfaceAppRootsEnv({
+  repoRoot = defaultRepoRoot(),
+  workspaceRoot = path.dirname(repoRoot),
+  readdir = readdirSync,
+  fileExists = existsSync,
+} = {}) {
+  const roots = {};
+  let entries;
+  try {
+    entries = readdir(workspaceRoot, { withFileTypes: true });
+  } catch {
+    return roots;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith('sdkwork-')) continue;
+    const moduleRoot = path.join(workspaceRoot, entry.name);
+    if (!fileExists(path.join(moduleRoot, 'database', 'database.manifest.json'))) continue;
+    const key = `SDKWORK_${entry.name
+      .slice('sdkwork-'.length)
+      .toUpperCase()
+      .replaceAll('-', '_')}_APP_ROOT`;
+    roots[key] = moduleRoot;
+  }
+  return roots;
 }
 
 function defaultRepoRoot() {

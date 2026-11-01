@@ -21,6 +21,7 @@ import {
 } from './sdkwork-api-cloud-gateway-dev-cargo-env.mjs';
 import {
   describeCloudRouterCredentialKeyRingSource,
+  resolveDatabaseSurfaceAppRootsEnv,
   resolveEmbeddedCanvasSqliteUrl,
   resolveEmbeddedDatabaseEnv,
   resolveEmbeddedDependencyEnv,
@@ -77,6 +78,7 @@ async function main() {
     env: { ...sourceProfile.env, ...process.env },
     extraEnv: {
       SDKWORK_APP_ROOT: appRoot,
+      ...resolveDatabaseSurfaceAppRootsEnv({ repoRoot: appRoot }),
       SDKWORK_DEPLOYMENT_ENV: selected.environment,
       SDKWORK_DEPLOYMENT_PROFILE: selected.deploymentProfile,
       SDKWORK_RUNTIME_TARGET: 'server',
