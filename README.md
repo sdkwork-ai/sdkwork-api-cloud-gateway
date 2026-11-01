@@ -71,7 +71,7 @@ base URLs, a proxy fallback, a parallel catalog, or dependency-owned handlers to
 
 `pnpm dev` selects `standalone.development` from `etc/sdkwork.deployment.config.json`. That source
 profile selects `etc/sdkwork-api-cloud-gateway.development.toml` and the unified PostgreSQL
-development profile from ignored `.env.postgres`. Runtime configuration follows SDKWork precedence:
+development profile from ignored `config/host/postgres.env`. Runtime configuration follows SDKWork precedence:
 selected source profile, protected operator config/secrets, process environment, then explicit CLI
 overrides. The binary accepts `--config` and `SDKWORK_API_CLOUD_GATEWAY_CONFIG_FILE`; the retired
 `SDKWORK_API_CLOUD_GATEWAY_CONFIG` key remains a read-only compatibility fallback.

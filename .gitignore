@@ -27,7 +27,8 @@ node_modules/
 **/.runtime/
 **/target/
 !.env.*.example
-!.env.postgres.example
+config/host/postgres.env
+!config/host/postgres.env.example
 **/dist/
 coverage/
 .DS_Store

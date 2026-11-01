@@ -33,8 +33,8 @@ profile.
 ## Local Overrides And Secrets
 
 The tracked profiles contain no passwords, tokens, private keys, or developer-specific paths.
-Local PostgreSQL credentials come from ignored `.env.postgres`, bootstrapped from
-`.env.postgres.example` when missing. Files matching `etc/**/*.local.*` and `etc/secrets/` are
+Local PostgreSQL credentials come from ignored `config/host/postgres.env`, bootstrapped from
+`config/host/postgres.env.example` when missing. Files matching `etc/**/*.local.*` and `etc/secrets/` are
 private and must remain untracked. Production secrets are injected by the deployment platform or
 referenced protected secret files.
 

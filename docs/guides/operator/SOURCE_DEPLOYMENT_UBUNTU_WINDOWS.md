@@ -613,7 +613,7 @@ Ubuntu 使用 `sudo ss -ltnp | grep :3900`，Windows 使用
 本地开发使用仓库自带 PostgreSQL 初始化和环境展开逻辑。复制忽略的开发配置：
 
 ```text
-.env.postgres.example -> .env.postgres
+config/host/postgres.env.example -> config/host/postgres.env
 ```
 
 替换所有 `<CHANGE_ME>` 后，在仓库根运行：
