@@ -784,3 +784,23 @@ test('deployment environment registry is the single source of truth for packagin
     'the unified bundle packager must import the shared environment registry',
   );
 });
+
+test('membership token plan catalog is a startup seed in every environment', () => {
+  const membershipRoot = path.join(appRoot, '..', 'sdkwork-membership');
+  const manifestPath = path.join(membershipRoot, 'database', 'database.manifest.json');
+  const seedPath = path.join(membershipRoot, 'database', 'seeds', 'common', '001_catalog.sql');
+  assert.ok(existsSync(manifestPath), `missing membership database manifest: ${manifestPath}`);
+  assert.ok(existsSync(seedPath), `missing membership token-plan seed: ${seedPath}`);
+
+  const manifest = readFileSync(manifestPath, 'utf8');
+  assert.match(
+    manifest,
+    /"seedOnBoot"\s*:\s*true/u,
+    'membership token plans must seed on startup in release and every other environment',
+  );
+
+  const seed = readFileSync(seedPath, 'utf8');
+  for (const planId of ['plan-free', 'plan-basic', 'plan-standard', 'plan-premium', 'plan-super']) {
+    assert.match(seed, new RegExp(`'${planId}'`, 'u'), `missing token plan ${planId}`);
+  }
+});

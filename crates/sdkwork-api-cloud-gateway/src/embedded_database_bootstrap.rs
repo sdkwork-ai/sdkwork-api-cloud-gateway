@@ -210,7 +210,8 @@ struct PackagedDatabaseModule {
 
 /// Lists the packaged database application roots (`<root>/database/database.manifest.json`).
 fn packaged_database_app_roots() -> Result<Vec<PathBuf>, GatewayRuntimeError> {
-    let Some(root) = std::env::var_os("SDKWORK_DATABASE_MODULES_ROOT").filter(|value| !value.is_empty())
+    let Some(root) =
+        std::env::var_os("SDKWORK_DATABASE_MODULES_ROOT").filter(|value| !value.is_empty())
     else {
         return Ok(Vec::new());
     };
@@ -238,7 +239,11 @@ fn packaged_database_app_roots() -> Result<Vec<PathBuf>, GatewayRuntimeError> {
             message: format!("cannot read entry under {}: {error}", root.display()),
         })?;
         let path = entry.path();
-        if path.join("database").join("database.manifest.json").is_file() {
+        if path
+            .join("database")
+            .join("database.manifest.json")
+            .is_file()
+        {
             app_roots.push(path);
         }
     }
@@ -292,8 +297,13 @@ async fn provision_packaged_database_modules(
             .to_owned();
         let module = DefaultDatabaseModule::from_app_root(&app_root)
             .map_err(|error| packaged_module_error(&workspace, "(packaged)", error.to_string()))?;
-        let manifest = DatabaseManifest::from_file(module.manifest_path())
-            .map_err(|error| packaged_module_error(&workspace, &module.descriptor().module_id, error.to_string()))?;
+        let manifest = DatabaseManifest::from_file(module.manifest_path()).map_err(|error| {
+            packaged_module_error(
+                &workspace,
+                &module.descriptor().module_id,
+                error.to_string(),
+            )
+        })?;
         modules.push(PackagedDatabaseModule {
             app_root,
             workspace,
@@ -349,10 +359,7 @@ async fn provision_packaged_database_modules(
             }
             submodule_modules.push((label, Arc::new(submodule)));
         }
-        root_modules.push((
-            packaged.workspace.clone(),
-            packaged.module.clone(),
-        ));
+        root_modules.push((packaged.workspace.clone(), packaged.module.clone()));
     }
 
     // Dependency ordering across packaged modules is not guaranteed by the
@@ -409,9 +416,8 @@ async fn init_packaged_module(
     module: Arc<dyn sdkwork_database_spi::DatabaseModule>,
     pool: &DatabasePool,
 ) -> Result<(), GatewayRuntimeError> {
-    let manifest = DatabaseManifest::from_file(module.manifest_path()).map_err(|error| {
-        packaged_module_error(label, "(packaged)", error.to_string())
-    })?;
+    let manifest = DatabaseManifest::from_file(module.manifest_path())
+        .map_err(|error| packaged_module_error(label, "(packaged)", error.to_string()))?;
     let descriptor = module.descriptor();
     let _options = lifecycle_options_from_env(&descriptor.service_code, &manifest);
     LifecycleOrchestrator::new(pool.clone(), module)
@@ -419,7 +425,11 @@ async fn init_packaged_module(
         .init()
         .await
         .map_err(|error| {
-            packaged_module_error(label, &descriptor.module_id, format!("init failed: {error}"))
+            packaged_module_error(
+                label,
+                &descriptor.module_id,
+                format!("init failed: {error}"),
+            )
         })
 }
 
@@ -429,18 +439,25 @@ async fn migrate_packaged_module(
     module: Arc<dyn sdkwork_database_spi::DatabaseModule>,
     pool: &DatabasePool,
 ) -> Result<(), GatewayRuntimeError> {
-    let manifest = DatabaseManifest::from_file(module.manifest_path()).map_err(|error| {
-        packaged_module_error(label, "(packaged)", error.to_string())
-    })?;
+    let manifest = DatabaseManifest::from_file(module.manifest_path())
+        .map_err(|error| packaged_module_error(label, "(packaged)", error.to_string()))?;
     let descriptor = module.descriptor();
     let _options = lifecycle_options_from_env(&descriptor.service_code, &manifest);
     let orchestrator = LifecycleOrchestrator::new(pool.clone(), module)
         .with_applied_by(DATABASE_BOOTSTRAP_APPLIED_BY);
     orchestrator.init().await.map_err(|error| {
-        packaged_module_error(label, &descriptor.module_id, format!("init failed: {error}"))
+        packaged_module_error(
+            label,
+            &descriptor.module_id,
+            format!("init failed: {error}"),
+        )
     })?;
     orchestrator.migrate().await.map_err(|error| {
-        packaged_module_error(label, &descriptor.module_id, format!("migrate failed: {error}"))
+        packaged_module_error(
+            label,
+            &descriptor.module_id,
+            format!("migrate failed: {error}"),
+        )
     })?;
     Ok(())
 }

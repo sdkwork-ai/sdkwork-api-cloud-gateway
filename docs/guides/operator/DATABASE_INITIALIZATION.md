@@ -64,6 +64,19 @@ pnpm db:postgres:provision   # 宿主 PostgreSQL 角色/库/schema 供给（WSL 
 | Owner 装配 | `--migrate-databases` | 再次幂等 discovery，然后装配 IM/CloudRouter 等 owner router 并校验完整性 | 是（零新增迁移） |
 | 服务启动 | 网关服务进程 | 连接并校验已迁移 schema，不在生产运行时改变 schema | 是 |
 
+### Seed 初始化
+
+- 模块 manifest 的 `lifecycle.seedOnBoot=true` 表示该模块的 seed 属于启动必需数据；
+  discovery bootstrap 在迁移后执行 `seed.locale/profile`，结果记录在
+  `ops_seed_history`，按内容 checksum 幂等，重复启动不会重复写入。
+- `membership` 的 token plan 商业目录属于启动必需 seed：`database/seeds/common/001_catalog.sql`
+  会在所有环境初始化 5 个 token plan、16 个 package、4 个 package group 及 plan benefits，
+  并应用 `zh-CN` locale 文本。release 环境缺失这些数据会导致订阅页为空。
+- `seedOnBoot=false` 的模块是显式 opt-in 数据（示例/运营数据），不由启动自动写入；
+  需要时通过该模块的 seed profile 显式执行，避免把 demo 数据带进生产。
+- 不要在 release 环境把 `SDKWORK_DATABASE_SEED_ON_BOOT` 覆盖为 `false`；该环境变量
+  会覆盖 manifest，导致 membership token plan 等启动必需 seed 被跳过。已有 release
+  库只要 seed history 缺失，下一次启动会按 checksum 补写，不会重复已写入的脚本。
 - **安装器编排**：容器 entrypoint 与 systemd `ExecStartPre` 自动执行
   provision → bootstrap → migrate；服务运行时使用
   `SDKWORK_DATABASE_AUTO_MIGRATE=false`。Knowledgebase RPC sidecar 在 bootstrap
