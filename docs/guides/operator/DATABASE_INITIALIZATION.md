@@ -72,6 +72,10 @@ pnpm db:postgres:provision   # 宿主 PostgreSQL 角色/库/schema 供给（WSL 
 - `membership` 的 token plan 商业目录属于启动必需 seed：`database/seeds/common/001_catalog.sql`
   会在所有环境初始化 5 个 token plan、16 个 package、4 个 package group 及 plan benefits，
   并应用 `zh-CN` locale 文本。release 环境缺失这些数据会导致订阅页为空。
+- `appstore` 的 storefront 目录同样属于启动必需 seed（`lifecycle.seedOnBoot=true`）：
+  `database/seeds/seed.manifest.json` 的 `standard` profile 会在所有环境写入分类、
+  应用、上架、版本、模板、专题、平台字典及其 `zh-CN` 文本。缺失时应用商店首页、
+  分类与搜索列表全部为空，即使其它模块数据正常。
 - `seedOnBoot=false` 的模块是显式 opt-in 数据（示例/运营数据），不由启动自动写入；
   需要时通过该模块的 seed profile 显式执行，避免把 demo 数据带进生产。
 - 不要在 release 环境把 `SDKWORK_DATABASE_SEED_ON_BOOT` 覆盖为 `false`；该环境变量
@@ -81,6 +85,15 @@ pnpm db:postgres:provision   # 宿主 PostgreSQL 角色/库/schema 供给（WSL 
   provision → bootstrap → migrate；服务运行时使用
   `SDKWORK_DATABASE_AUTO_MIGRATE=false`。Knowledgebase RPC sidecar 在 bootstrap
   之后启动；容器重启策略会吸收首次启动时的短暂等待。
+- **host-native 安装的 surface 发现**：容器镜像在 Dockerfile 中显式声明
+  `SDKWORK_<MODULE>_APP_ROOT`；host-native 安装器（`bin/packaging/install-ubuntu.sh`）
+  会为 `database-modules/` 下每个已打包模块生成同名 `SDKWORK_<MODULE>_APP_ROOT`
+  写入 `/etc/sdkwork/api-gateway/api-gateway.env`。缺少这些键时 discovery 不会选中
+  任何 surface，`seedOnBoot=true` 的模块（appstore/iam/course/documents/membership…）
+  在直装环境不会灌入启动必需 seed。已存在的安装可在
+  `/etc/sdkwork/api-gateway/api-gateway.env` 追加对应的
+  `SDKWORK_<MODULE>_APP_ROOT=/opt/sdkwork/api-gateway/database-modules/<module>`
+  后重启服务；新安装由安装器自动生成。
 - **多实例**：实例 1 拥有 provision + migrate；实例 2..N 以
   `SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START=false` 启动，避免并发 DDL。
 - **开发直跑**：development/test TOML 可保留 `autoMigrate=true` 以便本地单进程开发；

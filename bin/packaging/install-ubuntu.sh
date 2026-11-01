@@ -402,6 +402,22 @@ if [ ! -e "$env_target" ]; then
     echo "SDKWORK_DATABASE_CONFIG_DIR=${database_config_dir:-/etc/sdkwork/database}"
     echo "SDKWORK_MODELS_APP_ROOT=/opt/sdkwork/api-gateway/database-modules/sdkwork-models"
     echo "SDKWORK_MODELS_CATALOG_ROOT=/opt/sdkwork/api-gateway/data/sdkwork-models"
+    # Per-surface discovery roots (DATABASE_FRAMEWORK_SPEC §4.4): the embedded
+    # lifecycle resolves each enabled dependency surface through
+    # SDKWORK_<MODULE>_APP_ROOT, and the container image declares those roots
+    # explicitly in its Dockerfile. A host-native install must declare the same
+    # inputs from its packaged module tree; otherwise database discovery skips
+    # every surface and modules that opt into lifecycle.seedOnBoot (appstore
+    # catalog, iam, course, documents, ...) never receive initialization data.
+    # The key derivation mirrors surface_app_root_env_key in
+    # crates/sdkwork-api-cloud-gateway/src/embedded_database_bootstrap.rs:
+    # strip the `sdkwork-` prefix, uppercase, and replace `-` with `_`.
+    for module_dir in /opt/sdkwork/api-gateway/database-modules/*; do
+      [ -d "$module_dir" ] || continue
+      module_name=${module_dir##*/}
+      module_env_key=$(printf '%s' "${module_name#sdkwork-}" | tr '[:lower:]-' '[:upper:]_')
+      echo "SDKWORK_${module_env_key}_APP_ROOT=$module_dir"
+    done
     echo "SDKWORK_DATABASE_SCHEMA_FALLBACK_PUBLIC=false"
     echo "SDKWORK_DATABASE_PROVISION=true"
     echo "SDKWORK_DATABASE_MAX_CONNECTIONS=150"
