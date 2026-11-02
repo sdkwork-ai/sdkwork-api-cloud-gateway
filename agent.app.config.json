@@ -187,16 +187,41 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.18",
+    "currentVersion": "0.1.19",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.18"
+      "BETA": "0.1.19"
     },
     "notes": [
       {
-        "version": "0.1.18",
+        "version": "0.1.19",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.19",
+        "summary": "Workspace dependency wave: every registered sdkwork-space submodule was re-fetched and advanced to current main (85 of 104 moved: 84 fast-forwarded plus one diverged merge, 17 already current, 2 pre-existing dirty worktrees preserved, 0 blocked/failed). The two largest advances are sdkwork-mall (+104 commits: bilingual i18n catalogues across mall-pc/mall-flutter/mall-mini-program, per-environment identity and API-host fixes, lazy drive uploader) and sdkwork-iam (+47 commits: admin account-binding policy editor across PC/H5/Flutter/mini-program, RP registration, mini-program console tier, Flutter admin catalogs and the machine-checkable IAM parity blockers record), with sdkwork-cloudrouter, sdkwork-knowledgebase (local lockfile-resync commit merged forward), sdkwork-specs and 79 other modules following. The gateway also merged origin/main's CI workflow refresh (deployment_profile/runtime_target package inputs, required package_version, Verify workflow). Cargo.lock stays locked-clean for both the default and platform-foundation-suite-container feature graphs; the 0.1.19 container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
+        "highlights": [
+          "workspace sync: 85 of 104 submodules advanced to current main (84 fast-forwarded, 1 diverged merge for sdkwork-knowledgebase, 17 already current, 2 pre-existing dirty worktrees preserved, 0 blocked/failed)",
+          "sdkwork-mall: +104 commits — bilingual i18n catalogue migration across mall-pc/mall-flutter/mall-mini-program, environment identity and API-host resolution fixes, browser runtime-env boot and lazy drive-uploader performance",
+          "sdkwork-iam: +47 commits — admin account-binding policy editor reaching PC/H5/Flutter/mini-program parity, RP registration, mini-program console tenant workspace, Flutter admin tenant/org/role/policy catalogs, and the machine-checkable platform-blockers record",
+          "sdkwork-cloudrouter: +3 commits; sdkwork-knowledgebase: local Cargo.lock resync merged with note-autosave/knowledge-space feature work (+5 commits on both sides)",
+          "gateway CI: merged origin/main workflow refresh — package.yml gains deployment_profile/runtime_target inputs and a required package_version, adds the Verify entrypoint workflow, and keeps deployment opt-in only",
+          "Cargo.lock: locked-clean for the default and platform-foundation-suite-container feature graphs (cargo metadata --locked passes; 1522 packages)",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.19 rebuilt on the bookworm toolchain and packaged into the install bundle; remote production upgraded in place with its live operator env preserved",
+          "verification: gateway/knowledgebase-rpc/postgres/redis containers healthy, /healthz and /readyz 200, public nginx api.sdkwork.com and api.birdcoder.com endpoints 200"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.18",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.18",
         "summary": "Database surface discovery closure: the container image and host-native installer now declare an SDKWORK_<MODULE>_APP_ROOT discovery key for every packaged database surface (customerservice/deployments/gameengine/generations/appbase/webserver plus the surfaces that already had one), so embedded lifecycle discovery no longer skips surfaces whose owners opt into lifecycle.seedOnBoot. The dev harness derives the same roots from the workspace so source checkouts match the packaged install, with a contract test covering the derivation. This wave also advanced 26 sdkwork-space submodules (aiot, appbase, appstore, canvas, cloudrouter, comments, community, company, compute, documents, drive, forum, gameengine, iam, mail, mcp, membership, merchandise, missory, partner, payment, settings, skills, webserver, daxuedazi, birdcoder2) to current main. The container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
         "highlights": [
