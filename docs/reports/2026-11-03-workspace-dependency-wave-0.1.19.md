@@ -72,6 +72,10 @@ and taking the refreshed reusable-workflow contract.
 - Static workspace gates: 18/18 pass after the fixes (standards, topology, workflow
   validation, API closure/operation patterns/response envelope, CORS carriers,
   process-shared pool, script tests 102/102, IAM/database bootstrap standards).
+- Cargo feature graphs: `--all-features` and `platform-foundation-suite` both
+  `cargo check` clean inside the bookworm toolchain container; `foundation-community`
+  clean on the host; `cargo fmt -- --check` clean. (The host lacks `libssl-dev`, so
+  the two OpenSSL-carrying graphs are only meaningful in the container.)
 
 ## 3. Image and bundle build
 
