@@ -13,11 +13,11 @@ on:
       tag:
         description: Release tag or source ref to package.
         required: true
-        default: v0.1.18
+        default: v0.1.19
       package_version:
         description: Package version used in artifact names and manifests.
         required: true
-        default: 0.1.18
+        default: 0.1.19
       deployment_profile:
         description: Deployment profile filter.
         required: true
@@ -123,7 +123,7 @@ permissions:
 
 jobs:
   package:
-    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@2a003154f4e227a057a9c26d720375f7c340311f
+    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@7dd29e0bb3dd59144c2be7260ef782ab82691d45
     with:
       config_path: agent.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
@@ -144,7 +144,7 @@ jobs:
       # environments exist.
       deploy: ${{ github.event.inputs.deploy == 'true' }}
       retention_days: 30
-      framework_ref: 2a003154f4e227a057a9c26d720375f7c340311f
+      framework_ref: 7dd29e0bb3dd59144c2be7260ef782ab82691d45
       dependency_refs_json: >-
         {
           "SDKWORK_APPBASE_REF": "${{ vars.SDKWORK_APPBASE_REF }}",
