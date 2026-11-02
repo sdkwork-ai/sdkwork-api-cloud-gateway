@@ -238,7 +238,13 @@ test('container entrypoint does not bootstrap sdkwork-webserver secrets', () => 
   const envExample = readFileSync(path.join(appRoot, 'docker', '.env.example'), 'utf8');
   assert.doesNotMatch(gatewayEntrypoint, /load_webserver_secret/u);
   assert.doesNotMatch(gatewayEntrypoint, /SDKWORK_WEBSERVER_/u);
-  assert.doesNotMatch(dockerfile, /SDKWORK_WEBSERVER_/u);
+  // The 0.1.18 lifecycle-discovery wave deliberately exports
+  // SDKWORK_WEBSERVER_APP_ROOT (the packaged module discovery key) so the
+  // gateway can resolve the sdkwork-webserver component root. That is a module
+  // root, not secret bootstrap input, so it is the one exempt variable; every
+  // other SDKWORK_WEBSERVER_* variable would provision webserver credentials or
+  // secrets into this image and stays forbidden.
+  assert.doesNotMatch(dockerfile, /SDKWORK_WEBSERVER_(?!APP_ROOT\b)/u);
   assert.doesNotMatch(envExample, /^GATEWAY_WEBSERVER_/mu);
 });
 

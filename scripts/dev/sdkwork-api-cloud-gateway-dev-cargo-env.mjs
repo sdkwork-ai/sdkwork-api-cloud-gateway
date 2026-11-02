@@ -95,8 +95,13 @@ export function resolveDevelopmentOpusEnv({
   if (configured) {
     return { env: {}, libraryDirectory: configured };
   }
-  const libraryDirectory = path.join(appRoot, 'target', 'prebuilt-opus', 'lib');
-  if (!fileExists(path.join(libraryDirectory, 'libopus.a'))) {
+  // Build the Windows probe with the Windows path grammar so a simulated
+  // win32 development host (or a Windows-style appRoot) yields the exact
+  // backslash layout the linker receives, even when the runner executing this
+  // resolver is not Windows itself.
+  const p = platform === 'win32' ? path.win32 : path.posix;
+  const libraryDirectory = p.join(appRoot, 'target', 'prebuilt-opus', 'lib');
+  if (!fileExists(p.join(libraryDirectory, 'libopus.a'))) {
     return { env: {}, libraryDirectory: undefined };
   }
   return {

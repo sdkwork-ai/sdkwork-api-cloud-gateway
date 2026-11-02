@@ -24,10 +24,17 @@ const embeddedAppbaseBuilderSource = runtimeSource.slice(
 const gatewayCargo = read('crates/sdkwork-api-cloud-gateway/Cargo.toml');
 
 // 1) IAM schema lifecycle must stay behind its owner API assembly.
+//    The gateway mounts IAM through the canonical WebModule factory
+//    `sdkwork_api_iam_assembly::web_module_with_pool(pool.clone())`, whose
+//    implementation in sdkwork-iam
+//    (crates/sdkwork-api-iam-assembly/src/bootstrap.rs) delegates to
+//    `assemble_owner_api_surfaces_with_pool(pool)`. Accept either the direct
+//    owner-assembly call or that documented factory, but keep requiring the
+//    shared process pool so a second pool cannot slip in.
 assert.match(
   dependencyRoutesSource,
-  /sdkwork_api_iam_assembly::assemble_owner_api_surfaces_with_pool\(pool\.clone\(\)\)/u,
-  'API cloud gateway must initialize IAM through the canonical owner assembly.',
+  /sdkwork_api_iam_assembly::(?:assemble_owner_api_surfaces_with_pool|web_module_with_pool)\(pool\.clone\(\)\)/u,
+  'API cloud gateway must initialize IAM through the canonical owner assembly with the shared pool.',
 );
 assert.doesNotMatch(
   databaseBootstrapSource,
