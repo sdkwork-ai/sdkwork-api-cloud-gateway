@@ -5,25 +5,50 @@ on:
     tags:
       - v*
       - '*.*.*'
-  # `release.published` is intentionally absent: this workflow publishes its own
-  # aggregate release at the end of a tag run, and a release event would start a
-  # second full matrix for that same tag (the v0.1.12 tag produced both a push
-  # run and a release run). Manual releases are packaged by pushing a tag or by
-  # dispatching this workflow.
+  release:
+    types:
+      - published
   workflow_dispatch:
-    # GitHub accepts at most 25 workflow_dispatch inputs, so dependency refs are
-    # declared as fixed refs in agent.workflow.json (GITHUB_WORKFLOW_SPEC:
-    # "Dependency refs may come from a fixed ref or from a declared refInput").
-    # Every runtime dependency therefore tracks its repository's main branch.
     inputs:
       tag:
         description: Release tag or source ref to package.
         required: true
         default: v0.1.18
       package_version:
-        description: Package version used in artifact names and manifests; empty derives it from the tag.
-        required: false
-        default: ''
+        description: Package version used in artifact names and manifests.
+        required: true
+        default: 0.1.18
+      deployment_profile:
+        description: Deployment profile filter.
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - standalone
+          - cloud
+      runtime_target:
+        description: Runtime target filter.
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - browser
+          - desktop
+          - tablet-ipados
+          - tablet-android
+          - capacitor-ios
+          - capacitor-android
+          - flutter-ios
+          - flutter-android
+          - android-native
+          - ios-native
+          - harmony-native
+          - mini-program
+          - server
+          - container
+          - test-runner
       platform:
         description: Platform filter.
         required: true
@@ -40,7 +65,11 @@ on:
           - ipados
           - windows-tablet
           - web
+          - h5
+          - h5-weixin
+          - harmony
           - container
+          - mp-weixin
       architecture:
         description: Architecture filter.
         required: true
@@ -55,26 +84,32 @@ on:
           - wasm32
           - noarch
       profile:
-        description: Runtime profile filter.
+        description: Package profile filter.
         required: true
         default: all
         type: choice
         options:
           - all
+          - browser
           - server
-          - container
           - desktop
           - mobile
           - tablet
-          - web
+          - mini-program
+          - container
           - worker
           - library
+          - test
+      variant:
+        description: Package variant filter.
+        required: true
+        default: all
       format:
         description: Package format filter.
         required: true
         default: all
       deploy:
-        description: Run configured deployment environments after packaging (no deployments[] are declared; see agent.workflow.json).
+        description: Run configured deployment environments after packaging.
         required: true
         default: false
         type: boolean
@@ -88,19 +123,34 @@ permissions:
 
 jobs:
   package:
-    name: Package
     uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@2a003154f4e227a057a9c26d720375f7c340311f
     with:
       config_path: agent.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
       package_version: ${{ github.event.inputs.package_version || '' }}
+      deployment_profile: ${{ github.event.inputs.deployment_profile || 'all' }}
+      runtime_target: ${{ github.event.inputs.runtime_target || 'all' }}
       platform: ${{ github.event.inputs.platform || 'all' }}
       architecture: ${{ github.event.inputs.architecture || 'all' }}
       profile: ${{ github.event.inputs.profile || 'all' }}
+      variant: ${{ github.event.inputs.variant || 'all' }}
       format: ${{ github.event.inputs.format || 'all' }}
       publish_release: true
       upload_artifact: true
+      # Deployment is opt-in only. `agent.workflow.json` declares no
+      # deployment environments, so a release-triggered `deploy: true` would
+      # abort the whole package matrix at plan time ("Deployment was requested
+      # but no deployment matched"). Flip this back only after deployment
+      # environments exist.
       deploy: ${{ github.event.inputs.deploy == 'true' }}
       retention_days: 30
       framework_ref: 2a003154f4e227a057a9c26d720375f7c340311f
+      dependency_refs_json: >-
+        {
+          "SDKWORK_APPBASE_REF": "${{ vars.SDKWORK_APPBASE_REF }}",
+          "SDKWORK_CORE_REF": "${{ vars.SDKWORK_CORE_REF }}",
+          "SDKWORK_UI_REF": "${{ vars.SDKWORK_UI_REF }}",
+          "SDKWORK_IM_SDK_REF": "${{ vars.SDKWORK_IM_SDK_REF }}",
+          "SDKWORK_SDK_GENERATOR_REF": "${{ vars.SDKWORK_SDK_GENERATOR_REF }}"
+        }
     secrets: inherit
