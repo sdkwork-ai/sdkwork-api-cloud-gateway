@@ -667,6 +667,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/partner_center",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/partner_join",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-app-api",
@@ -2297,6 +2304,7 @@
         "/app/v3/api/iam/invites",
         "/app/v3/api/iam/users/settings",
         "/app/v3/api/notification",
+        "/app/v3/api/partner_center",
         "/app/v3/api/partner_join",
         "/app/v3/api/runtime",
         "/app/v3/api/system/site"

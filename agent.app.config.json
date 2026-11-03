@@ -187,16 +187,43 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.19",
+    "currentVersion": "0.1.22",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.19"
+      "BETA": "0.1.22"
     },
     "notes": [
       {
-        "version": "0.1.19",
+        "version": "0.1.22",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.22",
+        "summary": "Workspace dependency wave: all 106 discovered sdkwork-space sub-projects were re-fetched and advanced to current main (41 advanced — 40 registered submodules plus the unregistered sdkwork-birdcoder — 63 already current, one diverged repository merged forward cleanly, 0 blocked/failed, 143 commits advanced in total, 3 pre-existing dirty worktrees preserved). Largest advances: sdkwork-deployments +16, sdkwork-appstore +13, sdkwork-iam +10, sdkwork-specs +10, sdkwork-agents +9, sdkwork-birdcoder2 +8, sdkwork-course +8, sdkwork-whatseek +6, sdkwork-mall +5, sdkwork-order +5. sdkwork-knowledgebase kept its local Cargo.lock resync commit and merged upstream's TLS trust bootstrap work forward (merge 8bf44bc, no conflicts). Three integration repairs ride with this wave: the live production ops_schema_migration_history checksums for sdkwork-payment migrations 0002/0003 were reconciled after their comment-only rollback-metadata alignment (drift gate would otherwise fail closed on the already-migrated schema); Cloud Router now gates its legacy POST /backend/v3/api/iam/api_keys route because the all-in-one gateway composes the sdkwork-iam backend assembly that owns it (axum panicked on the overlap during startup); and the component contract now declares the sdkwork-partner partner-center app surface (/app/v3/api/partner_center) that Cloud Router composes into the platform gateway route registry. Cargo.lock stays locked-clean for the platform-foundation-suite-container feature graph; the 0.1.22 container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
+        "highlights": [
+          "workspace sync: 41 of 104 registered submodules advanced to current main (63 already current, 1 diverged repository merged forward for sdkwork-knowledgebase, 1 unregistered repo advanced in place, 0 blocked/failed, 143 commits advanced, 3 pre-existing dirty worktrees preserved)",
+          "sdkwork-deployments +16 commits, sdkwork-appstore +13, sdkwork-iam +10, sdkwork-specs +10, sdkwork-agents +9, sdkwork-birdcoder2 +8, sdkwork-course +8, sdkwork-whatseek +6, sdkwork-mall +5, sdkwork-order +5, with the remaining 31 repositories advancing 1-5 commits each",
+          "sdkwork-knowledgebase: local Cargo.lock resync preserved and merged with upstream TLS trust bootstrap work (merge 8bf44bc, 0 conflicts) so the knowledgebase-rpc sidecar keeps its build graph",
+          "Cargo.lock: locked-clean for the platform-foundation-suite-container feature graph (cargo metadata --locked passes inside the bookworm toolchain)",
+          "sdkwork-payment: migrations 0002/0003 changed only rollback metadata comments; the applied checksums recorded in the production ops_schema_migration_history were reconciled to the current file hashes so the migration drift gate passes on the pre-existing production schema",
+          "route ownership: the all-in-one gateway merges the sdkwork-iam backend assembly, so Cloud Router now gates its legacy POST /backend/v3/api/iam/api_keys route (its DELETE /api_keys/{api_key_id} route stays mounted) and the gateway no longer panics with an overlapping method route at startup",
+          "route registry: the component contract declares the /app/v3/api/partner_center dependency surface (sdkwork-cloudrouter-app-api) that the new sdkwork-partner partner-center app API exposes through the Cloud Router app composition, so gateway startup validates the composed registry instead of rejecting the route",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.22 (image id sha256:0f1bf292c732d12ff260e723fffa5a31c959abc1f4c5288021792ba2d0346243, 433.9 MB) rebuilt on the debian:bookworm-slim toolchain (rustc 1.99.1, glibc 2.36); install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.22.bundle packaged with image sha256 560085e696af2f516324c422b487b887b22ee23890e2f078b6c1193cf0567072",
+          "remote production upgraded in place: gateway and knowledgebase-rpc recreated on 0.1.22 with the live operator env preserved, postgres (pgvector/pgvector:pg18) and redis (redis:8-alpine) untouched; deploy health gate reported healthy after 35s",
+          "verification: gateway/knowledgebase-rpc/postgres/redis containers healthy, /healthz and /readyz 200 directly and through the public nginx edge (api.sdkwork.com, api.birdcoder.com)"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.19",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.19",
         "summary": "Workspace dependency wave: every registered sdkwork-space submodule was re-fetched and advanced to current main (85 of 104 moved: 84 fast-forwarded plus one diverged merge, 17 already current, 2 pre-existing dirty worktrees preserved, 0 blocked/failed). The two largest advances are sdkwork-mall (+104 commits: bilingual i18n catalogues across mall-pc/mall-flutter/mall-mini-program, per-environment identity and API-host fixes, lazy drive uploader) and sdkwork-iam (+47 commits: admin account-binding policy editor across PC/H5/Flutter/mini-program, RP registration, mini-program console tier, Flutter admin catalogs and the machine-checkable IAM parity blockers record), with sdkwork-cloudrouter, sdkwork-knowledgebase (local lockfile-resync commit merged forward), sdkwork-specs and 79 other modules following. The gateway also merged origin/main's CI workflow refresh (deployment_profile/runtime_target package inputs, required package_version, Verify workflow). Cargo.lock stays locked-clean for both the default and platform-foundation-suite-container feature graphs; the 0.1.19 container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
         "highlights": [
