@@ -187,16 +187,41 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.22",
+    "currentVersion": "0.1.23",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.22"
+      "BETA": "0.1.23"
     },
     "notes": [
       {
-        "version": "0.1.22",
+        "version": "0.1.23",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.23",
+        "summary": "Workspace dependency wave plus the first demo-environment deployment: all 105 registered sdkwork-space submodules were re-fetched and advanced to current main (82 fast-forwarded for 837 commits, 20 already current, 3 diverged repositories merged forward cleanly - the gateway itself, sdkwork-cloudrouter and sdkwork-knowledgebase, whose local Cargo.lock resync and earlier merge commits were preserved - 0 blocked/failed; largest advances sdkwork-birdcoder2 +686, sdkwork-daxuedazi +25, sdkwork-mall +5). The gateway merged origin/main's layered topology environment refactor (etc/topology base/environments/overrides profiles materialized for every environment, including standalone.demo), Cargo.lock stays locked-clean for the platform-foundation-suite-container feature graph, and the 0.1.23 container image plus install bundle were rebuilt on the bookworm toolchain. The demo environment on the remote host was upgraded in place from 0.1.19: knowledgebase-rpc and gateway recreated on 0.1.23 with the live operator env preserved, embedded PostgreSQL/Redis untouched. The first demo boot failed closed on a sdkwork-payment migration checksum mismatch (0002/0003 changed only rollback metadata comments); the demo ops_schema_migration_history was reconciled to the current file hashes with the same remedy already applied to production in 0.1.22, after which the health gate passed. Verification covered containers, direct and nginx-edge /healthz + /readyz for api-demo.sdkwork.com and api-demo.birdcoder.com, the 1207100-byte openapi index, the 40101 problem+json envelope, and a 421 for a non-allowlisted Host.",
+        "highlights": [
+          "workspace sync: 82 of 105 registered submodules fast-forwarded to current main for 837 commits, 20 already current, 3 diverged repositories merged forward (gateway, sdkwork-cloudrouter, sdkwork-knowledgebase), 0 blocked/failed",
+          "largest advances: sdkwork-birdcoder2 +686 commits, sdkwork-daxuedazi +25, sdkwork-mall +5, sdkwork-documents/mail/im/specs/github-workflow +3 each, with the remaining repositories advancing 1-2 commits",
+          "gateway merged origin/main layered topology environment profiles: etc/topology/base.env, environments/<env>.base.env and overrides/<profile>.<env>.env materialize standalone.demo and the other profiles; Cargo.lock stays locked-clean for platform-foundation-suite-container",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.23 (image id sha256:a6ba6280750b..., 434.3 MB) rebuilt on the debian:bookworm-slim toolchain (rustc 1.99.1, glibc 2.36, static Opus); install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.23.bundle packaged with image sha256 3e71beb96d50...",
+          "remote demo upgraded in place: gateway and knowledgebase-rpc recreated on 0.1.23, embedded postgres (pgvector/pgvector:pg18) and redis (redis:8-alpine) untouched, live operator env preserved",
+          "demo schema reconciliation: sdkwork-payment migrations 0002/0003 changed only rollback metadata comments; the demo ops_schema_migration_history checksums were updated to the current file hashes (production received the same reconciliation in 0.1.22) so the migration drift gate passes on the pre-existing demo schema",
+          "nginx: the api-demo.* edge server blocks (upstream 127.0.0.1:3914, HTTPS with the multi-SAN demo certificate) were already enabled and verified for api-demo.sdkwork.com and api-demo.birdcoder.com at the HTTP and HTTPS layers; public DNS A records for those api-demo hosts remain an external prerequisite",
+          "verification: 4 demo containers healthy, /healthz and /readyz 200 directly and through the nginx edge, /openapi/index.json 200 (1207100 bytes), unauthenticated backend request returns 401 problem+json code 40101, non-allowlisted Host returns 421, production stays healthy on 0.1.22"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.22",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.22",
         "summary": "Workspace dependency wave: all 106 discovered sdkwork-space sub-projects were re-fetched and advanced to current main (41 advanced — 40 registered submodules plus the unregistered sdkwork-birdcoder — 63 already current, one diverged repository merged forward cleanly, 0 blocked/failed, 143 commits advanced in total, 3 pre-existing dirty worktrees preserved). Largest advances: sdkwork-deployments +16, sdkwork-appstore +13, sdkwork-iam +10, sdkwork-specs +10, sdkwork-agents +9, sdkwork-birdcoder2 +8, sdkwork-course +8, sdkwork-whatseek +6, sdkwork-mall +5, sdkwork-order +5. sdkwork-knowledgebase kept its local Cargo.lock resync commit and merged upstream's TLS trust bootstrap work forward (merge 8bf44bc, no conflicts). Three integration repairs ride with this wave: the live production ops_schema_migration_history checksums for sdkwork-payment migrations 0002/0003 were reconciled after their comment-only rollback-metadata alignment (drift gate would otherwise fail closed on the already-migrated schema); Cloud Router now gates its legacy POST /backend/v3/api/iam/api_keys route because the all-in-one gateway composes the sdkwork-iam backend assembly that owns it (axum panicked on the overlap during startup); and the component contract now declares the sdkwork-partner partner-center app surface (/app/v3/api/partner_center) that Cloud Router composes into the platform gateway route registry. Cargo.lock stays locked-clean for the platform-foundation-suite-container feature graph; the 0.1.22 container image and install bundle were rebuilt on the bookworm toolchain and the remote production host upgraded in place with its live operator env preserved.",
         "highlights": [
