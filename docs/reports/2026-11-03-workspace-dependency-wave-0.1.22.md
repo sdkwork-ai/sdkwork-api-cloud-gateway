@@ -134,24 +134,37 @@ backup-credential gap, unchanged), bundle tar-stream push, `docker load` of
 `deploy.sh` reported `gateway is healthy (waited 35s)`; all four containers are
 healthy and the live operator env was preserved (no config rewrite).
 
-Remote disk note: the host was at 90% before the wave and reached 96% after the
-failed 0.1.20/0.1.21 images plus 0.1.22 were loaded. Old unused gateway images
-were pruned afterwards by explicit tag (keeping `0.1.19` rollback and `0.1.22`
-current) to restore headroom.
+Remote disk note: the host was at 90% before the wave and reached 96% (5.6 GB
+free) after the failed 0.1.20/0.1.21 images plus 0.1.22 were loaded. The unused
+`0.1.16`, `0.1.17`, `0.1.18`, `0.1.20` and `0.1.21` tags were then removed by
+explicit `docker rmi` (≈10.9 GB freed, back to 87% used / 16 GB free), keeping
+`0.1.19` (rollback target, also used by the co-located demo environment) and
+`0.1.22` (production).
 
 ## 6. Verification evidence
 
 - `bin/docker-deploy.sh status --environment production`: gateway `:0.1.22`
   healthy, `0.0.0.0:3913->8080/tcp`; knowledgebase-rpc `:0.1.22` healthy;
-  postgres/redis healthy with unchanged images.
+  postgres/redis healthy with unchanged images. New gateway container
+  `RestartCount=0` (pre-wave historical baseline was 54), `OOMKilled=false`;
+  postgres/redis start times unchanged by the upgrade.
 - Direct probes on the host (Host `api.sdkwork.com`): `/healthz` 200,
   `/readyz` 200, `/openapi/index.json` 200, unauthenticated
   `/backend/v3/api/iam/tenants` 401 problem+json, non-whitelisted Host 421.
 - Public edge: `https://api.sdkwork.com/healthz` 200,
   `https://api.birdcoder.com/healthz` 200.
-- Startup log scan: no `failed to bootstrap`, `panicked`, or overlapping-route
-  errors on the current process; the embedded 54-module database bootstrap and
-  the composed API-assembly validation both complete.
+- Startup log scan (tail 400): 0 `failed to bootstrap`, 0 `panic`, 0
+  `Error:`; only three benign pre-existing WARNs (agents drift-gate summary and
+  the two plaintext-upstream-key warnings). Startup migrations
+  2026-11-03T05:23:12Z–05:23:45Z ran clean with no checksum or migration
+  errors, proving the payment reconciliation. The embedded 54-module database
+  bootstrap and the composed API-assembly validation both complete.
+- Fix-forward evidence: `/openapi/index.json` (3397 route patterns) now
+  contains the partner-center routes (`/app/v3/api/partner_center`,
+  `/team`, `/commissions`, `/withdrawals`), and the legacy
+  `/backend/v3/api/iam/api_keys` create route answers an authenticated 401
+  `problem+json` (`operationId=apiKeys.create`) rather than a 404 — the
+  dependency surface and the route-ownership gate are both live.
 - `bin/doctor.sh --environment production`: known non-defects only
   (`GATEWAY_CLOUDROUTER_REDIS_PASSWORD` empty for the embedded passwordless
   Redis, logs substring false-positive, disk usage warn).
