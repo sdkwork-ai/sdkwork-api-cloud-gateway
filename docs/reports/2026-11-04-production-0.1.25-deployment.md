@@ -184,8 +184,17 @@ the release owner:
   `GATEWAY_CLOUDROUTER_REDIS_PASSWORD` still `<empty>` for the passwordless embedded Redis). Both
   non-PASS items are the pre-existing baseline documented in the 0.1.22/0.1.23 reports; nothing new
   failed. Exit 70 is therefore the known baseline, not a release regression.
-- Demo regression guard: all four demo containers still healthy on `0.1.23` with unchanged uptime;
-  the upgrade touched only `-production-*` compose projects.
+- Demo regression guard: the upgrade touched only `-production-*` compose projects; production was
+  independent of demo throughout. During the verification window, at **15:21:14Z**, a separate
+  actor in this shared workspace (evidence line `docker-deploy upgrade env=demo`) also upgraded the
+  demo environment from `0.1.23` to `0.1.25` using the same bundle. That was not part of this
+  release's command sequence; it is recorded here for accuracy because the pre-upgrade verification
+  snapshot captured demo on `0.1.23`. Post-change demo checks: gateway and knowledgebase-rpc
+  `:0.1.25` `Up (healthy)`, gateway `Restart=0`, `OOMKilled=false`, direct `:3914` `/healthz` 200
+  15 B and `/readyz` 200 18 B, `api-demo.birdcoder.com` edge `/healthz` 200, demo
+  `/openapi/index.json` 1,217,697 B (identical to production), demo startup log scan free of
+  panic/checksum/composition failures (2 pre-existing credential WARNs, 1 slow-statement WARN and
+  2 INFO compensation passes only). Embedded demo postgres/redis containers were not recreated.
 - Storage: images `0.1.22` (rollback), `0.1.23` (demo) and `0.1.25` (production) retained; the
   broken `0.1.24` and the pre-existing unused `0.1.19` were removed by explicit `docker rmi` of
   those two tags (0 containers each) after the health gate passed. `/` went 93 % → **89 %**
@@ -210,6 +219,11 @@ the release owner:
    the 0.1.22 history reconciliation remains a one-off repair. This wave changed no migration SQL.
 6. Doctor `config` FAIL (`GATEWAY_CLOUDROUTER_REDIS_PASSWORD` `<empty>`) is an intentional
    embedded-mode placeholder; align the env shape if a clean doctor exit code is required.
+7. **Shared-workspace concurrency.** This checkout is used by more than one actor: an automatic
+   commit of the intermediate `0.1.24` version bump appeared at 22:58 CST, and a separate demo
+   upgrade ran at 15:21:14Z while this release's verification was in flight. Neither changed the
+   production result, but operators should serialise release windows or use a dedicated checkout so
+   evidence attribution stays unambiguous.
 
 ## 7. Rollback
 
