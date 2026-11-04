@@ -799,6 +799,69 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "open",
+      "prefix": "/alibaba/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/black_forest_labs/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/bytedance/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/jimeng/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/luma_ai/dream-machine",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/pixverse/openapi",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/runway/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/stability_ai/v2beta",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/zhipu/api",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "internal",
       "prefix": "/internal/v3/api/web",
       "ownership": "dependency",
@@ -2354,6 +2417,15 @@
         "/minimax/v1",
         "/elevenlabs/v1",
         "/typesafe/v1",
+        "/alibaba/api",
+        "/black_forest_labs/v1",
+        "/bytedance/api",
+        "/jimeng/v1",
+        "/luma_ai/dream-machine",
+        "/pixverse/openapi",
+        "/runway/v1",
+        "/stability_ai/v2beta",
+        "/zhipu/api",
         "/v1"
       ],
       "coverage": "sdkwork-cloudrouter-open-api-embedded-assembly-routes",
