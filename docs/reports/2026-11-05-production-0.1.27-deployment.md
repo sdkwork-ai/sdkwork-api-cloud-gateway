@@ -246,3 +246,34 @@ longer satisfies. Recovery options, in order of preference:
 | Production deploy | `.deploy-wave-0127/deploy-production-0127.log` |
 | Independent verification | `.deploy-wave-0127/verify-production-0127.log` |
 | Bin evidence | `target/bin-evidence/evidence.log` |
+
+## 10. Independent verification and remaining observation
+
+A separate read-only verifier session re-measured the deployment without trusting this report:
+**26/26 checks PASS, 0 FAIL** (evidence `.deploy-wave-0127/verify-production-0127.log`). It
+independently confirmed the gateway and knowledgebase-rpc image/health/restart values, the untouched
+postgres/redis uptimes, the published port, direct probes, the 1,219,789-byte / 3,424-route openapi
+index including six `device_authorizations` routes, the 401/421 problem+json envelopes with numeric
+codes and trace ids, a 3,809-line startup scan with zero `panic|ERROR|FATAL|failed to compose|failed
+to build embedded router|checksum_mismatch|ON CONFLICT` matches, the container-visible IAM login base
+URL and allowed audiences, the 182-row/0027 schema state with the unique OAuth client-id index, the
+nginx edge over both HTTP and HTTPS (Let's Encrypt certificate verified), the bundle tag/version, and
+demo-environment isolation (demo stayed on 0.1.25, untouched).
+
+One new, non-blocking observation is recorded for the operator: the startup warning introduced by
+`b753404` reports
+`SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES is missing enabled tenant applications
+missing=["app_100001"]`. `iam_tenant_application` has five enabled production rows and the
+pre-existing `app_100001` row (effective client id NULL) is not in the live allow-list, so sessions
+for that application will be rejected by the gateway audience gate. The release-mandated
+`app_daxuedazi` **is** present and the warning does not affect startup, health, migrations or the
+deployed routes. Completing the allow-list is an operator configuration decision (it broadens the
+accepted token audiences) and is therefore left as an explicit follow-up rather than being changed
+by the release:
+
+```
+bin/config.sh set --environment production --key GATEWAY_IAM_ALLOWED_AUDIENCES \
+  --value 'sdkwork-api-cloud-gateway,sdkwork-cloudrouter,app_01a18b4f-6f61-7ff1-b86c-75b54995883f,app_daxuedazi[,app_100001]' \
+  --host ssh://ubuntu@api.noaper.com --yes
+# then recreate the gateway instance so the new env reaches the container
+```
