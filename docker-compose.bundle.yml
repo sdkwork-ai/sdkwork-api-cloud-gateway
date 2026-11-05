@@ -129,6 +129,10 @@ x-gateway-common: &gateway-common
     SDKWORK_IAM_SIGNING_MASTER_SECRET_FILE: /run/secrets/sdkwork/api-gateway/iam-signing-master.key
     SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET: ${GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-true}
     SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES: ${GATEWAY_IAM_ALLOWED_AUDIENCES:-sdkwork-api-cloud-gateway}
+    # Hosted SDKWork OAuth login page origin. The IAM authorization endpoint
+    # redirects to <login base>/login; without it the Location is the relative
+    # /auth/login and resolves on the API host, which serves no login page.
+    SDKWORK_IAM_LOGIN_BASE_URL: ${GATEWAY_IAM_LOGIN_BASE_URL:-}
     SDKWORK_IM_GROUP_KNOWLEDGEBASE_LAUNCH_TICKET_SECRET_FILE: /run/secrets/sdkwork/api-gateway/knowledgebase-rpc/im-launch-ticket.key
     # IM -> Knowledgebase RPC over the per-environment shared network: the
     # deps-project knowledgebase-rpc singleton resolves by service DNS name.
