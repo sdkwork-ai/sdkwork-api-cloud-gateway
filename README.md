@@ -95,6 +95,7 @@ Environment overrides are then applied:
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_ENABLED`
 - `SDKWORK_API_CLOUD_GATEWAY_DIAGNOSTICS_PATH`
 - `SDKWORK_API_CLOUD_GATEWAY_WEB_FRAMEWORK_ENABLED`
+- `SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES` (comma-separated tenant application `app_id` values whose IAM session tokens the gateway accepts; startup logs every enabled IAM application missing from the list)
 - `SDKWORK_DATABASE_TEMPORARY_ANY_POOL_EXCEPTION`
 - `SDKWORK_DATABASE_TEMPORARY_DRIVER_POOL_COUNT`
 
