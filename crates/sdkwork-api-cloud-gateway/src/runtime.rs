@@ -19,6 +19,7 @@ use http_body_util::LengthLimitError;
 #[cfg(feature = "foundation-appbase")]
 use sdkwork_api_cloud_gateway_config::GatewayMode;
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
+use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_api_cloud_gateway_observability::{
     build_gateway_access_log_event, build_gateway_audit_log_event, describe_gateway_startup,
     GatewayAccessLogInput, GatewayAuditLogInput,
@@ -327,6 +328,7 @@ async fn build_embedded_router(
         .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
     let framework_manifest = composed.route_manifest.clone();
     let audiences = gateway_iam_allowed_audiences()?;
+    warn_missing_gateway_iam_audiences(&pool, &audiences).await;
     let audience_refs = audiences.iter().map(String::as_str).collect::<Vec<_>>();
     let resolver =
         sdkwork_iam_web_adapter::iam_web_request_context_resolver_from_database_pool_for_audiences(
@@ -451,6 +453,57 @@ fn gateway_iam_allowed_audiences() -> Result<Vec<String>, GatewayRuntimeError> {
         });
     }
     Ok(audiences)
+}
+
+/// Enabled tenant applications whose session audience the gateway would reject.
+///
+/// The audience allow-list is an environment value, while applications are
+/// registered in the IAM database; a newly enabled application silently fails
+/// every API call until an operator edits the environment. Startup reports the
+/// mismatch instead of leaving it to a user-visible 401.
+fn missing_gateway_iam_audiences(
+    enabled_app_ids: &[String],
+    audiences: &[String],
+) -> Vec<String> {
+    let allowed = audiences
+        .iter()
+        .map(String::as_str)
+        .collect::<std::collections::HashSet<_>>();
+    enabled_app_ids
+        .iter()
+        .filter(|app_id| !allowed.contains(app_id.as_str()))
+        .cloned()
+        .collect()
+}
+
+async fn warn_missing_gateway_iam_audiences(pool: &DatabasePool, audiences: &[String]) {
+    let Some(pg) = pool.as_postgres() else {
+        return;
+    };
+    let enabled_app_ids = match sqlx::query_scalar::<_, String>(
+        "SELECT app_id FROM iam_tenant_application WHERE status = 'enabled' ORDER BY app_id",
+    )
+    .fetch_all(pg)
+    .await
+    {
+        Ok(app_ids) => app_ids,
+        Err(error) => {
+            tracing::warn!(
+                target: "sdkwork.api.cloud_gateway",
+                %error,
+                "could not verify enabled IAM applications against the gateway audience allow-list"
+            );
+            return;
+        }
+    };
+    let missing = missing_gateway_iam_audiences(&enabled_app_ids, audiences);
+    if !missing.is_empty() {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway",
+            missing = ?missing,
+            "SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES is missing enabled tenant applications; sessions for these app ids will be rejected by the gateway"
+        );
+    }
 }
 
 fn required_gateway_web_redis_url() -> Result<String, GatewayRuntimeError> {
@@ -1828,5 +1881,21 @@ mod tests {
         assert_eq!(json["code"], 40001);
         assert_eq!(json["instance"], "POST /app/v3/api/auth/sessions");
         assert_eq!(json["traceId"], "01234567-89ab-cdef-0123-456789abcdef");
+    }
+
+    #[test]
+    fn enabled_apps_missing_from_iam_audiences_are_reported() {
+        let enabled = vec![
+            "app_a".to_owned(),
+            "app_b".to_owned(),
+            "app_c".to_owned(),
+        ];
+        let audiences = vec!["app_b".to_owned(), "sdkwork-cloudrouter".to_owned()];
+
+        assert_eq!(
+            missing_gateway_iam_audiences(&enabled, &audiences),
+            vec!["app_a".to_owned(), "app_c".to_owned()]
+        );
+        assert!(missing_gateway_iam_audiences(&enabled, &enabled).is_empty());
     }
 }
