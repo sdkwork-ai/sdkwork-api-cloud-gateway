@@ -187,16 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.32",
+    "currentVersion": "0.1.33",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.32"
+      "BETA": "0.1.33"
     },
     "notes": [
       {
-        "version": "0.1.32",
+        "version": "0.1.33",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.33",
+        "summary": "Workspace sync wave rebuild and in-place production upgrade. Every registered sdkwork-space repository was re-fetched against origin/main with local history preserved: sdkwork-iam merged one upstream commit forward, all other repositories were already current, 22 local-ahead repositories kept their unpushed commits, and dirty worktrees were preserved untouched. The gateway is rebuilt forward from that exact workspace state as 0.1.33 and production is upgraded in place from the healthy 0.1.32 while the embedded PostgreSQL/Redis dependency project and live production.env stay untouched.",
+        "highlights": [
+          "workspace sync: sdkwork-iam merged forward (ahead 5, behind 1) to pick up the public application access token Vite plugin; every other repository already sat at origin/main, 22 local-ahead repositories preserved, dirty worktrees preserved, sdkwork-video fetch blocked by a transient connection failure and unrelated to the gateway",
+          "release discipline: 0.1.32 was already built and deployed, so the rebuild takes a new forward tag 0.1.33 instead of overwriting it; 0.1.32 remains addressable as the rollback target",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.33 rebuilt inside the pinned bookworm build container from the synced workspace and packaged as install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.33.bundle",
+          "production continuity: the in-place upgrade recreates only the gateway and knowledgebase-rpc containers on host port 3913 with dependency mode embedded; the embedded pgvector PostgreSQL and Redis containers and the production.env values are not rewritten",
+          "verification: gateway and knowledgebase-rpc run image 0.1.33 (image id sha256:d6cdfcb1ebfdf5861b562b5b8072c97590ff509ac1be33e1adc97fe29d2e0438) with RestartCount 0; release.sh status reports no image drift and instance health HEALTHY; /healthz and /readyz return 200 on host port 3913 with bodies {\"status\":\"ok\"} and {\"status\":\"ready\"}; the public edge https://api.birdcoder.com/healthz returns 200; the release ledger recorded deploy 0.1.32 -> 0.1.33 and 0.1.32 remains present as the rollback target",
+          "disk note: the production host was at 99% before this wave, so unused historical gateway image tags 0.1.22/0.1.27/0.1.28/0.1.29/0.1.30 were removed explicitly (0.1.25 kept because demo runs it, 0.1.31/0.1.32 kept for rollback), restoring free space before the new bundle sync"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.32",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.32",
         "summary": "Workspace sync confirmation and forward rebuild. Every registered sdkwork-space repository was re-fetched against origin/main with local history preserved: no repository had upstream commits newer than the 0.1.31 wave, so the workspace is confirmed current, while 21 local-ahead repositories kept their unpushed commits, 6 worktrees preserved local modifications, and 0 repositories were blocked or failed. The gateway is rebuilt forward from that exact synced workspace state as 0.1.32 rather than reusing the built 0.1.31 tag, and production is upgraded in place from the healthy 0.1.31 while the embedded PostgreSQL/Redis dependency project and live production.env stay untouched.",
         "highlights": [
