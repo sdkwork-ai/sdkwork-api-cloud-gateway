@@ -187,16 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.28",
+    "currentVersion": "0.1.29",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.28"
+      "BETA": "0.1.29"
     },
     "notes": [
       {
-        "version": "0.1.28",
+        "version": "0.1.29",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.29",
+        "summary": "Workspace dependency wave rebuild and an in-place production upgrade. The whole sdkwork-space module set was re-fetched against origin/main: every repository was already at current main (0 behind), 20 local-ahead repositories kept their unpushed commits, 6 pre-existing dirty worktrees were preserved, and 0 repositories were blocked or failed. The gateway was rebuilt forward from that exact workspace state and packaged as a fresh install bundle. Version 0.1.28 had been built and applied to production earlier in the same wave and was rolled back to 0.1.27; because a built tag is never reused, 0.1.29 is a new forward build and production is upgraded in place from 0.1.27 with embedded PostgreSQL/Redis untouched.",
+        "highlights": [
+          "workspace sync: all registered sdkwork-space repositories fetched against origin/main, 0 behind, 20 local-ahead repositories preserved (including sdkwork-api-cloud-gateway +23, sdkwork-cloudrouter +7, sdkwork-knowledgebase +5, sdkwork-iam +4), 6 pre-existing dirty worktrees preserved, 0 blocked/failed",
+          "checkout safety: branch-preserving fetch/ff/merge sweep only; no git submodule update --init, no reset, rebase, stash or clean, so no checkout was detached and no branch history was rewritten",
+          "release hygiene: the rolled-back 0.1.28 image stays addressable; 0.1.29 is a new forward tag built on the bookworm toolchain from the current workspace state",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.29 packaged into install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.29.bundle",
+          "remote production upgraded in place 0.1.27 -> 0.1.29 on api.noaper.com with the embedded PostgreSQL/Redis dependency project untouched and the live production.env preserved (3913/8080/embedded)",
+          "verification: production containers healthy, /healthz and /readyz 200 directly on the host port, gateway container running the 0.1.29 image with RestartCount 0"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.28",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.28",
         "summary": "Workspace dependency wave plus a gateway contract repair: all 105 registered sdkwork-space submodules were fetched and advanced to current main with a branch-preserving sweep (75 already current, 5 fast-forwarded for 11 commits - sdkwork-models +3, sdkwork-daxuedazi +5, sdkwork-specs/documents/videogen +1 - sdkwork-cloudrouter and sdkwork-iam merged their upstream commits forward over local work, 18 local-ahead repositories and 6 pre-existing dirty worktrees preserved untouched, 0 failed; the sweep deliberately avoided the wave tool's unconditional submodule update that detached checkouts in the 0.1.27 wave). sdkwork-cloudrouter merged 26 new provider-native vendor routes (mureka, xai and volume across elevenlabs, kling, minimax, mureka, vidu, xai); the gateway component contract now declares the /mureka/v1 and /xai/v1 prefixes and the API closure gate passes at 3,459 method/path routes. No migration SQL changed in any advanced repository, so production's 182-row migration history stays compatible.",
         "highlights": [
