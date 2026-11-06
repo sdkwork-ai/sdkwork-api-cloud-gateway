@@ -187,16 +187,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.33",
+    "currentVersion": "0.1.34",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.33"
+      "BETA": "0.1.34"
     },
     "notes": [
       {
-        "version": "0.1.33",
+        "version": "0.1.34",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.34",
+        "summary": "IAM claim-based application access token resolution for credential-entry bootstrap deployments. The gateway is rebuilt forward from sdkwork-iam main (a4e3ad64) which resolves the committed public application token against the enabled tenant application registry without requiring an iam_session row, accepts exp=0 as never-expiring, and seeds the default IAM subject with the tenant-scoped organization conflict target. Production was upgraded in place from 0.1.33 after the image was verified to contain the public application token resolver.",
+        "highlights": [
+          "sdkwork-iam: claim-based application access token resolver (sdkwork-iam-public / public-app-token / iam:self) resolves credential-entry bootstrap tokens against iam_tenant_application instead of iam_session, fixing 40103 invalid-credentials at request-context-resolution",
+          "sdkwork-iam: application access credentials issued with exp=0 (never expires) while delegated credentials keep the one-hour lifetime",
+          "sdkwork-iam: fresh-database bootstrap seeds the default tenant/organization with ON CONFLICT (tenant_id, id), matching migration 0027",
+          "release discipline: 0.1.33 stays addressable; the forward rebuild takes 0.1.34",
+          "verification: binary contains sdkwork-iam-public/public-app-token markers; /healthz and /readyz return 200; login/registration no longer returns 40103"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.33",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.33",
         "summary": "Workspace sync wave rebuild and in-place production upgrade. Every registered sdkwork-space repository was re-fetched against origin/main with local history preserved: sdkwork-iam merged one upstream commit forward, all other repositories were already current, 22 local-ahead repositories kept their unpushed commits, and dirty worktrees were preserved untouched. The gateway is rebuilt forward from that exact workspace state as 0.1.33 and production is upgraded in place from the healthy 0.1.32 while the embedded PostgreSQL/Redis dependency project and live production.env stay untouched.",
         "highlights": [
