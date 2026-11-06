@@ -187,16 +187,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.30",
+    "currentVersion": "0.1.31",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.30"
+      "BETA": "0.1.31"
     },
     "notes": [
       {
-        "version": "0.1.30",
+        "version": "0.1.31",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.31",
+        "summary": "Workspace dependency wave rebuild and in-place production upgrade. Every registered sdkwork-space repository was re-fetched against origin/main with local history preserved: 9 repositories fast-forwarded, 3 merged forward (sdkwork-appbase, sdkwork-iam, sdkwork-knowledgebase), 18 local-ahead repositories kept their unpushed commits, 6 dirty worktrees were preserved untouched, and 0 repositories were blocked or failed. The gateway was rebuilt forward from that exact workspace state rather than reusing a built tag, and production is upgraded in place from the healthy 0.1.30 while the embedded PostgreSQL/Redis dependency project and live production.env stay untouched.",
+        "highlights": [
+          "workspace sync: 107 registered repositories fetched against origin/main, 9 advanced by fast-forward, 3 merged forward preserving local ahead commits, 18 local-ahead repositories preserved (sdkwork-api-cloud-gateway +26, sdkwork-cloudrouter +10, sdkwork-knowledgebase +5, sdkwork-iam +4, sdkwork-appbase +1, others +1 or +2), 6 dirty worktrees preserved (sdkwork-agents, sdkwork-app-topology, sdkwork-birdcoder2, sdkwork-sdk-generator, sdkwork-webserver, and the workspace superproject), 0 blocked, 0 failed",
+          "release discipline: 0.1.30 was already built and running in production, so the rebuild takes a new forward tag 0.1.31 instead of overwriting it; 0.1.30 remains addressable as the rollback target",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.31 rebuilt inside the pinned bookworm build container from the synced workspace and packaged as install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.31.bundle",
+          "production continuity: the in-place upgrade recreates only the gateway and knowledgebase-rpc containers on host port 3913 with dependency mode embedded; the embedded pgvector PostgreSQL and Redis containers and the production.env values are not rewritten",
+          "verification: filled in after the in-place production upgrade"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.30",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.30",
         "summary": "Fix-forward over the 0.1.29 production bootstrap failure. The embedded CloudRouter seed completeness predicate required the bundled vendor and relay default accounts to be enabled with an active credential, while the seed deliberately leaves those accounts disabled and uncredentialed for production-like install environments, so a production install could never reach Installed and the gateway crash-looped. sdkwork-cloudrouter now gates both completeness clauses and the missing-key-ring diagnostic on the same dev-like environment predicate the seed uses, with a regression test pinning production versus dev-like behavior. The gateway is rebuilt forward from the current workspace state as 0.1.30 and production is upgraded in place from the healthy 0.1.27 rollback.",
         "highlights": [
