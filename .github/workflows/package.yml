@@ -13,11 +13,11 @@ on:
       tag:
         description: Release tag or source ref to package.
         required: true
-        default: v0.1.29
+        default: v0.1.30
       package_version:
         description: Package version used in artifact names and manifests.
         required: true
-        default: 0.1.29
+        default: 0.1.30
       deployment_profile:
         description: Deployment profile filter.
         required: true

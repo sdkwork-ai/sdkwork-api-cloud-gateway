@@ -187,25 +187,48 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.29",
+    "currentVersion": "0.1.30",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.29"
+      "BETA": "0.1.30"
     },
     "notes": [
       {
-        "version": "0.1.29",
+        "version": "0.1.30",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.30",
+        "summary": "Fix-forward over the 0.1.29 production bootstrap failure. The embedded CloudRouter seed completeness predicate required the bundled vendor and relay default accounts to be enabled with an active credential, while the seed deliberately leaves those accounts disabled and uncredentialed for production-like install environments, so a production install could never reach Installed and the gateway crash-looped. sdkwork-cloudrouter now gates both completeness clauses and the missing-key-ring diagnostic on the same dev-like environment predicate the seed uses, with a regression test pinning production versus dev-like behavior. The gateway is rebuilt forward from the current workspace state as 0.1.30 and production is upgraded in place from the healthy 0.1.27 rollback.",
+        "highlights": [
+          "root cause: 0.1.29 evaluated the vendor/relay account credential clauses for every environment, while import_postgres_ai_routing_seed enables those accounts only for dev-like environments (the production database holds 29 seeded vendor accounts, 0 active, 0 active credentials), so the startup gate could never converge to Installed",
+          "fix: postgres_ai_routing_seed_gap and postgres_ai_routing_seed_complete take the install environment and skip the vendor/relay credential clauses when the seed would not enable those accounts; the installer's missing-key-ring diagnostic is gated the same way, mirroring the existing dev media gateway key gap",
+          "regression test: production_install_ignores_disabled_vendor_accounts pins that a production-shaped database (seeded accounts disabled, credentials removed) reports complete for production while the dev-like gate still reports the credential gap",
+          "production continuity: the crash-looping 0.1.29 was rolled back to the healthy 0.1.27 (RestartCount 0, /healthz 200) while the fix was built; 0.1.30 replaces it in place with the embedded PostgreSQL/Redis dependency project and live production.env untouched",
+          "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.30 packaged into install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.30.bundle",
+          "verification: filled in after the in-place production upgrade"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.29",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.29",
-        "summary": "Workspace dependency wave rebuild and an in-place production upgrade. The whole sdkwork-space module set was re-fetched against origin/main: every repository was already at current main (0 behind), 20 local-ahead repositories kept their unpushed commits, 6 pre-existing dirty worktrees were preserved, and 0 repositories were blocked or failed. The gateway was rebuilt forward from that exact workspace state and packaged as a fresh install bundle. Version 0.1.28 had been built and applied to production earlier in the same wave and was rolled back to 0.1.27; because a built tag is never reused, 0.1.29 is a new forward build and production is upgraded in place from 0.1.27 with embedded PostgreSQL/Redis untouched.",
+        "summary": "Workspace dependency wave rebuild. The whole sdkwork-space module set was re-fetched against origin/main: every repository was already at current main (0 behind), 20 local-ahead repositories kept their unpushed commits, 6 pre-existing dirty worktrees were preserved, and 0 repositories were blocked or failed. The gateway was rebuilt forward from that exact workspace state and packaged as a fresh install bundle. Version 0.1.28 had been built and applied to production earlier in the same wave and was rolled back to 0.1.27; because a built tag is never reused, 0.1.29 was a new forward build. 0.1.29 itself was upgraded into production but its embedded CloudRouter bootstrap refused to start: the seed completeness predicate required seeded vendor/relay accounts to carry active credentials while the seed leaves them disabled for production-like environments. Production was rolled back to 0.1.27 and 0.1.29 is superseded by 0.1.30.",
         "highlights": [
           "workspace sync: all registered sdkwork-space repositories fetched against origin/main, 0 behind, 20 local-ahead repositories preserved (including sdkwork-api-cloud-gateway +23, sdkwork-cloudrouter +7, sdkwork-knowledgebase +5, sdkwork-iam +4), 6 pre-existing dirty worktrees preserved, 0 blocked/failed",
           "checkout safety: branch-preserving fetch/ff/merge sweep only; no git submodule update --init, no reset, rebase, stash or clean, so no checkout was detached and no branch history was rewritten",
-          "release hygiene: the rolled-back 0.1.28 image stays addressable; 0.1.29 is a new forward tag built on the bookworm toolchain from the current workspace state",
+          "release hygiene: the rolled-back 0.1.28 image stays addressable; 0.1.29 was a new forward tag built on the bookworm toolchain from the current workspace state",
           "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.29 packaged into install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.29.bundle",
-          "remote production upgraded in place 0.1.27 -> 0.1.29 on api.noaper.com with the embedded PostgreSQL/Redis dependency project untouched and the live production.env preserved (3913/8080/embedded)",
-          "verification: production containers healthy, /healthz and /readyz 200 directly on the host port, gateway container running the 0.1.29 image with RestartCount 0"
+          "remote production upgrade 0.1.27 -> 0.1.29 on api.noaper.com with embedded PostgreSQL/Redis untouched and the live production.env preserved (3913/8080/embedded)",
+          "outcome: 0.1.29 crash-looped on the embedded CloudRouter ai routing seed completeness gap (dev-only vendor credentials required in production) and was rolled back to 0.1.27 to restore service; the image stays addressable but is superseded by 0.1.30"
         ],
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
