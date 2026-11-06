@@ -187,16 +187,37 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.27",
+    "currentVersion": "0.1.28",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.27"
+      "BETA": "0.1.28"
     },
     "notes": [
       {
-        "version": "0.1.27",
+        "version": "0.1.28",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.28",
+        "summary": "Workspace dependency wave plus a gateway contract repair: all 105 registered sdkwork-space submodules were fetched and advanced to current main with a branch-preserving sweep (75 already current, 5 fast-forwarded for 11 commits - sdkwork-models +3, sdkwork-daxuedazi +5, sdkwork-specs/documents/videogen +1 - sdkwork-cloudrouter and sdkwork-iam merged their upstream commits forward over local work, 18 local-ahead repositories and 6 pre-existing dirty worktrees preserved untouched, 0 failed; the sweep deliberately avoided the wave tool's unconditional submodule update that detached checkouts in the 0.1.27 wave). sdkwork-cloudrouter merged 26 new provider-native vendor routes (mureka, xai and volume across elevenlabs, kling, minimax, mureka, vidu, xai); the gateway component contract now declares the /mureka/v1 and /xai/v1 prefixes and the API closure gate passes at 3,459 method/path routes. No migration SQL changed in any advanced repository, so production's 182-row migration history stays compatible.",
+        "highlights": [
+          "workspace sync: 75 of 106 repositories already current, 5 fast-forwarded for 11 commits, sdkwork-cloudrouter (+2 upstream, 26 new vendor routes) and sdkwork-iam (+1 upstream, auth account menu frontend) merged forward cleanly, 18 local-ahead repositories preserved, 6 pre-existing dirty worktrees preserved, 0 blocked/failed",
+          "checkout safety: the wave used a branch-preserving fetch/merge sweep instead of the 0.1.27 wave tool whose unconditional git submodule update --init detached 20 clean checkouts; no checkout was detached and no branch rewritten this wave",
+          "contract repair: specs/component.spec.json declares /mureka/v1 and /xai/v1 in the sdkwork-cloudrouter-open-api apiPrefixes and apiSurfaces; gateway API closure passes with 3,459 method/path routes (+26 over 0.1.27)",
+          "no migration drift: zero migration .sql files changed across every advanced or merged repository, so the deployed 182-row ops_schema_migration_history remains compatible and GATEWAY_MIGRATE_ON_START stays false"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.27",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.27",
         "summary": "Workspace dependency wave, IAM tenant-scoped organization adoption and an in-place production upgrade. All 105 registered sdkwork-space submodules were fetched and advanced to current main (5 advanced for 294 commits - largest sdkwork-daxuedazi +284 - 98 already current, 2 local-ahead repositories sdkwork-cloudrouter and sdkwork-knowledgebase preserved, 0 failed); the wave tool's submodule init step detached 20 clean checkouts at their remote tips, and every one was safely reattached to its local main (the gateway and sdkwork-iam also merged origin/main forward, preserving all unpushed local commits). The gateway merged origin/main's IAM audience allow-list warning commit. The first rebuild, 0.1.26, booted into a crash loop and never served: the newly merged sdkwork-iam feature commits added migrations 0024-0027 (the 0027 migration replaces the global iam_organization primary key with (tenant_id, id)) while the IAM default-subject bootstrap still declared ON CONFLICT(id), so PostgreSQL rejected the router build with 'no unique or exclusion constraint matching the ON CONFLICT specification'. Migrations 0024-0027 were applied to production (178 -> 182 history rows, pre-checked for duplicate OAuth client ids and the single-tenant organization table) with a one-time GATEWAY_MIGRATE_ON_START=true pass, then reset to false. Fix-forward commit sdkwork-iam b4cf9142 changes the postgres upsert to ON CONFLICT (tenant_id, id) (sqlite keeps id), the broken 0.1.26 tag was discarded and never overwritten, and 0.1.27 was rebuilt on the bookworm toolchain. The live production env was preserved, and the operator's today's IAM login configuration is now consumed by the bundle: the compose template passes GATEWAY_IAM_LOGIN_BASE_URL through as SDKWORK_IAM_LOGIN_BASE_URL and the env examples document it. Production was upgraded in place from 0.1.25: pre-change backup set, bundle push with the image archive, docker load, gateway and knowledgebase-rpc recreated on 0.1.27 with embedded PostgreSQL/Redis untouched, health gate 'gateway is healthy (waited 35s)', RestartCount 0. Because the 0.1.26 crash loop and the 22-minute rebuild happened after the previous container had been replaced, the production gateway was unavailable for roughly 39 minutes (12:06Z-12:45Z) before 0.1.27 restored service; this is recorded as the release's principal incident. Verification covered direct /healthz and /readyz, the 1,219,789-byte openapi index with 3424 routes including the new IAM device-authorization routes, the 40101 problem+json and 40001 host envelopes, the nginx edge, a zero-match startup error scan, the container-visible IAM login base URL, the 182-row/0027 schema state, and a 90% disk with 0.1.26 and the unused 0.1.23 image pruned. The pre-0.1.27 IAM bootstrap SQL is not compatible with the 0027 primary key, so the retained 0.1.25 image is not a one-command rollback; the documented recovery is a 0.1.27 redeploy (or a patched rebuild) plus the pre-change backup set.",
         "highlights": [
