@@ -862,6 +862,20 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "open",
+      "prefix": "/mureka/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "open",
+      "prefix": "/xai/v1",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-open-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "internal",
       "prefix": "/internal/v3/api/web",
       "ownership": "dependency",
@@ -2426,6 +2440,8 @@
         "/runway/v1",
         "/stability_ai/v2beta",
         "/zhipu/api",
+        "/mureka/v1",
+        "/xai/v1",
         "/v1"
       ],
       "coverage": "sdkwork-cloudrouter-open-api-embedded-assembly-routes",

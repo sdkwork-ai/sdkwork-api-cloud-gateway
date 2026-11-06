@@ -19,7 +19,6 @@ use http_body_util::LengthLimitError;
 #[cfg(feature = "foundation-appbase")]
 use sdkwork_api_cloud_gateway_config::GatewayMode;
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
-use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_api_cloud_gateway_observability::{
     build_gateway_access_log_event, build_gateway_audit_log_event, describe_gateway_startup,
     GatewayAccessLogInput, GatewayAuditLogInput,
@@ -27,6 +26,7 @@ use sdkwork_api_cloud_gateway_observability::{
 use sdkwork_api_cloud_gateway_registry::{
     GatewayRouteRegistry, RouteDescriptor, RouteExecutionTarget, RouteProtocol, RouteVisibility,
 };
+use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::{ApiModuleRegistry, WebModule};
 use sdkwork_web_contract::HttpMethod;
 use sdkwork_web_core::new_request_id;
@@ -461,10 +461,7 @@ fn gateway_iam_allowed_audiences() -> Result<Vec<String>, GatewayRuntimeError> {
 /// registered in the IAM database; a newly enabled application silently fails
 /// every API call until an operator edits the environment. Startup reports the
 /// mismatch instead of leaving it to a user-visible 401.
-fn missing_gateway_iam_audiences(
-    enabled_app_ids: &[String],
-    audiences: &[String],
-) -> Vec<String> {
+fn missing_gateway_iam_audiences(enabled_app_ids: &[String], audiences: &[String]) -> Vec<String> {
     let allowed = audiences
         .iter()
         .map(String::as_str)
@@ -1885,11 +1882,7 @@ mod tests {
 
     #[test]
     fn enabled_apps_missing_from_iam_audiences_are_reported() {
-        let enabled = vec![
-            "app_a".to_owned(),
-            "app_b".to_owned(),
-            "app_c".to_owned(),
-        ];
+        let enabled = vec!["app_a".to_owned(), "app_b".to_owned(), "app_c".to_owned()];
         let audiences = vec!["app_b".to_owned(), "sdkwork-cloudrouter".to_owned()];
 
         assert_eq!(
