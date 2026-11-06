@@ -204,7 +204,7 @@
           "release discipline: 0.1.30 was already built and running in production, so the rebuild takes a new forward tag 0.1.31 instead of overwriting it; 0.1.30 remains addressable as the rollback target",
           "container image registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.31 rebuilt inside the pinned bookworm build container from the synced workspace and packaged as install bundle dist/docker-install/sdkwork-api-cloud-gateway-install-0.1.31.bundle",
           "production continuity: the in-place upgrade recreates only the gateway and knowledgebase-rpc containers on host port 3913 with dependency mode embedded; the embedded pgvector PostgreSQL and Redis containers and the production.env values are not rewritten",
-          "verification: filled in after the in-place production upgrade"
+          "verification: gateway and knowledgebase-rpc run image 0.1.31 with RestartCount 0 and no ERROR/panic lines; /healthz and /readyz return 200 on host port 3913 and through https://api.noaper.com; the release ledger recorded deploy 0.1.30 -> 0.1.31 (sha256:ef69de7b50d49009ce42759662a6e6f60bc53e104b1e073ffaacaab1f6bbf2d2) with no image drift; the embedded PostgreSQL (pgvector pg18) and Redis keep running with the production data intact"
         ],
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
