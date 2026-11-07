@@ -702,6 +702,13 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/partners",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/payments",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
@@ -2402,6 +2409,7 @@
       "apiPrefixes": [
         "/backend/v3/api/ai",
         "/backend/v3/api/billing",
+        "/backend/v3/api/partners",
         "/backend/v3/api/payments",
         "/backend/v3/api/pricing",
         "/backend/v3/api/recharges",

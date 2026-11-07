@@ -31,9 +31,15 @@ import { fileURLToPath } from 'node:url';
 import {
   CONTAINER_CARGO_FEATURES,
   CONTAINER_DATABASE_ASSET_METADATA_ARGS,
+  MODELS_CATALOG_ASSETS,
+  MODELS_CATALOG_INSTALL_DIR,
+  MODELS_CATALOG_REQUIRED_FILES,
   RELEASE_CONFIG_TEMPLATES,
+  assertModelsCatalogSource,
+  missingModelsCatalogAssets,
   resolveCargoReleaseDir,
   resolveDatabaseHostCratesFromMetadata,
+  resolveModelsCatalogSourceRoot,
 } from './package-server.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -362,6 +368,14 @@ async function validateBuildPlan(plan) {
   if (!existsSync(path.join(appRoot, 'specs', 'component.spec.json'))) {
     issues.push('missing specs/component.spec.json');
   }
+  // Seed-time catalog assets are release-blocking: an image whose
+  // data/sdkwork-models root is empty boots with zero model vendors.
+  const missingCatalogAssets = missingModelsCatalogAssets(resolveModelsCatalogSourceRoot());
+  if (missingCatalogAssets.length > 0) {
+    issues.push(
+      `incomplete sdkwork-models catalog bundle: missing ${missingCatalogAssets.join(', ')}`,
+    );
+  }
   if (!existsSync(path.join(appRoot, 'bin', 'container', 'entrypoint'))) {
     issues.push('missing bin/container/entrypoint');
   }
@@ -598,23 +612,18 @@ async function assembleBuildContext(plan) {
     }
   }
 
-  // Models catalog (sdkwork-models.json + models/ + overlays/) installed under
-  // <install root>/data/sdkwork-models: the cloudrouter foundation module's
-  // bundled catalog fallback (SDKWORK_MODELS_CATALOG_ROOT image ENV).
-  const modelsCatalogRepo = path.join(appRoot, '..', 'sdkwork-models');
-  for (const entry of [
-    'sdkwork-models.json',
-    'models',
-    'overlays',
-  ]) {
-    const source = path.join(modelsCatalogRepo, entry);
-    if (existsSync(source)) {
-      await cp(
-        source,
-        path.join(plan.imageBuildDir, 'data', 'sdkwork-models', entry),
-        { recursive: true, preserveTimestamps: true },
-      );
-    }
+  // Official model catalog installed under <install root>/data/sdkwork-models:
+  // the cloudrouter foundation module's first-install seed source
+  // (SDKWORK_MODELS_CATALOG_ROOT image ENV). `schemas/` is declared by the
+  // bundle manifest's schemasRoot and ships with the complete bundle.
+  const modelsCatalogRepo = resolveModelsCatalogSourceRoot();
+  assertModelsCatalogSource(modelsCatalogRepo);
+  for (const entry of MODELS_CATALOG_ASSETS) {
+    await cp(
+      path.join(modelsCatalogRepo, entry),
+      path.join(plan.imageBuildDir, MODELS_CATALOG_INSTALL_DIR, entry),
+      { recursive: true, preserveTimestamps: true },
+    );
   }
 
   await writeFile(
@@ -651,6 +660,12 @@ function createInstallManifest(plan) {
       workspace: module.workspace,
       assets: `database-modules/${module.workspace}/database`,
     })),
+    modelCatalog: {
+      root: MODELS_CATALOG_INSTALL_DIR,
+      requiredFiles: MODELS_CATALOG_REQUIRED_FILES.map(
+        (entry) => `${MODELS_CATALOG_INSTALL_DIR}/${entry}`,
+      ),
+    },
     healthPath: '/healthz',
     readinessPath: '/readyz',
   };

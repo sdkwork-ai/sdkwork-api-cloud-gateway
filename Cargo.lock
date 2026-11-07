@@ -7868,6 +7868,7 @@ dependencies = [
  "axum 0.8.9",
  "sdkwork-database-id",
  "sdkwork-database-sqlx",
+ "sdkwork-models 0.1.0",
  "sdkwork-models-catalog-repository-sqlx",
  "sdkwork-models-contract-service",
  "sdkwork-models-database-host",
@@ -7878,6 +7879,7 @@ dependencies = [
  "sdkwork-web-core",
  "sqlx",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -8806,6 +8808,7 @@ dependencies = [
  "sdkwork-api-iam-assembly",
  "sdkwork-api-inventory-assembly",
  "sdkwork-api-log-assembly",
+ "sdkwork-api-mcp-assembly",
  "sdkwork-api-membership-assembly",
  "sdkwork-api-messaging-assembly",
  "sdkwork-api-order-assembly",
@@ -8813,6 +8816,7 @@ dependencies = [
  "sdkwork-api-payment-assembly",
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-rtc-assembly",
+ "sdkwork-api-skills-assembly",
  "sdkwork-base-data-service-host",
  "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-database-host",
@@ -13810,6 +13814,7 @@ dependencies = [
  "sdkwork-routes-edu-data-backend-api",
  "sdkwork-routes-iam-backend-api",
  "sdkwork-routes-inventory-backend-api",
+ "sdkwork-routes-mcp-backend-api",
  "sdkwork-routes-med-data-backend-api",
  "sdkwork-routes-membership-backend-api",
  "sdkwork-routes-messaging-backend-api",
@@ -13819,6 +13824,7 @@ dependencies = [
  "sdkwork-routes-payment-backend-api",
  "sdkwork-routes-promotion-backend-api",
  "sdkwork-routes-rtc-backend-api",
+ "sdkwork-routes-skills-backend-api",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",

@@ -189,9 +189,11 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_PARTNER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-partner \
     SDKWORK_WEBSERVER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-webserver \
     SDKWORK_WEB_STORE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-web-framework
-# Models catalog (sdkwork-models.json + models/ + overlays/) installed under
-# <install root>/data/sdkwork-models; the cloudrouter foundation module loads
-# it through SDKWORK_MODELS_CATALOG_ROOT (overridable with a mounted catalog).
+# Official models catalog (sdkwork-models.json + models/ + overlays/ +
+# schemas/) installed under <install root>/data/sdkwork-models; the models
+# owner assembly seeds a greenfield database from it on first boot through
+# SDKWORK_MODELS_CATALOG_ROOT (overridable with a mounted catalog). The build
+# script fails closed if any loader-required file is missing.
 ENV SDKWORK_MODELS_CATALOG_ROOT=${INSTALL_ROOT}/data/sdkwork-models
 
 LABEL org.opencontainers.image.title="sdkwork-api-cloud-gateway (standalone container)"

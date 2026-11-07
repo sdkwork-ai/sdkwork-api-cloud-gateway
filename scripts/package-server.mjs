@@ -45,6 +45,26 @@ export const CONTAINER_DATABASE_ASSET_METADATA_ARGS = Object.freeze([
 export const CONTAINER_CARGO_FEATURES = 'platform-foundation-suite-container';
 export const SERVER_CARGO_FEATURES = 'platform-foundation-suite';
 
+// Official model catalog bundle installed under data/sdkwork-models.
+// `sdkwork_models::load_catalog` reads the four REQUIRED_FILES entries
+// unconditionally; if a package ships an empty or partial root, a greenfield
+// gateway starts with an empty ai_model_vendor table and every model-vendor /
+// resource-group / model-mapping admin page stays blank. Treat the bundle as
+// a release-blocking asset, not an optional copy.
+export const MODELS_CATALOG_ASSETS = Object.freeze([
+  'sdkwork-models.json',
+  'models',
+  'overlays',
+  'schemas',
+]);
+export const MODELS_CATALOG_REQUIRED_FILES = Object.freeze([
+  'sdkwork-models.json',
+  'models/index.json',
+  'models/meters.json',
+  'models/protocols.json',
+]);
+export const MODELS_CATALOG_INSTALL_DIR = 'data/sdkwork-models';
+
 // Database workspaces whose module requires non-database assets next to
 // `database/` under the packaged module root (mirrors sdkwork-cloudrouter's
 // extra paths). sdkwork-iam materializes its module catalog from
@@ -55,6 +75,26 @@ const EXTRA_DATABASE_MODULE_PATHS = Object.freeze({
 const scriptPath = fileURLToPath(import.meta.url);
 const appRoot = path.resolve(path.dirname(scriptPath), '..');
 const KNOWLEDGEBASE_ROOT = path.resolve(appRoot, '..', 'sdkwork-knowledgebase');
+
+export function resolveModelsCatalogSourceRoot() {
+  return path.resolve(appRoot, '..', 'sdkwork-models');
+}
+
+/** Returns every catalog asset missing from `root` (empty means complete). */
+export function missingModelsCatalogAssets(root) {
+  const required = [...new Set([...MODELS_CATALOG_ASSETS, ...MODELS_CATALOG_REQUIRED_FILES])];
+  return required.filter((entry) => !existsSync(path.join(root, entry)));
+}
+
+export function assertModelsCatalogSource(root) {
+  const missing = missingModelsCatalogAssets(root);
+  if (missing.length > 0) {
+    throw new Error(
+      `Official model catalog bundle is incomplete at ${root}: missing ${missing.join(', ')}. `
+      + 'A greenfield gateway would seed zero vendors; refuse to build this release.',
+    );
+  }
+}
 
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2));
@@ -597,14 +637,14 @@ async function copyDatabaseModuleAssets(context) {
 }
 
 async function copyModelsCatalog(stageRoot) {
-  const modelsRoot = path.join(appRoot, '..', 'sdkwork-models');
-  for (const entry of ['sdkwork-models.json', 'models', 'overlays']) {
-    const source = path.join(modelsRoot, entry);
-    if (existsSync(source)) {
-      await cp(source, path.join(stageRoot, 'data', 'sdkwork-models', entry), {
-        recursive: true,
-      });
-    }
+  const modelsRoot = resolveModelsCatalogSourceRoot();
+  assertModelsCatalogSource(modelsRoot);
+  for (const entry of MODELS_CATALOG_ASSETS) {
+    await cp(
+      path.join(modelsRoot, entry),
+      path.join(stageRoot, MODELS_CATALOG_INSTALL_DIR, entry),
+      { recursive: true },
+    );
   }
 }
 
@@ -744,6 +784,12 @@ async function createInstallManifest(context) {
       workspace: module.workspace,
       assets: `database-modules/${module.workspace}/database`,
     })),
+    modelCatalog: {
+      root: MODELS_CATALOG_INSTALL_DIR,
+      requiredFiles: MODELS_CATALOG_REQUIRED_FILES.map(
+        (entry) => `${MODELS_CATALOG_INSTALL_DIR}/${entry}`,
+      ),
+    },
     // Host directory mapping and service registration (PACKAGING_SPEC §5.5,
     // RUNTIME_DIRECTORY_SPEC §4.1-§4.5). The package declares where each asset
     // role lands so installers and automation can materialize the canonical
@@ -866,6 +912,12 @@ async function validateArchive(context) {
     `${context.stageName}/README.md`,
     ...context.databaseModules.map(
       (module) => `${context.stageName}/database-modules/${module.workspace}/database/database.manifest.json`,
+    ),
+    // First-install catalog seeding reads these files at gateway boot. An
+    // archive without them is a broken release even when every other asset
+    // passes the checksum gate.
+    ...MODELS_CATALOG_REQUIRED_FILES.map(
+      (entry) => `${context.stageName}/${MODELS_CATALOG_INSTALL_DIR}/${entry}`,
     ),
   ];
 
