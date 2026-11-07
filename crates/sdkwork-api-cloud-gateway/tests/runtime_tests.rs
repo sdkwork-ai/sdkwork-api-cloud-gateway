@@ -86,6 +86,63 @@ fn explicit_profile_configs_keep_component_dependency_surface_parity() {
 }
 
 #[test]
+fn application_manifest_declares_the_agents_backend_surface() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .and_then(Path::parent)
+        .expect("workspace root");
+    let manifest = GatewayRuntimeConfig::from_application_root(root).expect("load app manifest");
+    let surface = manifest
+        .dependency_surfaces
+        .iter()
+        .find(|surface| surface.service_id == "sdkwork-agent-backend-api")
+        .expect("agents backend-api surface must be declared");
+
+    assert_eq!(surface.workspace, "sdkwork-agents");
+    assert_eq!(surface.sdk_family, "sdkwork-agent-backend-sdk");
+    assert_eq!(surface.api_prefix, "/backend/v3/api/ai");
+    assert_eq!(surface.surface, "backend");
+    assert_eq!(surface.runtime_mode, DependencyRuntimeMode::Embedded);
+    assert_eq!(surface.cargo_feature.as_deref(), Some("foundation-agents"));
+    assert_eq!(
+        surface.cargo_dependency.as_deref(),
+        Some("sdkwork-api-agents-assembly")
+    );
+}
+
+#[cfg(feature = "foundation-agents")]
+#[test]
+fn agents_backend_route_manifest_exposes_agent_category_operations() {
+    let manifest = sdkwork_api_agents_assembly::backend_api_route_manifest();
+    for (method, path, permission) in [
+        (
+            "GET",
+            "/backend/v3/api/ai/agent_categories",
+            "agent.business.category.read",
+        ),
+        (
+            "PUT",
+            "/backend/v3/api/ai/agent_categories/{categoryCode}",
+            "agent.business.category.manage",
+        ),
+    ] {
+        let route = manifest
+            .match_route(method, path)
+            .unwrap_or_else(|| panic!("{method} {path} must be in the agents backend manifest"));
+        assert_eq!(
+            route.auth,
+            sdkwork_web_contract::RouteAuth::DualToken,
+            "{method} {path} must keep dual-token auth"
+        );
+        assert_eq!(
+            route.required_permission,
+            Some(permission),
+            "{method} {path} must keep its category permission"
+        );
+    }
+}
+
+#[test]
 fn missing_embedded_router_fails_before_serving() {
     let result = build_sdkwork_api_cloud_gateway_router_with_embedded_routers(
         config(vec![surface("drive", "/app/v3/api/drive")]),

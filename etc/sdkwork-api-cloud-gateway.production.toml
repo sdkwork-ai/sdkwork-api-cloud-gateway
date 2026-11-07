@@ -22,6 +22,10 @@ labels = ["account", "admin", "agent", "agents", "agents-admin", "agents-app", "
 environmentSuffix = ""
 schemes = ["https"]
 
+[cors.registeredSubdomainHosts]
+baseDomains = ["sdkwork.com", "birdcoder.com", "sdkwork.cn", "birdcoder.cn"]
+schemes = ["http", "https"]
+
 [request]
 maxBodyBytes = 33554432
 

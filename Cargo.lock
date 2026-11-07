@@ -3764,9 +3764,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.37.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f111c8c41e7c61a49cd34e44c7619462967221a6443b0ec299e0ac30cfb9b1"
+checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
  "cc",
  "pkg-config",
@@ -6569,6 +6569,7 @@ dependencies = [
  "sdkwork-agent-kernel",
  "sdkwork-intelligence-agents-service",
  "sdkwork-knowledgebase-app-sdk-generated-rust",
+ "sdkwork-utils-rust",
  "tokio",
  "tracing",
 ]
@@ -6582,6 +6583,7 @@ dependencies = [
  "sdkwork-memory-app-sdk",
  "sdkwork-memory-contract",
  "sdkwork-memory-inprocess",
+ "sdkwork-utils-rust",
  "serde_json",
  "tokio",
  "tracing",
@@ -7129,6 +7131,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+ "sdkwork-discovery-client",
  "sdkwork-iam-web-adapter",
  "sdkwork-im-database-pool",
  "sdkwork-image-generation-provider-adapter",
@@ -7840,6 +7843,7 @@ name = "sdkwork-api-messaging-assembly"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "sdkwork-database-id",
  "sdkwork-database-sqlx",
  "sdkwork-messaging-database-host",
  "sdkwork-routes-messaging-backend-api",
@@ -7979,6 +7983,23 @@ dependencies = [
  "sdkwork-routes-payment-backend-api",
  "sdkwork-web-bootstrap",
  "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
+name = "sdkwork-api-plugins-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-database-sqlx",
+ "sdkwork-intelligence-plugins-repository-sqlx",
+ "sdkwork-intelligence-plugins-service",
+ "sdkwork-plugins-database-host",
+ "sdkwork-routes-plugins-app-api",
+ "sdkwork-routes-plugins-backend-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "sqlx",
  "tokio",
 ]
 
@@ -8803,6 +8824,7 @@ dependencies = [
  "sdkwork-account-repository-sqlx",
  "sdkwork-account-service",
  "sdkwork-account-service-host",
+ "sdkwork-api-agents-assembly",
  "sdkwork-api-community-assembly",
  "sdkwork-api-course-assembly",
  "sdkwork-api-iam-assembly",
@@ -8814,6 +8836,7 @@ dependencies = [
  "sdkwork-api-order-assembly",
  "sdkwork-api-partner-assembly",
  "sdkwork-api-payment-assembly",
+ "sdkwork-api-plugins-assembly",
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-rtc-assembly",
  "sdkwork-api-skills-assembly",
@@ -10032,6 +10055,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-discovery-client"
+version = "0.1.0"
+dependencies = [
+ "reqwest 0.12.28",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-discovery-rpc-proto"
 version = "0.1.0"
 dependencies = [
@@ -10563,6 +10601,7 @@ dependencies = [
  "chrono",
  "cloudrouter-open-sdk",
  "sdkwork-intelligence-generations-service",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tracing",
@@ -11091,6 +11130,7 @@ dependencies = [
  "axum 0.8.9",
  "cloudrouter-open-sdk",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tower 0.5.3",
@@ -11463,6 +11503,33 @@ dependencies = [
  "tokio",
  "tracing",
  "url",
+]
+
+[[package]]
+name = "sdkwork-intelligence-plugins-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-id-core",
+ "sdkwork-intelligence-plugins-service",
+ "sdkwork-plugins-contract",
+ "sdkwork-utils-rust",
+ "serde_json",
+ "sqlx",
+]
+
+[[package]]
+name = "sdkwork-intelligence-plugins-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "regex-lite",
+ "sdkwork-plugins-contract",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -13316,6 +13383,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-plugins-contract"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-plugins-database-host"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "sdkwork-database-config",
+ "sdkwork-database-drift",
+ "sdkwork-database-lifecycle",
+ "sdkwork-database-spi",
+ "sdkwork-database-sqlx",
+ "sdkwork-id-core",
+ "sqlx",
+]
+
+[[package]]
 name = "sdkwork-portal-database-host"
 version = "0.1.0"
 dependencies = [
@@ -13792,6 +13882,7 @@ dependencies = [
  "anyhow",
  "axum 0.8.9",
  "getrandom 0.3.4",
+ "sdkwork-api-agents-assembly",
  "sdkwork-api-drive-assembly",
  "sdkwork-api-iam-assembly",
  "sdkwork-api-log-assembly",
@@ -13822,6 +13913,7 @@ dependencies = [
  "sdkwork-routes-order-backend-api",
  "sdkwork-routes-partner-backend-api",
  "sdkwork-routes-payment-backend-api",
+ "sdkwork-routes-plugins-backend-api",
  "sdkwork-routes-promotion-backend-api",
  "sdkwork-routes-rtc-backend-api",
  "sdkwork-routes-skills-backend-api",
@@ -15649,6 +15741,7 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "chrono",
+ "sdkwork-database-id",
  "sdkwork-iam-web-adapter",
  "sdkwork-messaging-delivery-service",
  "sdkwork-utils-rust",
@@ -16038,6 +16131,40 @@ version = "0.4.7"
 dependencies = [
  "axum 0.8.9",
  "sdkwork-cloudrouter-http",
+]
+
+[[package]]
+name = "sdkwork-routes-plugins-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-plugins-service",
+ "sdkwork-plugins-contract",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx",
+]
+
+[[package]]
+name = "sdkwork-routes-plugins-backend-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-intelligence-plugins-service",
+ "sdkwork-plugins-contract",
+ "sdkwork-utils-rust",
+ "sdkwork-web-axum",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+ "sqlx",
 ]
 
 [[package]]
@@ -17252,6 +17379,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-routes-voice-app-api",
  "sdkwork-routes-voice-backend-api",
+ "sdkwork-utils-rust",
  "sdkwork-voice-drive-sync-processor",
  "sdkwork-voice-generation-provider-adapter",
  "sdkwork-voice-generation-provider-spi",

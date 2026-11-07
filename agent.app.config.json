@@ -187,16 +187,49 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.34",
+    "currentVersion": "0.1.37",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.34"
+      "BETA": "0.1.37"
     },
     "notes": [
       {
-        "version": "0.1.34",
+        "version": "0.1.37",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.37",
+        "summary": "Embedded Cloud Router turn repair plus the database-backed HTTP service registry. Production 0.1.36 returned 50301 on agents turns because the container declared only the application-scoped deployment profile, so the shared SDK resolver classified the all-in-one gateway as split and dialled http://127.0.0.1:3900 while the listener was on 0.0.0.0:8080. The binary now publishes the canonical SDKWORK_DEPLOYMENT_PROFILE before the runtime starts, the entrypoint and compose inputs publish it, and the agents turn transport prefers an installed in-process surface over the profile string. The same release adds sdkwork-discovery-client (idempotent per-instance/port PostgreSQL registration, lease heartbeat, QoS selection, failure demotion, last-known-good degradation), gateway self-registration for every composed surface/alias with graceful deregistration, and registry-first HTTP base-URL resolution.",
+        "highlights": [
+          "root cause: container env carried SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone but not SDKWORK_DEPLOYMENT_PROFILE; sdkwork-agents-tool-cloudrouter resolved ServiceMode::Split and dialled http://127.0.0.1:3900, a port the 8080 listener does not own, producing 50301 provider_error",
+          "fix: listener_main publishes the canonical SDKWORK_DEPLOYMENT_PROFILE (explicit > application alias > manifest default standalone) before the runtime thread; invalid values fail bootstrap, a conflicting explicit value wins with a warning",
+          "fix: bin/container/entrypoint and every compose input publish both names and validate standalone|cloud",
+          "fix: CloudRouterTurnTransport::resolve prefers a composition-root-installed in-process surface over the profile string",
+          "new: sdkwork-discovery-client with HttpRegistry idempotent upsert on (namespace, environment, service_name, instance_id), stable lease across re-registration, heartbeat renewal, soft deregistration, status reporting, and HTTP discovery",
+          "new: HttpRegistryResolver implements the process-global service_base_url::HttpServiceRegistry with a cache-first snapshot, priority/weight QoS, consecutive-failure demotion with cooldown, success reset, and last-known-good degradation",
+          "new: HttpRegistryResolver supports an opt-in active health probe (SDKWORK_DISCOVERY_HTTP_REGISTRY_HEALTH_PATH + timeout): each snapshot refresh probes targets and applies the same failure threshold/cooldown; unset keeps failure-driven detection only",
+          "gateway: binds the listener and starts the registry before router construction (so generations/media providers and drive facades see the resolver), registers every composed surface plus its SDK alias for each instance/port, heartbeats every 10s against a 30s lease, re-registers on lease loss, sweeps expired rows every minute when no discovery control plane runs, and deregisters on graceful shutdown; registry failure is fail-open",
+          "consumers: all detected backend HTTP SDK construction sites now resolve through sdkwork_utils_rust::service_base_url / registry_base_url_or (agents bridges, aiot, generations, knowledgebase memory/drive/agent-provider, canvas, notes, course, voice, image, deployments ports, webserver website runtime, webserver agent); the gate scans 6124 Rust files with an empty baseline, allows only explicit registry:allow test stubs, and rejects new bypasses",
+          "standalone hosts: the webserver standalone gateway and the webserver agent install the resolver from the shared registry database before constructing SDK clients; the gate also fails a standalone host that is present without install_resolver_from_env",
+          "docs: docs/guides/operator/HTTP_SERVICE_REGISTRY.md is the operator runbook for the registry table, producer/consumer behaviour, env keys, OEM/multi-cluster guidance, verification SQL, and troubleshooting",
+          "media: the video/audio/image/music app-api audit confirms generations and image are the real media surfaces; CloudRouterMediaGateway re-resolves cloudrouter on every call and rebuilds its SDK client when the registry target changes (online failover, no restart), the standalone ImageGenerationProviderAdapter does the same, the agents media tool family (cloudrouter_base_url) resolves through the registry, and transport failures from media adapters, agent media tools, and HTTP turns report demotion; tests media_registry_resolution, media_client_registry, registry_failover, and turn_transport_registry prove target selection, online failover, and failure reporting",
+          "resolution precedence: explicit override > in-process > healthy registry instance > authored topology URL > split default, with BaseUrlSource::Registry provenance",
+          "specs: DISCOVERY_SPEC.md section 12.1 defines the HTTP registry contract; APP_SDK_INTEGRATION_SPEC.md section 5.2 makes registry resolution the default cloud path",
+          "verification: discovery-client unit tests, real PostgreSQL 18 contract tests for idempotent re-registration/heartbeat/weight ordering/status demotion/deregistration, a gateway registry integration test proving every surface/alias registers for the exact port and deregisters on shutdown, 22 service_base_url tests, 41 gateway lib tests, 53 generations tests, 25/25 deployment-contract tests, 10-profile deployment matrix, and the registry gate",
+          "production hotfix: the deployed 0.1.36 bundle compose/env were patched to publish SDKWORK_DEPLOYMENT_PROFILE=standalone and the gateway was recreated on the same image; /readyz is 200, the in-process turn surface is installed, and the 3900 dial path is gone"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.34",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.34",
         "summary": "IAM claim-based application access token resolution for credential-entry bootstrap deployments. The gateway is rebuilt forward from sdkwork-iam main (a4e3ad64) which resolves the committed public application token against the enabled tenant application registry without requiring an iam_session row, accepts exp=0 as never-expiring, and seeds the default IAM subject with the tenant-scoped organization conflict target. Production was upgraded in place from 0.1.33 after the image was verified to contain the public application token resolver.",
         "highlights": [

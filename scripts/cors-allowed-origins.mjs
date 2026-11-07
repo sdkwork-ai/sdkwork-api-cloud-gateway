@@ -220,6 +220,46 @@ export const CONSOLE_HOST_SCHEMES_ENV_KEY = 'SDKWORK_CORS_CONSOLE_HOST_SCHEMES';
 export const CONSOLE_HOST_BASE_DOMAINS_ENV_KEY = 'SDKWORK_CORS_CONSOLE_HOST_BASE_DOMAINS';
 
 /**
+ * Opt-in registered sub-domain origin rule (`CORS_SPEC.md` §5.1).
+ *
+ * The console pattern above matches exactly one registered label per host, so it
+ * cannot express an operator-chosen brand host (`platform.birdcoder.com`), the
+ * apex (`sdkwork.com`) or a nested name (`region.console.sdkwork.com`). These
+ * base domains are declared **wholly** trusted instead: every host under them,
+ * at any depth, is a first-party browser origin.
+ *
+ * Trust is still bounded by the registered platform base-domain registry (the
+ * Rust `RegisteredSubdomainHosts::validate` rejects anything else), and matching
+ * is anchored on whole DNS labels, so `evil-sdkwork.com`,
+ * `notsdkwork.com` and `sdkwork.com.attacker.example` stay rejected.
+ *
+ * Production carries plain HTTP too: the production operator console set that
+ * motivated this rule already publishes HTTP origins for these hosts, and the
+ * browser is the final arbiter (a mixed-content request is dropped client-side).
+ */
+export const SUBDOMAIN_TRUSTED_BASE_DOMAINS = Object.freeze([
+  'sdkwork.com',
+  'birdcoder.com',
+  'sdkwork.cn',
+  'birdcoder.cn',
+]);
+
+/** Accepted schemes for the sub-domain rule in every lifecycle environment. */
+export const SUBDOMAIN_TRUSTED_SCHEMES = Object.freeze(['http', 'https']);
+
+/** Environment keys that carry the registered sub-domain rule. */
+export const SUBDOMAIN_HOST_BASE_DOMAINS_ENV_KEY = 'SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS';
+export const SUBDOMAIN_HOST_SCHEMES_ENV_KEY = 'SDKWORK_CORS_SUBDOMAIN_SCHEMES';
+
+/** The sub-domain rule as the comma-separated values every carrier declares. */
+export function canonicalSubdomainHostConfig() {
+  return Object.freeze({
+    baseDomains: SUBDOMAIN_TRUSTED_BASE_DOMAINS.join(','),
+    schemes: SUBDOMAIN_TRUSTED_SCHEMES.join(','),
+  });
+}
+
+/**
  * Registered client origins the web framework merges into every policy
  * (WEB_FRAMEWORK_SPEC §12), so carriers never need to list them.
  * Mirrors `REGISTERED_SDKWORK_DESKTOP_CORS_ORIGINS` +

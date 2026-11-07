@@ -17,6 +17,7 @@ import {
   BASE_DOMAINS,
   canonicalConsoleHostConfig,
   canonicalSeedOrigins,
+  canonicalSubdomainHostConfig,
   isPatternCoveredOrigin,
 } from './cors-allowed-origins.mjs';
 
@@ -111,7 +112,17 @@ export function validateDeploymentEnvironment(env, mode) {
     throw new Error(`unsupported dependency mode: ${mode}`);
   }
   const environment = requireResolved(env, 'GATEWAY_ENVIRONMENT');
-  const expectedProfileId = `standalone.${environment}`;
+  // The canonical split-vs-embedded axis the container publishes as
+  // SDKWORK_DEPLOYMENT_PROFILE. The profile id must agree with it, otherwise
+  // the composition root and its embedded SDK consumers resolve different modes
+  // (the production 50301 loopback incident).
+  const deploymentProfile = String(env.GATEWAY_DEPLOYMENT_PROFILE ?? 'standalone').trim();
+  if (!['standalone', 'cloud'].includes(deploymentProfile)) {
+    throw new Error(
+      `GATEWAY_DEPLOYMENT_PROFILE must be standalone or cloud (got '${deploymentProfile}')`,
+    );
+  }
+  const expectedProfileId = `${deploymentProfile}.${environment}`;
   if (env.GATEWAY_PROFILE_ID !== expectedProfileId) {
     throw new Error(`GATEWAY_PROFILE_ID must be ${expectedProfileId}`);
   }
@@ -230,6 +241,37 @@ export function validateDeploymentEnvironment(env, mode) {
     throw new Error(
       `GATEWAY_CORS_CONSOLE_HOST_SCHEMES must include http in ${environment}: the environment ` +
         'edge serves plain HTTP on its host port',
+    );
+  }
+
+  // Opt-in whole-sub-domain rule (CORS_SPEC.md §5.1). The gateway fails closed at
+  // startup when only half of it is configured, and a base domain outside the
+  // registered registry is rejected by the Rust validator, so the carrier must
+  // declare both keys with exactly the canonical values.
+  const subdomainConfig = canonicalSubdomainHostConfig();
+  const subdomainBaseDomains = csv(env.GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS);
+  const missingSubdomainDomains = subdomainConfig.baseDomains
+    .split(',')
+    .filter((domain) => !subdomainBaseDomains.includes(domain));
+  if (missingSubdomainDomains.length > 0) {
+    throw new Error(
+      `GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS is missing ${missingSubdomainDomains.join(', ')} ` +
+        '(run: node scripts/derive-cors-allowed-origins.mjs --apply)',
+    );
+  }
+  const unregisteredSubdomainDomains = subdomainBaseDomains.filter(
+    (domain) => !BASE_DOMAINS.includes(domain),
+  );
+  if (unregisteredSubdomainDomains.length > 0) {
+    throw new Error(
+      `GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS carries unregistered base domain(s) ` +
+        `${unregisteredSubdomainDomains.join(', ')}; the gateway rejects the policy at startup`,
+    );
+  }
+  if (csv(env.GATEWAY_CORS_SUBDOMAIN_SCHEMES).join(',') !== subdomainConfig.schemes) {
+    throw new Error(
+      `GATEWAY_CORS_SUBDOMAIN_SCHEMES must be "${subdomainConfig.schemes}" in ${environment} ` +
+        `(got "${env.GATEWAY_CORS_SUBDOMAIN_SCHEMES ?? ''}")`,
     );
   }
 

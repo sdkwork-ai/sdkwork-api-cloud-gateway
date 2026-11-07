@@ -17,6 +17,7 @@ mod policy;
 mod runtime;
 mod security;
 mod service_config_loader;
+pub mod service_registry;
 mod traffic;
 pub mod web_framework;
 

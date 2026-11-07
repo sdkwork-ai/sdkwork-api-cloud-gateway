@@ -5,8 +5,23 @@
 # signals (SIGTERM graceful shutdown) reach the gateway process directly.
 set -eu
 
-export SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE=standalone
+export SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE="${SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE:-standalone}"
 export SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
+# The canonical profile axis every embedded Rust SDK consumer reads
+# (APP_SDK_INTEGRATION_SPEC.md §5.2). Publishing it here, not only under the
+# application-scoped alias, keeps the process' dependency assemblies and SDK
+# consumers in the same split-vs-embedded mode. Without it the agents turn path
+# classifies this all-in-one container as `split`, skips the in-process Cloud
+# Router surface, and dials the split default http://127.0.0.1:3900 — a port
+# nothing listens on when GATEWAY_CONTAINER_PORT moved to 8080.
+case "${SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE}" in
+  standalone|cloud) ;;
+  *)
+    echo "SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE must be standalone or cloud (got '${SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE}')" >&2
+    exit 2
+    ;;
+esac
+export SDKWORK_DEPLOYMENT_PROFILE="${SDKWORK_DEPLOYMENT_PROFILE:-${SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE}}"
 : "${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT:=development}"
 : "${SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID:=standalone.${SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT}}"
 export SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT

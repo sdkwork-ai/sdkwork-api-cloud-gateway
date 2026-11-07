@@ -4315,6 +4315,8 @@
     "cors": {
       "configField": "cors",
       "strictOriginMode": "cors.allowAnyOrigin=false with cors.allowedOrigins",
+      "registeredConsoleHosts": "cors.registeredConsoleHosts admits <label><suffix>.<registered base domain> exactly (CORS_SPEC.md section 5)",
+      "registeredSubdomainHosts": "cors.registeredSubdomainHosts (SDKWORK_CORS_SUBDOMAIN_{BASE_DOMAINS,SCHEMES}) admits the apex and every sub-domain of a registered base domain at any depth, opt-in and fail-closed (CORS_SPEC.md section 5.1)",
       "embeddedModeAuthority": "embedded dependency routers own request-context middleware and the platform gateway owns outer CORS"
     },
     "configValidation": {

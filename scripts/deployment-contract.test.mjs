@@ -172,6 +172,43 @@ test('default compose uses external PostgreSQL/Redis; embedded is opt-in', () =>
   assert.match(externalShim, /external PostgreSQL\/Redis is now the default/u);
 });
 
+test('every container surface publishes the canonical deployment profile', () => {
+  // APP_SDK_INTEGRATION_SPEC §5.2: embedded Rust SDK consumers resolve
+  // split-versus-embedded from SDKWORK_DEPLOYMENT_PROFILE alone. A container
+  // that declares only the application-scoped alias silently runs its dependency
+  // assemblies as `split` and dials the Cloud Router split default
+  // (http://127.0.0.1:3900) — the production 50301 incident on container port
+  // 8080. Every compose input that can create the gateway container must carry
+  // the canonical key, tracking the same GATEWAY_DEPLOYMENT_PROFILE input.
+  for (const file of [
+    'docker-compose.yml',
+    'docker-compose.bundle.yml',
+    'docker-compose.override.yml',
+    'docker-compose.bundle.attach-override.yml',
+  ]) {
+    const compose = readFileSync(path.join(appRoot, file), 'utf8');
+    assert.match(compose, /SDKWORK_DEPLOYMENT_PROFILE: \$\{GATEWAY_DEPLOYMENT_PROFILE:-standalone\}/u, file);
+  }
+  for (const file of ['docker-compose.yml', 'docker-compose.bundle.yml']) {
+    const compose = readFileSync(path.join(appRoot, file), 'utf8');
+    assert.match(compose, /SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: \$\{GATEWAY_DEPLOYMENT_PROFILE:-standalone\}/u, file);
+  }
+  const entrypoint = readFileSync(
+    path.join(appRoot, 'bin', 'container', 'entrypoint'),
+    'utf8',
+  );
+  assert.match(entrypoint, /export SDKWORK_DEPLOYMENT_PROFILE=/u);
+  assert.match(entrypoint, /SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE:-standalone/u);
+  assert.match(entrypoint, /standalone\|cloud/u);
+  for (const environment of environments) {
+    const env = parseDotEnv(readFileSync(
+      path.join(appRoot, 'docker', 'env', `${environment}.env.example`),
+      'utf8',
+    ));
+    assert.equal(env.GATEWAY_DEPLOYMENT_PROFILE, 'standalone', environment);
+  }
+});
+
 test('container image packages the official Knowledgebase RPC sidecar', () => {
   const buildScript = readFileSync(
     path.join(appRoot, 'scripts', 'build-api-cloud-gateway-container.mjs'),

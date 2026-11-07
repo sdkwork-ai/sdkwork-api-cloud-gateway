@@ -23,6 +23,7 @@ import {
   canonicalConsoleHostConfig,
   canonicalConsoleOrigins,
   canonicalSeedOrigins,
+  canonicalSubdomainHostConfig,
   CONSOLE_ENV_SCHEMES,
   CONSOLE_ENV_SUFFIX,
   consoleHostLabelRegistry,
@@ -31,6 +32,8 @@ import {
   isManagedConsoleOrigin,
   isPatternCoveredOrigin,
   isRegisteredClientOrigin,
+  SUBDOMAIN_TRUSTED_BASE_DOMAINS,
+  SUBDOMAIN_TRUSTED_SCHEMES,
   WEB_CONSOLE_CLIENT_ROLES,
 } from './cors-allowed-origins.mjs';
 
@@ -193,4 +196,32 @@ test('base domain registry mirrors the platform base-domain family', () => {
   assert.equal(new Set(BASE_DOMAINS).size, BASE_DOMAINS.length);
   assert.ok(BASE_DOMAINS.includes('sdkwork.com'));
   assert.ok(BASE_DOMAINS.includes('86offer.cn'));
+});
+
+test('the sub-domain rule is opt-in, registered and environment-independent', () => {
+  assert.deepEqual([...SUBDOMAIN_TRUSTED_BASE_DOMAINS], [
+    'sdkwork.com',
+    'birdcoder.com',
+    'sdkwork.cn',
+    'birdcoder.cn',
+  ]);
+  assert.deepEqual([...SUBDOMAIN_TRUSTED_SCHEMES], ['http', 'https']);
+  // Every trusted base domain is a registered platform domain; nothing else may
+  // ever be added here (the Rust validator rejects it at startup).
+  for (const domain of SUBDOMAIN_TRUSTED_BASE_DOMAINS) {
+    assert.ok(BASE_DOMAINS.includes(domain), domain);
+  }
+  assert.equal(new Set(SUBDOMAIN_TRUSTED_BASE_DOMAINS).size, SUBDOMAIN_TRUSTED_BASE_DOMAINS.length);
+  const config = canonicalSubdomainHostConfig();
+  assert.equal(config.baseDomains, SUBDOMAIN_TRUSTED_BASE_DOMAINS.join(','));
+  assert.equal(config.schemes, SUBDOMAIN_TRUSTED_SCHEMES.join(','));
+});
+
+test('the reported conditional-write failure is covered by the sub-domain rule', () => {
+  // The production console `platform.birdcoder.com` is not a registered console
+  // label, so the single-label pattern cannot express it. The reported preflight
+  // failure (`Request header field if-match is not allowed`) came from that
+  // origin, and it must stay reachable through the whole-sub-domain rule.
+  assert.ok(!isPatternCoveredOrigin('https://platform.birdcoder.com', 'production'));
+  assert.ok(SUBDOMAIN_TRUSTED_BASE_DOMAINS.includes('birdcoder.com'));
 });

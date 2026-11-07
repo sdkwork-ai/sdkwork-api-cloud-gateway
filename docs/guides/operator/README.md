@@ -12,4 +12,6 @@ Deployment, monitoring, and incident response entrypoints.
 - [数据库初始化](DATABASE_INITIALIZATION.md)
 - [Ubuntu 与 Windows 源码发布和生产部署](SOURCE_DEPLOYMENT_UBUNTU_WINDOWS.md)
 
+- [HTTP service registry runbook](HTTP_SERVICE_REGISTRY.md)
+
 See `DOCUMENTATION_SPEC.md` section 2.

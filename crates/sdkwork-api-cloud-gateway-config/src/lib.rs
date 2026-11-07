@@ -8,6 +8,9 @@ use sdkwork_web_core::registered_client_origins::{
 use sdkwork_web_core::registered_console_hosts::{
     registered_console_hosts_from_lookup, RegisteredConsoleHosts,
 };
+use sdkwork_web_core::registered_subdomain_hosts::{
+    registered_subdomain_hosts_from_lookup, RegisteredSubdomainHosts,
+};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -250,6 +253,17 @@ pub struct CorsConfig {
     /// declares the closed pattern. `None` keeps exact-origin-only matching.
     #[serde(default)]
     pub registered_console_hosts: Option<RegisteredConsoleHosts>,
+    /// Opt-in sub-domain origin rule (`CORS_SPEC.md` §5.1).
+    ///
+    /// The console pattern above matches one registered label per host. A
+    /// deployment that also serves first-party browser surfaces on an
+    /// operator-chosen or nested name (`platform.birdcoder.com`, the apex
+    /// `sdkwork.com`, `region.console.sdkwork.com`) declares the base domains
+    /// whose **whole** sub-domain space is trusted here. Base domains stay
+    /// restricted to the registered platform registry, so the rule cannot be
+    /// widened to an unrelated domain. `None` keeps exact matching only.
+    #[serde(default)]
+    pub registered_subdomain_hosts: Option<RegisteredSubdomainHosts>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -801,6 +815,16 @@ impl GatewayRuntimeConfig {
                 return Err(invalid_value("cors.registeredConsoleHosts", reason));
             }
         }
+        // Registered sub-domain origin rule: the same fail-closed contract as the
+        // console pattern, resolved through the injected environment so it obeys
+        // the deployment override rules.
+        match registered_subdomain_hosts_from_lookup(|key| env.get(key).cloned()) {
+            Ok(Some(hosts)) => self.cors.registered_subdomain_hosts = Some(hosts),
+            Ok(None) => {}
+            Err(reason) => {
+                return Err(invalid_value("cors.registeredSubdomainHosts", reason));
+            }
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED") {
             self.traffic.rate_limit_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED", enabled)?;
@@ -881,6 +905,11 @@ impl GatewayRuntimeConfig {
             hosts
                 .validate()
                 .map_err(|reason| invalid_value("cors.registeredConsoleHosts", reason))?;
+        }
+        if let Some(hosts) = &self.cors.registered_subdomain_hosts {
+            hosts
+                .validate()
+                .map_err(|reason| invalid_value("cors.registeredSubdomainHosts", reason))?;
         }
 
         if is_production_like_environment(self.service.environment.as_str())
@@ -1102,6 +1131,7 @@ impl Default for CorsConfig {
             allow_any_origin: true,
             allowed_origins: Vec::new(),
             registered_console_hosts: None,
+            registered_subdomain_hosts: None,
         }
     }
 }

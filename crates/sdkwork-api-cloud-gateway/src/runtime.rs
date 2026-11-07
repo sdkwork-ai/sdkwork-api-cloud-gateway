@@ -601,7 +601,7 @@ fn apply_gateway_cors_headers(
         .get(header::ORIGIN)
         .and_then(|value| value.to_str().ok());
     SecurityPolicy::apply_cors_policy_headers_from_origin(
-        &web_framework::gateway_cors_policy(&state.config),
+        &web_framework::gateway_cors_policy_for_origin(&state.config, origin),
         origin,
         response,
     );
@@ -1631,46 +1631,7 @@ fn emit_access_log(
 }
 
 fn cors_layer(config: &GatewayRuntimeConfig) -> tower_http::cors::CorsLayer {
-    let policy = web_framework::gateway_cors_policy(config);
-    let mut layer = sdkwork_web_axum::cors_layer_from_policy(policy.clone());
-    // Same-origin requests (Origin == Host) are always allowed for dependency
-    // surfaces that declare `sameOriginAllowed`, on top of the canonical CORS
-    // allowlist (development private-network semantics + the
-    // SDKWORK_CORS_ALLOWED_ORIGINS allowlist). The predicate therefore accepts
-    // the canonical policy origins first and only then widens to same-origin,
-    // so first-party browser flows keep working without weakening the
-    // configured cross-origin policy.
-    if config
-        .dependency_surfaces
-        .iter()
-        .any(|surface| surface.same_origin_allowed)
-    {
-        let canonical_policy = policy;
-        layer = layer.allow_origin(tower_http::cors::AllowOrigin::predicate(
-            move |origin, request_parts| {
-                let origin = origin.to_str().unwrap_or_default();
-                canonical_policy.allows_origin_value(origin)
-                    || request_parts
-                        .headers
-                        .get(header::HOST)
-                        .and_then(|host| host.to_str().ok())
-                        .map(|host| same_origin(origin, host))
-                        .unwrap_or(false)
-            },
-        ));
-    }
-    layer
-}
-
-/// Compare an Origin authority with the request Host (case-insensitive,
-/// port-sensitive like the browser's same-origin policy).
-fn same_origin(origin: &str, host: &str) -> bool {
-    let origin_host = origin
-        .strip_prefix("https://")
-        .or_else(|| origin.strip_prefix("http://"))
-        .and_then(|authority| authority.split_once('/').map(|(host, _)| host))
-        .unwrap_or(origin);
-    origin_host.eq_ignore_ascii_case(host.trim())
+    web_framework::gateway_cors_layer(config)
 }
 
 fn problem_response_with_instance(

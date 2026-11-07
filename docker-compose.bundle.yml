@@ -38,7 +38,17 @@ x-gateway-common: &gateway-common
     - sdkwork
   environment:
     # Deployment identity (DEPLOYMENT_SPEC §5.2); the entrypoint pins these too.
-    SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: standalone
+    # GATEWAY_DEPLOYMENT_PROFILE is the canonical split-vs-embedded axis every
+    # embedded Rust SDK consumer reads (APP_SDK_INTEGRATION_SPEC §5.2); both the
+    # application-scoped alias and the canonical value must stay identical so
+    # the composition root and its dependency assemblies agree on the mode.
+    SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+    SDKWORK_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+    # Database-backed HTTP service registry (DISCOVERY_SPEC.md section 12.1).
+    SDKWORK_DISCOVERY_NAMESPACE: ${GATEWAY_DISCOVERY_NAMESPACE:-platform}
+    SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED: ${GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED:-true}
+    SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL: ${GATEWAY_PUBLIC_HTTP_URL:-}
+    SDKWORK_DISCOVERY_DATABASE_URL: ${GATEWAY_DISCOVERY_DATABASE_URL:-}
     SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container
     SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
     SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:?required}
@@ -52,7 +62,9 @@ x-gateway-common: &gateway-common
     # so no extra override file is needed to keep them consistent.
     SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
     # Cloud Router open-api ingress for embedded Rust SDK consumers: must track
-    # the listener bind above (the SDK resolver maps it to 127.0.0.1:<port>).
+    # the listener bind above. The resolver never turns this bind into a
+    # loopback base URL; the in-process turn transport dispatches into the
+    # mounted assembly, and the profile above (not this bind) selects that arm.
     SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:${GATEWAY_CONTAINER_PORT:-3900}
     SDKWORK_API_CLOUD_GATEWAY_ALLOWED_HOSTS: ${GATEWAY_ALLOWED_HOSTS:-}
     # Accept raw IP literal Host headers when the deployment must stay
@@ -62,6 +74,8 @@ x-gateway-common: &gateway-common
     SDKWORK_CORS_CONSOLE_HOST_LABELS: ${GATEWAY_CORS_CONSOLE_HOST_LABELS:-}
     SDKWORK_CORS_CONSOLE_HOST_SUFFIX: ${GATEWAY_CORS_CONSOLE_HOST_SUFFIX:-}
     SDKWORK_CORS_CONSOLE_HOST_SCHEMES: ${GATEWAY_CORS_CONSOLE_HOST_SCHEMES:-}
+    SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS: ${GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS:-}
+    SDKWORK_CORS_SUBDOMAIN_SCHEMES: ${GATEWAY_CORS_SUBDOMAIN_SCHEMES:-}
     # Migration ownership: instance 1 migrates; instances 2..N must not.
     SDKWORK_API_CLOUD_GATEWAY_MIGRATE_ON_START: ${GATEWAY_MIGRATE_ON_START:-true}
     SDKWORK_DATABASE_AUTO_MIGRATE: ${SDKWORK_DATABASE_AUTO_MIGRATE:-false}
