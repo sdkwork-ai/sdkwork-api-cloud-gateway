@@ -169,6 +169,7 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_NOTES_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-notes \
     SDKWORK_ORDER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-order \
     SDKWORK_PAYMENT_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-payment \
+    SDKWORK_PLUGINS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-plugins \
     SDKWORK_PORTAL_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-portal \
     SDKWORK_PROMOTION_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-promotion \
     SDKWORK_PROMPTS_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-prompts \

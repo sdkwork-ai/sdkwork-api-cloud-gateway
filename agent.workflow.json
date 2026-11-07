@@ -10,7 +10,7 @@
   },
   "release": {
     "artifactPrefix": "sdkwork-api-cloud-gateway",
-    "defaultVersion": "0.1.34",
+    "defaultVersion": "0.1.36",
     "changelog": {
       "source": "auto",
       "maxCommitSubjects": 50
@@ -51,6 +51,12 @@
     {
       "id": "sdkwork-payment",
       "repository": "sdkwork-ai/sdkwork-payment",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN",
+      "ref": "main"
+    },
+    {
+      "id": "sdkwork-plugins",
+      "repository": "sdkwork-ai/sdkwork-plugins",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN",
       "ref": "main"
     },
@@ -546,7 +552,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-linux-x64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-linux-x64-standalone-server.tar.gz"
     },
     {
       "id": "linux-x64-cloud-server-tar-gz",
@@ -567,7 +573,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-linux-x64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-linux-x64-cloud-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-linux-x64-cloud-server.tar.gz"
     },
     {
       "id": "windows-x64-standalone-server-tar-gz",
@@ -588,7 +594,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-windows-x64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-windows-x64-standalone-server.tar.gz"
     },
     {
       "id": "windows-x64-cloud-server-tar-gz",
@@ -609,7 +615,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-windows-x64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-windows-x64-cloud-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-windows-x64-cloud-server.tar.gz"
     },
     {
       "id": "macos-arm64-standalone-server-tar-gz",
@@ -630,7 +636,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-standalone-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-standalone-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-macos-arm64-standalone-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-macos-arm64-standalone-server.tar.gz"
     },
     {
       "id": "macos-arm64-cloud-server-tar-gz",
@@ -651,7 +657,7 @@
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-cloud-server.tar.gz.cdx.json",
         "dist/server/sdkwork-api-cloud-gateway-*-macos-arm64-cloud-server.tar.gz.intoto.jsonl"
       ],
-      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.34-macos-arm64-cloud-server.tar.gz"
+      "artifactPath": "dist/server/sdkwork-api-cloud-gateway-0.1.36-macos-arm64-cloud-server.tar.gz"
     }
   ],
   "security": {
