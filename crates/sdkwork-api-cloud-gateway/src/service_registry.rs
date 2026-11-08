@@ -24,7 +24,7 @@ use std::time::Duration;
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_discovery_client::{
     HttpInstanceRegistration, HttpRegistry, HttpRegistryConfig, HttpRegistryResolver,
-    RegisteredHttpInstance, RegistryIdentity,
+    LoadBalanceStrategy, RegisteredHttpInstance,
 };
 use sdkwork_utils_rust::service_base_url::{bind_port, install_http_service_registry};
 use tokio::sync::Mutex;
@@ -35,18 +35,10 @@ use tracing::{info, warn};
 const LEASE_TTL_SECONDS: u64 = 30;
 /// Heartbeat cadence; comfortably shorter than the lease.
 const HEARTBEAT_INTERVAL_SECONDS: u64 = 10;
-/// Registry namespace used when the deployment does not declare one.
-const DEFAULT_NAMESPACE: &str = "platform";
 /// Toggle for the whole registration/resolution feature.
 const ENABLED_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED";
-/// Namespace override.
-const NAMESPACE_ENV: &str = "SDKWORK_DISCOVERY_NAMESPACE";
 /// Optional dedicated discovery database; defaults to the application database.
 const ENV_DISCOVERY_DATABASE_URL: &str = "SDKWORK_DISCOVERY_DATABASE_URL";
-/// Authored public origin of this gateway (`https://api.example.com`).
-const PUBLIC_HTTP_URL_ENV: &str = "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL";
-/// Generic authored public origin fallback.
-const GENERIC_PUBLIC_HTTP_URL_ENV: &str = "SDKWORK_PUBLIC_BASE_URL";
 /// Refresh interval override.
 const REFRESH_INTERVAL_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_REFRESH_MS";
 /// Failure threshold override.
@@ -57,6 +49,13 @@ const FAILURE_COOLDOWN_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_FAILURE_COOL
 const HEALTH_PROBE_PATH_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_HEALTH_PATH";
 /// Active health-probe timeout override.
 const HEALTH_PROBE_TIMEOUT_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_HEALTH_TIMEOUT_MS";
+/// Load-balancer override (`priority`, `round_robin`, `random`,
+/// `weighted_random`).
+const LOAD_BALANCER_ENV: &str = "SDKWORK_DISCOVERY_HTTP_REGISTRY_LOAD_BALANCER";
+/// Registration priority override (lower is preferred).
+const REGISTRY_PRIORITY_ENV: &str = "SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY";
+/// Registration weight override (relative traffic inside one priority tier).
+const REGISTRY_WEIGHT_ENV: &str = "SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT";
 
 struct LeaseState {
     registration: HttpInstanceRegistration,
@@ -95,7 +94,7 @@ impl ServiceRegistryRuntime {
         };
 
         let identity =
-            RegistryIdentity::new(registry_namespace(), config.service.environment.clone());
+            sdkwork_discovery_client::registry_identity_from_env_or(&config.service.environment);
         let registry = match tokio::time::timeout(
             Duration::from_secs(5),
             HttpRegistry::connect(&database_url, identity, 2),
@@ -134,7 +133,7 @@ impl ServiceRegistryRuntime {
             }
         }
 
-        let endpoint = public_base_url(local_addr.port());
+        let endpoint = advertised_base_url(local_addr.port());
         let instance_id = instance_id(config, local_addr.port());
         let version = env!("CARGO_PKG_VERSION");
         let mut registrations = Vec::new();
@@ -146,6 +145,12 @@ impl ServiceRegistryRuntime {
                 version,
                 LEASE_TTL_SECONDS,
             );
+            if let Some(priority) = env_u64(REGISTRY_PRIORITY_ENV) {
+                registration.priority = priority.min(u32::MAX as u64) as u32;
+            }
+            if let Some(weight) = env_u64(REGISTRY_WEIGHT_ENV) {
+                registration.weight = weight.clamp(1, u32::MAX as u64) as u32;
+            }
             registration.metadata = registration_metadata(config, api_prefix.as_deref());
             registrations.push(registration);
         }
@@ -361,14 +366,6 @@ fn registry_enabled() -> bool {
     }
 }
 
-fn registry_namespace() -> String {
-    std::env::var(NAMESPACE_ENV)
-        .ok()
-        .map(|value| value.trim().to_owned())
-        .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| DEFAULT_NAMESPACE.to_owned())
-}
-
 /// Registry connection string: a dedicated discovery database wins, otherwise
 /// the application database hosts the registry table.
 fn registry_database_url() -> Option<String> {
@@ -402,6 +399,10 @@ fn resolver_config() -> HttpRegistryConfig {
         health_probe_timeout_ms: env_u64(HEALTH_PROBE_TIMEOUT_ENV)
             .unwrap_or(defaults.health_probe_timeout_ms)
             .max(250),
+        load_balancer: std::env::var(LOAD_BALANCER_ENV)
+            .ok()
+            .and_then(|value| LoadBalanceStrategy::parse(&value))
+            .unwrap_or(defaults.load_balancer),
     }
 }
 
@@ -411,31 +412,13 @@ fn env_u64(key: &str) -> Option<u64> {
         .and_then(|value| value.trim().parse::<u64>().ok())
 }
 
-/// Absolute public origin of this gateway for registry consumers.
+/// Absolute LAN origin of this gateway for cluster-internal registry consumers.
 ///
-/// Precedence: the gateway's authored public URL, a generic public URL, then a
-/// container/host identity derived origin. The derived form is intentionally
-/// last: it is reachable on the compose network, while an authored domain is
-/// required for consumers outside the deployment.
-fn public_base_url(port: u16) -> String {
-    for key in [PUBLIC_HTTP_URL_ENV, GENERIC_PUBLIC_HTTP_URL_ENV] {
-        if let Some(value) = std::env::var(key)
-            .ok()
-            .map(|value| value.trim().trim_end_matches('/').to_owned())
-            .filter(|value| !value.is_empty())
-        {
-            if value.starts_with("http://") || value.starts_with("https://") {
-                return value;
-            }
-            warn!(key, "ignoring non-http(s) public base URL");
-        }
-    }
-    let host = std::env::var("HOSTNAME")
-        .ok()
-        .filter(|value| !value.trim().is_empty())
-        .or_else(|| std::env::var("COMPUTERNAME").ok())
-        .unwrap_or_else(|| "127.0.0.1".to_owned());
-    format!("http://{}:{}", host.trim(), port)
+/// The zero-config decision lives in `sdkwork-discovery-client` (private URL >
+/// advertise IP > private-preferred interface > hostname); public edge domains
+/// are intentionally not registered.
+fn advertised_base_url(port: u16) -> String {
+    sdkwork_discovery_client::advertised_http_endpoint(port)
 }
 
 fn instance_id(config: &GatewayRuntimeConfig, port: u16) -> String {

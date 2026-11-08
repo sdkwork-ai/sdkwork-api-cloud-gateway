@@ -14,7 +14,7 @@ service_name, instance_id)`:
 | `namespace`, `environment` | Registry partition, e.g. `platform` / `production` |
 | `service_name` | Canonical service or SDK alias (`sdkwork-cloudrouter`, `cloudrouter`) |
 | `instance_id` | `<profile-id>:<hostname>:<port>` — unique per process/port |
-| `endpoint` | Absolute `http(s)://host[:port]` base URL |
+| `endpoint` | Absolute `http(s)://host[:port]` base URL, LAN-reachable in cluster deployments |
 | `protocol` | `http` for backend SDK base URLs |
 | `status` | `serving`, `degraded`, `not_serving` |
 | `priority`, `weight` | QoS ordering (lower priority first, then higher weight) |
@@ -54,7 +54,9 @@ Resolution order (`sdkwork_utils_rust::service_base_url`):
 `registry_base_url_or(service, configured)` returns the registry target when
 present, otherwise the configured value. `report_registry_result(...)` feeds
 success/failure back to the resolver so a failing target is demoted for a
-cooldown.
+cooldown. Adapters resolve per call and pool clients by resolved base URL; the
+media tool family pools by `(base URL, auth token)`, so a multi-process cluster
+load-balances without pinning one process.
 
 Embedded consumers inherit the gateway's installed resolver. Standalone hosts
 must call:
@@ -75,7 +77,11 @@ before constructing SDK clients.
 | `SDKWORK_DISCOVERY_DATABASE_URL` | app DB | Dedicated registry database. **All services in one environment MUST use the same value.** |
 | `SDKWORK_DISCOVERY_NAMESPACE` | `platform` | Registry partition |
 | `SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED` | `true` | `false` disables registration and registry-first resolution |
-| `SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL` / `SDKWORK_PUBLIC_BASE_URL` | derived container URL | Authored public origin published for this instance |
+| `SDKWORK_API_CLOUD_GATEWAY_PRIVATE_HTTP_URL` | auto-detected LAN IP | Authored LAN origin published to the cluster registry (`http://10.0.0.5:8080`). The public edge domain is not registered. |
+| `SDKWORK_API_CLOUD_GATEWAY_ADVERTISE_IP` | unset | Explicit LAN IP combined with the bound port when the private URL is empty. |
+| `SDKWORK_DISCOVERY_HTTP_REGISTRY_LOAD_BALANCER` | `priority` | `priority`, `round_robin`, `random`, or `weighted_random`. |
+| `SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY` | `100` | Registration priority; lower values are preferred tiers. |
+| `SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT` | `100` | Registration weight inside one priority tier. |
 | `SDKWORK_DISCOVERY_HTTP_REGISTRY_REFRESH_MS` | `5000` | Snapshot refresh interval |
 | `SDKWORK_DISCOVERY_HTTP_REGISTRY_FAILURE_THRESHOLD` | `3` | Consecutive failures before demotion |
 | `SDKWORK_DISCOVERY_HTTP_REGISTRY_FAILURE_COOLDOWN_MS` | `30000` | Demotion cooldown |
@@ -86,9 +92,16 @@ OEM / new cluster / new domain:
 
 - point every service at the same registry database;
 - set a distinct `SDKWORK_DISCOVERY_NAMESPACE` per tenant/platform partition;
-- set `GATEWAY_PUBLIC_HTTP_URL` to the real public domain, otherwise the
-  derived `http://<container-hostname>:<port>` is reachable only inside the
-  deployment network;
+- set `GATEWAY_PRIVATE_HTTP_URL` (or `GATEWAY_ADVERTISE_IP`) to a LAN address
+  reachable by every cluster member; the registry is east-west traffic and the
+  public edge domain is intentionally not registered. External consumers use an
+  explicit per-service override or the public edge;
+- choose `GATEWAY_DISCOVERY_LOAD_BALANCER` (`priority`, `round_robin`, `random`,
+  `weighted_random`) for the traffic pattern;
+- for a published host port (for example `3913:8080`), set
+  `GATEWAY_PRIVATE_HTTP_URL=http://<host-lan-ip>:3913`; `GATEWAY_ADVERTISE_IP`
+  uses the bound container port and suits host/overlay networking where that
+  port is directly reachable;
 - no port or domain is hard-coded in SDK clients: the registry supplies the
   endpoint.
 
@@ -133,7 +146,8 @@ Behaviour checks:
 | Turn/media call dials `http://127.0.0.1:3900` | process profile is `split` without a registry target | ensure the canonical `SDKWORK_DEPLOYMENT_PROFILE=standalone` and the gateway registered; check the table |
 | Registry table empty after startup | DB unreachable / no DDL permission | check gateway logs for `HTTP service registry ...` warnings; grant CREATE/INSERT/UPDATE on the schema |
 | Repeated `lease expired; re-registering` | heartbeat blocked or DB latency | check DB connectivity/timeouts; lease is 30s, heartbeat 10s |
-| Consumers outside the compose network cannot reach the endpoint | derived container hostname URL | set `SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL` to the public domain |
+| Consumers outside the compose network cannot reach the endpoint | the registry advertises a LAN address by design | use an explicit per-service override or the public edge; do not register the public domain |
+| Registry row shows a public domain | old `GATEWAY_PUBLIC_HTTP_URL` mapping | set `GATEWAY_PRIVATE_HTTP_URL` / `GATEWAY_ADVERTISE_IP`; public domains are not registry endpoints |
 | Stale rows accumulate | no discovery control plane and no producer sweep | the gateway sweeps every minute; verify `reap_expired` logs |
 
 ## 7. Security

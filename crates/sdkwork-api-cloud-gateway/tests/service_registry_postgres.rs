@@ -69,11 +69,14 @@ async fn gateway_registers_every_surface_for_its_port_and_deregisters() {
     // SAFETY: this integration test binary owns its process environment.
     std::env::set_var("SDKWORK_DISCOVERY_DATABASE_URL", &schema_url);
     std::env::set_var("SDKWORK_DISCOVERY_NAMESPACE", "platform");
+    std::env::set_var("SDKWORK_ENVIRONMENT", "integration");
     std::env::set_var("SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID", "integration");
     std::env::set_var(
-        "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL",
+        "SDKWORK_API_CLOUD_GATEWAY_PRIVATE_HTTP_URL",
         "http://127.0.0.1:18080",
     );
+    std::env::set_var("SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY", "20");
+    std::env::set_var("SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT", "70");
 
     let mut config = GatewayRuntimeConfig::default();
     config.service.environment = "integration".to_owned();
@@ -117,6 +120,14 @@ async fn gateway_registers_every_surface_for_its_port_and_deregisters() {
         cloudrouter[0].instance_id
     );
     assert_eq!(cloudrouter[0].endpoint, "http://127.0.0.1:18080");
+    assert_eq!(
+        cloudrouter[0].priority, 20,
+        "registration priority honors the env override"
+    );
+    assert_eq!(
+        cloudrouter[0].weight, 70,
+        "registration weight honors the env override"
+    );
 
     let services = registry
         .discover_services()
@@ -156,8 +167,11 @@ async fn gateway_registers_every_surface_for_its_port_and_deregisters() {
     for key in [
         "SDKWORK_DISCOVERY_DATABASE_URL",
         "SDKWORK_DISCOVERY_NAMESPACE",
+        "SDKWORK_ENVIRONMENT",
         "SDKWORK_API_CLOUD_GATEWAY_PROFILE_ID",
-        "SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL",
+        "SDKWORK_API_CLOUD_GATEWAY_PRIVATE_HTTP_URL",
+        "SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY",
+        "SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT",
     ] {
         std::env::remove_var(key);
     }

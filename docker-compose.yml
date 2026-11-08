@@ -143,10 +143,14 @@ services:
       # authored topology values instead of failing startup.
       SDKWORK_DISCOVERY_NAMESPACE: ${GATEWAY_DISCOVERY_NAMESPACE:-platform}
       SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED: ${GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED:-true}
-      # Authored public origin of this gateway for registry consumers. Leave
-      # empty to derive http://<container-hostname>:<container-port> (compose
-      # network reachable); set the real domain in a multi-host/OEM deployment.
-      SDKWORK_API_CLOUD_GATEWAY_PUBLIC_HTTP_URL: ${GATEWAY_PUBLIC_HTTP_URL:-}
+      # LAN origin published for cluster consumers; empty auto-detects a
+      # non-loopback IPv4. The public edge domain is intentionally not
+      # registered; external consumers use an explicit override.
+      SDKWORK_API_CLOUD_GATEWAY_PRIVATE_HTTP_URL: ${GATEWAY_PRIVATE_HTTP_URL:-}
+      SDKWORK_API_CLOUD_GATEWAY_ADVERTISE_IP: ${GATEWAY_ADVERTISE_IP:-}
+      SDKWORK_DISCOVERY_HTTP_REGISTRY_LOAD_BALANCER: ${GATEWAY_DISCOVERY_LOAD_BALANCER:-priority}
+      SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY: ${GATEWAY_REGISTRY_PRIORITY:-}
+      SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT: ${GATEWAY_REGISTRY_WEIGHT:-}
       # Optional dedicated discovery database; empty reuses SDKWORK_DATABASE_URL.
       SDKWORK_DISCOVERY_DATABASE_URL: ${GATEWAY_DISCOVERY_DATABASE_URL:-}
       SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container

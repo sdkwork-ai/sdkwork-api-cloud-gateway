@@ -58,7 +58,11 @@ container port needs no hard-coded SDK URL.
 | --- | --- |
 | `GATEWAY_DISCOVERY_NAMESPACE` | Registry partition (default `platform`). |
 | `GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED` | `false` disables registration and registry-first resolution. |
-| `GATEWAY_PUBLIC_HTTP_URL` | Authored public origin published for this instance (`https://api.example.com`); empty derives `http://<container-host>:<port>` (compose-network reachable). |
+| `GATEWAY_PRIVATE_HTTP_URL` | Authored LAN origin published to the cluster registry (`http://10.0.0.5:8080`); empty auto-detects a non-loopback IPv4. The public edge domain is not registered. |
+| `GATEWAY_ADVERTISE_IP` | Explicit LAN IP combined with the bound port (used when the private URL is empty). |
+| `GATEWAY_DISCOVERY_LOAD_BALANCER` | `priority` (default), `round_robin`, `random`, `weighted_random`. |
+| `GATEWAY_REGISTRY_PRIORITY` | Registration priority (default `100`; lower is preferred). |
+| `GATEWAY_REGISTRY_WEIGHT` | Registration weight (default `100`; relative traffic inside a tier). |
 | `GATEWAY_DISCOVERY_DATABASE_URL` | Optional dedicated registry database; empty reuses `SDKWORK_DATABASE_URL`. All services in one environment must point at the same registry database. |
 
 A registry outage is fail-open: the gateway keeps serving and consumers degrade

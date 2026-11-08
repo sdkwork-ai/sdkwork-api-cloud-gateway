@@ -102,6 +102,11 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
 - `HttpRegistryResolver` implements
   `sdkwork_utils_rust::service_base_url::HttpServiceRegistry`:
   - cache-first, background snapshot refresh, no per-call DB round trip;
+  - priority is the QoS tier; all strategies spread traffic only inside the
+    best admissible tier (lowest `priority`);
+  - configurable tier-internal load balancing
+    (`priority`, `round_robin`, `random`, `weighted_random`) via
+    `SDKWORK_DISCOVERY_HTTP_REGISTRY_LOAD_BALANCER`;
   - consecutive-failure demotion with a bounded cooldown;
   - success resets the failure streak;
   - last-known-good snapshot survives refresh failure;
@@ -118,12 +123,29 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
     dependency surface, and the short SDK alias
     (`sdkwork-cloudrouter` / `cloudrouter`, `sdkwork-agents` / `agents`, ...);
   - 30s lease, 10s heartbeat, re-register on lease loss;
+  - the registered endpoint is zero-config: authored private URL, explicit
+    advertise IP, or the first private-preferred LAN interface (IPv6 bracketed),
+    so a new replica registers without a host/port table; public edge domains are
+    intentionally not registered;
+  - identity alignment: registration and consumption both read
+    `SDKWORK_ENVIRONMENT` / the gateway aliases, falling back to the runtime
+    environment, so a process without the env var still lands in the same
+    registry partition;
   - a bounded expiry sweep every minute soft-deletes rows whose lease elapsed,
     so an embedded deployment without the discovery control plane does not
     accumulate dead instances;
   - graceful deregistration after the HTTP server drains;
   - fail-open: registry outage degrades to authored topology values and never
-    fails startup.
+    fails startup;
+  - the registry gate also enforces startup order (`ServiceRegistryRuntime::start`
+    before `axum::serve`) and graceful deregistration, so a future edit cannot
+    silently drop registration.
+- Backend SDK call framework (`APP_SDK_INTEGRATION_SPEC.md` §5.4):
+  - every call re-resolves the registry target; chat resolves per turn, media
+    tools per invocation, generations/image adapters per SDK call;
+  - clients are pooled by resolved base URL (media tools by base URL + auth
+    token), so a multi-process cluster load-balances while reusing connections;
+  - success/failure is reported for the exact target used.
 - Standalone hosts:
   - `sdkwork-api-webserver-standalone-gateway` and
     `sdkwork-webserver-agent` call
@@ -137,7 +159,8 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
   topology URL → split default (`BaseUrlSource::Registry` provenance).
 - Configuration:
   `GATEWAY_DISCOVERY_NAMESPACE`, `GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED`,
-  `GATEWAY_PUBLIC_HTTP_URL`, `GATEWAY_DISCOVERY_DATABASE_URL`.
+  `GATEWAY_PRIVATE_HTTP_URL`, `GATEWAY_ADVERTISE_IP`,
+  `GATEWAY_DISCOVERY_LOAD_BALANCER`, `GATEWAY_DISCOVERY_DATABASE_URL`.
 
 ## 6. Media app-api audit (video, audio, image, music)
 
@@ -146,17 +169,17 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
   (`Router::new()`); the real media generation surface is
   `sdkwork-api-generations-assembly` plus `sdkwork-api-image-assembly`.
 - The generations media provider registry builds a
-  `CloudRouterMediaGateway` from environment settings. `CloudRouterMediaGateway`
-  re-resolves `cloudrouter` on every call and rebuilds its SDK client when the
-  registry target changes, so a failed instance is replaced without a process
-  restart; the configured URL remains the degradation path. Transport failures
-  from the media adapters, the agent media tools, and HTTP chat turns are fed
-  back with `report_current_registry_failure` / `report_registry_result`, so
-  media and turn traffic demote an unreachable target. HTTP status errors are
-  not reported as target failures (the target answered; the upstream may be at
-  fault). Integration tests `media_registry_resolution`,
-  `media_client_registry`, and `turn_transport_registry` prove target selection
-  and failure reporting.
+  `CloudRouterMediaGateway` from environment settings. It re-resolves
+  `cloudrouter` on every SDK call and pools clients per resolved base URL, so a
+  multi-process cluster load-balances media traffic and a failed instance is
+  replaced without a restart; the configured URL remains the degradation path.
+  Chat resolves the transport per turn, and media tools resolve the media client
+  per invocation with a pool keyed by `(base URL, auth token)`. Transport
+  failures from the media adapters, the agent media tools, and HTTP chat turns
+  are fed back with `report_current_registry_failure` / `report_registry_result`.
+  Integration tests `media_registry_resolution`, `media_client_registry`,
+  `turn_transport_lb`, `registry_failover`, and `turn_transport_registry` prove
+  target selection, per-call alternation, failover, and reporting.
 - The agent media tool family (image/audio/video/music) constructs a
   `CloudRouterMediaClient` per call. `cloudrouter_base_url()` now resolves
   `cloudrouter` through the registry, replacing the old hard-coded
@@ -175,8 +198,10 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
 ## 7. Verification performed
 
 - `cargo test -p sdkwork-discovery-client` — QoS ordering, cooldown demotion,
-  success reset, cache-only resolution, and the active health probe (4 unit +
-  3 selection tests).
+  success reset, cache-only resolution, the active health probe, endpoint
+  auto-discovery (private URL > advertise IP > private interface > host name,
+  IPv6 bracketed), and four load-balancing strategies with priority-tier
+  containment (6 unit + 7 selection tests).
 - `cargo test -p sdkwork-discovery-client --test registry_postgres` against a
   real PostgreSQL 18 — idempotent re-registration (one row, stable lease),
   heartbeat extension, weight ordering, status demotion, deregistration, and the
@@ -185,20 +210,26 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
 - `cargo test -p sdkwork-api-cloud-gateway --test service_registry_postgres`
   against the same database — the real gateway runtime registers every composed
   surface and SDK alias for its exact port (18080), the endpoint is the
-  authored public URL, and graceful shutdown deregisters the rows (1 test).
+  authored private/LAN URL, registration priority/weight honor the env
+  overrides, and graceful shutdown deregisters the rows (1 test).
 - `cargo test -p sdkwork-utils-rust --lib service_base_url` — 22 tests
   including registry precedence and embedded bypass.
 - `cargo test -p sdkwork-api-cloud-gateway --lib` — 41 tests including profile
   publication and surface alias registration.
+- `cargo test -p sdkwork-agents-tool-cloudrouter` — 73 tests. `turn_transport_lb`
+  proves chat resolves per turn and alternates two healthy registry targets;
+  `media_client_registry` proves the image/audio/video/music client resolves per
+  invocation and alternates; `turn_transport_registry` proves a failed HTTP turn
+  reports the target.
 - `cargo test -p sdkwork-agents-memory-bridge -p sdkwork-agents-knowledgebase-bridge`
-  and `cargo test -p sdkwork-generations-provider-adapter` (53 tests) pass
+  and `cargo test -p sdkwork-generations-provider-adapter` (54 tests) pass
   after the registry-first conversion.
-- Media paths: `media_registry_resolution` (generations media gateway,
-  including an online target switch), `media_client_registry` (agents
-  image/audio/video/music tool client), `registry_failover` (standalone image
-  adapter online switch), and `turn_transport_registry` (failed HTTP turn
-  reports the target) pass and prove target selection, failover, and failure
-  reporting.
+- Media adapters: `media_registry_resolution` (generations media gateway pools
+  clients per target, including an online switch), `registry_failover`
+  (standalone image adapter online switch), plus the chat/media LB tests above.
+- `node sdkwork-specs/tools/check-http-registry-resolution.mjs` also verifies
+  the gateway calls `ServiceRegistryRuntime::start` before `axum::serve`,
+  deregisters on shutdown, and that the LB/spec infrastructure exists.
 - `cargo test` for the remaining converted consumers: canvas 4, notes 4,
   course 4, deployments 18, image host 4, knowledgebase agent provider 36,
   voice 0 (compiles). Total 70 additional tests.
@@ -225,12 +256,13 @@ New capability (`DISCOVERY_SPEC.md` §12.1):
   `ImageGenerationProviderAdapter` (target changes are picked up per call); the
   generations media gateway follows target changes as well.
 - Add the registry keys to the live bundle before/with the 0.1.37 deploy
-  (`GATEWAY_DISCOVERY_NAMESPACE`, `GATEWAY_PUBLIC_HTTP_URL`,
+  (`GATEWAY_DISCOVERY_NAMESPACE`, `GATEWAY_PRIVATE_HTTP_URL`,
+  `GATEWAY_ADVERTISE_IP`, `GATEWAY_DISCOVERY_LOAD_BALANCER`,
   `GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED`). The existing production env is
   preserved across deploys, so `deploy.sh --set` (or `bin/config.sh set`) is the
-  safe path. `GATEWAY_PUBLIC_HTTP_URL` must be the real public domain when
-  consumers outside the compose network resolve the gateway; otherwise the
-  derived container-hostname URL works only inside the deployment network.
+  safe path. `GATEWAY_PRIVATE_HTTP_URL` / `GATEWAY_ADVERTISE_IP` must be a LAN
+  address reachable by every cluster member; public edge domains are not
+  registered, so external consumers use an explicit override.
 - Consumer sweep: every detected backend Rust service that constructs a
   generated HTTP SDK now resolves the base URL through
   `sdkwork_utils_rust::service_base_url` / `registry_base_url_or`
