@@ -26,8 +26,50 @@ composition:
 
 - does **not** start sdkwork-webserver
 - does **not** install nginx site mappings
-- exposes only `GATEWAY_HOST_PORT` → container `:3900` for health and for
-  sdkwork-webserver to reverse-proxy
+- exposes only `GATEWAY_HOST_PORT` → container `GATEWAY_CONTAINER_PORT`
+  (default `3900`; `8080` when attached to `sdkwork-webserver`) for health and
+  for sdkwork-webserver to reverse-proxy
+
+## Deployment profile: embedded vs split
+
+One image serves both topologies. `GATEWAY_DEPLOYMENT_PROFILE=standalone|cloud`
+is published inside the container as the canonical `SDKWORK_DEPLOYMENT_PROFILE`
+axis every embedded Rust SDK consumer reads (`APP_SDK_INTEGRATION_SPEC` §5.2).
+Keep it `standalone` for the all-in-one image: dependency surfaces are composed
+in-process, so the agents → Cloud Router turn dispatches in-process and never
+dials a loopback port. This is why the deployment works unchanged on any
+container port (`3900`, `8080`, …) and behind any public domain: there is no
+intra-process HTTP hop to configure. Set `cloud` only when the dependency
+surfaces are genuinely separate services with authored absolute URLs.
+
+The gateway binary also publishes the canonical value itself at startup from the
+application-scoped alias, so a launcher that forgets `GATEWAY_DEPLOYMENT_PROFILE`
+still resolves one consistent mode.
+
+## HTTP service registry
+
+The gateway registers every composed HTTP surface for **each instance and
+port** in the database-backed registry (`DISCOVERY_SPEC.md` §12.1) and heartbeats
+the lease (`GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED`, default `true`). Peer
+backend SDKs resolve base URLs from the same table, so a new domain, cluster, or
+container port needs no hard-coded SDK URL.
+
+| Key | Meaning |
+| --- | --- |
+| `GATEWAY_DISCOVERY_NAMESPACE` | Registry partition (default `platform`). |
+| `GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED` | `false` disables registration and registry-first resolution. |
+| `GATEWAY_PRIVATE_HTTP_URL` | Authored LAN origin published to the cluster registry (`http://10.0.0.5:8080`); empty auto-detects a non-loopback IPv4. The public edge domain is not registered. |
+| `GATEWAY_ADVERTISE_IP` | Explicit LAN IP combined with the bound port (used when the private URL is empty). |
+| `GATEWAY_DISCOVERY_LOAD_BALANCER` | `priority` (default), `round_robin`, `random`, `weighted_random`. |
+| `GATEWAY_REGISTRY_PRIORITY` | Registration priority (default `100`; lower is preferred). |
+| `GATEWAY_REGISTRY_WEIGHT` | Registration weight (default `100`; relative traffic inside a tier). |
+| `GATEWAY_DISCOVERY_DATABASE_URL` | Optional dedicated registry database; empty reuses `SDKWORK_DATABASE_URL`. All services in one environment must point at the same registry database. |
+
+A registry outage is fail-open: the gateway keeps serving and consumers degrade
+to the authored topology values. `cargo test -p sdkwork-discovery-client` covers
+idempotent registration, heartbeat expiry, QoS ordering, and failure demotion.
+Full operator runbook:
+[`docs/guides/operator/HTTP_SERVICE_REGISTRY.md`](../docs/guides/operator/HTTP_SERVICE_REGISTRY.md).
 
 ## Default dependencies: external PostgreSQL + Redis (no password)
 

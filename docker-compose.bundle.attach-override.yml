@@ -29,10 +29,15 @@ services:
       - "${GATEWAY_INSTANCE_HOST_PORT:?required}:8080"
     environment:
       SDKWORK_API_CLOUD_GATEWAY_BIND: 0.0.0.0:8080
-      # Cloud Router is composed inside this process; embedded Rust SDK
-      # consumers resolve the router bind to http://127.0.0.1:<port>. Without
-      # this pin the resolver falls back to the standalone default
-      # (http://127.0.0.1:3900), which nothing listens on here.
+      # Canonical split-vs-embedded axis read by embedded Rust SDK consumers.
+      # This process composes the Cloud Router surface in-process, so the agents
+      # turn path must select its in-process transport instead of dialling a
+      # loopback port this container may not own.
+      SDKWORK_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+      # Cloud Router is composed inside this process; the in-process turn
+      # transport dispatches into the mounted assembly. This ingress bind is
+      # published for diagnostics and must track the listener, but it is never
+      # turned into a loopback base URL (the profile above selects the arm).
       SDKWORK_CLOUDROUTER_ROUTER_APPLICATION_PUBLIC_INGRESS_BIND: 0.0.0.0:8080
     networks:
       sdkwork:

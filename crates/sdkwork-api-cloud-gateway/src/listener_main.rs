@@ -28,6 +28,18 @@ const MIGRATE_DATABASES_ARG: &str = "--migrate-databases";
 const HELP_ARGS: [&str; 2] = ["-h", "--help"];
 const VERSION_ARGS: [&str; 2] = ["-V", "--version"];
 
+/// Canonical deployment-profile variable read by every Rust SDK consumer
+/// (`APP_SDK_INTEGRATION_SPEC.md` §5.2). It is the single split-vs-embedded
+/// authority in the process.
+const DEPLOYMENT_PROFILE_ENV: &str = "SDKWORK_DEPLOYMENT_PROFILE";
+/// Application-scoped alias the gateway's own launch scripts declare.
+const GATEWAY_DEPLOYMENT_PROFILE_ENV: &str = "SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE";
+/// Profile used when the deployment declares none: the application manifest's
+/// default and the only profile in which this binary composes every dependency
+/// surface (`agent.app.config.json` `runtime.defaultDeploymentProfile`).
+const DEFAULT_DEPLOYMENT_PROFILE: &str = "standalone";
+const DEPLOYMENT_PROFILES: [&str; 2] = ["standalone", "cloud"];
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ProcessMode {
     Serve,
@@ -55,6 +67,7 @@ fn main() -> anyhow::Result<()> {
         | ProcessMode::MigrateDatabases => {}
     }
 
+    publish_deployment_profile()?;
     install_process_crypto_provider()?;
     if matches!(
         process_mode,
@@ -79,6 +92,60 @@ fn main() -> anyhow::Result<()> {
         .map_err(|_| anyhow!("gateway runtime thread panicked"))?
 }
 
+/// Publishes the process' canonical deployment profile before the runtime
+/// thread, the dependency assemblies, and every SDK consumer start.
+///
+/// The gateway is a composition root. Its container and launch scripts declare
+/// the profile under the application-scoped alias, while every embedded
+/// dependency SDK resolves split-versus-embedded from
+/// `SDKWORK_DEPLOYMENT_PROFILE` (`APP_SDK_INTEGRATION_SPEC.md` §5.2). Missing
+/// that publication is a silent correctness defect: the agents turn path
+/// classifies the process as `split`, skips the in-process Cloud Router surface
+/// the composition root installed, and dials the split default
+/// `http://127.0.0.1:3900` — a port this process does not own when the listener
+/// moved to `0.0.0.0:8080` (the production `50301` incident).
+///
+/// Resolution order: the explicit canonical value, then the application-scoped
+/// alias, then the manifest default. A value outside `standalone`/`cloud` fails
+/// bootstrap instead of letting different consumers disagree about the mode.
+fn publish_deployment_profile() -> anyhow::Result<()> {
+    let explicit = normalized_env(DEPLOYMENT_PROFILE_ENV);
+    let app_scoped = normalized_env(GATEWAY_DEPLOYMENT_PROFILE_ENV);
+    let profile = explicit
+        .clone()
+        .or_else(|| app_scoped.clone())
+        .unwrap_or_else(|| DEFAULT_DEPLOYMENT_PROFILE.to_owned());
+    if !DEPLOYMENT_PROFILES.contains(&profile.as_str()) {
+        return Err(anyhow!(
+            "invalid deployment profile `{profile}`: {DEPLOYMENT_PROFILE_ENV} and \
+             {GATEWAY_DEPLOYMENT_PROFILE_ENV} accept only {}",
+            DEPLOYMENT_PROFILES.join(" or ")
+        ));
+    }
+    if let (Some(explicit), Some(app_scoped)) = (&explicit, &app_scoped) {
+        if explicit != app_scoped {
+            // The canonical value is the operator's explicit choice; keep it,
+            // but make the contradiction visible instead of letting two parts
+            // of the process silently disagree about their own mode.
+            eprintln!(
+                "warning: {DEPLOYMENT_PROFILE_ENV}={explicit} disagrees with \
+                 {GATEWAY_DEPLOYMENT_PROFILE_ENV}={app_scoped}; keeping the canonical value"
+            );
+        }
+    }
+    // SAFETY: called from `main` before the gateway runtime thread, the
+    // embedded dependency assemblies, and any request worker start.
+    unsafe { env::set_var(DEPLOYMENT_PROFILE_ENV, &profile) };
+    Ok(())
+}
+
+fn normalized_env(key: &str) -> Option<String> {
+    env::var(key)
+        .ok()
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty())
+}
+
 fn run_gateway_process(process_mode: ProcessMode) -> anyhow::Result<()> {
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -93,6 +160,10 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     let env = env::vars().collect::<HashMap<_, _>>();
     let config = load_gateway_config(env::args().skip(1), &env, ".")?;
     init_tracing(&config)?;
+    info!(
+        deployment_profile = %env::var(DEPLOYMENT_PROFILE_ENV).unwrap_or_default(),
+        "canonical deployment profile published for embedded SDK consumers"
+    );
     if process_mode == ProcessMode::ProvisionDatabases {
         let report = provision_databases(&config).await?;
         info!(
@@ -124,6 +195,24 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
         .with_context(|| format!("invalid bind address `{}`", config.server.bind))?;
     publish_embedded_cloudrouter_ingress(&config);
 
+    // Bind first so the registry can publish the exact port this process owns,
+    // then install the registry resolver BEFORE any dependency assembly builds
+    // an HTTP SDK client. Embedded consumers (generations media providers,
+    // canvas/notes/course drive facades, image host, ...) construct their
+    // clients during router construction, so a resolver installed afterwards
+    // would be invisible to them and they would keep the configured fallback.
+    let listener = TcpListener::bind(bind).await?;
+    let local_addr = listener.local_addr()?;
+    let registry_config = config.clone();
+    // Registration is fail-open: a registry outage degrades to the authored
+    // topology values instead of failing startup.
+    let service_registry =
+        sdkwork_api_cloud_gateway::service_registry::ServiceRegistryRuntime::start(
+            &registry_config,
+            local_addr,
+        )
+        .await;
+
     // The realtime builder additionally returns shutdown handles so the
     // embedded IM realtime plane (WebSocket upgrade + TCP/UDP/QUIC link
     // listeners) drains its routes before the process exits.
@@ -133,13 +222,14 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     #[cfg(not(all(feature = "foundation-appbase", feature = "foundation-im-realtime")))]
     let app = build_sdkwork_api_cloud_gateway_router(config).await?;
 
-    let listener = TcpListener::bind(bind).await?;
-    let local_addr = listener.local_addr()?;
-
     info!(%local_addr, "sdkwork api gateway listening");
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await?;
+
+    if let Some(service_registry) = service_registry {
+        service_registry.shutdown().await;
+    }
 
     #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
     shutdown.shutdown().await;
@@ -343,6 +433,107 @@ fn bind_port(bind: &str) -> Option<u16> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Serializes env-mutating tests: `std::env` is process-global, so
+    /// parallel tests would race on the same variables.
+    fn profile_env_guard() -> &'static std::sync::Mutex<()> {
+        static GUARD: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+        GUARD.get_or_init(|| std::sync::Mutex::new(()))
+    }
+
+    /// Snapshot/restore the two deployment-profile inputs so the process
+    /// environment is left exactly as the test found it.
+    struct ProfileEnvGuard {
+        previous: [(String, Option<String>); 2],
+    }
+
+    impl ProfileEnvGuard {
+        fn capture_and_clear() -> Self {
+            let mut previous: [(String, Option<String>); 2] =
+                std::array::from_fn(|_| (String::new(), None));
+            for (slot, key) in [DEPLOYMENT_PROFILE_ENV, GATEWAY_DEPLOYMENT_PROFILE_ENV]
+                .iter()
+                .enumerate()
+            {
+                previous[slot] = (key.to_string(), std::env::var(key).ok());
+                // SAFETY: test-only, serialized by profile_env_guard.
+                unsafe { std::env::remove_var(key) };
+            }
+            Self { previous }
+        }
+    }
+
+    impl Drop for ProfileEnvGuard {
+        fn drop(&mut self) {
+            for (key, value) in &self.previous {
+                // SAFETY: test-only, serialized by profile_env_guard.
+                unsafe {
+                    match value {
+                        Some(value) => std::env::set_var(key, value),
+                        None => std::env::remove_var(key),
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn publishes_the_application_scoped_profile_as_the_canonical_value() {
+        let _guard = profile_env_guard().lock().expect("env test lock");
+        let _env = ProfileEnvGuard::capture_and_clear();
+        // SAFETY: test-only, serialized by profile_env_guard.
+        unsafe { std::env::set_var(GATEWAY_DEPLOYMENT_PROFILE_ENV, "standalone") };
+
+        publish_deployment_profile().expect("the application-scoped profile publishes");
+
+        assert_eq!(
+            std::env::var(DEPLOYMENT_PROFILE_ENV).as_deref(),
+            Ok("standalone")
+        );
+    }
+
+    #[test]
+    fn defaults_to_the_embedded_profile_when_none_is_declared() {
+        let _guard = profile_env_guard().lock().expect("env test lock");
+        let _env = ProfileEnvGuard::capture_and_clear();
+
+        publish_deployment_profile().expect("the manifest default publishes");
+
+        assert_eq!(
+            std::env::var(DEPLOYMENT_PROFILE_ENV).as_deref(),
+            Ok(DEFAULT_DEPLOYMENT_PROFILE)
+        );
+    }
+
+    #[test]
+    fn the_explicit_canonical_profile_wins_over_the_application_alias() {
+        let _guard = profile_env_guard().lock().expect("env test lock");
+        let _env = ProfileEnvGuard::capture_and_clear();
+        // SAFETY: test-only, serialized by profile_env_guard.
+        unsafe {
+            std::env::set_var(DEPLOYMENT_PROFILE_ENV, "cloud");
+            std::env::set_var(GATEWAY_DEPLOYMENT_PROFILE_ENV, "standalone");
+        }
+
+        publish_deployment_profile().expect("the explicit profile publishes");
+
+        assert_eq!(
+            std::env::var(DEPLOYMENT_PROFILE_ENV).as_deref(),
+            Ok("cloud")
+        );
+    }
+
+    #[test]
+    fn rejects_a_profile_outside_the_supported_axis() {
+        let _guard = profile_env_guard().lock().expect("env test lock");
+        let _env = ProfileEnvGuard::capture_and_clear();
+        // SAFETY: test-only, serialized by profile_env_guard.
+        unsafe { std::env::set_var(GATEWAY_DEPLOYMENT_PROFILE_ENV, "production") };
+
+        let error = publish_deployment_profile().expect_err("an unknown profile must fail");
+
+        assert!(error.to_string().contains("standalone or cloud"), "{error}");
+    }
 
     /// Serializes env-mutating tests: `std::env` is process-global, so
     /// parallel tests would race on the same variables.

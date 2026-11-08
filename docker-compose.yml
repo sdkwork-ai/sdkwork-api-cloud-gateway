@@ -132,8 +132,27 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       # Deployment identity (DEPLOYMENT_SPEC §5.2); the entrypoint pins these
-      # too, so the values here are belt-and-suspenders.
-      SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: standalone
+      # too, so the values here are belt-and-suspenders. GATEWAY_DEPLOYMENT_PROFILE
+      # is the canonical split-vs-embedded axis every embedded Rust SDK consumer
+      # reads; keep the application-scoped alias and the canonical value identical.
+      SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+      SDKWORK_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+      # Database-backed HTTP service registry (DISCOVERY_SPEC.md). The gateway
+      # registers this instance/port for every composed surface and resolves
+      # peer SDK base URLs from the same table. Registry failure degrades to the
+      # authored topology values instead of failing startup.
+      SDKWORK_DISCOVERY_NAMESPACE: ${GATEWAY_DISCOVERY_NAMESPACE:-platform}
+      SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED: ${GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED:-true}
+      # LAN origin published for cluster consumers; empty auto-detects a
+      # non-loopback IPv4. The public edge domain is intentionally not
+      # registered; external consumers use an explicit override.
+      SDKWORK_API_CLOUD_GATEWAY_PRIVATE_HTTP_URL: ${GATEWAY_PRIVATE_HTTP_URL:-}
+      SDKWORK_API_CLOUD_GATEWAY_ADVERTISE_IP: ${GATEWAY_ADVERTISE_IP:-}
+      SDKWORK_DISCOVERY_HTTP_REGISTRY_LOAD_BALANCER: ${GATEWAY_DISCOVERY_LOAD_BALANCER:-priority}
+      SDKWORK_API_CLOUD_GATEWAY_REGISTRY_PRIORITY: ${GATEWAY_REGISTRY_PRIORITY:-}
+      SDKWORK_API_CLOUD_GATEWAY_REGISTRY_WEIGHT: ${GATEWAY_REGISTRY_WEIGHT:-}
+      # Optional dedicated discovery database; empty reuses SDKWORK_DATABASE_URL.
+      SDKWORK_DISCOVERY_DATABASE_URL: ${GATEWAY_DISCOVERY_DATABASE_URL:-}
       SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET: container
       SDKWORK_API_CLOUD_GATEWAY_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
       SDKWORK_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-development}
@@ -169,6 +188,8 @@ services:
       SDKWORK_CORS_CONSOLE_HOST_LABELS: ${GATEWAY_CORS_CONSOLE_HOST_LABELS:-account,admin,agent,agents,agents-admin,agents-app,agents-open,agentstudio,agentstudio-admin,agentstudio-app,aiot,aiot-admin,aiot-app,api,appbase,appstore,assets,audio,audio-api,birdcoder2,browser,canvas,cloudrouter,cms,code,codebox,community,company,console,course,customer-service,deploy,deploy-admin,deploy-app,dezhou,discovery,discovery-admin,doc,documents,documents-admin,documents-open,doudizhu,drama,drive,drive-internal,events,feeds,forum,gameengine,games,generations,github,github-workflow,harness,iam,im,image,inventory,invoice,kernel,knowledge,knowledgebase,knowledgebase-admin,llm,llm-admin,llm-app,llm-open,local-router,mahjong,mail,mcp,mem,membership,memory,memory-admin,memory-app,memory-open,merchandise,messaging,modelkit,models,music,news,notary,notary-admin,notes,order,partner,payment,portal,promotion,prompts,router,router-admin,router-open,rtc,search,server,server-admin,server-app,settings,shop,skills,terminal,tts,video,video-cut,voice,web-internal,web-provider-events,xiangqi}
       SDKWORK_CORS_CONSOLE_HOST_SUFFIX: ${GATEWAY_CORS_CONSOLE_HOST_SUFFIX:--dev}
       SDKWORK_CORS_CONSOLE_HOST_SCHEMES: ${GATEWAY_CORS_CONSOLE_HOST_SCHEMES:-http,https}
+      SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS: ${GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS:-sdkwork.com,birdcoder.com,sdkwork.cn,birdcoder.cn}
+      SDKWORK_CORS_SUBDOMAIN_SCHEMES: ${GATEWAY_CORS_SUBDOMAIN_SCHEMES:-http,https}
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.

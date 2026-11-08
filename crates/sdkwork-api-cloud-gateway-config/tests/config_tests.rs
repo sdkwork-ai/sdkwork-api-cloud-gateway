@@ -401,6 +401,111 @@ fn production_cors_rejects_unregistered_console_host_base_domain() {
 }
 
 #[test]
+fn production_cors_accepts_registered_subdomain_rule() {
+    // Operator-chosen brand hosts (`platform.birdcoder.com`), the apex and nested
+    // names are not in the console label registry; a deployment declares the whole
+    // base-domain space instead (CORS_SPEC.md §5.1).
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = []
+
+        [cors.registeredSubdomainHosts]
+        baseDomains = ["sdkwork.com", "birdcoder.com", "sdkwork.cn", "birdcoder.cn"]
+        schemes = ["http", "https"]
+        "#,
+    )
+    .expect("registered sub-domain rule should be accepted in production");
+
+    let hosts = config
+        .cors
+        .registered_subdomain_hosts
+        .as_ref()
+        .expect("sub-domain rule parsed");
+    assert!(hosts.matches("https://platform.birdcoder.com"));
+    assert!(hosts.matches("https://a.b.sdkwork.com"));
+    assert!(!hosts.matches("https://sdkwork.com.attacker.example"));
+}
+
+#[test]
+fn production_cors_rejects_unregistered_subdomain_base_domain() {
+    let toml = r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = []
+
+        [cors.registeredSubdomainHosts]
+        baseDomains = ["attacker.example"]
+        schemes = ["https"]
+        "#;
+    assert!(GatewayRuntimeConfig::from_toml_str(toml).is_err());
+}
+
+#[test]
+fn subdomain_rule_env_override_is_fail_closed() {
+    let base = r#"
+        [service]
+        environment = "production"
+
+        [cors]
+        allowAnyOrigin = false
+        allowedOrigins = ["https://api.sdkwork.com"]
+        "#;
+
+    // Base domains without schemes is a half-configured policy: fail at startup
+    // rather than silently rejecting first-party preflights.
+    let mut partial = HashMap::new();
+    partial.insert(
+        "SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS".to_owned(),
+        "sdkwork.com".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::from_toml_str(base)
+        .expect("base config")
+        .with_env_overrides(&partial)
+        .is_err());
+
+    let mut complete = HashMap::new();
+    complete.insert(
+        "SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS".to_owned(),
+        "sdkwork.com,birdcoder.com".to_owned(),
+    );
+    complete.insert(
+        "SDKWORK_CORS_SUBDOMAIN_SCHEMES".to_owned(),
+        "http,https".to_owned(),
+    );
+    let config = GatewayRuntimeConfig::from_toml_str(base)
+        .expect("base config")
+        .with_env_overrides(&complete)
+        .expect("complete sub-domain rule");
+    let hosts = config
+        .cors
+        .registered_subdomain_hosts
+        .expect("sub-domain rule applied");
+    assert!(hosts.matches("https://platform.birdcoder.com"));
+
+    let mut unregistered = HashMap::new();
+    unregistered.insert(
+        "SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS".to_owned(),
+        "attacker.example".to_owned(),
+    );
+    unregistered.insert(
+        "SDKWORK_CORS_SUBDOMAIN_SCHEMES".to_owned(),
+        "https".to_owned(),
+    );
+    assert!(GatewayRuntimeConfig::from_toml_str(base)
+        .expect("base config")
+        .with_env_overrides(&unregistered)
+        .is_err());
+}
+
+#[test]
 fn console_host_pattern_env_override_is_fail_closed() {
     let base = r#"
         [service]

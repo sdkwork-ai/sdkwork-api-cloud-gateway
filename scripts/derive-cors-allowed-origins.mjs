@@ -17,6 +17,12 @@
  * pattern cannot express (per-environment loopback seeds). Desktop-shell and
  * mini-program origins are merged by the framework and are never listed.
  *
+ * The pattern matches one registered label per host, so operator-chosen brand
+ * hosts (`platform.birdcoder.com`), the apex (`sdkwork.com`) and nested names
+ * (`region.console.sdkwork.com`) are declared through the opt-in whole
+ * sub-domain rule (`SDKWORK_CORS_SUBDOMAIN_{BASE_DOMAINS,SCHEMES}`,
+ * `CORS_SPEC.md` §5.1). It is bounded by the registered base-domain registry.
+ *
  * Any carrier left behind silently blocks the consoles it omits — the historical
  * failure mode was "No 'Access-Control-Allow-Origin' header is present on the
  * requested resource" on the OPTIONS preflight of
@@ -57,6 +63,7 @@ import { ENVIRONMENTS } from './deployment-environments.mjs';
 import {
   canonicalConsoleHostConfig,
   canonicalSeedOrigins,
+  canonicalSubdomainHostConfig,
   consoleHostLabelRegistry,
 } from './cors-allowed-origins.mjs';
 
@@ -87,31 +94,46 @@ const GATEWAY_ENV_PREFIX = 'GATEWAY_';
 const SIBLING_ENV_PREFIX = 'SDKWORK_MODULE_API_GATEWAY_';
 const WEBSERVER_ENV_PREFIX = 'SDKWORK_';
 
-/** The four variables every carrier family materializes, per prefix. */
+/** The variables every carrier family materializes, per prefix. */
 function keysFor(prefix) {
   return {
     allowedOrigins: `${prefix}CORS_ALLOWED_ORIGINS`,
     labels: `${prefix}CORS_CONSOLE_HOST_LABELS`,
     suffix: `${prefix}CORS_CONSOLE_HOST_SUFFIX`,
     schemes: `${prefix}CORS_CONSOLE_HOST_SCHEMES`,
+    subdomainBaseDomains: `${prefix}CORS_SUBDOMAIN_BASE_DOMAINS`,
+    subdomainSchemes: `${prefix}CORS_SUBDOMAIN_SCHEMES`,
   };
 }
 
-/** The four compose mapping names (gateway container contract). */
+/** The compose mapping names (gateway container contract). */
 const COMPOSE_MAP_KEYS = {
   allowedOrigins: 'SDKWORK_CORS_ALLOWED_ORIGINS',
   labels: 'SDKWORK_CORS_CONSOLE_HOST_LABELS',
   suffix: 'SDKWORK_CORS_CONSOLE_HOST_SUFFIX',
   schemes: 'SDKWORK_CORS_CONSOLE_HOST_SCHEMES',
+  subdomainBaseDomains: 'SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS',
+  subdomainSchemes: 'SDKWORK_CORS_SUBDOMAIN_SCHEMES',
 };
+
+/** The registered sub-domain rule every gateway carrier declares. */
+function canonicalSubdomainConfig() {
+  return canonicalSubdomainHostConfig();
+}
 
 /**
  * The values every carrier declares for `environment`, keyed by variable name.
  *
  * `allowedOrigins` is the loopback seed list only: the console closure is
  * expressed by the pattern, and frameworks merge the registered client origins.
+ * `subdomainBaseDomains`/`subdomainSchemes` are the opt-in whole-sub-domain rule
+ * (`CORS_SPEC.md` §5.1).
  */
-function expectedValues(environment, prefix, { includeAllowedOrigins = true } = {}) {
+function expectedValues(
+  environment,
+  prefix,
+  { includeAllowedOrigins = true, includeSubdomains = true } = {},
+) {
   const keys = keysFor(prefix);
   const config = canonicalConsoleHostConfig(environment);
   const expected = new Map();
@@ -121,6 +143,11 @@ function expectedValues(environment, prefix, { includeAllowedOrigins = true } = 
   expected.set(keys.labels, config.labels);
   expected.set(keys.suffix, config.suffix);
   expected.set(keys.schemes, config.schemes);
+  if (includeSubdomains) {
+    const subdomain = canonicalSubdomainConfig();
+    expected.set(keys.subdomainBaseDomains, subdomain.baseDomains);
+    expected.set(keys.subdomainSchemes, subdomain.schemes);
+  }
   return expected;
 }
 
@@ -128,6 +155,7 @@ function expectedValues(environment, prefix, { includeAllowedOrigins = true } = 
 // Carrier 1/2: TOML profiles.
 // ---------------------------------------------------------------------------
 const CONSOLE_HOSTS_HEADER = '[cors.registeredConsoleHosts]';
+const SUBDOMAIN_HOSTS_HEADER = '[cors.registeredSubdomainHosts]';
 
 function tomlArray(values) {
   return `[${values.map((value) => `"${value}"`).join(', ')}]`;
@@ -143,6 +171,10 @@ function tomlCarrier(file, environment) {
         `labels = ${tomlArray(expected.get(keys.labels).split(','))}`,
         `environmentSuffix = "${expected.get(keys.suffix)}"`,
         `schemes = ${tomlArray(expected.get(keys.schemes).split(','))}`,
+        '',
+        SUBDOMAIN_HOSTS_HEADER,
+        `baseDomains = ${tomlArray(expected.get(keys.subdomainBaseDomains).split(','))}`,
+        `schemes = ${tomlArray(expected.get(keys.subdomainSchemes).split(','))}`,
       ].join('\n'),
     };
   };
@@ -156,14 +188,7 @@ function tomlCarrier(file, environment) {
       const { originLine, block } = render(this.expected());
       const detail = [];
       if (!text.includes(originLine)) detail.push('allowedOrigins');
-      const start = text.indexOf(CONSOLE_HOSTS_HEADER);
-      if (start < 0) {
-        detail.push(CONSOLE_HOSTS_HEADER);
-      } else {
-        const end = text.indexOf('\n[', start + CONSOLE_HOSTS_HEADER.length);
-        const section = end < 0 ? text.slice(start) : text.slice(start, end);
-        if (section.trim() !== block.trim()) detail.push('registeredConsoleHosts');
-      }
+      if (!text.includes(block)) detail.push(`${CONSOLE_HOSTS_HEADER} + ${SUBDOMAIN_HOSTS_HEADER}`);
       return { canonical: detail.length === 0, detail };
     },
     apply(text) {
@@ -171,11 +196,16 @@ function tomlCarrier(file, environment) {
       let next = text.replace(/allowedOrigins\s*=\s*\[[^\]]*\]/u, originLine);
       const start = next.indexOf(CONSOLE_HOSTS_HEADER);
       if (start < 0) {
-        // Keep both halves of the policy adjacent: the sub-table follows the
-        // `[cors]` origins line it refines.
+        // Keep both halves of the policy adjacent: the sub-tables follow the
+        // `[cors]` origins line they refine.
         return next.replace(originLine, `${originLine}\n\n${block}`);
       }
-      const end = next.indexOf('\n[', start + CONSOLE_HOSTS_HEADER.length);
+      // The expected block spans both sub-tables, so the replacement ends at the
+      // first table after the sub-domain section (or at end of file).
+      const subdomainStart = next.indexOf(SUBDOMAIN_HOSTS_HEADER, start);
+      const end = subdomainStart < 0
+        ? next.indexOf('\n[', start + CONSOLE_HOSTS_HEADER.length)
+        : next.indexOf('\n[', subdomainStart + SUBDOMAIN_HOSTS_HEADER.length);
       const tail = end < 0 ? '\n' : next.slice(end + 1);
       return `${next.slice(0, start)}${block}\n\n${tail}`;
     },
@@ -241,6 +271,16 @@ function envCarrier(file, environment, groups, options = {}) {
         // Preserve the file's line-ending convention (CRLF drift has already
         // broken container startup gates in this workspace).
         const eol = next.includes('\r\n') ? '\r\n' : '\n';
+        // Keep the CORS policy block together: a new key lands next to the last
+        // existing CORS key instead of drifting to the end of the file.
+        const anchor = [
+          ...next.matchAll(/^(?:GATEWAY|SDKWORK)_[A-Z0-9_]*CORS[A-Z0-9_]*=[^\r\n]*$/gmu),
+        ].pop();
+        if (anchor) {
+          const at = anchor.index + anchor[0].length;
+          next = `${next.slice(0, at)}${eol}${line}${next.slice(at)}`;
+          continue;
+        }
         const separator = next.length === 0 || /\r?\n$/u.test(next) ? '' : eol;
         next = `${next}${separator}${line}${eol}`;
       }
@@ -270,16 +310,60 @@ function locateComposeEntry(text, key) {
   };
 }
 
-function composeCarrier(file, environment, prefix, { emptyDefaults = true, sibling = false } = {}) {
+/**
+ * End offset of the contiguous CORS mapping block that begins at `start`.
+ *
+ * The block is a run of adjacent `SDKWORK_*CORS*` compose mapping lines; the
+ * console-host and sub-domain keys live in the same block, so a rewrite replaces
+ * the whole run instead of appending a second copy beside the old lines.
+ */
+function composeCorsBlockEnd(text, start) {
+  let index = start;
+  let end = start;
+  while (index < text.length) {
+    const lineEnd = text.indexOf('\n', index);
+    const lineStop = lineEnd < 0 ? text.length : lineEnd;
+    const line = text.slice(index, lineStop).replace(/\r$/u, '');
+    if (!/^[ \t]*(?:SDKWORK|GATEWAY)_[A-Z0-9_]*CORS[A-Z0-9_]*\s*:/u.test(line)) break;
+    end = lineStop;
+    if (lineEnd < 0) break;
+    index = lineEnd + 1;
+  }
+  return end;
+}
+
+function composeCarrier(
+  file,
+  environment,
+  prefix,
+  { emptyDefaults = true, sibling = false, includeSubdomains = true } = {},
+) {
   const keys = keysFor(prefix);
+  const mapKeys = Object.fromEntries(
+    Object.entries(COMPOSE_MAP_KEYS).filter(
+      ([field]) => includeSubdomains || !field.startsWith('subdomain'),
+    ),
+  );
   const defaults = () => {
-    if (emptyDefaults) return { allowedOrigins: '', labels: '', suffix: '', schemes: '' };
+    if (emptyDefaults) {
+      return {
+        allowedOrigins: '',
+        labels: '',
+        suffix: '',
+        schemes: '',
+        subdomainBaseDomains: '',
+        subdomainSchemes: '',
+      };
+    }
     const config = canonicalConsoleHostConfig(environment);
+    const subdomain = canonicalSubdomainConfig();
     return {
       allowedOrigins: canonicalSeedOrigins(environment).join(','),
       labels: config.labels,
       suffix: config.suffix,
       schemes: config.schemes,
+      subdomainBaseDomains: subdomain.baseDomains,
+      subdomainSchemes: subdomain.schemes,
     };
   };
   return {
@@ -289,25 +373,33 @@ function composeCarrier(file, environment, prefix, { emptyDefaults = true, sibli
     expected: () => keys,
     isCanonical(text) {
       const detail = [];
-      for (const field of Object.keys(COMPOSE_MAP_KEYS)) {
-        const entry = locateComposeEntry(text, COMPOSE_MAP_KEYS[field]);
-        if (!entry) {
-          detail.push(`${COMPOSE_MAP_KEYS[field]} (missing)`);
+      for (const field of Object.keys(mapKeys)) {
+        const occurrences = [
+          ...text.matchAll(new RegExp(`^[ \\t]*${mapKeys[field]}\\s*:`, 'gmu')),
+        ];
+        if (occurrences.length === 0) {
+          detail.push(`${mapKeys[field]} (missing)`);
           continue;
         }
+        if (occurrences.length > 1) {
+          detail.push(`${mapKeys[field]} (declared ${occurrences.length}x)`);
+          continue;
+        }
+        const entry = locateComposeEntry(text, mapKeys[field]);
         const value = entry.value.replace(/^'|'$/gu, '');
-        if (!value.startsWith(`\${${keys[field]}:-`)) detail.push(COMPOSE_MAP_KEYS[field]);
+        if (!value.startsWith(`\${${keys[field]}:-`)) detail.push(mapKeys[field]);
       }
       return { canonical: detail.length === 0, detail };
     },
     apply(text) {
-      const entry = locateComposeEntry(text, COMPOSE_MAP_KEYS.allowedOrigins);
+      const entry = locateComposeEntry(text, mapKeys.allowedOrigins);
       if (!entry) return text;
       const fallback = defaults();
-      const lines = Object.keys(COMPOSE_MAP_KEYS)
-        .map((field) => `${entry.indent}${COMPOSE_MAP_KEYS[field]}: \${${keys[field]}:-${fallback[field]}}`)
+      const lines = Object.keys(mapKeys)
+        .map((field) => `${entry.indent}${mapKeys[field]}: \${${keys[field]}:-${fallback[field]}}`)
         .join('\n');
-      return `${text.slice(0, entry.start)}${lines}${text.slice(entry.end)}`;
+      const end = composeCorsBlockEnd(text, entry.start);
+      return `${text.slice(0, entry.start)}${lines}${text.slice(end)}`;
     },
   };
 }
@@ -366,8 +458,8 @@ if (!NO_SIBLING && existsSync(SIBLING_ROOT)) {
           file,
           environment,
           [
-            { prefix: SIBLING_ENV_PREFIX },
-            { prefix: WEBSERVER_ENV_PREFIX, includeAllowedOrigins: false },
+            { prefix: SIBLING_ENV_PREFIX, includeSubdomains: false },
+            { prefix: WEBSERVER_ENV_PREFIX, includeAllowedOrigins: false, includeSubdomains: false },
           ],
           { sibling: true, optional: file.endsWith('.env') },
         ),
@@ -379,7 +471,7 @@ if (!NO_SIBLING && existsSync(SIBLING_ROOT)) {
       'deployments/docker/docker-compose.bundle-gateway.yml',
       'production',
       SIBLING_ENV_PREFIX,
-      { sibling: true },
+      { sibling: true, includeSubdomains: false },
     ),
   );
 }

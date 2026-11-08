@@ -204,7 +204,12 @@ Readiness is exposed at `/readyz` and includes the service id, embedded runtime 
 and dependency surfaces. Assembly registration is verified before the server accepts traffic.
 
 CORS is configured through `[cors]`. `allowAnyOrigin = true` allows any origin; strict mode uses
-`allowAnyOrigin = false` with an explicit `allowedOrigins` list.
+`allowAnyOrigin = false` with an explicit `allowedOrigins` list. `[cors.registeredConsoleHosts]`
+admits `<label><suffix>.<registered base domain>` exactly, and the opt-in
+`[cors.registeredSubdomainHosts]` (`SDKWORK_CORS_SUBDOMAIN_{BASE_DOMAINS,SCHEMES}`) admits the apex
+and every sub-domain of a registered base domain at any depth — the mode used for operator-chosen
+hosts such as `platform.birdcoder.com`. Base domains stay restricted to the registered platform
+registry, and a half-configured rule fails startup (`CORS_SPEC.md` §5.1).
 
 ## Commercial Gateway Controls
 

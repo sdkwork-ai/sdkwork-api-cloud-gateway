@@ -3091,6 +3091,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "if-addrs"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0a05c691e1fae256cf7013d99dad472dc52d5543322761f83ec8d47eab40d2b"
+dependencies = [
+ "libc",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "im-adapters-local-disk"
 version = "0.1.0"
 dependencies = [
@@ -3764,9 +3774,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.37.0"
+version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1f111c8c41e7c61a49cd34e44c7619462967221a6443b0ec299e0ac30cfb9b1"
+checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
  "cc",
  "pkg-config",
@@ -6569,6 +6579,7 @@ dependencies = [
  "sdkwork-agent-kernel",
  "sdkwork-intelligence-agents-service",
  "sdkwork-knowledgebase-app-sdk-generated-rust",
+ "sdkwork-utils-rust",
  "tokio",
  "tracing",
 ]
@@ -6582,6 +6593,7 @@ dependencies = [
  "sdkwork-memory-app-sdk",
  "sdkwork-memory-contract",
  "sdkwork-memory-inprocess",
+ "sdkwork-utils-rust",
  "serde_json",
  "tokio",
  "tracing",
@@ -7129,6 +7141,7 @@ dependencies = [
  "sdkwork-database-lifecycle",
  "sdkwork-database-spi",
  "sdkwork-database-sqlx",
+ "sdkwork-discovery-client",
  "sdkwork-iam-web-adapter",
  "sdkwork-im-database-pool",
  "sdkwork-image-generation-provider-adapter",
@@ -10052,6 +10065,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-discovery-client"
+version = "0.1.0"
+dependencies = [
+ "if-addrs",
+ "reqwest 0.12.28",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "sdkwork-discovery-rpc-proto"
 version = "0.1.0"
 dependencies = [
@@ -10583,6 +10612,7 @@ dependencies = [
  "chrono",
  "cloudrouter-open-sdk",
  "sdkwork-intelligence-generations-service",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tracing",
@@ -11111,6 +11141,7 @@ dependencies = [
  "axum 0.8.9",
  "cloudrouter-open-sdk",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "tower 0.5.3",
@@ -17359,6 +17390,7 @@ dependencies = [
  "sdkwork-database-sqlx",
  "sdkwork-routes-voice-app-api",
  "sdkwork-routes-voice-backend-api",
+ "sdkwork-utils-rust",
  "sdkwork-voice-drive-sync-processor",
  "sdkwork-voice-generation-provider-adapter",
  "sdkwork-voice-generation-provider-spi",
