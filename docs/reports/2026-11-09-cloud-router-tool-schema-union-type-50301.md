@@ -162,7 +162,70 @@ Interim workaround until 0.1.38 is deployed (no rebuild): run the session on a
 non-chat wire (`wire_protocol: "anthropic_messages"`), which drops the tool
 set instead of sending tool schemas; chat works, tools are unavailable.
 
-## 6. Follow-ups
+## 6. Full API contract regression sweep (same release)
+
+After the incident fix, every client-supplied body that Cloud Router parses into
+a typed contract was swept for the same class of defect: **a contract narrower
+than the wire format it accepts, failing the whole request before routing.**
+
+Method:
+
+```sh
+rg 'from_value::<|from_slice::<|from_str::<' services/sdkwork-cloudrouter-router-service/src crates
+```
+
+Classification of the 40+ typed parse sites found:
+
+- **Client request DTOs** — only the three OpenAI-compatible parsers exist:
+  `openai_chat.rs::parse_request`, `openai_responses.rs::parse_request`,
+  `openai_embeddings.rs::parse_request`. These are the only places where
+  third-party-shaped JSON is deserialized into a Rust type.
+- **Provider responses / streams / invocation bodies** — parsed as
+  `serde_json::Value` (`provider_request.rs`, `payload.rs`,
+  `response_normalization.rs`, `openai_relay_execution.rs`, the SSE readers and
+  the agents `chat_stream`), so they cannot reject a legal vendor payload.
+- **Internal/own contracts** — admin cursor payloads, stored settings rows,
+  provider-adapter manifests. Not client-shaped; strictness is intended.
+
+Findings and fixes in `openai_contract.rs` (all in this release):
+
+| # | Surface | Legal shape that used to 400 | Fix |
+| --- | --- | --- | --- |
+| 1 | chat tools | `"type": ["string","null"]` (schemars `Option<T>`) | `OpenAiSchemaType` untagged single/union |
+| 2 | chat + responses tools | `{"type":"custom"}`, `{"type":"web_search"}`, `{"type":"local_shell"}`, `{"type":"mcp"}`, ... | `OpenAiToolType` permissive (`Other(String)`), round-trips verbatim |
+| 3 | tool_choice (both) | Responses' flat `{"type":"function","name":"f"}` and built-in `{"type":"web_search"}` | `OpenAiNamedToolChoice` accepts nested and flat; `tool_name()` |
+| 4 | responses input | assistant history as `{"type":"output_text"}` — what the agents `openai_responses` wire emits on turn 2+ | `OpenAiResponseInputContentPartType` += `OutputText`, `InputAudio`, `OutputAudio` |
+| 5 | responses tools | flat function tools (`{type,name,parameters,strict}`) and built-in kinds | dedicated `OpenAiResponseTool` with `function_name()` |
+| 6 | any JSON Schema | draft-07 tuple `"items": [...]` | `OpenAiJsonSchemaItems` single/tuple |
+| 7 | service tier / reasoning effort | `"service_tier":"scale"`, `"effort":"xhigh"` | permissive enums preserving the wire value |
+
+Verified already tolerant (no change needed): multimodal message content parts,
+`stop` string/array, `response_format.json_schema`, `stream_options`,
+`metadata`, `logit_bias`, `modalities`, `audio`, `prediction`, legacy
+`functions`/`function_call`, unknown top-level and per-message vendor fields
+(`flatten`), embeddings input forms (string, string array, token array, token
+arrays), `conversation` string-or-object.
+
+Verification:
+
+```text
+cargo test -p sdkwork-cloudrouter-router-service --test openai_contract
+  running 15 tests ... test result: ok. 15 passed; 0 failed
+rustfmt --check (src + tests)  # clean
+```
+
+Nine of those tests form the request-tolerance corpus
+(`chat_request_accepts_nullable_json_schema_union_types_in_tool_parameters`,
+`chat_request_accepts_every_documented_optional_field`,
+`json_schema_items_accepts_single_and_tuple_forms`,
+`tool_kinds_accept_extensions_and_round_trip`,
+`vendor_enumerated_values_accept_unknown_levels`,
+`responses_request_accepts_assistant_output_text_history`,
+`responses_request_accepts_builtin_tool_kinds_and_flat_function_tools`,
+`embeddings_request_accepts_every_documented_input_form`, plus the six
+pre-existing strong-typing tests, which still pass).
+
+## 7. Follow-ups
 
 - Regenerate the open-api document
   (`sdks/cloudrouter-open-sdk/openapi/cloudrouter-open-sdk.openapi.json` →
