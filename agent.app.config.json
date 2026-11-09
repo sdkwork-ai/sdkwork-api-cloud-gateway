@@ -187,16 +187,34 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.39",
+    "currentVersion": "0.1.40",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.39"
+      "BETA": "0.1.40"
     },
     "notes": [
       {
-        "version": "0.1.39",
+        "version": "0.1.40",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.40",
+        "summary": "One model-id parser for every provider-facing surface, including image, video, audio, and music, plus an operator-accurate empty-account-pool diagnostic. A request model id may arrive as vendor/model, vendor:model, vendor|model, in full width, or with a region middle segment; the catalog-owned provider_native_model_id now normalizes all of them to the vendor-native id, every outbound provider request (JSON body, multipart body, query, and the models/{model}:{action} path) passes through one chokepoint, and the router's private duplicate parser is deleted. The Google media action path (/google/v1beta/models/{model}:generateImages and :generateVideos) was not recognized before, so the main image/video path forwarded the caller's model verbatim; it is fixed with regression tests.",
+        "highlights": [
+          "one parser: sdkwork-models-catalog-service::provider_native_model_id accepts `/`, `:`, `|`, their full-width forms, and one `region` middle segment, strips a vendor/relay prefix only for known namespaces, and leaves fine-tune (`ft:gpt-4o-...`) and variant (`gpt-4o:free`) ids verbatim; storage keys stay strict vendor/model",
+          "media coverage: the outbound chokepoint (application/invocation/provider_request.rs) rewrites the JSON body, multipart body, query, and action path model for chat, responses, embeddings, image, video, audio, music, and every vendor-native passthrough route",
+          "fix: rewrite_models_action_path now recognizes `/google/v1beta/models/` and splits the action at the last `:`, so Google image/video generation no longer reaches the vendor with the caller's model id",
+          "diagnostics: an empty routing snapshot reports the blocking account-pool gate (enable supplier/account, align auth method, add credential, join account group, resolve base URL) instead of a blanket 401",
+          "verification: sdkwork-models 86 tests, sdkwork-cloudrouter-router-service 686 tests, sdkwork-agents-tool-cloudrouter 67 tests (serial), including the separator matrix, region dropping, media action-path, and gate-hint regressions",
+          "note: production 0.1.39 still fails turns with upstream_route_snapshot_empty because every seeded upstream account and credential is disabled; enable one account with a real vendor key (the reported gate moves from enabled_accounts to active_credentials)"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.39",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.39",
         "summary": "Repackaged rebuild of the 0.1.38 source after the full sdkwork-space submodule sync, deployed to the production Docker host. No functional change: the image, the install bundle, and the deployed containers are rebuilt from the same verified revision so the release tag and rollback target stay independently addressable.",
         "highlights": [
