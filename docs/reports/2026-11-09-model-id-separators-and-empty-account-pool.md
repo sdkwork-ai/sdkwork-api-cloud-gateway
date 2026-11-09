@@ -97,24 +97,70 @@ contract.
 gate (`block at '<gate>'`) with that gate's own remediation, before the generic
 credential branch.
 
-## 4. Verification
+## 4. One parser for every provider-facing model (media included)
+
+The dialect rules lived in the router. They now live in the model catalog —
+the owner of the model vocabulary — behind a single public function:
+
+- `sdkwork-models-catalog-service::domain::provider_native_model_id` — the one
+  parser every surface calls. It accepts `/`, `:`, `|`, their full-width forms,
+  and one `region` middle segment; it strips a vendor/relay prefix only when the
+  head is a known vendor or relay namespace, so `ft:gpt-4o-...:org:abc` and
+  `gpt-4o:free` are returned verbatim.
+- `parse_request_model_identity` — the tolerant reader behind it (vendor + model
+  parts). The **storage** contract stays strict: `ensure_canonical_model_catalog_key`
+  still demands `vendor/model` for catalog rows.
+- The router's private duplicate (`provider_native_model_id_for_wire`,
+  `without_region_segment`) is deleted; `route_planning`, the openai runtime, the
+  app-runtime, and every other caller use the catalog function.
+
+Every outbound surface now passes through **one chokepoint**
+(`application/invocation/provider_request.rs::normalized_provider_model`): the
+model written into the JSON/multipart body, the query, and the
+`models/{model}:{action}` path is the catalog-native id. That covers chat,
+responses, embeddings, **image, video, audio, music**, and every vendor-native
+passthrough route (Anthropic, Gemini, Kling, Vidu, Volcengine, ...), because all
+of them are dialled through that one builder.
+
+Two defects surfaced while wiring the media paths:
+
+1. `rewrite_models_action_path` recognized only `/v1beta/models/` and
+   `/v1/models/`. Google's media surfaces publish
+   `/google/v1beta/models/{model}:generateImages` (and `:generateVideos`), so the
+   **main image/video path forwarded the caller's model verbatim**. The
+   `/google/v1beta/models/` prefix is now recognized.
+2. The action split took the first `:`, so a dialect model in the path
+   (`models/google:veo-3.0:generateVideos`) produced a mangled action. It now
+   splits at the last `:` (the action), replacing the whole model.
+
+## 5. Verification
 
 ```text
-# cloudrouter
-cargo test -p sdkwork-cloudrouter-router-service --lib
-  test result: ok. 685 passed; 0 failed
+# sdkwork-models (unified parser)
+cargo test -p sdkwork-models-catalog-service --lib
+  test result: ok. 86 passed; 0 failed
 
-# agents
+# cloudrouter (routing, derivation, outbound chokepoint)
+cargo test -p sdkwork-cloudrouter-router-service --lib
+  test result: ok. 686 passed; 0 failed
+
+# agents (gate hint)
 cargo test -p sdkwork-agents-tool-cloudrouter --lib -- --test-threads=1
   test result: ok. 67 passed; 0 failed
 ```
 
 New tests:
 
+- `domain::catalog::tests::provider_native_model_id_strips_every_request_separator`
+- `domain::catalog::tests::provider_native_model_id_drops_the_region_segment`
+- `domain::catalog::tests::provider_native_model_id_keeps_model_side_segments_and_relay_overlays`
+- `domain::catalog::tests::provider_native_model_id_leaves_non_vendor_heads_untouched`
+- `domain::catalog::tests::request_identity_parsing_is_separate_from_storage_validation`
 - `domain::model_request_alias::tests::normalization_rewrites_pipe_separators_both_widths`
-- `domain::model_request_alias::tests::provider_native_model_id_for_wire_strips_every_separator_spelling`
 - `application::invocation::route_planning::tests::provider_model_derivation_strips_every_separator_spelling`
 - `application::invocation::route_planning::tests::provider_model_derivation_keeps_deliberate_mappings`
+- `application::invocation::provider_request::tests::provider_model_normalization_covers_every_separator_spelling`
+- `application::invocation::provider_request::tests::media_action_paths_are_rewritten_to_the_native_model`
 - `api::app_runtime::tests::runtime_provider_model_resolves_dialect_separators`
 - `client::tests::empty_account_pool_reports_the_blocking_gate_not_a_401`
 
@@ -122,9 +168,12 @@ Note: `chat_stream::tests::both_transports_present_the_same_credential_source`
 fails only under parallel execution (it mutates process env) and passes with
 `--test-threads=1`; that flake predates this change.
 
-## 5. Follow-ups
+## 6. Follow-ups
 
 - Operator: enable one upstream account with a real vendor key (section 2). No
   code change makes a disabled/placeholder account routable.
 - Consider a startup warning that logs the gate chain once when the routing
   snapshot is empty, so an all-disabled pool is visible before the first turn.
+- Media adapters that dial a vendor with a *constant* model (for example the
+  ElevenLabs sound-effect default) are intentionally untouched: the constant is
+  already native and no request id can reach it.
