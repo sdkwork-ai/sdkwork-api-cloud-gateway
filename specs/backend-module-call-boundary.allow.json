@@ -1,0 +1,9 @@
+{
+  "comment": "Deliberate exceptions to MODULE_SPEC.md §4.2 (Backend Module Call Boundary, In-Process First). The gateway embeds its modules; the entry below is not an embedded module proxy and cannot be routed in-process.",
+  "allow": [
+    {
+      "file": "crates/sdkwork-api-cloud-gateway/src/comments_proxy.rs",
+      "reason": "Edge proxy to a genuinely separate service, not a same-process module call (MODULE_SPEC.md §4.2.3 split-deployment exception). sdkwork-comments has no route crate and no API assembly, so it cannot be embedded in the gateway (docs/engineering/reviews/REVIEW-20260731-sdkwork-api-cloud-gateway-integration-audit.md: GATE-P1-004); it runs as its own process (apps/sdkwork-comments-runtime, 'sdkwork comments runtime listening on http://127.0.0.1:3901'). The gateway forwards /app/v3/api/comments and /app/v3/api/engagement to SDKWORK_COMMENTS_RUNTIME_URL, and no in-process comments port exists to call instead."
+    }
+  ]
+}
