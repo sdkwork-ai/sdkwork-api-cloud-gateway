@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.47",
+    "currentVersion": "0.1.48",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.47"
+      "BETA": "0.1.48"
     },
     "notes": [
       {
-        "version": "0.1.47",
+        "version": "0.1.48",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.48",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-drive, sdkwork-cloudrouter, sdkwork-merchandise, sdkwork-knowledgebase, sdkwork-webserver, sdkwork-agents, sdkwork-messaging, sdkwork-specs, and more than twenty other dependency workspaces. The merged gateway upstream adds the drive storage bootstrap environment wiring plus the refreshed bundled compose and module boundary allowlist; the gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule verified at origin/main; the advanced repositories were fast-forwarded or merged forward, sdkwork-merchandise was reattached from a detached HEAD to main, and the dirty birdcoder2/cloudrouter trees were fast-forwarded only where the incoming diff did not overlap local edits",
+          "gateway source: merged origin/main (drive storage bootstrap environment, bundled compose refresh, backend module boundary allowlist) onto the local release metadata checkpoint without conflict",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.48 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.47",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.47",
         "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-iam, sdkwork-mall, sdkwork-order, sdkwork-promotion, sdkwork-cloudrouter, sdkwork-appbase, and sdkwork-specs. The gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
         "highlights": [
