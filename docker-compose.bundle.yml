@@ -44,6 +44,12 @@ x-gateway-common: &gateway-common
     # the composition root and its dependency assemblies agree on the mode.
     SDKWORK_API_CLOUD_GATEWAY_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
     SDKWORK_DEPLOYMENT_PROFILE: ${GATEWAY_DEPLOYMENT_PROFILE:-standalone}
+    # Account-ledger adapter mode (MODULE_SPEC.md §4.2): `store` calls the
+    # account module in-process on the shared PostgreSQL; `http` is only for a
+    # split deployment and requires SDKWORK_ACCESS_TOKEN. Passing it through
+    # here is mandatory — a value present only in the env file never reaches the
+    # container, because this service lists its environment explicitly.
+    SDKWORK_ORDER_ACCOUNT_LEDGER_ADAPTER: ${SDKWORK_ORDER_ACCOUNT_LEDGER_ADAPTER:-store}
     # Database-backed HTTP service registry (DISCOVERY_SPEC.md section 12.1).
     SDKWORK_DISCOVERY_NAMESPACE: ${GATEWAY_DISCOVERY_NAMESPACE:-platform}
     SDKWORK_DISCOVERY_HTTP_REGISTRY_ENABLED: ${GATEWAY_DISCOVERY_HTTP_REGISTRY_ENABLED:-true}
