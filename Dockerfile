@@ -46,7 +46,10 @@
 # daemon platform; `scripts/build-api-cloud-gateway-container.mjs` records that
 # architecture in the image manifest and refuses a mislabeled package.
 # Refresh deliberately: it is the only place the base image version is fixed.
-FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
+# trixie (glibc 2.41), not bookworm (2.36): the staged release binary is compiled on
+# ubuntu-24.04+ build hosts (glibc >= 2.39) and cannot load on a bookworm image
+# (GLIBC_2.38/2.39 not found at container start).
+FROM debian:trixie-slim
 
 ARG GATEWAY_BINARY=sdkwork-api-cloud-gateway
 ARG KNOWLEDGEBASE_RPC_BINARY=sdkwork-intelligence-knowledgebase-rpc-bin
