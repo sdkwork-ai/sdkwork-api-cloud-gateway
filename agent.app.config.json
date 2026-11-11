@@ -187,16 +187,122 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.40",
+    "currentVersion": "0.1.47",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.40"
+      "BETA": "0.1.47"
     },
     "notes": [
       {
-        "version": "0.1.40",
+        "version": "0.1.47",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.47",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-iam, sdkwork-mall, sdkwork-order, sdkwork-promotion, sdkwork-cloudrouter, sdkwork-appbase, and sdkwork-specs. The gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule verified at origin/main; the advanced repositories were fast-forwarded or merged forward to their upstream revisions before the build",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.47 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.46",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.46",
+        "summary": "Repackaged rebuild after the full sdkwork-space submodule sync wave. No submodule advanced, so no functional change: the image, the install bundle, and the deployed gateway plus knowledgebase-rpc containers are rebuilt from the verified synced tree so the release tag and rollback target stay independently addressable.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule verified at origin/main before the rebuild; fetch retries resolved the transient network failures",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.46 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.45",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.45",
+        "summary": "Fixes the 0.1.44 production startup failure by declaring the sdkwork-deployments download catalog dependency API surfaces. The deployments workspace added /app/v3/api/downloads and /backend/v3/api/downloads routes; the gateway now declares both prefixes in specs/component.spec.json so embedded composition covers every route.",
+        "highlights": [
+          "root cause: sdkwork-deployments route /app/v3/api/downloads/catalog/{catalogKey} was not covered by any declared dependency API surface, so the 0.1.44 gateway exited during embedded assembly composition",
+          "fix: added app and backend downloads prefixes to the deployments dependency apiPrefixes and apiSurfaces in specs/component.spec.json",
+          "deployment: production install bundle repackaged and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.45 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.44",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.44",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-cloudrouter, sdkwork-birdcoder2, sdkwork-daxuedazi, and sdkwork-deployments. The gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: all sdkwork-* submodules verified at origin/main; the advanced repositories were fast-forwarded to their upstream revisions before the build",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.44 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.43",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.43",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-cloudrouter and sdkwork-promotion. The gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: all sdkwork-* submodules verified at origin/main; sdkwork-cloudrouter and sdkwork-promotion fast-forwarded to their upstream revisions before the build",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.43 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.42",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.42",
+        "summary": "Repackaged rebuild after the full sdkwork-space submodule sync wave, deployed to the production Docker host. No functional change: the image, the install bundle, and the deployed gateway plus knowledgebase-rpc containers are rebuilt from the synced revision so the release tag and rollback target stay independently addressable.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule verified at origin/main before the rebuild; gateway and knowledgebase-rpc binaries rebuilt from the same verified tree",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.42 and /healthz and /readyz return 200 on the production instance port"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.41",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.41",
+        "summary": "Repackaged rebuild after the full sdkwork-space submodule sync wave, deployed to the production Docker host. No functional change: the image, the install bundle, and the deployed gateway plus knowledgebase-rpc containers are rebuilt from the synced revision so the release tag and rollback target stay independently addressable.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule verified at origin/main before the rebuild; gateway and knowledgebase-rpc binaries rebuilt from the same verified tree",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.41 and /healthz and /readyz return 200 on the production instance port"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.40",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.40",
         "summary": "One model-id parser for every provider-facing surface, including image, video, audio, and music, plus an operator-accurate empty-account-pool diagnostic. A request model id may arrive as vendor/model, vendor:model, vendor|model, in full width, or with a region middle segment; the catalog-owned provider_native_model_id now normalizes all of them to the vendor-native id, every outbound provider request (JSON body, multipart body, query, and the models/{model}:{action} path) passes through one chokepoint, and the router's private duplicate parser is deleted. The Google media action path (/google/v1beta/models/{model}:generateImages and :generateVideos) was not recognized before, so the main image/video path forwarded the caller's model verbatim; it is fixed with regression tests.",
         "highlights": [

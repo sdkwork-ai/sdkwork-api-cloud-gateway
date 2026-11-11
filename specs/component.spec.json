@@ -1937,6 +1937,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/downloads",
+      "dependencyServiceId": "sdkwork-deploy-app-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/template_categories",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route",
@@ -2036,6 +2043,13 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/usage",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/downloads",
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
@@ -3202,7 +3216,8 @@
         "/app/v3/api/template_categories",
         "/app/v3/api/marketplace",
         "/app/v3/api/upload_sessions",
-        "/app/v3/api/usage_events"
+        "/app/v3/api/usage_events",
+        "/app/v3/api/downloads"
       ],
       "coverage": "sdkwork-deploy-app-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
@@ -3232,7 +3247,8 @@
         "/backend/v3/api/signing_identity_health",
         "/backend/v3/api/source_events",
         "/backend/v3/api/tls",
-        "/backend/v3/api/usage"
+        "/backend/v3/api/usage",
+        "/backend/v3/api/downloads"
       ],
       "coverage": "sdkwork-deploy-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",

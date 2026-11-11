@@ -9182,6 +9182,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tracing",
  "uuid",
 ]
 
@@ -9973,6 +9974,17 @@ dependencies = [
  "sdkwork-deploy-core",
  "sdkwork-drive-app-sdk-generated-rust",
  "sdkwork-utils-rust",
+]
+
+[[package]]
+name = "sdkwork-deploy-feed"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-deploy-contract",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
@@ -11300,6 +11312,7 @@ dependencies = [
  "sdkwork-deploy-contract",
  "sdkwork-deploy-core",
  "sdkwork-deploy-drive-port",
+ "sdkwork-deploy-feed",
  "sdkwork-deploy-runtime-compiler",
  "sdkwork-deploy-web-port",
  "sdkwork-utils-rust",
@@ -14248,6 +14261,7 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "sdkwork-deploy-contract",
+ "sdkwork-deploy-feed",
  "sdkwork-iam-web-adapter",
  "sdkwork-routes-deploy-common",
  "sdkwork-web-axum",
