@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.48",
+    "currentVersion": "0.1.49",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.48"
+      "BETA": "0.1.49"
     },
     "notes": [
       {
-        "version": "0.1.48",
+        "version": "0.1.49",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.49",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave. Every dependency workspace was fetched and verified against origin/main, the diverged sdkwork-daxuedazi checkout was merged forward, and the gateway container image plus the production install bundle were rebuilt from the synced tree and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule fetched and verified at origin/main; local-ahead checkouts preserved; sdkwork-daxuedazi merged forward from a 958-commit divergence without discarding its local commit",
+          "gateway source: already at origin/main with no upstream movement, so no source merge was needed",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.49 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.48",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.48",
         "summary": "Rebuild after the sdkwork-space submodule sync wave that advanced sdkwork-drive, sdkwork-cloudrouter, sdkwork-merchandise, sdkwork-knowledgebase, sdkwork-webserver, sdkwork-agents, sdkwork-messaging, sdkwork-specs, and more than twenty other dependency workspaces. The merged gateway upstream adds the drive storage bootstrap environment wiring plus the refreshed bundled compose and module boundary allowlist; the gateway and knowledgebase-rpc binaries, the container image, and the production install bundle are rebuilt from the synced revision and redeployed to the production Docker host.",
         "highlights": [
