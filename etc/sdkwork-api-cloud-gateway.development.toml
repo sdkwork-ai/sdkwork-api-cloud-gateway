@@ -22,6 +22,15 @@ autoMigrate = true
 [realtime]
 enabled = false
 
+# AIoT protocol edge embedded in this process (foundation-aiot-realtime):
+# HTTP/WebSocket (TCP) ingress, UDP media bridge and MQTT bridge. The bind is
+# the AIoT device ingress port, separate from the gateway HTTP port. MQTT/UDP
+# protocol tuning comes from the SDKWORK_AIOT_* environment family.
+[aiotRealtime]
+enabled = true
+bind = "127.0.0.1:18080"
+mqttBridgeEnabled = false
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["http://localhost:3910", "http://127.0.0.1:3910"]

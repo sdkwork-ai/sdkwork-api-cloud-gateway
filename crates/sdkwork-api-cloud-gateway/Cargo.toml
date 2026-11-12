@@ -53,6 +53,13 @@ foundation-community-commerce-membership-embedded = [
 foundation-cms = ["dep:sdkwork-api-cms-assembly"]
 foundation-voice = ["dep:sdkwork-api-voice-assembly"]
 foundation-aiot = ["dep:sdkwork-api-aiot-assembly"]
+# Embeds the AIoT protocol edge (HTTP/WebSocket listener, UDP media bridge,
+# MQTT bridge) into this process per platform gateway realtime hosting.
+foundation-aiot-realtime = [
+    "foundation-aiot",
+    "foundation-appbase",
+    "dep:sdkwork-aiot-device-edge-runtime",
+]
 foundation-appstore = ["dep:sdkwork-api-appstore-assembly"]
 foundation-forum = ["dep:sdkwork-api-forum-assembly"]
 foundation-cloudrouter = [
@@ -140,6 +147,7 @@ platform-foundation-suite-container = [
     "foundation-cms",
     "foundation-voice",
     "foundation-aiot",
+    "foundation-aiot-realtime",
     "foundation-appstore",
     "foundation-forum",
     "foundation-cloudrouter",
@@ -250,6 +258,7 @@ sdkwork-api-rtc-assembly = { workspace = true, optional = true }
 sdkwork-api-notary-assembly = { workspace = true, optional = true }
 sdkwork-api-mail-assembly = { workspace = true, optional = true }
 sdkwork-api-aiot-assembly = { workspace = true, optional = true }
+sdkwork-aiot-device-edge-runtime = { workspace = true, optional = true }
 sdkwork-api-appstore-assembly = { workspace = true, optional = true }
 sdkwork-api-agents-assembly = { workspace = true, optional = true }
 sdkwork-agents-tool-cloudrouter = { workspace = true, optional = true }

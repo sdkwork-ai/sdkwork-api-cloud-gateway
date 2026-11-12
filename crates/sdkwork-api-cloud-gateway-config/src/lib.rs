@@ -124,6 +124,8 @@ pub struct GatewayRuntimeConfig {
     #[serde(default)]
     pub realtime: GatewayRealtimeConfig,
     #[serde(default)]
+    pub aiot_realtime: GatewayAiotRealtimeConfig,
+    #[serde(default)]
     pub database: GatewayDatabaseConfig,
     #[serde(default)]
     pub mode: GatewayMode,
@@ -179,6 +181,24 @@ pub struct GatewayServerConfig {
 pub struct GatewayRealtimeConfig {
     #[serde(default)]
     pub enabled: bool,
+}
+
+/// AIoT protocol edge embedded into the gateway process.
+///
+/// When enabled with the `foundation-aiot-realtime` Cargo feature, the gateway
+/// starts the AIoT device edge listeners in-process: the HTTP/WebSocket (TCP)
+/// ingress, the UDP media bridge and the MQTT bridge. AIoT protocol tuning
+/// (MQTT endpoint/topics, UDP bind, crypto material) comes from the existing
+/// `SDKWORK_AIOT_*` environment family.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GatewayAiotRealtimeConfig {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default)]
+    pub bind: Option<String>,
+    #[serde(default)]
+    pub mqtt_bridge_enabled: bool,
 }
 
 /// Embedded database lifecycle defaults applied before any module bootstrap.
@@ -462,6 +482,8 @@ struct RawGatewayRuntimeConfig {
     service: Option<GatewayServiceConfig>,
     server: Option<RawGatewayServerConfig>,
     realtime: Option<GatewayRealtimeConfig>,
+    #[serde(rename = "aiotRealtime")]
+    aiot_realtime: Option<GatewayAiotRealtimeConfig>,
     database: Option<GatewayDatabaseConfig>,
     mode: Option<GatewayMode>,
     dependency_surfaces: Option<Vec<DependencyApiSurfaceConfig>>,
@@ -572,6 +594,7 @@ impl Default for GatewayRuntimeConfig {
             service: GatewayServiceConfig::default(),
             server: GatewayServerConfig::default(),
             realtime: GatewayRealtimeConfig::default(),
+            aiot_realtime: GatewayAiotRealtimeConfig::default(),
             database: GatewayDatabaseConfig::default(),
             mode: GatewayMode::default(),
             dependency_surfaces: default_dependency_surfaces(),
@@ -605,6 +628,9 @@ impl GatewayRuntimeConfig {
         }
         if let Some(realtime) = raw.realtime {
             config.realtime = realtime;
+        }
+        if let Some(aiot_realtime) = raw.aiot_realtime {
+            config.aiot_realtime = aiot_realtime;
         }
         if let Some(database) = raw.database {
             config.database = database;
@@ -743,6 +769,21 @@ impl GatewayRuntimeConfig {
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED") {
             self.realtime.enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_REALTIME_ENABLED", enabled)?;
+        }
+        if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_ENABLED") {
+            self.aiot_realtime.enabled =
+                parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_ENABLED", enabled)?;
+        }
+        if let Some(bind) = env.get("SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_BIND") {
+            self.aiot_realtime.bind = Some(bind.clone());
+        }
+        if let Some(enabled) =
+            env.get("SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_MQTT_BRIDGE_ENABLED")
+        {
+            self.aiot_realtime.mqtt_bridge_enabled = parse_bool_env(
+                "SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_MQTT_BRIDGE_ENABLED",
+                enabled,
+            )?;
         }
         if let Some(max_body_bytes) = env.get("SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES") {
             self.request.max_body_bytes =

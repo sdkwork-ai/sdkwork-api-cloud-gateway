@@ -18,6 +18,10 @@ bind = "127.0.0.1:3906"
 # lifecycle explicitly; SDKWORK_DATABASE_AUTO_MIGRATE still overrides.
 autoMigrate = true
 
+[aiotRealtime]
+enabled = false
+mqttBridgeEnabled = false
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["http://localhost:3911", "http://127.0.0.1:3911"]
