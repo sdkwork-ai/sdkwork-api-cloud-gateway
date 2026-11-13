@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.51",
+    "currentVersion": "0.1.52",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.51"
+      "BETA": "0.1.52"
     },
     "notes": [
       {
-        "version": "0.1.51",
+        "version": "0.1.52",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.52",
+        "summary": "Rebuild and redeploy after pruning the embedded cloudrouter app/backend OpenAPI documents to the routes the platform gateway actually mounts, so assembly no longer fails its manifest/OpenAPI inventory equality check.",
+        "highlights": [
+          "gateway runtime: cloudrouter assembly drops OpenAPI operations that belong to capabilities mounted only in standalone composition (ai plugins/agents/skill packages, mcp servers/connectors, billing plans), keeping the served contract equal to the 457-route manifest",
+          "provenance: rebuilt from the synced sdkwork-space tree on top of the production migration-history reconciliation delivered in 0.1.51",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.52, migration checksum validation passes, and /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.51",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.51",
         "summary": "Repackage and redeploy after the production migration-history reconciliation: merchandise migration 0002 keeps the reviewed idempotent content and payment migration 0002 returns byte-for-byte to the applied revision with its rollback strategy recorded in the metadata sidecar.",
         "highlights": [
