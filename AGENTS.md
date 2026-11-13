@@ -74,7 +74,7 @@ Use dynamic progressive loading before reading implementation files:
   `TEST_SPEC.md`.
 - API/SDK surfaces: `API_SPEC.md`, `SDK_SPEC.md`, `APP_SDK_INTEGRATION_SPEC.md`,
   `COMPONENT_SPEC.md`, and `TEST_SPEC.md`; add `PAGINATION_SPEC.md` for list/search work.
-- Security/auth/IAM: `IAM_SPEC.md`, `IAM_LOGIN_INTEGRATION_SPEC.md`, `SECURITY_SPEC.md`, and
+- Security/auth/IAM: `IAM_SPEC.md`, `IAM_LOGIN_INTEGRATION_SPEC.md`, `AUTHORIZATION_STATE_SPEC.md`, `SECURITY_SPEC.md`, and
   `PRIVACY_SPEC.md`.
 - Workflow/package/release/deploy: `GITHUB_WORKFLOW_SPEC.md`, `DEPLOYMENT_SPEC.md`, `DOCKER_SPEC.md`,
   `RELEASE_SPEC.md`, `SUPPLY_CHAIN_SECURITY_SPEC.md`, and `PNPM_SCRIPT_SPEC.md`.
