@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.50",
+    "currentVersion": "0.1.51",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.50"
+      "BETA": "0.1.51"
     },
     "notes": [
       {
-        "version": "0.1.50",
+        "version": "0.1.51",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.51",
+        "summary": "Repackage and redeploy after the production migration-history reconciliation: merchandise migration 0002 keeps the reviewed idempotent content and payment migration 0002 returns byte-for-byte to the applied revision with its rollback strategy recorded in the metadata sidecar.",
+        "highlights": [
+          "provenance: rebuilt from the same synced sdkwork-space tree as 0.1.50 with the payment migration restored to the applied bytes",
+          "database: payment 0002 rollback metadata is now authoritative in the historical metadata sidecar; merchandise 0002 keeps the reviewed DROP IF EXISTS idempotency",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.51, migration checksum validation passes, and /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.50",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.50",
         "summary": "Rebuild after the sdkwork-space submodule sync wave and the gateway origin/main merge that embeds the AIoT protocol edge routes. Every dependency workspace was fetched and verified against origin/main, the gateway local release commits were merged forward with upstream, and the container image plus the production install bundle are rebuilt from the synced tree and redeployed to the production Docker host.",
         "highlights": [
