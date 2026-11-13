@@ -55,8 +55,10 @@ _tmp-*
 **/.cargo/
 
 # Common runtime/build artifacts (auto-aligned)
+*.sqlite
 *.sqlite-shm
 *.sqlite-wal
+*.db
 **/test-results/
 .turbo/
 **/.turbo/
