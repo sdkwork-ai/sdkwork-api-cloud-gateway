@@ -2857,6 +2857,23 @@
       "executableExport": "sdkwork_api_aiot_assembly::web_module_with_pool"
     },
     {
+      "serviceId": "sdkwork-aiot-realtime-plane",
+      "workspace": "sdkwork-aiot",
+      "apiAuthority": "sdkwork-aiot-app-api",
+      "sdkFamily": "sdkwork-aiot-app-sdk",
+      "apiPrefixes": [
+        "/iot/xiaozhi"
+      ],
+      "coverage": "sdkwork-aiot-realtime-plane-embedded-bootstrap",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "runtimeSurface": true,
+      "cargoFeature": "foundation-aiot-realtime",
+      "cargoDependency": "sdkwork-aiot-device-edge-runtime",
+      "executableExport": "sdkwork_aiot_device_edge_runtime::spawn_device_edge_runtime"
+    },
+    {
       "serviceId": "sdkwork-community-app-api",
       "workspace": "sdkwork-community",
       "apiAuthority": "sdkwork-community-app-api",

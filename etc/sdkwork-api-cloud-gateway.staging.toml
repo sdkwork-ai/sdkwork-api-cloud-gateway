@@ -12,6 +12,10 @@ bind = "0.0.0.0:3907"
 # `--provision-databases` then `--migrate-databases` before service startup.
 autoMigrate = false
 
+[aiotRealtime]
+enabled = false
+mqttBridgeEnabled = false
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["http://localhost:3912", "http://127.0.0.1:3912"]

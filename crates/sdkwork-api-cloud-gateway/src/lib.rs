@@ -24,7 +24,10 @@ pub mod web_framework;
 pub use error::GatewayRuntimeError;
 #[cfg(feature = "foundation-appbase")]
 pub use runtime::build_sdkwork_api_cloud_gateway_router_with_embedded_appbase;
-#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+#[cfg(any(
+    all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+    feature = "foundation-aiot-realtime"
+))]
 pub use runtime::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
 pub use runtime::{
     build_sdkwork_api_cloud_gateway_router,

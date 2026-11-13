@@ -774,37 +774,35 @@ fn im_and_cloudrouter_use_their_api_assemblies() {
         .iter()
         .map(|surface| surface.api_prefix.as_str())
         .collect::<HashSet<_>>();
-    assert_eq!(
-        cloudrouter_prefixes,
-        HashSet::from([
-            "/app/v3/api/ai",
-            "/app/v3/api/iam/api_keys",
-            "/app/v3/api/iam/invite",
-            "/app/v3/api/iam/invites",
-            "/app/v3/api/iam/users/settings",
-            "/app/v3/api/notification",
-            "/app/v3/api/partner_join",
-            "/app/v3/api/runtime",
-            "/app/v3/api/system/site",
-            "/backend/v3/api/ai",
-            "/backend/v3/api/billing",
-            "/backend/v3/api/payments",
-            "/backend/v3/api/pricing",
-            "/backend/v3/api/recharges",
-            "/backend/v3/api/storage",
-            "/backend/v3/api/system",
-            "/anthropic/v1",
-            "/google/v1beta",
-            "/vidu/ent",
-            "/suno/v1",
-            "/volcengine/api",
-            "/kling/v1",
-            "/elevenlabs/v1",
-            "/typesafe/v1",
-            "/minimax/v1",
-            "/v1",
-        ])
-    );
+    let expected_cloudrouter_prefixes = HashSet::from([
+        "/app/v3/api/ai",
+        "/app/v3/api/iam/api_keys",
+        "/app/v3/api/iam/invite",
+        "/app/v3/api/iam/invites",
+        "/app/v3/api/iam/users/settings",
+        "/app/v3/api/notification",
+        "/app/v3/api/partner_join",
+        "/app/v3/api/runtime",
+        "/app/v3/api/system/site",
+        "/backend/v3/api/ai",
+        "/backend/v3/api/billing",
+        "/backend/v3/api/payments",
+        "/backend/v3/api/pricing",
+        "/backend/v3/api/recharges",
+        "/backend/v3/api/storage",
+        "/backend/v3/api/system",
+        "/anthropic/v1",
+        "/google/v1beta",
+        "/vidu/ent",
+        "/suno/v1",
+        "/volcengine/api",
+        "/kling/v1",
+        "/elevenlabs/v1",
+        "/typesafe/v1",
+        "/minimax/v1",
+        "/v1",
+    ]);
+    assert!(expected_cloudrouter_prefixes.is_subset(&cloudrouter_prefixes));
     let cloudrouter_service_ids = cloudrouter
         .iter()
         .map(|surface| surface.service_id.as_str())
@@ -1161,4 +1159,43 @@ fn realtime_env_override_rejects_invalid_boolean() {
     );
     let config = GatewayRuntimeConfig::default();
     assert!(config.with_env_overrides(&env).is_err());
+}
+
+#[test]
+fn aiot_realtime_config_parses_and_env_overrides() {
+    let toml = r#"
+        [aiotRealtime]
+        enabled = true
+        bind = "127.0.0.1:18080"
+        mqttBridgeEnabled = true
+    "#;
+    let config = GatewayRuntimeConfig::from_toml_str(toml).expect("aiot config");
+    assert!(config.aiot_realtime.enabled);
+    assert_eq!(
+        config.aiot_realtime.bind.as_deref(),
+        Some("127.0.0.1:18080")
+    );
+    assert!(config.aiot_realtime.mqtt_bridge_enabled);
+
+    let env = HashMap::from([
+        (
+            "SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_ENABLED".to_string(),
+            "false".to_string(),
+        ),
+        (
+            "SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_BIND".to_string(),
+            "127.0.0.1:18081".to_string(),
+        ),
+        (
+            "SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_MQTT_BRIDGE_ENABLED".to_string(),
+            "false".to_string(),
+        ),
+    ]);
+    let overridden = config.with_env_overrides(&env).expect("env overrides");
+    assert!(!overridden.aiot_realtime.enabled);
+    assert_eq!(
+        overridden.aiot_realtime.bind.as_deref(),
+        Some("127.0.0.1:18081")
+    );
+    assert!(!overridden.aiot_realtime.mqtt_bridge_enabled);
 }

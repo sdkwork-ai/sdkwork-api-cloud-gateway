@@ -205,6 +205,46 @@ Verification commands (repository root):
 Release builds on Windows may require `CARGO_INCREMENTAL=0` when rustc hits a known `windows-sys`
 ICE in incremental release mode.
 
+### 7.2 Embedded AIoT Protocol Edge
+
+The gateway can host the `sdkwork-aiot` protocol edge in-process so one
+gateway process starts the AIoT server capability: the HTTP/WebSocket (TCP)
+device ingress, the UDP media bridge, and the MQTT bridge. The AIoT admin/app
+APIs remain the embedded `foundation-aiot` HTTP assembly.
+
+Enablement requires:
+
+- Cargo feature `foundation-aiot-realtime` (included in
+  `platform-foundation-suite-container`);
+- `[aiotRealtime] enabled = true` in the runtime TOML or
+  `SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_ENABLED=true`;
+- optional `bind` / `SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_BIND` for the
+  device ingress listener (default `127.0.0.1:18080`);
+- optional `mqttBridgeEnabled` /
+  `SDKWORK_API_CLOUD_GATEWAY_AIOT_REALTIME_MQTT_BRIDGE_ENABLED` for the
+  Xiaozhi MQTT+UDP bridge.
+
+Protocol tuning is owned by the existing `SDKWORK_AIOT_*` environment family:
+`SDKWORK_AIOT_DEVICE_EDGE_MQTT_HOST/PORT`, MQTT topics, UDP bind
+(`SDKWORK_AIOT_DEVICE_EDGE_UDP_BIND`, default `0.0.0.0:8888`), and the Xiaozhi
+UDP crypto material. The MQTT bridge is a client of an external broker; this
+gateway does not embed an MQTT broker. MQTT+UDP sessions therefore require a
+configured broker, while the WebSocket/TCP ingress works without one.
+
+The gateway binds the AIoT listener in addition to its Axum HTTP listener and
+returns from startup only after the AIoT listener is bound (10s readiness
+budget). Shutdown stops the AIoT listeners after the HTTP listener drains. The
+listener serves `/iot/xiaozhi/ota`, `/iot/xiaozhi/ws`, device activation, and
+the internal bridge/MCP tool endpoints on the AIoT port.
+
+Smoke check:
+
+```bash
+curl -s http://127.0.0.1:3900/healthz
+curl -s -X POST -H 'content-type: application/json' \
+  -d '{}' http://127.0.0.1:18080/iot/xiaozhi/ota
+```
+
 ## 8. Architecture Decision Index
 
 See linked TECH shards in the document map above. Key decisions:

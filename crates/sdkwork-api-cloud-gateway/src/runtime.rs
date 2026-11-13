@@ -82,6 +82,8 @@ pub(crate) struct GatewayState {
 pub struct GatewayShutdown {
     #[cfg(feature = "foundation-im-realtime")]
     realtime_plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
+    #[cfg(feature = "foundation-aiot-realtime")]
+    aiot_runtime: Option<sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle>,
 }
 
 impl GatewayShutdown {
@@ -91,6 +93,14 @@ impl GatewayShutdown {
         plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
     ) {
         self.realtime_plane = plane;
+    }
+
+    #[cfg(feature = "foundation-aiot-realtime")]
+    fn retain_aiot_runtime(
+        &mut self,
+        runtime: Option<sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle>,
+    ) {
+        self.aiot_runtime = runtime;
     }
 
     /// Drains embedded realtime planes: marks the node draining, fences and
@@ -116,6 +126,16 @@ impl GatewayShutdown {
                     target: "sdkwork.api.cloud_gateway",
                     %error,
                     "embedded IM realtime plane drain failed"
+                );
+            }
+        }
+        #[cfg(feature = "foundation-aiot-realtime")]
+        if let Some(handle) = self.aiot_runtime {
+            if let Err(error) = tokio::task::spawn_blocking(move || handle.shutdown()).await {
+                tracing::warn!(
+                    target: "sdkwork.api.cloud_gateway",
+                    %error,
+                    "embedded AIoT runtime shutdown task failed"
                 );
             }
         }
@@ -525,13 +545,19 @@ fn web_framework_dependency_error(error: impl std::fmt::Display) -> GatewayRunti
 /// handles so a gateway main can drain embedded surfaces (for example the IM
 /// realtime plane) after the HTTP listener's graceful shutdown. Requires both
 /// `foundation-appbase` and `foundation-im-realtime`.
-#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+#[cfg(any(
+    all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+    feature = "foundation-aiot-realtime"
+))]
 pub async fn build_sdkwork_api_cloud_gateway_router_with_embedded_realtime(
     config: GatewayRuntimeConfig,
 ) -> Result<(Router, GatewayShutdown), GatewayRuntimeError> {
     let (router, mut runtime) = build_embedded_router(config).await?;
     let mut shutdown = GatewayShutdown::default();
+    #[cfg(feature = "foundation-im-realtime")]
     shutdown.retain_realtime_plane(runtime.take_realtime_plane());
+    #[cfg(feature = "foundation-aiot-realtime")]
+    shutdown.retain_aiot_runtime(runtime.take_aiot_runtime());
     Ok((router.layer(Extension(Arc::new(runtime))), shutdown))
 }
 

@@ -28,6 +28,8 @@ pub struct EmbeddedDependencyRuntime {
     im_runtime: Option<sdkwork_api_im_assembly::ApiAssemblyRuntime>,
     #[cfg(feature = "foundation-im-realtime")]
     realtime_plane: Option<session_gateway::GatewayEmbeddedRealtimePlane>,
+    #[cfg(feature = "foundation-aiot-realtime")]
+    aiot_runtime: Option<sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle>,
 }
 
 impl EmbeddedDependencyRuntime {
@@ -48,11 +50,28 @@ impl EmbeddedDependencyRuntime {
         self.realtime_plane = Some(plane);
     }
 
+    #[cfg(feature = "foundation-aiot-realtime")]
+    fn retain_aiot_runtime(
+        &mut self,
+        runtime: sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle,
+    ) {
+        self.aiot_runtime = Some(runtime);
+    }
+
     /// Extracts the embedded realtime plane so a gateway main can drain it
     /// after the HTTP listener's graceful shutdown instead of aborting tasks.
     #[cfg(feature = "foundation-im-realtime")]
     pub fn take_realtime_plane(&mut self) -> Option<session_gateway::GatewayEmbeddedRealtimePlane> {
         self.realtime_plane.take()
+    }
+
+    /// Extracts the embedded AIoT protocol runtime so the gateway main can stop
+    /// its listeners after the HTTP listener shuts down.
+    #[cfg(feature = "foundation-aiot-realtime")]
+    pub fn take_aiot_runtime(
+        &mut self,
+    ) -> Option<sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle> {
+        self.aiot_runtime.take()
     }
 }
 
@@ -70,6 +89,10 @@ impl Drop for EmbeddedDependencyRuntime {
                 handle.abort();
             }
         }
+        #[cfg(feature = "foundation-aiot-realtime")]
+        if let Some(handle) = self.aiot_runtime.take() {
+            handle.shutdown();
+        }
     }
 }
 
@@ -78,6 +101,23 @@ pub async fn bootstrap_embedded_dependency_contributions(
     pool: &DatabasePool,
 ) -> Result<EmbeddedDependencyBootstrap, GatewayRuntimeError> {
     #[allow(unused_mut)]
+    #[cfg(not(feature = "foundation-aiot-realtime"))]
+    if config.aiot_realtime.enabled {
+        return Err(workspace_build_error(
+            config,
+            "sdkwork-aiot",
+            "aiotRealtime.enabled requires the foundation-aiot-realtime Cargo feature".to_string(),
+        ));
+    }
+    #[cfg(feature = "foundation-aiot-realtime")]
+    if config.aiot_realtime.enabled && !workspace_surface_enabled(config, "sdkwork-aiot") {
+        return Err(workspace_build_error(
+            config,
+            "sdkwork-aiot",
+            "aiotRealtime.enabled requires sdkwork-aiot in the dependency surfaces".to_string(),
+        ));
+    }
+
     let mut modules: Vec<WebModule> = Vec::new();
     #[allow(unused_mut)]
     let mut runtime = EmbeddedDependencyRuntime::default();
@@ -515,6 +555,11 @@ pub async fn bootstrap_embedded_dependency_contributions(
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-aiot", message))?;
         modules.push(module);
+        #[cfg(feature = "foundation-aiot-realtime")]
+        if config.aiot_realtime.enabled {
+            let handle = bootstrap_aiot_realtime_contribution(config)?;
+            runtime.retain_aiot_runtime(handle);
+        }
     }
 
     #[cfg(feature = "foundation-promotion")]
@@ -753,6 +798,19 @@ async fn bootstrap_im_realtime_contribution(
             .await
             .map_err(|message| workspace_build_error(config, "sdkwork-im", message))?;
     Ok((module, im_runtime, plane))
+}
+
+#[cfg(feature = "foundation-aiot-realtime")]
+fn bootstrap_aiot_realtime_contribution(
+    config: &GatewayRuntimeConfig,
+) -> Result<sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeHandle, GatewayRuntimeError> {
+    sdkwork_aiot_device_edge_runtime::spawn_device_edge_runtime(
+        sdkwork_aiot_device_edge_runtime::DeviceEdgeRuntimeConfig {
+            bind_addr: config.aiot_realtime.bind.clone(),
+            mqtt_bridge_enabled: Some(config.aiot_realtime.mqtt_bridge_enabled),
+        },
+    )
+    .map_err(|message| workspace_build_error(config, "sdkwork-aiot", message))
 }
 
 fn workspace_build_error(

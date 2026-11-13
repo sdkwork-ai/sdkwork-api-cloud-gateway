@@ -5,7 +5,10 @@ use opentelemetry::trace::TracerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
 #[cfg(not(all(feature = "foundation-appbase", feature = "foundation-im-realtime")))]
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router;
-#[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+#[cfg(any(
+    all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+    feature = "foundation-aiot-realtime"
+))]
 use sdkwork_api_cloud_gateway::build_sdkwork_api_cloud_gateway_router_with_embedded_realtime;
 use sdkwork_api_cloud_gateway::{
     database_provisioning::provision_databases,
@@ -216,10 +219,16 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     // The realtime builder additionally returns shutdown handles so the
     // embedded IM realtime plane (WebSocket upgrade + TCP/UDP/QUIC link
     // listeners) drains its routes before the process exits.
-    #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+    #[cfg(any(
+        all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+        feature = "foundation-aiot-realtime"
+    ))]
     let (app, shutdown) =
         build_sdkwork_api_cloud_gateway_router_with_embedded_realtime(config).await?;
-    #[cfg(not(all(feature = "foundation-appbase", feature = "foundation-im-realtime")))]
+    #[cfg(not(any(
+        all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+        feature = "foundation-aiot-realtime"
+    )))]
     let app = build_sdkwork_api_cloud_gateway_router(config).await?;
 
     info!(%local_addr, "sdkwork api gateway listening");
@@ -231,7 +240,10 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
         service_registry.shutdown().await;
     }
 
-    #[cfg(all(feature = "foundation-appbase", feature = "foundation-im-realtime"))]
+    #[cfg(any(
+        all(feature = "foundation-appbase", feature = "foundation-im-realtime"),
+        feature = "foundation-aiot-realtime"
+    ))]
     shutdown.shutdown().await;
 
     Ok(())

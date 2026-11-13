@@ -13,6 +13,10 @@ bind = "0.0.0.0:3900"
 # before service startup. Runtime auto-migration remains disabled.
 autoMigrate = false
 
+[aiotRealtime]
+enabled = false
+mqttBridgeEnabled = false
+
 [cors]
 allowAnyOrigin = false
 allowedOrigins = ["http://localhost:3913", "http://127.0.0.1:3913"]
