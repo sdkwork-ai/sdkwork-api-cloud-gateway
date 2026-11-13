@@ -13256,6 +13256,7 @@ dependencies = [
  "chrono",
  "sdkwork-contract-service",
  "sdkwork-order-service",
+ "sdkwork-payment-repository-sqlx",
  "sdkwork-payment-service",
  "sdkwork-utils-rust",
  "serde",
