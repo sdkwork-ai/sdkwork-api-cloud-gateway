@@ -1194,6 +1194,13 @@
       "routeGeneration": "dependency-realtime-websocket-route"
     },
     {
+      "surface": "open",
+      "prefix": "/iot/xiaozhi",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-aiot-realtime-plane",
+      "routeGeneration": "dependency-realtime-websocket-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/automation",
       "ownership": "dependency",
@@ -1903,6 +1910,13 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/billing",
+      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/mcp",
       "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"

@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.49",
+    "currentVersion": "0.1.50",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.49"
+      "BETA": "0.1.50"
     },
     "notes": [
       {
-        "version": "0.1.49",
+        "version": "0.1.50",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.50",
+        "summary": "Rebuild after the sdkwork-space submodule sync wave and the gateway origin/main merge that embeds the AIoT protocol edge routes. Every dependency workspace was fetched and verified against origin/main, the gateway local release commits were merged forward with upstream, and the container image plus the production install bundle are rebuilt from the synced tree and redeployed to the production Docker host.",
+        "highlights": [
+          "provenance: every sdkwork-* submodule fetched and verified against origin/main; local-ahead checkouts and dirty trees preserved, no reset or rebase",
+          "gateway source: merged origin/main (embedded AIoT protocol edge routes, refreshed topology config, config tests) onto the local release checkpoints without conflict",
+          "release contract: added the declared container-x64-cloud-container-oci single-format workflow target so the manifest and workflow align",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; gateway plus knowledgebase-rpc containers recreated",
+          "verification: containers healthy at 0.1.50 and /healthz and /readyz return 200 on the production instance port and through the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.49",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.49",
         "summary": "Rebuild after the sdkwork-space submodule sync wave. Every dependency workspace was fetched and verified against origin/main, the diverged sdkwork-daxuedazi checkout was merged forward, and the gateway container image plus the production install bundle were rebuilt from the synced tree and redeployed to the production Docker host.",
         "highlights": [
