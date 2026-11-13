@@ -187,23 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.52",
+    "currentVersion": "0.1.53",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.52"
+      "BETA": "0.1.53"
     },
     "notes": [
       {
-        "version": "0.1.52",
+        "version": "0.1.53",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.53",
+        "summary": "Startup fix on top of the 0.1.52 cloudrouter OpenAPI pruning: embedded realtime-plane surfaces (IM WebSocket upgrade, AIoT device edge) no longer block exact route-registry assembly while their planes are disabled, so the gateway boots with the production topology that keeps aiotRealtime disabled.",
+        "highlights": [
+          "gateway runtime: exact route coverage skips surfaces whose embedded bootstrap owns a listener outside the HTTP module pipeline; a disabled plane stays declared-but-unavailable and answers 503 instead of aborting startup",
+          "provenance: every sdkwork-space submodule fetched and verified against origin/main; only sdkwork-agents needed a forward merge, no reset or rebase",
+          "deployment: production install bundle repackaged with image.tar.gz and redeployed; backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.53, local production-parity stack verified before the remote upgrade, and /healthz and /readyz return 200 on the instance port"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.52",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.52",
-        "summary": "Rebuild and redeploy after pruning the embedded cloudrouter app/backend OpenAPI documents to the routes the platform gateway actually mounts, so assembly no longer fails its manifest/OpenAPI inventory equality check.",
+        "summary": "Release declaration for pruning the embedded cloudrouter app/backend OpenAPI documents to the routes the platform gateway actually mounts; no image was published before the rebuild moved forward to 0.1.53.",
         "highlights": [
           "gateway runtime: cloudrouter assembly drops OpenAPI operations that belong to capabilities mounted only in standalone composition (ai plugins/agents/skill packages, mcp servers/connectors, billing plans), keeping the served contract equal to the 457-route manifest",
           "provenance: rebuilt from the synced sdkwork-space tree on top of the production migration-history reconciliation delivered in 0.1.51",
-          "deployment: production install bundle repackaged with image.tar.gz and redeployed; backup retention kept at the 5 most recent sets",
-          "verification: containers healthy at 0.1.52, migration checksum validation passes, and /healthz and /readyz return 200 on the instance port and the public edge"
+          "deployment: superseded by 0.1.53 during local production-parity verification; no production mutation was made at this version",
+          "verification: the pruning fix was confirmed locally, where startup then exposed the disabled AIoT realtime-plane coverage defect fixed in 0.1.53"
         ],
         "packageIds": [
           "container-x64-cloud-container-oci"

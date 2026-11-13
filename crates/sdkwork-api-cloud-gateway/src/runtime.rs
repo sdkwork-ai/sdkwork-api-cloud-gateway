@@ -1396,6 +1396,14 @@ fn exact_registry_for_modules(
         if !wired_workspaces.contains(surface.workspace.as_str()) {
             continue;
         }
+        // Embedded realtime planes (IM WebSocket upgrade, AIoT device edge)
+        // bootstrap their own listener outside the HTTP module pipeline, so they
+        // contribute no route descriptor to this registry. While a plane is
+        // disabled it stays declared-but-unavailable and answers 503 at request
+        // time instead of blocking startup.
+        if surface.coverage.ends_with("-embedded-bootstrap") {
+            continue;
+        }
         if !descriptors
             .iter()
             .any(|route| route.service_id == surface.service_id)
