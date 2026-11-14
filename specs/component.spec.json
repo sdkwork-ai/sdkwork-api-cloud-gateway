@@ -527,6 +527,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/cashier",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/automation",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-im-app-api",
@@ -3034,7 +3041,8 @@
         "/app/v3/api/recharges",
         "/app/v3/api/memberships/orders",
         "/app/v3/api/app_template_orders",
-        "/app/v3/api/withdrawals"
+        "/app/v3/api/withdrawals",
+        "/app/v3/api/cashier"
       ],
       "cargoFeature": "foundation-order",
       "cargoDependency": "sdkwork-api-order-assembly",

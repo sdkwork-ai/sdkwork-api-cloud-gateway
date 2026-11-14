@@ -187,16 +187,100 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.53",
+    "currentVersion": "0.1.58",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.53"
+      "BETA": "0.1.58"
     },
     "notes": [
       {
-        "version": "0.1.53",
+        "version": "0.1.58",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.58",
+        "summary": "Workspace-wide delivery rebuild after pulling every sdkwork-space submodule back onto origin/main: diverged order, iam, membership, cloudrouter, agents, aiot, payment, shop, knowledgebase and birdcoder2 trees were forward-merged (no reset, no rebase), the two real merge conflicts were resolved forward, the gateway image was rebuilt from the synced trees in the bookworm toolchain container, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
+        "highlights": [
+          "provenance: 108 submodules fetched; order, iam, membership, cloudrouter, agents, aiot, payment, shop, knowledgebase and birdcoder2 were fast-forwarded or forward-merged onto main; the iam h5 @types/react catalog dependency was committed instead of dropped",
+          "conflict resolution: order checkout_resolver keeps the origin/main structural-locale comments, and cloudrouter keeps its local h5 workspace declarations while its lockfile was regenerated with the workspace package manager after the merge",
+          "gateway runtime: upstream main also advanced the production topology env files (console tenant target and Tencent COS storage bootstrap), so the rebuilt image carries that configuration",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.58, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.57",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.57",
+        "summary": "Workspace-wide delivery rebuild: every sdkwork-space repository was fetched back to origin/main, the duplicated order NUMERIC projection and iam iot-catalog fixes were reconciled onto main, and the gateway image is rebuilt from the synced trees, verified as a local production-parity stack, then upgraded in place on api.noaper.com.",
+        "highlights": [
+          "provenance: 109 sdkwork-space repositories fetched; diverged trees were fast-forwarded or forward-merged without reset or rebase, and the order/iam worktrees that carried the 0.1.56 fixes were committed and merged with their identical origin commits",
+          "gateway runtime: rebuilt from the synced workspace so the embedded order, iam, cloudrouter and commerce surfaces come from origin/main; no gateway source change was required",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.56",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.56",
+        "summary": "Production fix for the two live admin failures found in the api.noaper.com gateway log: GET /backend/v3/api/orders answered 500/50001 on every call because the admin order queries read native NUMERIC money columns as text after order migration 0016, and every IoT admin call answered 403 iot.profiles.read because the bundled iot IAM module was never materialized into the permission catalog. Management money and quantity projections are cast, the iot module joins the IAM registry, and order internal failures now log their stored cause.",
+        "highlights": [
+          "root cause (orders.admin.list 500): LIST_MANAGEMENT_ORDERS selected commerce_order_amount_breakdown.payable_amount/discount_amount and SUM(commerce_order_item.quantity) without a cast; 0016_money_columns_native_numeric made those money columns NUMERIC and SUM(bigint) is NUMERIC too, sqlx cannot decode NUMERIC into String/i64, string_cell silently returned an empty value and commerce_money_stored rejected it (quantity silently fell back to 1)",
+          "fix (orders): management list and detail projections cast the stored money to TEXT and the quantity aggregate to BIGINT, matching every other stored-money read in sdkwork-order; a production read of the rewritten projection returns text/text/bigint and real rows",
+          "root cause (iot 40301): iam/registry/iam-registry.config.json listed the bundled iot manifest under optionalModules, so startup materialization never inserted any iot.* permission and platform_super_admin's wildcard pattern had nothing to expand for iot.profiles.read",
+          "fix (iot): iot joins enabledModules, materializing 22 iot permissions plus the iot_field_operator/iot_platform_admin domain roles and the org_operations grant (validated by node tools/validators/validate-iam-module-manifests.mjs before the build)",
+          "observability: sdkwork-order maps an internal failure and now emits an ERROR log line with the stored cause and trace id, so the next 50001 is diagnosable from the container log instead of only the sanitized problem detail",
+          "deployment: image 0.1.56 was built locally from this workspace but never shipped; production stayed on 0.1.55 and 0.1.57 carries the same order/iam fixes plus the synchronized workspace trees",
+          "verification: the order/iam fixes were verified at the source level and the shipped verification record is the 0.1.57 release entry"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.55",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.55",
+        "summary": "Delivery rebuild after pulling every sdkwork-space submodule back onto origin/main: sdkwork-deployments fast-forwarded, sdkwork-cloudrouter forward-merged with its console-shell updates, and production redeployed with the proven 0.1.54 topology.",
+        "highlights": [
+          "provenance: 109 submodules fetched; sdkwork-deployments advanced two commits and sdkwork-cloudrouter one upstream commit was forward-merged onto main without reset or rebase",
+          "gateway runtime: embedded cloudrouter console shell and deployments archives refreshed; no gateway source change was required",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.55, /healthz and /readyz return 200 on the instance port and the public edge, and the served OpenAPI inventory still matches the mounted route manifest"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.54",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.54",
+        "summary": "Routine full-tree rebuild after pulling every sdkwork-space submodule to origin/main (utils, specs, models, order, agents and cloudrouter forward-merged) and redeploying production with the same topology as 0.1.53.",
+        "highlights": [
+          "provenance: all 109 submodules fetched; nine fast-forwarded and sdkwork-order, sdkwork-agents and sdkwork-cloudrouter forward-merged onto main without reset or rebase",
+          "gateway runtime: embedded commerce, commerce-checkout and model-catalog dependencies picked up the latest origin/main revisions; no gateway source change was required",
+          "deployment: install bundle rebuilt with image.tar.gz, verified locally as a production-parity stack first, then installed on the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.54, /healthz and /readyz return 200 on the instance port, and the served OpenAPI inventory matches the mounted route manifest"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.53",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.53",
         "summary": "Startup fix on top of the 0.1.52 cloudrouter OpenAPI pruning: embedded realtime-plane surfaces (IM WebSocket upgrade, AIoT device edge) no longer block exact route-registry assembly while their planes are disabled, so the gateway boots with the production topology that keeps aiotRealtime disabled.",
         "highlights": [
