@@ -485,8 +485,18 @@ function discoverNestedAssemblyRoutes(
       );
       continue;
     }
+    // A nested surface declares exactly one dependency surface. Restrict
+    // route-crate discovery to that surface: a sibling surface the embedding
+    // module ships but does not dispatch (for example the Memory open-api
+    // compatibility roots) must not be reported as an unconfigured route just
+    // because it shares the nested assembly manifest.
+    const nestedSurfaceName = nestedSurface.surface
+      ? configuredSurfaceName(nestedSurface.surface)
+      : null;
     const routeCrates = (assemblyManifest.routeCrates ?? []).filter((routeCrate) =>
-      surfaceNames.has(routeCrate.surface),
+      nestedSurfaceName
+        ? routeCrate.surface === nestedSurfaceName
+        : surfaceNames.has(routeCrate.surface),
     );
     if (routeCrates.length === 0) {
       errors.push(
