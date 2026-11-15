@@ -746,6 +746,14 @@ pub async fn bootstrap_embedded_dependency_contributions(
         modules.push(module);
     }
 
+    #[cfg(feature = "foundation-plugins")]
+    if workspace_surface_enabled(config, "sdkwork-plugins") {
+        let module = sdkwork_api_plugins_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-plugins", message))?;
+        modules.push(module);
+    }
+
     Ok(EmbeddedDependencyBootstrap { modules, runtime })
 }
 
@@ -906,6 +914,7 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-notes"));
         assert!(workspace_surface_enabled(&config, "sdkwork-search"));
         assert!(workspace_surface_enabled(&config, "sdkwork-settings"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-plugins"));
         assert!(!workspace_surface_enabled(&config, "unknown-workspace"));
     }
 

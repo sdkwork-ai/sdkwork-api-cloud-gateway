@@ -413,6 +413,14 @@
           ]
         },
         {
+          "module": "sdkwork-plugins",
+          "ownerAssembly": "sdkwork-api-plugins-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
           "module": "sdkwork-portal",
           "ownerAssembly": "sdkwork-api-portal-assembly",
           "poolMode": "injected",

@@ -7265,6 +7265,7 @@ dependencies = [
  "sdkwork-api-notes-assembly",
  "sdkwork-api-order-assembly",
  "sdkwork-api-payment-assembly",
+ "sdkwork-api-plugins-assembly",
  "sdkwork-api-portal-assembly",
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-prompts-assembly",
