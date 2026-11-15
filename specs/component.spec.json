@@ -2291,6 +2291,34 @@
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-course-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/plugins",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-plugins-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/plugin_categories",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-plugins-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/plugins",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-plugins-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/plugin_categories",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-plugins-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
     }
   ],
   "databaseBootstrapOrder": [
@@ -4323,6 +4351,40 @@
       ],
       "executableExport": "sdkwork_api_settings_assembly::web_module",
       "coverage": "sdkwork-settings-backend-api-embedded-assembly-routes"
+    },
+    {
+      "serviceId": "sdkwork-plugins-app-api",
+      "workspace": "sdkwork-plugins",
+      "apiAuthority": "sdkwork-plugins-app-api",
+      "sdkFamily": "sdkwork-plugins-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/plugins",
+        "/app/v3/api/plugin_categories"
+      ],
+      "cargoFeature": "foundation-plugins",
+      "cargoDependency": "sdkwork-api-plugins-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_plugins_assembly::web_module_with_pool",
+      "coverage": "sdkwork-plugins-app-api-embedded-assembly-routes"
+    },
+    {
+      "serviceId": "sdkwork-plugins-backend-api",
+      "workspace": "sdkwork-plugins",
+      "apiAuthority": "sdkwork-plugins-backend-api",
+      "sdkFamily": "sdkwork-plugins-backend-sdk",
+      "apiPrefixes": [
+        "/backend/v3/api/plugins",
+        "/backend/v3/api/plugin_categories"
+      ],
+      "cargoFeature": "foundation-plugins",
+      "cargoDependency": "sdkwork-api-plugins-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_plugins_assembly::web_module_with_pool",
+      "coverage": "sdkwork-plugins-backend-api-embedded-assembly-routes"
     }
   ],
   "routeRegistry": {

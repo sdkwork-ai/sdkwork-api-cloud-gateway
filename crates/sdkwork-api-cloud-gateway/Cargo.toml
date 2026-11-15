@@ -134,6 +134,7 @@ foundation-messaging = ["dep:sdkwork-api-messaging-assembly"]
 foundation-notes = ["dep:sdkwork-api-notes-assembly"]
 foundation-search = ["dep:sdkwork-api-search-assembly"]
 foundation-settings = ["dep:sdkwork-api-settings-assembly"]
+foundation-plugins = ["dep:sdkwork-api-plugins-assembly"]
 # Container images deliberately omit foundation-webserver: reverse proxy and
 # site edge belong to host nginx / the separate sdkwork-webserver product, not
 # the gateway container process (see docker/README.md).
@@ -193,6 +194,7 @@ platform-foundation-suite-container = [
     "foundation-notes",
     "foundation-search",
     "foundation-settings",
+    "foundation-plugins",
 ]
 platform-foundation-suite = [
     "platform-foundation-suite-container",
@@ -298,6 +300,7 @@ sdkwork-api-messaging-assembly = { workspace = true, optional = true }
 sdkwork-api-notes-assembly = { workspace = true, optional = true }
 sdkwork-api-search-assembly = { workspace = true, optional = true }
 sdkwork-api-settings-assembly = { workspace = true, optional = true }
+sdkwork-api-plugins-assembly = { workspace = true, optional = true }
 
 [dev-dependencies]
 http-body-util.workspace = true
