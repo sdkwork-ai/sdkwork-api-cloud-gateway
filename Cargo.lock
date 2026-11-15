@@ -3280,6 +3280,7 @@ dependencies = [
  "rand 0.8.8",
  "regex",
  "sdkwork-communication-rtc-service",
+ "sdkwork-iam-context-service",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
@@ -8993,6 +8994,7 @@ dependencies = [
  "sdkwork-api-log-assembly",
  "sdkwork-api-mcp-assembly",
  "sdkwork-api-membership-assembly",
+ "sdkwork-api-memory-assembly",
  "sdkwork-api-messaging-assembly",
  "sdkwork-api-order-assembly",
  "sdkwork-api-partner-assembly",
@@ -9714,6 +9716,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
@@ -10482,6 +10485,7 @@ dependencies = [
  "jsonwebtoken",
  "reqwest 0.13.1",
  "sdkwork-utils-rust",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "tokio",
@@ -10941,6 +10945,15 @@ dependencies = [
  "sqlx",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "sdkwork-iam-directory-repository-sqlx"
+version = "0.1.0"
+dependencies = [
+ "sdkwork-database-config",
+ "sdkwork-iam-context-service",
+ "sqlx",
 ]
 
 [[package]]
@@ -11465,6 +11478,7 @@ dependencies = [
  "sdkwork-drive-uploader-service",
  "sdkwork-drive-workspace-service",
  "sdkwork-generations-mcp-service",
+ "sdkwork-iam-context-service",
  "sdkwork-intelligence-prompts-ai-contract",
  "sdkwork-utils-rust",
  "sdkwork-web-core",
@@ -11604,6 +11618,7 @@ dependencies = [
  "sdkwork-knowledgebase-contract",
  "sdkwork-knowledgebase-observability",
  "sdkwork-utils-rust",
+ "sdkwork-web-core",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -12745,6 +12760,7 @@ dependencies = [
  "sdkwork-contract-service",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
+ "sdkwork-iam-directory-repository-sqlx",
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
@@ -14143,6 +14159,7 @@ dependencies = [
  "sdkwork-routes-mcp-backend-api",
  "sdkwork-routes-med-data-backend-api",
  "sdkwork-routes-membership-backend-api",
+ "sdkwork-routes-memory-backend-api",
  "sdkwork-routes-messaging-backend-api",
  "sdkwork-routes-models-catalog-backend-api",
  "sdkwork-routes-order-backend-api",
@@ -16343,6 +16360,7 @@ name = "sdkwork-routes-payment-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "chrono",
  "sdkwork-contract-service",
  "sdkwork-database-sqlx",
  "sdkwork-iam-context-service",
