@@ -242,6 +242,7 @@ sdkwork-api-membership-assembly = { workspace = true, optional = true }
 sdkwork-api-order-assembly = { workspace = true, optional = true }
 sdkwork-api-promotion-assembly = { workspace = true, optional = true }
 sdkwork-api-payment-assembly = { workspace = true, optional = true }
+sdkwork-payment-providers = { workspace = true }
 sdkwork-api-voice-assembly = { workspace = true, optional = true }
 sdkwork-api-image-assembly = { workspace = true, optional = true }
 sdkwork-image-generation-provider-adapter = { workspace = true, optional = true }

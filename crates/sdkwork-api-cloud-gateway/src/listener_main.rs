@@ -53,6 +53,36 @@ enum ProcessMode {
     Version,
 }
 
+/// Installs the payment provider credential cipher when the deployment mounts a
+/// master key file.
+///
+/// The unified gateway composes the payment surfaces, so tenant PSP credentials
+/// stored as ciphertext must be decryptable in this process. Without it every
+/// tenant-configured provider degrades to "provider is not configured", and the
+/// checkout falls back to the unenriched path. A missing key file is not an
+/// error (deployments may keep credentials in the environment), and an
+/// already-installed cipher wins.
+fn install_payment_credential_cipher_from_env() {
+    use std::sync::Arc;
+    if sdkwork_payment_providers::payment_credential_cipher_is_installed() {
+        return;
+    }
+    let Some(path) = normalized_env("SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE") else {
+        return;
+    };
+    match sdkwork_payment_providers::LocalFilePaymentCredentialCipher::load(&path) {
+        Ok(cipher) => {
+            let _ = sdkwork_payment_providers::install_payment_credential_cipher(Arc::new(cipher));
+        }
+        Err(error) => {
+            tracing::warn!(
+                %error,
+                "payment credential master key could not be loaded; tenant PSP credentials stay unreadable"
+            );
+        }
+    }
+}
+
 fn main() -> anyhow::Result<()> {
     let process_mode = process_mode_from_args(env::args().skip(1));
     match process_mode {
@@ -72,6 +102,7 @@ fn main() -> anyhow::Result<()> {
 
     publish_deployment_profile()?;
     install_process_crypto_provider()?;
+    install_payment_credential_cipher_from_env();
     if matches!(
         process_mode,
         ProcessMode::BootstrapDatabases | ProcessMode::MigrateDatabases

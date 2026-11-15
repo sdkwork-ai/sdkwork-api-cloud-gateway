@@ -10,7 +10,7 @@
   },
   "release": {
     "artifactPrefix": "sdkwork-api-cloud-gateway",
-    "defaultVersion": "0.1.58",
+    "defaultVersion": "0.1.70",
     "changelog": {
       "source": "auto",
       "maxCommitSubjects": 50

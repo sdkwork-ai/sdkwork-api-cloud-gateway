@@ -7285,6 +7285,7 @@ dependencies = [
  "sdkwork-im-database-pool",
  "sdkwork-image-generation-provider-adapter",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-payment-providers",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
@@ -8994,6 +8995,7 @@ dependencies = [
  "sdkwork-api-log-assembly",
  "sdkwork-api-mcp-assembly",
  "sdkwork-api-membership-assembly",
+ "sdkwork-api-memory-assembly",
  "sdkwork-api-messaging-assembly",
  "sdkwork-api-order-assembly",
  "sdkwork-api-partner-assembly",
@@ -14158,6 +14160,7 @@ dependencies = [
  "sdkwork-routes-mcp-backend-api",
  "sdkwork-routes-med-data-backend-api",
  "sdkwork-routes-membership-backend-api",
+ "sdkwork-routes-memory-backend-api",
  "sdkwork-routes-messaging-backend-api",
  "sdkwork-routes-models-catalog-backend-api",
  "sdkwork-routes-order-backend-api",
@@ -16358,6 +16361,7 @@ name = "sdkwork-routes-payment-backend-api"
 version = "0.1.0"
 dependencies = [
  "axum 0.8.9",
+ "chrono",
  "sdkwork-contract-service",
  "sdkwork-database-sqlx",
  "sdkwork-iam-context-service",

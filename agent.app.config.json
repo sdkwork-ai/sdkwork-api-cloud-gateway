@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.58",
+    "currentVersion": "0.1.70",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.58"
+      "BETA": "0.1.59"
     },
     "notes": [
       {
-        "version": "0.1.58",
+        "version": "0.1.59",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.59",
+        "summary": "Workspace-wide delivery rebuild after syncing every sdkwork-space submodule onto origin/main: the diverged iam and cloudrouter trees were forward-merged, the gateway image was rebuilt from the synced trees in the bookworm toolchain container, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
+        "highlights": [
+          "provenance: 108 submodules fetched; documents, membership, memory, skills and specs advanced by fast-forward, while iam and cloudrouter were forward-merged onto origin/main without reset or rebase",
+          "gateway runtime: embedded iam and cloudrouter surfaces now come from the merged origin/main trees, so the image is rebuilt in full rather than patched",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.59, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.58",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.58",
         "summary": "Workspace-wide delivery rebuild after pulling every sdkwork-space submodule back onto origin/main: diverged order, iam, membership, cloudrouter, agents, aiot, payment, shop, knowledgebase and birdcoder2 trees were forward-merged (no reset, no rebase), the two real merge conflicts were resolved forward, the gateway image was rebuilt from the synced trees in the bookworm toolchain container, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
         "highlights": [

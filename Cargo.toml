@@ -35,6 +35,7 @@ sdkwork-api-membership-assembly = { path = "../sdkwork-membership/crates/sdkwork
 sdkwork-api-order-assembly = { path = "../sdkwork-order/crates/sdkwork-api-order-assembly" }
 sdkwork-api-promotion-assembly = { path = "../sdkwork-promotion/crates/sdkwork-api-promotion-assembly" }
 sdkwork-api-payment-assembly = { path = "../sdkwork-payment/crates/sdkwork-api-payment-assembly" }
+sdkwork-payment-providers = { path = "../sdkwork-payment/crates/sdkwork-payment-providers" }
 sdkwork-api-course-assembly = { path = "../sdkwork-course/crates/sdkwork-api-course-assembly" }
 sdkwork-api-voice-assembly = { path = "../sdkwork-voice/crates/sdkwork-api-voice-assembly" }
 sdkwork-api-image-assembly = { path = "../sdkwork-image/crates/sdkwork-api-image-assembly" }
