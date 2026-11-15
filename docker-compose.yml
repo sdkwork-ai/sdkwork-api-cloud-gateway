@@ -188,6 +188,13 @@ services:
       SDKWORK_CORS_CONSOLE_HOST_SCHEMES: ${GATEWAY_CORS_CONSOLE_HOST_SCHEMES:-http,https}
       SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS: ${GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS:-sdkwork.com,birdcoder.com,sdkwork.cn,birdcoder.cn}
       SDKWORK_CORS_SUBDOMAIN_SCHEMES: ${GATEWAY_CORS_SUBDOMAIN_SCHEMES:-http,https}
+      # Admin-managed CORS policy: the edge scans
+      # `framework_cors_policy` for this tenant/environment and hot-swaps its
+      # in-memory allowlist. `GATEWAY_CORS_DYNAMIC_TENANT_ID` is the platform
+      # tenant scope of that row (production: 100001).
+      SDKWORK_CORS_DYNAMIC_ENABLED: ${GATEWAY_CORS_DYNAMIC_ENABLED:-true}
+      SDKWORK_CORS_DYNAMIC_REFRESH_INTERVAL_SECONDS: ${GATEWAY_CORS_DYNAMIC_REFRESH_INTERVAL_SECONDS:-10}
+      SDKWORK_CORS_DYNAMIC_TENANT_ID: ${GATEWAY_CORS_DYNAMIC_TENANT_ID:-0}
       # External dependencies are injected at runtime, not baked into the image.
       # Split database fields (with explicit schema) instead of a raw URL so
       # the lifecycle schema identity is unambiguous.

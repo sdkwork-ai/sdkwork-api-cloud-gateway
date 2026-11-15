@@ -1,6 +1,10 @@
 //! Runtime router builders for the SDKWork API Gateway.
 
 mod comments_proxy;
+/// Console-facing CORS settings API backed by `framework_cors_policy`.
+pub(crate) mod cors_admin;
+/// Admin-managed dynamic CORS policy snapshot shared by the edge and pipeline.
+pub mod cors_dynamic;
 /// Installer-time workspace PostgreSQL provisioning (role/database/schema/extensions).
 pub mod database_provisioning;
 /// Embedded dependency database lifecycle shared by platform runtime consumers.

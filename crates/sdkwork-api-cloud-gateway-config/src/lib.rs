@@ -284,6 +284,31 @@ pub struct CorsConfig {
     /// widened to an unrelated domain. `None` keeps exact matching only.
     #[serde(default)]
     pub registered_subdomain_hosts: Option<RegisteredSubdomainHosts>,
+    /// Admin-managed (dynamic) CORS policy refresh settings.
+    ///
+    /// The platform edge reads the `framework_cors_policy` row for this
+    /// deployment scope on a fixed interval and hot-swaps the in-memory policy,
+    /// so operators add origins (exact or `https://**.example.com` wildcards)
+    /// from the admin console without editing code or redeploying. Every
+    /// process/replica runs its own scan, which is what keeps a multi-process
+    /// deployment converged even when instances restart independently.
+    #[serde(default)]
+    pub dynamic: CorsDynamicConfig,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CorsDynamicConfig {
+    /// Enables the periodic scan of the admin-managed CORS policy row.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Scan interval. Bounded so a typo cannot turn the edge into a database
+    /// hammer (too small) or leave stale origins for hours (too large).
+    #[serde(default = "default_cors_dynamic_refresh_interval_seconds")]
+    pub refresh_interval_seconds: u64,
+    /// Deployment tenant scope of the policy row (`framework_cors_policy.tenant_id`).
+    #[serde(default = "default_cors_dynamic_tenant_id")]
+    pub tenant_id: String,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -866,6 +891,27 @@ impl GatewayRuntimeConfig {
                 return Err(invalid_value("cors.registeredSubdomainHosts", reason));
             }
         }
+        // Admin-managed (dynamic) CORS policy scan settings. The policy itself
+        // lives in the database, never in the environment; these keys only
+        // control how often each process refreshes its in-memory snapshot.
+        if let Some(enabled) = env.get("SDKWORK_CORS_DYNAMIC_ENABLED") {
+            self.cors.dynamic.enabled = parse_bool_env("SDKWORK_CORS_DYNAMIC_ENABLED", enabled)?;
+        }
+        if let Some(interval) = env.get("SDKWORK_CORS_DYNAMIC_REFRESH_INTERVAL_SECONDS") {
+            self.cors.dynamic.refresh_interval_seconds =
+                interval.trim().parse::<u64>().map_err(|_| {
+                    invalid_value(
+                        "cors.dynamic.refreshIntervalSeconds",
+                        "must be a positive integer number of seconds",
+                    )
+                })?;
+        }
+        if let Some(tenant_id) = env.get("SDKWORK_CORS_DYNAMIC_TENANT_ID") {
+            let trimmed = tenant_id.trim();
+            if !trimmed.is_empty() {
+                self.cors.dynamic.tenant_id = trimmed.to_owned();
+            }
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED") {
             self.traffic.rate_limit_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_RATE_LIMIT_ENABLED", enabled)?;
@@ -952,6 +998,16 @@ impl GatewayRuntimeConfig {
                 .validate()
                 .map_err(|reason| invalid_value("cors.registeredSubdomainHosts", reason))?;
         }
+        if !(2..=3600).contains(&self.cors.dynamic.refresh_interval_seconds) {
+            return Err(invalid_value(
+                "cors.dynamic.refreshIntervalSeconds",
+                "must be between 2 and 3600 seconds",
+            ));
+        }
+        validate_non_empty(
+            "cors.dynamic.tenantId",
+            self.cors.dynamic.tenant_id.as_str(),
+        )?;
 
         if is_production_like_environment(self.service.environment.as_str())
             && self
@@ -1173,8 +1229,27 @@ impl Default for CorsConfig {
             allowed_origins: Vec::new(),
             registered_console_hosts: None,
             registered_subdomain_hosts: None,
+            dynamic: CorsDynamicConfig::default(),
         }
     }
+}
+
+impl Default for CorsDynamicConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            refresh_interval_seconds: default_cors_dynamic_refresh_interval_seconds(),
+            tenant_id: default_cors_dynamic_tenant_id(),
+        }
+    }
+}
+
+fn default_cors_dynamic_refresh_interval_seconds() -> u64 {
+    10
+}
+
+fn default_cors_dynamic_tenant_id() -> String {
+    "0".to_owned()
 }
 
 impl Default for GatewayRequestConfig {
@@ -1590,9 +1665,15 @@ fn validate_exact_allowed_origin(key: &str, origin: &str) -> Result<(), GatewayC
     if is_exact_http_origin(origin) || is_exact_desktop_origin(origin) {
         return Ok(());
     }
+    // A host-wildcard entry (`https://*.example.com`, `https://**.example.com`)
+    // declares a whole first-party sub-domain space in one line, at any depth.
+    if sdkwork_web_core::cors_wildcard::is_host_wildcard_origin_pattern(origin) {
+        return sdkwork_web_core::cors_wildcard::validate_host_wildcard_origin_pattern(origin)
+            .map_err(|reason| invalid_value(key, reason));
+    }
     Err(invalid_value(
         key,
-        "must be an exact HTTP(S) origin or a registered desktop origin (app:// or tauri://) without credentials, wildcard, path, query, or fragment",
+        "must be an exact HTTP(S) origin, a registered desktop origin (app:// or tauri://), or a host wildcard such as https://**.example.com; credentials, path, query and fragment are not allowed",
     ))
 }
 

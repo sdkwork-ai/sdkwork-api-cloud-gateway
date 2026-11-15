@@ -38,7 +38,7 @@ use tracing::Instrument;
 
 use crate::embedded_dependency_routes::EmbeddedDependencyRuntime;
 use crate::{
-    diagnostics, health,
+    cors_dynamic, diagnostics, health,
     metrics::{escape_label_value, GatewayMetrics},
     openapi, policy, security, traffic, web_framework, GatewayRuntimeError,
 };
@@ -63,6 +63,7 @@ pub struct GatewayRuntime {
     registry: GatewayRouteRegistry,
     embedded_routers: HashMap<String, Router>,
     composed_router: Option<Router>,
+    cors: Arc<cors_dynamic::GatewayCorsPolicy>,
 }
 
 #[derive(Clone)]
@@ -73,6 +74,9 @@ pub(crate) struct GatewayState {
     pub(crate) composed_router: Option<Router>,
     pub(crate) metrics: GatewayMetrics,
     pub(crate) traffic: traffic::GatewayTrafficState,
+    /// Static CORS floor plus the admin-managed overlay, shared by every
+    /// request-path CORS decision.
+    pub(crate) cors: Arc<cors_dynamic::GatewayCorsPolicy>,
 }
 
 /// Process-lifetime handles a gateway main drains after the HTTP listener's
@@ -162,11 +166,14 @@ impl GatewayRuntime {
     ) -> Result<Self, GatewayRuntimeError> {
         validate_preflight(&config, &embedded_routers, false)?;
 
+        let cors =
+            cors_dynamic::GatewayCorsPolicy::new(web_framework::gateway_cors_policy(&config));
         Ok(Self {
             config,
             registry,
             embedded_routers,
             composed_router: None,
+            cors,
         })
     }
 
@@ -176,12 +183,25 @@ impl GatewayRuntime {
         composed_router: Router,
     ) -> Result<Self, GatewayRuntimeError> {
         validate_preflight(&config, &HashMap::new(), true)?;
+        let cors =
+            cors_dynamic::GatewayCorsPolicy::new(web_framework::gateway_cors_policy(&config));
         Ok(Self {
             config,
             registry,
             embedded_routers: HashMap::new(),
             composed_router: Some(composed_router),
+            cors,
         })
+    }
+
+    /// Replaces the CORS policy snapshot (static floor + admin-managed overlay)
+    /// before the router is assembled. The embedded runtime calls this so the
+    /// edge layer, the response-header writer and the request-path pipeline all
+    /// consult the same instance, which is also the instance the periodic scan
+    /// refreshes.
+    fn with_cors_policy(mut self, cors: Arc<cors_dynamic::GatewayCorsPolicy>) -> Self {
+        self.cors = cors;
+        self
     }
 
     pub fn router(self) -> Router {
@@ -200,7 +220,8 @@ impl GatewayRuntime {
         );
 
         let uses_composed_host = self.composed_router.is_some();
-        let cors = cors_layer(&self.config);
+        let cors =
+            web_framework::gateway_cors_layer_with_policy(&self.config, Arc::clone(&self.cors));
         let metrics_enabled = self.config.observability.metrics_enabled;
         let metrics_path = metrics_route_path(self.config.observability.metrics_path.as_str());
         let diagnostics_enabled = self.config.diagnostics.enabled;
@@ -222,6 +243,7 @@ impl GatewayRuntime {
             composed_router: self.composed_router,
             metrics: GatewayMetrics::default(),
             traffic,
+            cors: self.cors,
         });
 
         let mut router = Router::new()
@@ -336,6 +358,21 @@ async fn build_embedded_router(
     // fail closed inside try_compose.
     let mut module_registry = ApiModuleRegistry::new();
     module_registry.add_modules(dependency_bootstrap.modules);
+    // Platform CORS settings contribution. Operators manage the browser origin
+    // allowlist from `/admin/settings`; the handler writes the platform-scoped
+    // `framework_cors_policy` row and the edge's periodic scan applies it on
+    // every process without a restart or deploy.
+    if let Some(postgres_pool) = pool.as_postgres().cloned() {
+        module_registry.add_module(web_framework::cors_admin_contribution(
+            postgres_pool,
+            &config,
+        )?);
+    } else {
+        tracing::warn!(
+            target: "sdkwork.api.cloud_gateway",
+            "platform CORS settings API not mounted: the embedded runtime has no PostgreSQL pool"
+        );
+    }
     for duplicate in module_registry.ignored_duplicates() {
         tracing::warn!(
             target: "sdkwork.api.cloud_gateway",
@@ -432,9 +469,36 @@ async fn build_embedded_router(
                 ),
             ]));
     }
+    // Admin-managed CORS overlay. One instance feeds the edge layer, the
+    // response-header writer and the request-path pipeline; the periodic scan
+    // swaps its snapshot in place, so an operator change is visible without a
+    // restart. Non-PostgreSQL assemblies keep the static floor only.
+    let cors = cors_dynamic::GatewayCorsPolicy::new(web_framework::gateway_cors_policy(&config));
+    if config.cors.dynamic.enabled {
+        match pool.as_postgres().cloned() {
+            Some(postgres_pool) => {
+                cors.spawn_refresher(
+                    postgres_pool,
+                    cors_dynamic::CorsPolicyScope::from_config(&config),
+                );
+            }
+            None => {
+                tracing::warn!(
+                    target: "sdkwork.api.cloud_gateway",
+                    "admin-managed CORS policy scan disabled: the embedded runtime has no PostgreSQL pool"
+                );
+            }
+        }
+    }
+    let dynamic_cors_source: Arc<dyn sdkwork_web_core::DynamicCorsPolicySource> = cors.clone();
+    let framework = framework.dynamic_cors_policy_source(dynamic_cors_source);
     let hosted = composed.into_hosted(framework);
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
-        .map(GatewayRuntime::assemble_router)?
+        .map(|runtime| {
+            runtime
+                .with_cors_policy(Arc::clone(&cors))
+                .assemble_router()
+        })?
         .layer(axum::middleware::from_fn(
             crate::dependency_error_observer::observe_dependency_server_errors,
         ));
@@ -604,6 +668,27 @@ async fn metrics_endpoint(State(state): State<Arc<GatewayState>>) -> Response {
         escape_label_value(state.config.service.name.as_str()),
         state.traffic.redis_fallback_count()
     ));
+    let cors = state.cors.metrics();
+    body.push_str(&format!(
+        "# HELP sdkwork_api_cloud_gateway_cors_policy_refresh_total Admin-managed CORS policy scan attempts.\n# TYPE sdkwork_api_cloud_gateway_cors_policy_refresh_total counter\nsdkwork_api_cloud_gateway_cors_policy_refresh_total{{service=\"{service}\"}} {attempts}\n",
+        service = escape_label_value(state.config.service.name.as_str()),
+        attempts = cors.attempts
+    ));
+    body.push_str(&format!(
+        "# HELP sdkwork_api_cloud_gateway_cors_policy_refresh_failures_total Admin-managed CORS policy scan failures.\n# TYPE sdkwork_api_cloud_gateway_cors_policy_refresh_failures_total counter\nsdkwork_api_cloud_gateway_cors_policy_refresh_failures_total{{service=\"{service}\"}} {failures}\n",
+        service = escape_label_value(state.config.service.name.as_str()),
+        failures = cors.failures
+    ));
+    body.push_str(&format!(
+        "# HELP sdkwork_api_cloud_gateway_cors_policy_version Currently applied admin-managed CORS policy version.\n# TYPE sdkwork_api_cloud_gateway_cors_policy_version gauge\nsdkwork_api_cloud_gateway_cors_policy_version{{service=\"{service}\"}} {version}\n",
+        service = escape_label_value(state.config.service.name.as_str()),
+        version = cors.applied_version
+    ));
+    body.push_str(&format!(
+        "# HELP sdkwork_api_cloud_gateway_cors_policy_dynamic_origins Admin-managed CORS origins in the current snapshot.\n# TYPE sdkwork_api_cloud_gateway_cors_policy_dynamic_origins gauge\nsdkwork_api_cloud_gateway_cors_policy_dynamic_origins{{service=\"{service}\"}} {origins}\n",
+        service = escape_label_value(state.config.service.name.as_str()),
+        origins = cors.dynamic_origins
+    ));
     Response::builder()
         .status(StatusCode::OK)
         .header(
@@ -626,11 +711,12 @@ fn apply_gateway_cors_headers(
     let origin = request_headers
         .get(header::ORIGIN)
         .and_then(|value| value.to_str().ok());
-    SecurityPolicy::apply_cors_policy_headers_from_origin(
-        &web_framework::gateway_cors_policy_for_origin(&state.config, origin),
-        origin,
-        response,
-    );
+    // Borrow the live snapshot instead of cloning the policy: the snapshot
+    // already carries the static floor, the registered console and sub-domain
+    // rules and the admin-managed origins, so the writer emits exactly what the
+    // current scan published.
+    let snapshot = state.cors.snapshot();
+    SecurityPolicy::apply_cors_policy_headers_from_origin(snapshot.policy(), origin, response);
 }
 
 async fn security_middleware(
@@ -1662,10 +1748,6 @@ fn emit_access_log(
         ?event,
         "gateway access"
     );
-}
-
-fn cors_layer(config: &GatewayRuntimeConfig) -> tower_http::cors::CorsLayer {
-    web_framework::gateway_cors_layer(config)
 }
 
 fn problem_response_with_instance(
