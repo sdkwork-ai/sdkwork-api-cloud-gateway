@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.70",
+    "currentVersion": "0.1.71",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.59"
+      "BETA": "0.1.71"
     },
     "notes": [
       {
-        "version": "0.1.59",
+        "version": "0.1.71",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.71",
+        "summary": "Workspace-wide delivery rebuild after fetching every sdkwork-space submodule back to origin/main: the gateway tree forward-merged upstream main, catalog resolved its storefront locale conflict onto the anonymous-reads change, and agents/cloudrouter were forward-merged before the image was rebuilt, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
+        "highlights": [
+          "provenance: every sdkwork-space repository fetched to origin/main; catalog and cloudrouter needed forward merges and were resolved forward without reset or rebase",
+          "gateway runtime: upstream main also mounts the Memory app and backend dependency surfaces, so the image is rebuilt in full rather than patched",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.71, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.59",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.59",
         "summary": "Workspace-wide delivery rebuild after syncing every sdkwork-space submodule onto origin/main: the diverged iam and cloudrouter trees were forward-merged, the gateway image was rebuilt from the synced trees in the bookworm toolchain container, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
         "highlights": [
