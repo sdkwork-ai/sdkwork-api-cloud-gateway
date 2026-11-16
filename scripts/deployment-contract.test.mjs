@@ -488,6 +488,94 @@ test('single-node containers provision the Payment key in the canonical secret m
   assert.match(entrypoint, /set -C/u);
 });
 
+test('containers provision the anonymous cashier token secret like the Payment key', () => {
+  const entrypoint = readFileSync(path.join(appRoot, 'bin', 'container', 'entrypoint'), 'utf8');
+  const repoCompose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
+  const bundleCompose = readFileSync(path.join(appRoot, 'docker-compose.bundle.yml'), 'utf8');
+  const installer = readFileSync(
+    path.join(appRoot, 'bin', 'packaging', 'install-ubuntu.sh'),
+    'utf8',
+  );
+  const devEnv = readFileSync(
+    path.join(appRoot, 'scripts', 'dev', 'sdkwork-api-cloud-gateway-dev-env.mjs'),
+    'utf8',
+  );
+
+  for (const compose of [repoCompose, bundleCompose]) {
+    // The payment center stores the cashier signing keys encrypted in the
+    // payment database; this deployment value is only the key-encryption key
+    // (KEK) that wraps them. An explicit operator value must win over the
+    // durable provisioned KEK.
+    assert.match(
+      compose,
+      /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET: \$\{GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET:-\}/u,
+    );
+    assert.match(
+      compose,
+      /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE: \/run\/secrets\/sdkwork\/api-gateway\/commerce-cashier-token\.secret/u,
+    );
+    assert.match(
+      compose,
+      /GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-true/u,
+    );
+  }
+
+  assert.match(
+    entrypoint,
+    /SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET/u,
+  );
+  assert.match(entrypoint, /openssl rand -hex 32 > "\$secret_file"/u);
+  // A configured secret must never be rotated by a restart.
+  assert.match(
+    entrypoint,
+    /\[ -z "\$\{SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-\}" \] \|\| return 0/u,
+  );
+  assert.match(
+    entrypoint,
+    /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET=\$\(tr -d '\\r\\n' < "\$secret_file"\)/u,
+  );
+
+  // Host-native installs persist a durable generated value in the systemd
+  // EnvironmentFile instead of relying on container volume provisioning.
+  assert.match(
+    installer,
+    /set_env SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET "\$cashier_token_secret" "\$env_target"/u,
+  );
+
+  // `pnpm dev` must default a development-only secret; otherwise the cashier
+  // link exchange fails closed with the indistinguishable 404.
+  assert.match(devEnv, /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:/u);
+  assert.match(devEnv, /development-only-commerce-cashier-token-secret/u);
+
+  // The bundle's per-environment env templates are the operator's live
+  // configuration source (deploy.sh passes env/<environment>.env as the compose
+  // env file), so they must expose the same provisioning switch and explicit
+  // secret override as `docker/.env.example`; otherwise a multi-replica
+  // operator cannot pin one shared secret through the canonical env file.
+  for (const environment of environments) {
+    const template = parseDotEnv(
+      readFileSync(path.join(appRoot, 'docker', 'env', `${environment}.env.example`), 'utf8'),
+    );
+    assert.equal(template.GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET, '');
+    assert.equal(template.GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET, 'true');
+  }
+});
+
+test('deployment env templates are valid UTF-8', () => {
+  // A lossy Windows round-trip once replaced the em dashes in the production
+  // environment template with invalid bytes, leaving a tracked file that strict
+  // decoders reject. The templates ship to operators, so keep them decodable.
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const templates = [
+    path.join(appRoot, 'docker', '.env.example'),
+    ...environments.map((environment) =>
+      path.join(appRoot, 'docker', 'env', `${environment}.env.example`)),
+  ];
+  for (const template of templates) {
+    assert.doesNotThrow(() => decoder.decode(readFileSync(template)), template);
+  }
+});
+
 test('production-like embedded PostgreSQL enables transport encryption', () => {
   const compose = readFileSync(path.join(appRoot, 'docker-compose.yml'), 'utf8');
   const embedded = readFileSync(path.join(appRoot, 'docker-compose.embedded.yml'), 'utf8');
