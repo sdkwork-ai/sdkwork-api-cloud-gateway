@@ -502,9 +502,10 @@ test('containers provision the anonymous cashier token secret like the Payment k
   );
 
   for (const compose of [repoCompose, bundleCompose]) {
-    // The order app-api mints cashier capability tokens and the IAM payment
-    // OAuth signs the payer openid with the same deployment secret. An explicit
-    // operator value must win over the durable provisioned key.
+    // The payment center stores the cashier signing keys encrypted in the
+    // payment database; this deployment value is only the key-encryption key
+    // (KEK) that wraps them. An explicit operator value must win over the
+    // durable provisioned KEK.
     assert.match(
       compose,
       /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET: \$\{GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET:-\}/u,
