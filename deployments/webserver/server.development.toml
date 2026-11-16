@@ -2,8 +2,21 @@ environment = "development"
 
 [http]
 
+# Development serves both listeners from the webserver edge itself
+# (SDKWORK_WEBSERVER_SPEC.md §0.1: local Docker development publishes host
+# :80/:443 from the webserver container). The TLS certificate directory is
+# bootstrapped at startup by the webserver entrypoint with every aggregated
+# server name in the SAN list; operator/ACME material replaces it without a
+# config change.
 [[http.server]]
-listen = ["80"]
+listen = ["80", "443 ssl"]
+http2 = true
 serverName = ["api-dev.sdkwork.com", "api-dev.birdcoder.com", "api-dev.dtupay.com", "api-dev.noaper.com", "api-dev.sdkwork.cn", "api-dev.birdcoder.cn", "api-dev.dtupay.cn", "api-dev.noaper.cn", "api-dev.skubc.com", "api-dev.skubc.cn", "api-dev.zowalk.com", "api-dev.zowalk.cn", "api-dev.offer86.com", "api-dev.offer86.cn", "api-dev.86offer.com", "api-dev.86offer.cn"]
 include = ["snippets/gateway-locations.nonproduction.conf"]
+
+[http.server.tls]
+certFile = "/etc/sdkwork/certs/letsencrypt/api-dev.birdcoder.com/fullchain.pem"
+certKeyFile = "/etc/sdkwork/certs/letsencrypt/api-dev.birdcoder.com/privkey.pem"
+chainFile = "/etc/sdkwork/certs/letsencrypt/api-dev.birdcoder.com/chain.pem"
+protocols = ["TLSv1.2", "TLSv1.3"]
 
