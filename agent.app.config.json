@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.77",
+    "currentVersion": "0.1.78",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.77"
+      "BETA": "0.1.78"
     },
     "notes": [
       {
-        "version": "0.1.77",
+        "version": "0.1.78",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.78",
+        "summary": "Course lookup projections: every CourseItem read (list, detail, save, publish, unpublish, review detail, application convert, studio detail) now returns the category name and the instructor display name in CourseItem.category / CourseItem.instructor instead of the raw ids, so the operator course table and the learner course surfaces stop rendering course-category-* / instructor-* identifiers where a category or presenter name belongs.",
+        "highlights": [
+          "course reads: course_category.name and course_instructor.display_name are resolved inside each projection with tenant and soft-delete guards; categoryId stays available for writes and a missing lookup row yields null instead of the id, so the UI keeps its dash fallback",
+          "queries: correlated lookup subqueries keep the course_* statements unaliased, so no column reference in the surrounding WHERE/ORDER BY clauses changed and the projections stay byte-identical elsewhere",
+          "provenance: sdkwork-course main fc98f5a (fix(course): project category and instructor display names, not ids) pushed to GitHub and pulled into the build host; only the course repository crate and one new read-only integration test changed",
+          "tests: sdkwork-content-course-repository-sqlx/tests/course_lookup_names.rs ran against the development PostgreSQL and asserted that listed and retrieved courses expose display names (never course-category-* / instructor-*) and that the detail read agrees with the list"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.77",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.77",
         "summary": "Course report-overview contract fix: the admin console at /admin/course/overview rendered 0 on every card while course management listed 2685 rows, because the service answered totalCourses/totalEnrollments/totalApplications/publishedCourses while the deployed console reads named courseCount/publishedCourseCount/studentCount/enrollmentCount/liveSessionCount/completionRate fields with a zero fallback. The gateway now answers that six-field payload and computes the three aggregates it never returned.",
         "highlights": [
