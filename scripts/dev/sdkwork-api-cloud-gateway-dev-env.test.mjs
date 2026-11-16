@@ -157,6 +157,23 @@ test('embedded dependencies never default a dependency base URL to the gateway o
   assert.equal(resolved.SDKWORK_BIRDCODER_DEPLOYMENT_PROFILE, 'standalone');
   assert.equal(resolved.SDKWORK_BIRDCODER_RUNTIME_TARGET, 'server');
   assert.equal(resolved.SDKWORK_CLOUDROUTER_ROUTER_ENVIRONMENT, 'development');
+  assert.equal(
+    resolved.SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET,
+    'development-only-commerce-cashier-token-secret-0123456789',
+  );
+});
+
+test('embedded cashier token secret preserves an explicit deployment secret', () => {
+  // The order app-api mints/verifies cashier tokens and the IAM payment OAuth
+  // signs the payer openid with this same value; an operator-provided secret
+  // must always win so already-issued cashier links stay valid.
+  const resolved = resolveEmbeddedDependencyEnv({
+    SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET: 'operator-managed-cashier-token-secret',
+  });
+  assert.equal(
+    resolved.SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET,
+    'operator-managed-cashier-token-secret',
+  );
 });
 
 test('embedded cloudrouter router environment preserves explicit runtime overrides', () => {

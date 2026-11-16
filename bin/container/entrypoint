@@ -97,6 +97,61 @@ provision_payment_credential_key() {
   }
 }
 
+provision_commerce_cashier_token_secret() {
+  enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-false}
+  case "$enabled" in
+    true) ;;
+    false) return 0 ;;
+    *)
+      echo "SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET must be true or false" >&2
+      exit 2
+      ;;
+  esac
+
+  # An explicit deployment secret always wins. Never rotate a configured value:
+  # already-issued cashier links stay valid and every replica derives the same
+  # tenant keys.
+  [ -z "${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-}" ] || return 0
+
+  secret_file=${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE:-}
+  case "$secret_file" in
+    /run/secrets/sdkwork/api-gateway/*) ;;
+    *)
+      echo "cashier token secret provisioning requires a path under /run/secrets/sdkwork/api-gateway" >&2
+      exit 1
+      ;;
+  esac
+
+  secret_directory=${secret_file%/*}
+  mkdir -p "$secret_directory"
+  if [ ! -e "$secret_file" ]; then
+    # noclobber makes concurrent single-host starts race safely: one process
+    # creates the durable secret and no process overwrites an existing key.
+    if ! (umask 077; set -C; openssl rand -hex 32 > "$secret_file") 2>/dev/null; then
+      [ -s "$secret_file" ] || {
+        echo "failed to provision commerce cashier token secret" >&2
+        exit 1
+      }
+    fi
+  fi
+
+  [ -s "$secret_file" ] || {
+    echo "commerce cashier token secret file is empty" >&2
+    exit 1
+  }
+  secret_size=$(wc -c < "$secret_file")
+  [ "$secret_size" -ge 32 ] || {
+    echo "commerce cashier token secret must be at least 32 bytes" >&2
+    exit 1
+  }
+  SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET=$(tr -d '\r\n' < "$secret_file")
+  [ -n "$SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET" ] || {
+    echo "commerce cashier token secret is blank" >&2
+    exit 1
+  }
+  export SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET
+}
+
 provision_iam_signing_master_secret() {
   enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_IAM_SIGNING_MASTER_SECRET:-false}
   case "$enabled" in
@@ -157,6 +212,7 @@ load_iam_signing_master_secret() {
 provision_postgres_trust_bundle
 # Container images do not embed sdkwork-webserver; do not load WebServer secrets.
 provision_payment_credential_key
+provision_commerce_cashier_token_secret
 provision_iam_signing_master_secret
 load_iam_signing_master_secret
 

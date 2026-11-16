@@ -241,6 +241,14 @@ x-gateway-common: &gateway-common
     # operator/KMS-managed key (the first boot provisions it once).
     SDKWORK_PAYMENT_CREDENTIAL_MASTER_KEY_FILE: /run/secrets/sdkwork/api-gateway/payment-credential-master.key
     SDKWORK_API_CLOUD_GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY: ${GATEWAY_PROVISION_PAYMENT_CREDENTIAL_KEY:-true}
+    # Anonymous cashier capability tokens (order app-api + IAM payment OAuth
+    # share this deployment secret). An explicit
+    # GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET wins; otherwise the entrypoint
+    # provisions one durable key in the gateway-secrets volume, so scanned or
+    # already-printed cashier links open the no-login cashier.
+    SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET: ${GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET:-}
+    SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE: /run/secrets/sdkwork/api-gateway/commerce-cashier-token.secret
+    SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET: ${GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-true}
     RUST_LOG: ${RUST_LOG:-info}
   volumes:
     # Per-environment shared state: every instance mounts the same volumes.

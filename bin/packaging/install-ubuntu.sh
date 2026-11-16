@@ -479,6 +479,17 @@ if [ -z "$memory_cursor_signing_key" ]; then
 fi
 set_env SDKWORK_MEMORY_CURSOR_SIGNING_KEY "$memory_cursor_signing_key" "$env_target"
 
+# Anonymous cashier capability tokens: the order app-api and the IAM payment
+# OAuth derive tenant keys from one deployment secret (>= 32 bytes). Reuse an
+# operator-provided value, otherwise generate a durable host secret. Without it
+# `POST /app/v3/api/cashier/links` fails closed, so an already-printed cashier
+# QR would land on the login wall instead of the no-login cashier.
+cashier_token_secret=${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-}
+if [ -z "$cashier_token_secret" ]; then
+  cashier_token_secret=$(openssl rand -hex 32)
+fi
+set_env SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET "$cashier_token_secret" "$env_target"
+
 # Memory outbox delivery is mandatory for production-like environments.
 memory_outbox_mode=${SDKWORK_MEMORY_OUTBOX_DELIVERY_MODE:-}
 memory_outbox_url=${SDKWORK_MEMORY_OUTBOX_DELIVERY_URL:-}

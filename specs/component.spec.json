@@ -471,6 +471,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/cashier",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/orders",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-order-app-api",
@@ -3069,6 +3076,7 @@
       "sdkFamily": "sdkwork-order-app-sdk",
       "apiPrefixes": [
         "/app/v3/api/checkout",
+        "/app/v3/api/cashier",
         "/app/v3/api/orders",
         "/app/v3/api/after_sales",
         "/app/v3/api/fulfillments",

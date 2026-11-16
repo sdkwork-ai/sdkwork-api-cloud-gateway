@@ -159,6 +159,16 @@ export function resolveEmbeddedDependencyEnv(
       env.SDKWORK_CLOUDROUTER_APP_SESSION_SECRET ?? cloudRouterDevelopmentSecret,
     SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET:
       env.SDKWORK_CLOUDROUTER_PAYMENT_WEBHOOK_SECRET ?? cloudRouterDevelopmentSecret,
+    // Anonymous cashier capability tokens. The order app-api mints/verifies
+    // them and the IAM payment OAuth binds the payer openid with the same
+    // deployment secret (>= 32 bytes). Without it `POST
+    // /app/v3/api/cashier/links` fails closed with the indistinguishable
+    // "cashier link is not payable" 404, so a local development launch sets a
+    // dev-only value. Production-like deployments provision their own durable
+    // secret instead of reusing this one.
+    SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:
+      env.SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET
+      ?? 'development-only-commerce-cashier-token-secret-0123456789',
     // Required by the CloudRouter embedded router build: app runtime gateway
     // calls are signed/verified with this secret, so it must be present even
     // in the collapsed standalone development deployment.
