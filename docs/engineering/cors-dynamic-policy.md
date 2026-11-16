@@ -65,16 +65,38 @@ production defect. Probing the live gateway with a currently allowed origin
 
 The mall storefront (PC/H5/mini program/Flutter) calls
 `GET /app/v3/api/catalog/spus` and `/catalog/spus/{spuId}` through
-`sdkwork-commerce-app-sdk`, but no T1 domain service publishes those routes —
+`sdkwork-commerce-app-sdk`, but no T1 domain service published those routes —
 `sdkwork-mall/docs/architecture/api/storefront-browse-regression.md` already
-records the same finding. The gateway is behaving correctly by returning
-`40401`; the missing publisher belongs to the catalog/commerce contract, not to
-this gateway. Fixing it requires publishing `catalog.spus.list` /
-`catalog.spus.retrieve` (or moving the storefront to the published `products`
-contract) in the owning application.
+records the same finding. The gateway was behaving correctly: the missing
+publisher belonged to the catalog/commerce contract, not to this gateway.
 
-After the CORS fix, mall category and offer flows work; product list/detail
-still needs that contract decision.
+### Resolution (storefront moved to the published collection)
+
+The catalog authority retired the `/catalog/spus` collection on purpose — it was a
+second name for `commerce_product_spu`, and its contract forbids re-exposing it
+(`sdkwork-catalog/docs/product/prd/PRD.md`: no SPU aliases, no duplicate
+product/SPU app routes). Publishing the alias here would have added a second
+wire name for one read model, so the fix belongs to the callers:
+
+- `sdkwork-catalog` now declares `q` on `products.list`, the free-text filter the
+  storefront search box and home rails send (`apis/app-api/catalog/catalog-app-api.openapi.json`,
+  handler passes it to `ProductSpuListQuery`); the app SDK was regenerated
+  through `pnpm sdk:generate`.
+- The mall storefront (PC wiring, H5 home/shop/catalog services, mini program
+  and Flutter clients) now calls `GET /app/v3/api/catalog/products` and
+  `GET /app/v3/api/catalog/products/{productId}` — routes the catalog manifest
+  already carried and the gateway already composed — instead of the retired
+  `spus` collection. `sdkwork-mall/docs/architecture/api/storefront-browse-regression.md`
+  records the corrected status.
+
+The gateway needed no route change: `products.list` / `products.retrieve` were
+already in the composed manifest as `dual-token-or-anonymous`, so the paths now
+resolve instead of answering `40401`.
+
+The richer storefront projection the mall UX still wants (primary media, price
+range, and SKU summary on the list and detail) is a separate read-model change;
+until it ships the storefront renders the product fields and falls back where a
+field is absent.
 
 ## Fix
 
