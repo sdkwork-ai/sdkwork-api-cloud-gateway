@@ -85,5 +85,24 @@ fn diagnostics_snapshot(state: &GatewayState) -> serde_json::Value {
         }),
     );
 
+    let cors_metrics = state.cors.metrics();
+    let cors_snapshot = state.cors.snapshot();
+    snapshot.insert(
+        "cors".to_string(),
+        json!({
+            "dynamicEnabled": config.cors.dynamic.enabled,
+            "refreshIntervalSeconds": config.cors.dynamic.refresh_interval_seconds,
+            "tenantId": config.cors.dynamic.tenant_id,
+            "appliedVersion": cors_metrics.applied_version,
+            "dynamicOriginCount": cors_metrics.dynamic_origins,
+            "refreshAttempts": cors_metrics.attempts,
+            "refreshFailures": cors_metrics.failures,
+            "staticOriginCount": cors_snapshot.policy().allowed_origins.len()
+                .saturating_sub(cors_metrics.dynamic_origins),
+            "registeredConsoleHosts": cors_snapshot.policy().registered_console_hosts.is_some(),
+            "registeredSubdomainHosts": cors_snapshot.policy().registered_subdomain_hosts.is_some(),
+        }),
+    );
+
     serde_json::Value::Object(snapshot)
 }

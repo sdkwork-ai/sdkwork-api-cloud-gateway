@@ -203,6 +203,7 @@ platform-foundation-suite = [
 
 [dependencies]
 anyhow.workspace = true
+async-trait.workspace = true
 axum.workspace = true
 bytes.workspace = true
 http-body-util.workspace = true

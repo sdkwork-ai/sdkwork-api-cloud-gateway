@@ -29,6 +29,17 @@ schemes = ["http", "https"]
 baseDomains = ["sdkwork.com", "birdcoder.com", "sdkwork.cn", "birdcoder.cn"]
 schemes = ["http", "https"]
 
+# Admin-managed CORS policy (CORS_SPEC section 5.2): the platform edge scans
+# `framework_cors_policy` for this tenant/environment and hot-swaps the
+# in-memory policy, so operators add exact origins or `https://**.example.com`
+# wildcards from the admin console without a code change or redeploy. Every
+# process/replica scans independently, so a multi-process deployment converges
+# without a restart.
+[cors.dynamic]
+enabled = true
+refreshIntervalSeconds = 10
+tenantId = "0"
+
 [request]
 maxBodyBytes = 33554432
 

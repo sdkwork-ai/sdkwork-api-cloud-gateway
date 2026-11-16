@@ -85,6 +85,11 @@ x-gateway-common: &gateway-common
     SDKWORK_CORS_CONSOLE_HOST_SCHEMES: ${GATEWAY_CORS_CONSOLE_HOST_SCHEMES:-}
     SDKWORK_CORS_SUBDOMAIN_BASE_DOMAINS: ${GATEWAY_CORS_SUBDOMAIN_BASE_DOMAINS:-}
     SDKWORK_CORS_SUBDOMAIN_SCHEMES: ${GATEWAY_CORS_SUBDOMAIN_SCHEMES:-}
+    # Admin-managed CORS policy scope (framework_cors_policy.tenant_id) and
+    # scan cadence. Production sets GATEWAY_CORS_DYNAMIC_TENANT_ID=100001.
+    SDKWORK_CORS_DYNAMIC_ENABLED: ${GATEWAY_CORS_DYNAMIC_ENABLED:-true}
+    SDKWORK_CORS_DYNAMIC_REFRESH_INTERVAL_SECONDS: ${GATEWAY_CORS_DYNAMIC_REFRESH_INTERVAL_SECONDS:-10}
+    SDKWORK_CORS_DYNAMIC_TENANT_ID: ${GATEWAY_CORS_DYNAMIC_TENANT_ID:-0}
     # Drive storage bootstrap (fresh deployments): the embedded Drive module
     # initializes its built-in storage plane on first boot and binds Tencent
     # Cloud COS as the tenant default. Provide the COS key pair and bucket to
