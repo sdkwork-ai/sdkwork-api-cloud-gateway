@@ -187,16 +187,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.79",
+    "currentVersion": "0.1.80",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.79"
+      "BETA": "0.1.80"
     },
     "notes": [
       {
-        "version": "0.1.79",
+        "version": "0.1.80",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.80",
+        "summary": "Workspace sync cut for the settlement and fulfilment surface: every sdkwork-space repository was advanced to its origin/main tip (111 checkouts, sixteen HEADs moved) and the embedded gateway composition rebuilt on order shipment logistics and voucher flows, payment cashier link storage with token key settings, the shop checkout service with its schema repair migration, the IAM mini-program session module and the IM notification-centre service. Plugins, skills and MCP now fold their catalog routes into the shared contract, so the rebuilt route inventory is composed from one manifest surface instead of three hand-kept copies.",
+        "highlights": [
+          "provenance: 111 git checkouts synced merge-only (80 current, 8 fast-forwarded, 7 forward-merged, 1 fast-forwarded over a non-overlapping dirty tree, 9 local-ahead preserved, 3 dirty/diverged preserved, 1 detached-at-tip, 1 fetch-blocked); no reset, rebase, stash, clean, checkout -f, restore or push",
+          "closure advances: sdkwork-api-cloud-gateway (self, merged forward with 15 local commits), sdkwork-iam (mini-program session module, H5 auth and WeChat payment route), sdkwork-order (shipment logistics and voucher flows), sdkwork-payment (cashier link storage, token key settings), sdkwork-shop (checkout service, schema repair migration), sdkwork-catalog, sdkwork-plugins, sdkwork-skills, sdkwork-mcp (catalog routes folded into the shared contract), sdkwork-utils (catalog view and query int helpers), sdkwork-aiot (text instant casts at the Postgres statement boundary), sdkwork-appstore, sdkwork-im and sdkwork-ui",
+          "migration defect fixed forward: sdkwork-payment had committed the cashier-link schema as a second 0006 while 0006_payment_cashier_token_secret was already applied everywhere, so the drift checker resolved version 6 to the new file and the gateway refused to start with checksum_mismatch on 0006; the migration and its rollback were renumbered to the next free version 0008 in a dedicated sdkwork-payment commit, keeping applied history immutable, and both the local and remote payment histories now end at 0008 with commerce_payment_cashier_link and its two indexes present",
+          "gates: cargo metadata --locked, cargo fmt -- --check, pnpm check, pnpm workflow:validate and cargo test --workspace all exited 0 in the bookworm build container",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.80 (sha256 948a66e5), label org.opencontainers.image.version=0.1.80, and the self-contained install bundle was packaged from that image with image.tar.gz sha256 90b5039f",
+          "local parity: the local production-parity stack was upgraded first and verified 18/18 checks (RestartCount 0, /healthz and /readyz 200, sdkwork-v3 401 ProblemDetail with traceId, exactly 5 backup sets, bundle identity and image checksum)",
+          "deployment: remote production was upgraded in place from the locally packaged bundle over passwordless ssh (docker load, no registry pull), reporting healthy after 40s, then verified 18/18 there and 4/4 through the TLS public edge",
+          "availability: loopback sampling missed 32s (16:39:29-16:40:01Z) during the single-replica recreate and the public edge returned 502/000 for 36s (16:39:29-16:40:05Z); every other sample before and after was 200, so the only outage was the container swap itself",
+          "backup safety: exactly 5 production backup sets are retained, the newest set (20261116T163723Z) verified against its checksums, and an extra 33.3 MB logical pre-change dump (sha256 156de0fb) was captured inside the postgres container",
+          "housekeeping: the superseded 0.1.78 image was reclaimed while 0.1.79 stays addressable for rollback and the demo environment's pinned 0.1.25 image was left untouched"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.79",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.79",
         "summary": "Workspace sync cut with the anonymous cashier surface: every sdkwork-space repository was fetched to its origin/main tip (110 checkouts, five forward-merged), and the gateway now declares /app/v3/api/cashier on the order app-api surface and provisions the commerce cashier token secret in the container entrypoint. Without that prefix a rebuilt embedded gateway rejected the order route manifest (\"GET /app/v3/api/cashier/{token} is outside configured apiSurfaces\") and every printed cashier QR landed on the login wall; without the secret the same request failed closed with the indistinguishable 404.",
         "highlights": [
