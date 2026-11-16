@@ -187,16 +187,34 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.76",
+    "currentVersion": "0.1.77",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.76"
+      "BETA": "0.1.77"
     },
     "notes": [
       {
-        "version": "0.1.76",
+        "version": "0.1.77",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.77",
+        "summary": "Course report-overview contract fix: the admin console at /admin/course/overview rendered 0 on every card while course management listed 2685 rows, because the service answered totalCourses/totalEnrollments/totalApplications/publishedCourses while the deployed console reads named courseCount/publishedCourseCount/studentCount/enrollmentCount/liveSessionCount/completionRate fields with a zero fallback. The gateway now answers that six-field payload and computes the three aggregates it never returned.",
+        "highlights": [
+          "course reports: /backend/v3/api/course_reports/overview returns courseCount, publishedCourseCount, studentCount, enrollmentCount, liveSessionCount and completionRate (a 0..=1 fraction) 鈥?the exact named fields the admin surface reads; the retired totalCourses/totalEnrollments/totalApplications/publishedCourses keys had no consumer on any surface",
+          "new aggregates: distinct enrolled learners (course_enrollment.user_id), live sessions (course_live_session) and the completed/required lesson ratio (course_learning_progress rollup), each tenant+organization scoped like the course counts, each answering 0 instead of NULL for an empty scope",
+          "provenance: sdkwork-course main 520ead9 (fix(course): answer the admin report-overview contract the console reads) pushed to GitHub and pulled into the build host; only the course service/repository crates, the course regression test and the regenerated course Cargo.lock entry changed, the rest of the gateway dependency closure is identical to 0.1.76",
+          "gates: course contract unit tests plus a read-only repository integration test that compares every aggregate with an independent query over the same tenant scope; the service and repository crates compile and pass cargo fmt",
+          "image: built in the bookworm build container as registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.77",
+          "deployment: dev stack verified end-to-end first (IAM login -> GET course_reports/overview -> courseCount 2685, publishedCourseCount 2684, liveSessionCount 3), then the production stack upgraded in place from the byte-identical image id"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.76",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.76",
         "summary": "Workspace-wide delivery cut: every sdkwork-space repository was fetched to its origin/main tip, four gateway-closure repositories advanced (sdkwork-messaging and sdkwork-payment forward-merged, sdkwork-rtc and sdkwork-utils fast-forwarded), the gateway Cargo.lock was regenerated for the new sdkwork-rtc-service-host crypto dependencies, the full gate suite passed in the bookworm build container, the standalone container image was rebuilt, verified first as a local production-parity stack, then upgraded in place on api.noaper.com with the 5 most recent backup sets retained.",
         "highlights": [
