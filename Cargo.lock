@@ -17236,12 +17236,16 @@ dependencies = [
 name = "sdkwork-rtc-service-host"
 version = "0.1.0"
 dependencies = [
+ "aes-gcm 0.10.3",
+ "base64 0.22.1",
+ "rand_core 0.6.4",
  "sdkwork-communication-rtc-service",
  "sdkwork-drive-storage-contract",
  "sdkwork-drive-workspace-service",
  "sdkwork-routes-rtc-app-api",
  "sdkwork-routes-rtc-backend-api",
  "serde_json",
+ "sha2 0.10.9",
  "uuid",
 ]
 
