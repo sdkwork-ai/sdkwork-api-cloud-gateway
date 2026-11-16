@@ -187,16 +187,38 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.78",
+    "currentVersion": "0.1.79",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.78"
+      "BETA": "0.1.79"
     },
     "notes": [
       {
-        "version": "0.1.78",
+        "version": "0.1.79",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.79",
+        "summary": "Workspace sync cut with the anonymous cashier surface: every sdkwork-space repository was fetched to its origin/main tip (110 checkouts, five forward-merged), and the gateway now declares /app/v3/api/cashier on the order app-api surface and provisions the commerce cashier token secret in the container entrypoint. Without that prefix a rebuilt embedded gateway rejected the order route manifest (\"GET /app/v3/api/cashier/{token} is outside configured apiSurfaces\") and every printed cashier QR landed on the login wall; without the secret the same request failed closed with the indistinguishable 404.",
+        "highlights": [
+          "provenance: 110 git checkouts fetched; sdkwork-birdcoder2 and sdkwork-utils fast-forwarded, sdkwork-api-cloud-gateway, sdkwork-cloudrouter, sdkwork-iam, sdkwork-order and sdkwork-payment were forward-merged from origin/main (cashier signing-key provider, stored cashier secret, H5 History API routing, course catalog table); merge-only integration, no reset, rebase, stash, clean or force",
+          "gateway contract: /app/v3/api/cashier is declared on the sdkwork-order-app-api app surface and its apiPrefixes in specs/component.spec.json, so cashier.links.create, cashier.retrieve, cashier.payments.create and cashier.status.retrieve pass the API closure gate and embedded composition",
+          "deployment secret: the container entrypoint provisions a durable commerce cashier token KEK (openssl rand -hex 32, noclobber, 0600) under /run/secrets/sdkwork/api-gateway/commerce-cashier-token.secret when no explicit GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET is configured; the compose set and every per-environment env template expose the switch, and the host-native installer persists a generated value in the systemd EnvironmentFile",
+          "gates: cargo metadata --locked, cargo fmt -- --check, cargo test --workspace, pnpm check, pnpm workflow:validate, check:standards, the API operation-pattern and response-envelope checks and the module bin standard all exited 0; one pre-existing scripts/deployment-contract.test.mjs assertion (container workflow target has no artifactPath, unchanged since 0.1.50) still fails and is untouched by this cut",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.79 in the bookworm build container (image id sha256:bcfa1fb669ce8c4b596567627d9d1fa40e9a068539bd3a2f489c6576a60960cf, 469.5 MB / 492,332,053 B, label org.opencontainers.image.version 0.1.79); install bundle image.tar.gz sha256 9e522973eb2245b5e77db040405ec5cc8cfcf49b4e760614d0868bd5f7e23b62",
+          "local parity: the local production stack was upgraded first and reached healthy in 55 s on instance port 3913 with RestartCount 0; /healthz and /readyz answered 200, GET /app/v3/api/cashier/probe-token answered 404 \"cashier link is not payable\" with operationId cashier.retrieve (the prefix is routable instead of route-not-in-manifest), GET /backend/v3/api/payments/cashier_token_settings answered 401 with operationId cashierTokenSettings.retrieve, and the local backup window held 5 sets",
+          "deployment: production upgraded in place behind the webserver edge; the bundle was copied over ssh and loaded with docker load (the remote registry certificate still does not cover registry.sdkwork.com), the instance recreated in 40 s with RestartCount 0, and the public edge https://api.birdcoder.com answered 200 on /healthz and /readyz afterwards; the measured availability gap was one ~40 s recreate window (16:54:14-16:54:44 local) plus two isolated failed probes while the knowledgebase sidecar restarted",
+          "secret proof: /run/secrets/sdkwork/api-gateway/commerce-cashier-token.secret exists in the production gateway container (65 bytes, mode 0600) beside the payment credential key and the IAM signing master key; the payment database carries commerce_payment_cashier_token_setting with secret_ciphertext, secret_encryption_key_id, previous_secret_expires_at and enabled from migrations 0006/0007 (1 row)",
+          "backup safety: exactly 5 production backup sets remain; the pre-change set sdkwork-api-cloud-gateway-production-20261116T085211Z was checksum-verified and carries config.tar.gz, the data volume tar and a logical dump captured inside the postgres container with pg_dump -Fc (32,983,752 B, sha256 857e20aa8da28c30121fbaa4822eec5d2283ce5964d3082b039adbd5b90c80f) because the host-side pg_dump credential path still cannot authenticate; the 15:29 set keeps the pre-migration dump",
+          "housekeeping: the superseded 0.1.77 image was reclaimed, 0.1.78 stays as the rollback image, the demo stack stays on 0.1.25, and the production disk holds about 7.4 G free; live production.env gained GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET=true through bin/config.sh so the operator file states the switch explicitly"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.78",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.78",
         "summary": "Course lookup projections: every CourseItem read (list, detail, save, publish, unpublish, review detail, application convert, studio detail) now returns the category name and the instructor display name in CourseItem.category / CourseItem.instructor instead of the raw ids, so the operator course table and the learner course surfaces stop rendering course-category-* / instructor-* identifiers where a category or presenter name belongs.",
         "highlights": [
