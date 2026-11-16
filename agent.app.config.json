@@ -187,16 +187,104 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.71",
+    "currentVersion": "0.1.76",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.71"
+      "BETA": "0.1.76"
     },
     "notes": [
       {
-        "version": "0.1.71",
+        "version": "0.1.76",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.76",
+        "summary": "Workspace-wide delivery cut: every sdkwork-space repository was fetched to its origin/main tip, four gateway-closure repositories advanced (sdkwork-messaging and sdkwork-payment forward-merged, sdkwork-rtc and sdkwork-utils fast-forwarded), the gateway Cargo.lock was regenerated for the new sdkwork-rtc-service-host crypto dependencies, the full gate suite passed in the bookworm build container, the standalone container image was rebuilt, verified first as a local production-parity stack, then upgraded in place on api.noaper.com with the 5 most recent backup sets retained.",
+        "highlights": [
+          "provenance: 111 git checkouts fetched (87 current, 16 local-ahead preserved, 3 preserved dirty/diverged, 2 forward-merged, 2 fast-forwarded, 1 detached-at-tip); four HEADs advanced — sdkwork-messaging (send rules, send records, notification dashboard, provider defaults), sdkwork-payment (cashier token settings), sdkwork-rtc (provider catalog and sealed provider secrets), sdkwork-utils (commerce cashier token helpers); merge-only integration, no reset/rebase/stash/clean/force/push",
+          "workspace caveat: sdkwork-cloudrouter carries 28 local commits ahead and 5 upstream commits behind with a dirty frontend worktree, so its merge was intentionally preserved (dirty-worktree divergence) and the gateway image keeps the same cloudrouter assembly source as 0.1.75; sdkwork-birdcoder2, the parent sdkwork-space and sdkwork-deepseekbot are likewise preserved and outside the gateway dependency closure",
+          "lock: gateway Cargo.lock regenerated and committed (+4 dependency edges for sdkwork-rtc-service-host: aes-gcm, base64, rand_core, sha2); cargo metadata --locked resolves clean again",
+          "gates: cargo metadata --locked, cargo fmt -- --check, pnpm check, pnpm workflow:validate and cargo test --workspace all exited 0 in the bookworm build container",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.76 in the bookworm build container (image id sha256:78c77b045c07c08f955915e2062688a33c49aa351e75c467acad55c2681a0fb6, 469.2 MB); the embedded route inventory grew over 0.1.75 (send_records 36 vs 0, provider_profile 606 vs 597, cashier_token 145 vs 144), confirming the advanced closure code is baked into the image",
+          "bundle: install bundle packaged with image.tar.gz sha256 a5fc4ef2cba1858fc482714060a6c04c17d35e03fea9cfd7b0b53cef16691006 (490,248,110 B); the remote target loads the bundle image instead of a registry pull because the remote registry TLS certificate does not cover registry.sdkwork.com",
+          "deployment: the local production-parity stack was upgraded and verified first (18/18 checks), then the remote production stack upgraded in place from the byte-identical image id (78c77b04 on both hosts); the measured availability gap during the container recreate was 39 s on the instance port and about 40 s on the gateway public edge (https://api.birdcoder.com, nginx -> 127.0.0.1:3913)",
+          "backup safety: exactly 5 production backup sets retained after retention pruning, plus a pre-change logical PostgreSQL dump captured inside the postgres container (32,774,746 B, sha256 5a9c4bd8bb7d3eef4ae6124d261b0deaea73c94ad348ba830493ac9b6cdf3a88) because the host-side pg_dump credential path is broken; the unused 0.1.74 image was reclaimed and 0.1.75 kept as the rollback image",
+          "verification: remote containers healthy at 0.1.76 with RestartCount 0, /healthz and /readyz return 200 on the instance port and on the gateway public edge, unknown and sdkwork-v3 routes return 401 ProblemDetail with traceId, backup count 5, bundle sha256 verified, remote disk restored to 7.7 G free"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.75",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.75",
+        "summary": "Workspace-wide delivery cut: every sdkwork-space repository was fetched and verified at its origin/main tip (0 of 111 working trees needed advancing), the full gate suite passed, the standalone container image was rebuilt in the bookworm build container, verified first as a local production-parity stack, then upgraded in place on api.noaper.com with the 5 most recent backup sets retained.",
+        "highlights": [
+          "provenance: 111 git checkouts fetched (89 current, 19 preserved local-ahead, one detached checkout already at the origin/main tip, parent and birdcoder2 preserved as dirty/behind but outside the gateway dependency closure); merge-only integration, no reset/rebase/force; no closure repository was behind, so Cargo.lock stayed locked and unchanged",
+          "gates: cargo metadata --locked, cargo fmt -- --check, pnpm check, pnpm workflow:validate and cargo test --workspace all exited 0 in the bookworm build container",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.75 (image id 70556f27e984, 468.9 MB); the embedded route inventory including /app/v3/api/cashier/links was verified inside the image",
+          "bundle: install bundle packaged with image.tar.gz sha256 2d8f15124819; the remote deploy loads that bundle image instead of a registry pull because the remote registry TLS certificate does not cover registry.sdkwork.com; the first attempt failed closed before any mutation and the retry succeeded",
+          "deployment: local production-parity stack verified 18/18 checks, then the remote production stack upgraded in place to the byte-identical image id; the measured instance availability gap during the container recreate was about 35 seconds",
+          "backup safety: exactly 5 production backup sets retained after retention pruning, plus a pre-change logical PostgreSQL dump (database.dump, 32.7 MB, sha256 aad1beb1...) captured inside the postgres container because the host-side pg_dump credential path is broken",
+          "verification: remote containers healthy at 0.1.75 with RestartCount 0, /healthz and /readyz return 200 on the instance port and on https://api.noaper.com, backup count 5, bundle sha256 verified, unused 0.1.73 image reclaimed and 0.1.74 kept as the rollback image"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.74",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.74",
+        "summary": "Workspace-wide delivery rebuild after fetching every sdkwork-space repository back to origin/main: the gateway forward-merged the dynamic CORS policy and admin diagnostics feature, iam/knowledgebase/aiot/order/payment advanced, the image was rebuilt in full, verified as a local production-parity stack, then upgraded in place on api.noaper.com with the 5 most recent backup sets retained.",
+        "highlights": [
+          "provenance: all sdkwork-space repositories fetched to origin/main; the gateway forward-merged the upstream dynamic CORS policy commit and the dirty release files were preserved without reset or rebase",
+          "gateway runtime: dynamic CORS policy evaluation plus admin diagnostics endpoints are now part of config, runtime and web-framework layers",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.74, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.73",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.73",
+        "summary": "Workspace-wide delivery rebuild after fetching every sdkwork-space repository back to origin/main: only the gateway and sdkwork-plugins advanced, the gateway forward-merged the plugins capability composition, the image was rebuilt in full, verified as a local production-parity stack, then upgraded in place on api.noaper.com with the 5 most recent backup sets retained.",
+        "highlights": [
+          "provenance: all 110 sdkwork-space repositories fetched to origin/main; sdkwork-plugins fast-forwarded its plugin admin localization and the gateway forward-merged without reset or rebase",
+          "gateway runtime: /app/v3/api/plugins, /app/v3/api/plugin_categories, /backend/v3/api/plugins and /backend/v3/api/plugin_categories are now composed, so the previous 404/40401 answers are replaced by the real handlers",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.73, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.72",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.72",
+        "summary": "Workspace-wide delivery rebuild after fetching every sdkwork-space repository back to origin/main: iam advanced with the official-account unification migrations and specs registered the new consumer packages, the gateway image was rebuilt from the synced trees, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
+        "highlights": [
+          "provenance: all 110 sdkwork-space repositories fetched to origin/main; iam and specs advanced by fast-forward while dirty or ahead trees were preserved without reset or rebase",
+          "gateway runtime: embedded iam ships the official-account unification and resource-account access-mode migrations (0033-0036), so the image is rebuilt in full rather than patched",
+          "deployment: install bundle repackaged with image.tar.gz, verified first as a local production-parity stack, then loaded onto the production host with backup retention kept at the 5 most recent sets",
+          "verification: containers healthy at 0.1.72, /healthz and /readyz return 200 on the instance port and the public edge"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.71",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.71",
         "summary": "Workspace-wide delivery rebuild after fetching every sdkwork-space submodule back to origin/main: the gateway tree forward-merged upstream main, catalog resolved its storefront locale conflict onto the anonymous-reads change, and agents/cloudrouter were forward-merged before the image was rebuilt, verified as a local production-parity stack, then upgraded in place on api.noaper.com with backups retained at the 5 most recent sets.",
         "highlights": [
