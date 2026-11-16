@@ -545,6 +545,34 @@ test('containers provision the anonymous cashier token secret like the Payment k
   // link exchange fails closed with the indistinguishable 404.
   assert.match(devEnv, /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:/u);
   assert.match(devEnv, /development-only-commerce-cashier-token-secret/u);
+
+  // The bundle's per-environment env templates are the operator's live
+  // configuration source (deploy.sh passes env/<environment>.env as the compose
+  // env file), so they must expose the same provisioning switch and explicit
+  // secret override as `docker/.env.example`; otherwise a multi-replica
+  // operator cannot pin one shared secret through the canonical env file.
+  for (const environment of environments) {
+    const template = parseDotEnv(
+      readFileSync(path.join(appRoot, 'docker', 'env', `${environment}.env.example`), 'utf8'),
+    );
+    assert.equal(template.GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET, '');
+    assert.equal(template.GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET, 'true');
+  }
+});
+
+test('deployment env templates are valid UTF-8', () => {
+  // A lossy Windows round-trip once replaced the em dashes in the production
+  // environment template with invalid bytes, leaving a tracked file that strict
+  // decoders reject. The templates ship to operators, so keep them decodable.
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  const templates = [
+    path.join(appRoot, 'docker', '.env.example'),
+    ...environments.map((environment) =>
+      path.join(appRoot, 'docker', 'env', `${environment}.env.example`)),
+  ];
+  for (const template of templates) {
+    assert.doesNotThrow(() => decoder.decode(readFileSync(template)), template);
+  }
 });
 
 test('production-like embedded PostgreSQL enables transport encryption', () => {
