@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **11 aligned**, **8 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **12 aligned**, **7 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -235,3 +235,34 @@ for course: `cargo test --workspace` 25/26 pass, including the new fail-closed
 caller test and the updated source guard (no process token, diagnostic present).
 
 Gate after this round: 19 registry-resolved sites, **11 aligned**, **8 tracked**.
+
+## 10. Round 4 — knowledgebase chat turn
+
+The knowledge agent chat turn handed the kernel a cloud-router client built from
+the deployment API key, so a user's question was answered and billed as the
+deployment. Both the caller pair and the capability-specific credentials already
+reached the chat service; only the LLM client ignored them.
+
+- `resolve_cloud_router_client(caller)` composes the per-turn headers from a
+  pure, unit-tested helper: the caller's `Authorization`/`Access-Token` on a user
+  turn (never mixed with the deployment key), `X-Api-Key` only on the caller-less
+  background path, and nothing when neither is configured.
+- The chat host builds that client from `KnowledgeAgentChatCredentials` before
+  constructing the provider, so the identity survives the blocking kernel
+  invocation — the client carries its headers, which a request-scoped task-local
+  would not (deliberate: spawned/blocking work never inherits a caller).
+- The embedding/retrieval backend keeps `resolve_cloud_router_client_from_env()`,
+  the declared service identity for background work.
+
+Verified: `cargo test -p sdkwork-knowledgebase-agent-provider` (31 lib tests plus
+the two new identity tests); the app-api route crate compiles.
+
+### Image provider prerequisite discovery
+
+The image provider adapter cannot be migrated yet: its committed source no
+longer compiles against the current generated `cloudrouter_open_sdk` (the
+midjourney/nano-banana models and client accessors are gone, the OpenAI image
+request gained fields, and `ViduReferenceToImageRequest` lost `style`). That is
+unrelated cross-repository drift, not a caller-identity defect; the migration was
+attempted, reverted unverified, and is now recorded as blocked on reconciling the
+adapter with the regenerated SDK.
