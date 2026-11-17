@@ -266,3 +266,46 @@ request gained fields, and `ViduReferenceToImageRequest` lost `style`). That is
 unrelated cross-repository drift, not a caller-identity defect; the migration was
 attempted, reverted unverified, and is now recorded as blocked on reconciling the
 adapter with the regenerated SDK.
+
+## 11. Round 5 — agents streaming precedence and the machine-credential wall
+
+### Streaming/non-streaming divergence fixed
+
+`HopCredentials::select` preferred a configured `SDKWORK_CLOUDROUTER_OPEN_API_KEY`
+over the caller's dual tokens, so a *streamed* user turn authenticated as the
+deployment while the same turn non-streamed authenticated as the caller. The rule
+(commit `3447623`, sdkwork-agents) is now: the caller pair wins whenever the turn
+carries a non-blank auth token; the deployment key is used only for a caller-less
+(background/worker) turn as its declared service identity; a turn with neither
+presents no credential at all. Both transports share the rule and the parity test
+now covers all four cases in both arms.
+
+This does not change the gate count (the site already carried a caller pair); it
+removes a principal divergence inside an aligned call.
+
+### Why the internal/agent cluster cannot be fixed mechanically
+
+The five remaining `identity:service`-shaped sites (deploy web runtime, content
+provider internal legs, website provider data plane, website runtime pull, node
+agent heartbeat) fail on a missing credential source, not on code style:
+
+- the IAM runtime requires `X-SDKWork-Ingress-Token` / `X-SDKWork-Agent-Token`
+  **and** `.with_reason("missing-access-token")` an `Access-Token` that resolves
+  to an IAM application/tenant scope;
+- the deployments are configured with an ingress or node token only; no
+  application access token exists to send;
+- the generated internal SDKs expose `set_api_key`, which renders `X-API-Key` —
+  a header the ingress/agent credential profile explicitly rejects as
+  contamination.
+
+Resolving it therefore needs a provisioning decision (issue an IAM application
+access token to each machine deployment) or a contract change (drop the
+Access-Token requirement for machine surfaces). Both are `SECURITY_SPEC` /
+`IAM_SPEC` level decisions, so the call sites are left untouched and the status
+is recorded here for human review rather than half-fixed with a header swap that
+would still fail 401.
+
+Round status: 19 registry-resolved sites, **12 aligned**, **7 tracked** — the
+tracked set is now `image` (blocked on cloudrouter SDK reconciliation), five
+internal/agent sites (blocked on credential provisioning), and `aiot`
+device turn (documented service identity requiring a device→user decision).
