@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,267 Rust files, **19** registry-resolved sites, **8 aligned**, **11 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **9 aligned**, **10 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -82,7 +82,7 @@ Workspace run: 6,267 Rust files, **19** registry-resolved sites, **8 aligned**, 
 | 3 | voice `embedded-bootstrap/bootstrap.rs` | cloudrouter speech, latent | process API key | GAP (unwired) |
 | 4 | aiot `intelligence-bridge/cloud_router.rs` | cloudrouter ASR/TTS, **device turn** | process API key, single shared client for all sessions | GAP |
 | 5 | knowledgebase `agent-provider/cloud_router.rs` | cloudrouter chat, **user turn** + background embedding | process `SDKWORK_CLOUDROUTER_API_KEY` | GAP (user turn) |
-| 6 | canvas `api-canvas-assembly/drive_http_adapter.rs` | drive **app-api**, user writes | process `SDKWORK_ACCESS_TOKEN`, **no** `Authorization`, client built once | GAP + functional break (app-api requires both headers) |
+| 6 | canvas `api-canvas-assembly/drive_http_adapter.rs` | drive **app-api**, user writes | **caller pair** from `CanvasActorContext` through the Drive commands; per-call caller-scoped client; process token removed | **ALIGNED** (§8) |
 | 7 | notes `api-notes-assembly/drive_http_adapter.rs` | drive app-api, user writes | same defect | GAP + functional break |
 | 8 | course `course-embedded-bootstrap/drive_sdk.rs` | drive app-api, user writes | process `SDKWORK_ACCESS_TOKEN`, **no** `Authorization`; context already carries ids | GAP (per-call client shape is already right) |
 | 9 | deploy `deploy-web-port/lib.rs` | webserver **internal API**, background worker | `set_api_key` (ingress token in the wrong header) | SERVICE-IDENTITY-JUSTIFIED + **mechanism GAP** |
@@ -125,9 +125,7 @@ Workspace run: 6,267 Rust files, **19** registry-resolved sites, **8 aligned**, 
 Order by user impact:
 
 1. ~~**generations media gateway**~~ — **done** (see §7).
-2. **canvas / notes / course drive adapters** — read the injected extension (or accept it on the
-   port command), build the client per call with both headers, delete the `SDKWORK_ACCESS_TOKEN`
-   requirement, keep the ids-only command fields for authorization context.
+2. ~~**canvas**~~ — **done** (§8). **notes / course drive adapters** — thread the caller pair (notes through the actor context, course through `CourseServiceContext`), build the client per call with both headers, delete the `SDKWORK_ACCESS_TOKEN` requirement, and keep the ids-only command fields for the local authorization context.
 3. **knowledgebase agent-provider chat turn** — build the per-turn client from the caller pair; the
    embedding/worker path keeps the declared key.
 4. **image provider** — thread the caller pair to the provider boundary; background poller keeps the
@@ -145,9 +143,8 @@ change; the gate fails any new site and any new process-token substitution in th
 
 ## 6. Verification
 
-- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 11
-  tracked sites and per-site removal plans (8 aligned; fails on any new violation).
-- `cargo test -p sdkwork-utils-rust --lib caller_identity` — 8 passed.
+- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 10 tracked sites and per-site removal plans (9 aligned; fails on any new violation).
+- `cargo test -p sdkwork-utils-rust --lib caller_identity` — 8 passed; `cargo test -p sdkwork-web-core --lib caller_scope` — 2 passed (scope isolation and no spawn inheritance).
 - `cargo test -p sdkwork-web-core --lib` — 250 passed; `cargo test -p sdkwork-web-axum` — 13 passed.
 - `cargo test -p sdkwork-generations-provider-adapter` — 70 lib tests + the registry integration test
   pass; `cargo check --workspace` in `sdkwork-generations` passes.
@@ -186,3 +183,31 @@ pool separation, and an adapter-level test proving `bind_caller` rebinds the gat
 caller's fingerprint.
 
 No build, tag, or deploy was performed.
+
+## 8. Round 2 — canvas Drive path (commit `d63d4cb`)
+
+The canvas HTTP Drive adapter was the worst instance of the defect: it read a
+process `SDKWORK_ACCESS_TOKEN` once at bootstrap, set only `Access-Token`, and
+never sent `Authorization` — while the Drive app-api requires the dual-token
+pair, so every split-deployment page save failed `missing-auth-token`.
+
+- `sdkwork_web_core::caller_scope` exposes the verified pair as a task-local
+  installed around the handler by the framework layer (and reused by a composed
+  module host from the request extension). It is a transport convenience, never
+  an authorization decision, and is deliberately absent in spawned/blocking
+  work.
+- `CanvasActorContext` carries `CallerCredentials`; the HTTP auth builder fills
+  it from the accessor, so no handler signature changes were needed while the
+  typed context still flows explicitly through service and port boundaries.
+- The five Drive commands carry the caller. The adapter resolves the registry
+  target per call, builds a caller-scoped Drive app-api client with
+  `set_auth_token` + `set_access_token`, and fails closed with
+  `missing_caller_identity("sdkwork-drive app-api")` when the request carried
+  none. Tenant/organization ids stay in the commands only for the local service
+  contract; Drive resolves scope from the credential.
+- Build-fix prerequisite: the Drive uploader port renamed
+  `find_default_storage_provider` to `find_default_storage_target`, and two
+  test-only dynamic SQL strings now carry `sqlx::AssertSqlSafe` after audit.
+
+Next in this pattern: notes (same actor-context shape) and course
+(`CourseServiceContext`).
