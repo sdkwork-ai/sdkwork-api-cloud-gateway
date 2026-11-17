@@ -474,3 +474,27 @@ tenant/organization propagation, and a static gate that now covers every
 registry target-resolution call site. The three tracked sites stay open in the
 gate until their decisions land; the goal therefore remains active rather than
 being marked complete.
+
+## 17. Round 11 — the gate no longer tolerates a stale exemption
+
+One more way the gate could silently pass a regression: a baseline entry is a
+*current* state, not a permanent exemption. Once a site was migrated, its entry
+stayed in the map and — if the site later regressed — the gate would have listed
+it as "tracked" instead of failing. The same held for the base-URL baseline.
+
+`sdkwork-specs` now fails the gate when:
+
+- an identity-baseline file no longer exists, or already declares
+  `identity:service` / a caller identity (the entry must be removed in the
+  migration change);
+- a base-URL-baseline file no longer exists, or now resolves through the registry.
+
+Verified two ways: a deliberately stale entry makes the checker exit 1 and names
+the entry, and the real workspace run still passes with 19 call sites, 16
+aligned, 3 tracked.
+
+At this point the migration has no silent exemption left: 16 sites carry caller
+or service identity, 3 are tracked with removal plans *and* the tracked set is
+provably current, and the identity rule covers generated SDKs, raw HTTP clients,
+and `set_api_key` substitution. The three tracked sites remain blocked on the
+decisions recorded in §15/§16, so the goal stays active.
