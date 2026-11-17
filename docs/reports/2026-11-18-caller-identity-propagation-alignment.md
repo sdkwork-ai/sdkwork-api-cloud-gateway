@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **9 aligned**, **10 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **11 aligned**, **8 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -83,8 +83,8 @@ Workspace run: 6,268 Rust files, **19** registry-resolved sites, **9 aligned**, 
 | 4 | aiot `intelligence-bridge/cloud_router.rs` | cloudrouter ASR/TTS, **device turn** | process API key, single shared client for all sessions | GAP |
 | 5 | knowledgebase `agent-provider/cloud_router.rs` | cloudrouter chat, **user turn** + background embedding | process `SDKWORK_CLOUDROUTER_API_KEY` | GAP (user turn) |
 | 6 | canvas `api-canvas-assembly/drive_http_adapter.rs` | drive **app-api**, user writes | **caller pair** from `CanvasActorContext` through the Drive commands; per-call caller-scoped client; process token removed | **ALIGNED** (§8) |
-| 7 | notes `api-notes-assembly/drive_http_adapter.rs` | drive app-api, user writes | same defect | GAP + functional break |
-| 8 | course `course-embedded-bootstrap/drive_sdk.rs` | drive app-api, user writes | process `SDKWORK_ACCESS_TOKEN`, **no** `Authorization`; context already carries ids | GAP (per-call client shape is already right) |
+| 7 | notes `api-notes-assembly/drive_http_adapter.rs` | drive **app-api**, user writes | **caller pair** from `NotesActorContext` through the Drive commands; per-call caller-scoped client; process token removed | **ALIGNED** (§9) |
+| 8 | course `course-embedded-bootstrap/drive_sdk.rs` | drive **app-api**, user writes | **caller pair** from `CourseServiceContext`; per-call client with both headers; boot-time process token requirement removed | **ALIGNED** (§9) |
 | 9 | deploy `deploy-web-port/lib.rs` | webserver **internal API**, background worker | `set_api_key` (ingress token in the wrong header) | SERVICE-IDENTITY-JUSTIFIED + **mechanism GAP** |
 | 10 | deploy `identity-provisioning-port/http.rs` | IAM backend, control-plane | token in JSON body (`bootstrap-body`, headers forbidden) | SERVICE-IDENTITY-JUSTIFIED (matches contract) |
 | 11 | deploy `drive-port/drive_http_adapter.rs` | drive app-api, user uploads | caller dual tokens, per call | **ALIGNED** (add empty-credential fail-fast) |
@@ -113,9 +113,9 @@ Workspace run: 6,268 Rust files, **19** registry-resolved sites, **9 aligned**, 
 4. **Streaming diverges from non-streaming**: `agents-tool-cloudrouter`'s `chat_stream` selects the
    deployment API key whenever it is configured, while the same turn non-streamed authenticates as
    the caller — a user turn must not gain a service identity.
-5. **The drive app-api cannot be reached by the canvas/notes/course adapters at all today** (only
-   `Access-Token`, missing `Authorization`), so `/app/v3/api/drive` requests from those HTTP modes
-   fail `missing-auth-token`; the identity defect and the functional break are the same bug.
+5. **The Drive app-api adapters shipped without the dual token.** canvas/notes/course sent only
+   `Access-Token` from a process token and never `Authorization`, so those split
+   deployments failed `missing-auth-token`; all three are now migrated (§8/§9).
 6. **Grounding swallows identity failures** (`context_grounding.rs` logs a warning and returns empty
    snippets), so neither "no caller identity" nor "destination rejected" reaches an operator-visible
    problem detail. §5.2.1's diagnostic requirement is met for media/rig, partial for grounding.
@@ -125,9 +125,7 @@ Workspace run: 6,268 Rust files, **19** registry-resolved sites, **9 aligned**, 
 Order by user impact:
 
 1. ~~**generations media gateway**~~ — **done** (see §7).
-2. ~~**canvas**~~ — **done** (§8). **notes / course drive adapters** — thread the caller pair (notes through the actor context, course through `CourseServiceContext`), build the client per call with both headers, delete the `SDKWORK_ACCESS_TOKEN` requirement, and keep the ids-only command fields for the local authorization context.
-3. **knowledgebase agent-provider chat turn** — build the per-turn client from the caller pair; the
-   embedding/worker path keeps the declared key.
+2. ~~**canvas** (§8), **notes** (§9), **course** (§9)~~ — done. Remaining in this family: none.
 4. **image provider** — thread the caller pair to the provider boundary; background poller keeps the
    declared key; normalize the embedded bearer/api-key divergence.
 5. **internal/agent credential mechanism** — decide and implement the ingress/agent wire contract
@@ -143,7 +141,7 @@ change; the gate fails any new site and any new process-token substitution in th
 
 ## 6. Verification
 
-- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 10 tracked sites and per-site removal plans (9 aligned; fails on any new violation).
+- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 8 tracked sites and per-site removal plans (11 aligned; fails on any new violation).
 - `cargo test -p sdkwork-utils-rust --lib caller_identity` — 8 passed; `cargo test -p sdkwork-web-core --lib caller_scope` — 2 passed (scope isolation and no spawn inheritance).
 - `cargo test -p sdkwork-web-core --lib` — 250 passed; `cargo test -p sdkwork-web-axum` — 13 passed.
 - `cargo test -p sdkwork-generations-provider-adapter` — 70 lib tests + the registry integration test
@@ -211,3 +209,29 @@ pair, so every split-deployment page save failed `missing-auth-token`.
 
 Next in this pattern: notes (same actor-context shape) and course
 (`CourseServiceContext`).
+
+## 9. Round 3 — notes and course Drive paths
+
+Both split-deployment Drive adapters had the same defect as canvas (a startup
+process `SDKWORK_ACCESS_TOKEN`, `Access-Token` only, no `Authorization`, ignored
+tenant context) and were migrated with the same shape:
+
+- notes: `NotesActorContext.caller` filled from the request-scoped accessor,
+  carried by the five Drive commands, per-call caller-scoped client,
+  fail-closed diagnostic. Commit `2bcbb33`.
+- course: `CourseServiceContext.caller` (`#[serde(skip)]`) filled by the HTTP
+  auth builder, the port methods already receive the context, and the per-call
+  client now applies both tokens; the boot-time token requirement and its
+  constant are gone (`8979761`). The compatibility context mappers in both route
+  layers default to an empty carrier and are unused.
+
+Both needed the same build prerequisites as canvas (Drive uploader
+`find_default_storage_target` rename, `sqlx::AssertSqlSafe` in test-only dynamic
+SQL); notes was otherwise unbuildable against the current workspace.
+
+Verified for notes: `cargo test --workspace` 22/56/9/2 pass (the same
+pre-existing web-core route-manifest assertion is the only failure). Verified
+for course: `cargo test --workspace` 25/26 pass, including the new fail-closed
+caller test and the updated source guard (no process token, diagnostic present).
+
+Gate after this round: 19 registry-resolved sites, **11 aligned**, **8 tracked**.
