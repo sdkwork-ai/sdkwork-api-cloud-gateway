@@ -1299,6 +1299,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/appstore/listings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/moderation",
       "ownership": "dependency",
@@ -2090,6 +2097,13 @@
       "ownership": "dependency"
     },
     {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/apps",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route",
+      "ownership": "dependency"
+    },
+    {
       "surface": "internal",
       "prefix": "/internal/v3/api/knowledgebase",
       "ownership": "dependency",
@@ -2550,7 +2564,8 @@
         "/app/v3/api/download_grants",
         "/app/v3/api/library",
         "/app/v3/api/wishlist",
-        "/app/v3/api/user_store"
+        "/app/v3/api/user_store",
+        "/app/v3/api/appstore/listings"
       ],
       "cargoFeature": "foundation-appstore",
       "cargoDependency": "sdkwork-api-appstore-assembly",
@@ -3329,7 +3344,8 @@
         "/backend/v3/api/source_events",
         "/backend/v3/api/tls",
         "/backend/v3/api/usage",
-        "/backend/v3/api/downloads"
+        "/backend/v3/api/downloads",
+        "/backend/v3/api/apps"
       ],
       "coverage": "sdkwork-deploy-backend-api-embedded-assembly-routes",
       "cargoFeature": "foundation-deployments",
