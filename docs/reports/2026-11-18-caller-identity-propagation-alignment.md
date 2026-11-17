@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **12 aligned**, **7 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **13 aligned**, **6 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -309,3 +309,27 @@ Round status: 19 registry-resolved sites, **12 aligned**, **7 tracked** — the
 tracked set is now `image` (blocked on cloudrouter SDK reconciliation), five
 internal/agent sites (blocked on credential provisioning), and `aiot`
 device turn (documented service identity requiring a device→user decision).
+
+## 12. Round 6 — the machine service-identity helper and the deploy publisher
+
+`APP_SDK_INTEGRATION_SPEC.md` §5.2.1 only names caller identity; the machine
+surfaces need the complementary rule, now encoded in
+`sdkwork_utils_rust::service_identity` (`d6bfd85`):
+
+- internal-api authenticates `X-SDKWork-Ingress-Token` + `Access-Token`;
+- backend-agent authenticates `X-SDKWork-Agent-Token` + `Access-Token`;
+- `ServiceCredentials` carries the pair, refuses to render while incomplete, and
+  `missing_service_credentials` names the surface and both settings.
+
+The first site migrated with it is the deploy runtime-assignment publisher
+(`87af1ea`): it no longer sends the ingress token as `X-API-Key`; it reads an
+optional `SDKWORK_DEPLOY_WEB_INTERNAL_API_ACCESS_TOKEN_FILE` and renders the pair
+on the profile headers. A half-configured deployment fails closed with the
+actionable diagnostic instead of dispatching a request that the destination
+reports as a generic 400/401. The setting is optional at boot (existing
+deployments keep starting and surface the error at publication time) and is
+documented in the topology env files, operator README and component specs.
+
+The site declares `identity:service`: a background publisher with a declared
+machine identity and no end-user request to borrow tokens from. Gate status after
+this round: 19 sites, **13 aligned**, **6 tracked**.
