@@ -438,3 +438,39 @@ resolves through the registry either carries a caller pair, declares
   `cloudrouter_open_sdk` (midjourney/nano-banana models and accessors removed,
   OpenAI image request reshaped). Reconcile first, then apply the §7 `with_caller`
   shape.
+
+## 16. Round 10 — completion matrix and verification evidence
+
+The strengthened gate plus an independent sweep (all files calling
+`registry_base_url_or`) classify every call site. No site is unclassified except
+the three tracked ones, each of which is blocked on a decision or an upstream
+reconciliation rather than on code:
+
+| Class | Sites |
+|---|---|
+| **Caller pair (user-scoped)** — `Authorization` + `Access-Token` from `CallerCredentials`, per-call client | agents cloudrouter client, agents memory bridge, agents knowledgebase bridge, canvas Drive adapter, course Drive adapter, deploy Drive adapter, knowledgebase agent-provider chat, knowledgebase memory app-api, notes Drive adapter |
+| **Declared service identity** — `identity:service`, service-token header + `Access-Token` via `ServiceCredentials`, fail closed | deploy web publisher, deploy content provider (Drive + Knowledgebase legs), deploy IAM provisioning (dedicated provisioning token), generations media gateway (caller pair when present, declared identity otherwise), webserver website provider, webserver runtime pull, webserver node daemon |
+| **Tracked** — removal plan in the gate | aiot device speech turn (device-session identity decision), voice (route not wired), image (cloudrouter SDK reconciliation) |
+| **Infrastructure** | `sdkwork-utils` `service_base_url` (the resolver itself) |
+
+Verification evidence collected across the migration:
+
+- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace <root>`
+  — 6,268 files, 19 call sites, **16 aligned, 3 tracked**, and now also fails a
+  raw HTTP client or a `set_api_key` without `identity:service`.
+- `sdkwork-utils`: `CallerCredentials` + `ServiceCredentials` unit tests
+  (fingerprint, redaction, wire order, profile headers, fail-closed diagnostic).
+- `sdkwork-web-framework`: `caller_scope` task-local tests (no spawn inheritance)
+  and the ContextInjection credential carrier.
+- generations 70 lib tests + registry integration; canvas 24 + 7 + 5; notes
+  22/56/9/2; course 25/26; knowledgebase agent-provider 31; agents cloudrouter
+  68 + integration; webserver gateway 471 (WSL); webserver daemon 25 + 4;
+  deploy web port 6; deploy content provider 19.
+
+The objective's code deliverables are complete for every site that can be
+decided today: a shared caller-identity carrier, a shared machine
+service-identity carrier, per-site migration with fail-closed diagnostics and
+tenant/organization propagation, and a static gate that now covers every
+registry target-resolution call site. The three tracked sites stay open in the
+gate until their decisions land; the goal therefore remains active rather than
+being marked complete.
