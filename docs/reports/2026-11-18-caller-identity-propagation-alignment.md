@@ -71,13 +71,13 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,266 Rust files, **19** registry-resolved sites, **7 aligned**, **12 tracked**.
+Workspace run: 6,267 Rust files, **19** registry-resolved sites, **8 aligned**, **11 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
 | # | Site | Destination / trigger | Today | Verdict |
 |---|---|---|---|---|
-| 1 | generations `provider-adapter/gateway.rs` | cloudrouter media, **user turns** | process `GENERATIONS_MEDIA_GATEWAY_*_TOKEN`, pooled by base URL only | GAP (process credential + unkeyed pool) |
+| 1 | generations `provider-adapter/gateway.rs` | cloudrouter media, **user turns** | **caller pair** via `MediaSdkGateway::with_caller`; pool keyed by `(base URL, credential fingerprint)`; caller-less worker path keeps the declared service identity | **ALIGNED** (§7) |
 | 2 | image `provider-adapter/adapter.rs` (+`embedded.rs`) | cloudrouter image, user turns + background poller | process API key (`X-Api-Key`); embedded variant sends the same key as a bare bearer | GAP |
 | 3 | voice `embedded-bootstrap/bootstrap.rs` | cloudrouter speech, latent | process API key | GAP (unwired) |
 | 4 | aiot `intelligence-bridge/cloud_router.rs` | cloudrouter ASR/TTS, **device turn** | process API key, single shared client for all sessions | GAP |
@@ -104,9 +104,9 @@ Workspace run: 6,266 Rust files, **19** registry-resolved sites, **7 aligned**, 
    provider's internal legs, the website data plane, the website runtime pull, and the node agent
    heartbeat. It needs one contract decision (machine ``Access-Token`` for internal/agent profiles,
    and the SDK scheme name) plus per-site header fixes.
-2. **Pooling must become credential-aware** at the generations media gateway and the image adapter
-   before they adopt caller tokens (both currently key only by base URL; `clear()` at 16 silently
-   drops entries). The agents media client is per-call and already safe.
+2. **Pooling must become credential-aware** at the image adapter before it adopts caller tokens (it
+   still keys only by base URL and `clear()`s at 16). The generations media pool is now keyed by
+   `(base URL, credential fingerprint)`; the agents media client is per-call and already safe.
 3. **Ordering deviations** in the agents memory/knowledge bridges and media tool client
    (auth before access) are latent, not credential loss: today's generated clients keep both
    headers regardless. Adopting `CallerCredentials::apply_typed` aligns them anyway.
@@ -124,9 +124,7 @@ Workspace run: 6,266 Rust files, **19** registry-resolved sites, **7 aligned**, 
 
 Order by user impact:
 
-1. **generations media gateway** — thread `CallerCredentials` through `MediaSdkGateway`, apply the
-   caller pair, keep the API key only for a declared service path, key the pool by
-   `(base URL, credential fingerprint)`.
+1. ~~**generations media gateway**~~ — **done** (see §7).
 2. **canvas / notes / course drive adapters** — read the injected extension (or accept it on the
    port command), build the client per call with both headers, delete the `SDKWORK_ACCESS_TOKEN`
    requirement, keep the ids-only command fields for authorization context.
@@ -147,11 +145,15 @@ change; the gate fails any new site and any new process-token substitution in th
 
 ## 6. Verification
 
-- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 12
-  tracked sites and per-site removal plans (fails on any new violation).
-- `cargo test -p sdkwork-utils-rust --lib caller_identity` — 6 passed.
+- `node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace .` — passes with 11
+  tracked sites and per-site removal plans (8 aligned; fails on any new violation).
+- `cargo test -p sdkwork-utils-rust --lib caller_identity` — 8 passed.
 - `cargo test -p sdkwork-web-core --lib` — 250 passed; `cargo test -p sdkwork-web-axum` — 13 passed.
-- `cargo fmt -- --check` in `sdkwork-utils` and `sdkwork-web-framework`.
+- `cargo test -p sdkwork-generations-provider-adapter` — 70 lib tests + the registry integration test
+  pass; `cargo check --workspace` in `sdkwork-generations` passes.
+- `cargo fmt -- --check` in `sdkwork-utils` and `sdkwork-web-framework`; the touched generations files
+  are rustfmt-clean (the repository has pre-existing formatting drift in
+  `sdkwork-api-generations-assembly/src/bootstrap.rs`, untouched here).
 
 Blocked, not caused by this change: the gateway binary re-check currently fails inside
 `sdkwork-iam-web-adapter` (`unresolved import crate::application_scope` /
@@ -159,5 +161,28 @@ Blocked, not caused by this change: the gateway binary re-check currently fails 
 `sdkwork-iam` (two new modules on disk, `lib.rs` not yet updated). The framework change is additive
 (`inject_web_request_context` signature unchanged) and both framework crates compile and pass their
 suites.
+
+## 7. Round 1 — generations media path (commit `9db459c`)
+
+The generations provider adapter is the first site migrated end to end:
+
+- `GenerationsRequestContext` / `GenerationsHttpRequestContext` carry `CallerCredentials`; the HTTP
+  bootstrap injector reads the framework's caller-credentials extension and attaches the verified
+  pair. The MCP/worker port builds the context through `from_parts` and stays `identity:service`.
+- `MediaSdkGateway::with_caller` returns a handle bound to one caller. It keeps the resolved
+  registry target and the shared pool, whose clients are keyed by
+  `(base URL, credential fingerprint)`; the pool is bounded at 64 and each caller's client is never
+  mutated with another caller's tokens.
+- `media_credential_headers` sends only the caller pair on a caller-bound dispatch; the declared
+  deployment identity (`X-Api-Key`, or the service token pair) is used only by a caller-less
+  background/worker dispatch. This also fixed a production reality: no
+  `GENERATIONS_MEDIA_GATEWAY_*` credential is configured on the running gateway, so user media
+  calls previously carried no credential at all.
+- Image, video, music, sound-effect and voice adapters bind the caller for `dispatch`; the scripted
+  test double and the MCP port remain service-identity.
+
+Tests: caller-only wire headers (no `X-Api-Key`), caller-less service identity, credential-keyed
+pool separation, and an adapter-level test proving `bind_caller` rebinds the gateway with the
+caller's fingerprint.
 
 No build, tag, or deploy was performed.
