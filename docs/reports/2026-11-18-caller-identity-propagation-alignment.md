@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **15 aligned**, **4 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **16 aligned**, **3 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -362,3 +362,34 @@ standard gate passed.
 Remaining tracked sites (4): content-provider internal legs, node agent
 heartbeat, aiot device turn, image provider (blocked on cloudrouter SDK
 reconciliation).
+
+## 14. Round 8 — content provider and node daemon: the machine cluster is complete
+
+Two more machine surfaces had the same shape and are migrated:
+
+- **deploy content provider** (`a2eac0b`): the Drive publication and
+  Knowledgebase wiki-publication Internal API legs sent ingress tokens as
+  `X-API-Key` and never an `Access-Token`. Both now render the pair through
+  `service_identity`; `from_env` requires the two new access-token files (the
+  split deployment already fails at startup when its opt-in is incomplete);
+  documented in the topology env files, Kubernetes manifest, operator README and
+  five component specs; `identity:service` declared; two new tests cover the
+  fail-closed diagnostic and the complete pair.
+- **node daemon** (`3dcc92fe`): agent routes require
+  `X-SDKWork-Agent-Token` **plus** an `Access-Token`, so every heartbeat and sync
+  failed `missing-access-token`. The daemon now reads
+  `SDKWORK_WEBSERVER_AGENT_ACCESS_TOKEN_FILE` at startup, validates it, and
+  renders the pair (`ServiceTokenKind::Agent`); `identity:service` declared. The
+  loopback heartbeat test asserts both headers, a new test proves the fail-closed
+  builder, and the agent contract test asserts the service-identity pair instead
+  of `set_agent_token` (and forbids `set_api_key`).
+
+Verified: deploy content provider 19 tests, `cargo check` for the service host and
+runtime-assignment worker, source config gate; node daemon 25 lib + 4 integration
+tests (WSL), `node --test tests/contract/agent-sync-state.contract.test.mjs` 4
+passed, source config gate.
+
+Gate status: 19 sites, **16 aligned**, **3 tracked** — aiot device turn, voice
+(unwired), image provider (blocked on cloudrouter SDK reconciliation). Every
+remaining tracked site needs a product/credential decision or an upstream SDK
+reconciliation, not another mechanical migration.
