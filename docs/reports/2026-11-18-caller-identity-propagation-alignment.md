@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **13 aligned**, **6 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved sites, **15 aligned**, **4 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -333,3 +333,32 @@ documented in the topology env files, operator README and component specs.
 The site declares `identity:service`: a background publisher with a declared
 machine identity and no end-user request to borrow tokens from. Gate status after
 this round: 19 sites, **13 aligned**, **6 tracked**.
+
+## 13. Round 7 — webserver data-plane machine identity
+
+The split website data plane had the same defect as the deploy publisher in
+three places: the runtime-assignment pull, the Drive provider and the
+Knowledgebase provider each sent a node/ingress token through the generated
+client's `set_api_key` (i.e. `X-API-Key`) and never an `Access-Token`. All three
+now render the internal-api pair through `sdkwork_utils_rust::service_identity`
+and fail closed with a diagnostic naming both required settings
+(`sdkwork-webserver` `e42fb26b` + `7eb61921`).
+
+- New settings: `SDKWORK_WEBSERVER_NODE_ACCESS_TOKEN_FILE`,
+  `SDKWORK_WEBSERVER_DRIVE_INTERNAL_API_ACCESS_TOKEN_FILE`,
+  `SDKWORK_WEBSERVER_KNOWLEDGEBASE_INTERNAL_API_ACCESS_TOKEN_FILE`, documented in
+  the data-plane env example, the Kubernetes manifest and three component specs.
+- The provider bootstrap now preserves the diagnostic (`ProviderConfig(message)`)
+  instead of collapsing every construction failure into a generic client error;
+  the runtime cloud source gained a `Configuration` variant for the same reason.
+- Both modules declare `identity:service` (node machine surface).
+- The loopback wire test asserts the real headers: `x-sdkwork-ingress-token` and
+  `access-token` on both the pull and the observation.
+
+Verified in WSL (the crate is Unix-only): `cargo test -p
+sdkwork-api-webserver-standalone-gateway --lib` → 471 passed. Source-config
+standard gate passed.
+
+Remaining tracked sites (4): content-provider internal legs, node agent
+heartbeat, aiot device turn, image provider (blocked on cloudrouter SDK
+reconciliation).
