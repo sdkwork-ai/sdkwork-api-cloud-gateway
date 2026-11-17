@@ -161,7 +161,7 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     sdkwork_database_sqlx::enable_process_shared_database_pool();
 
     let env = env::vars().collect::<HashMap<_, _>>();
-    let config = load_gateway_config(env::args().skip(1), &env, ".")?;
+    let mut config = load_gateway_config(env::args().skip(1), &env, ".")?;
     init_tracing(&config)?;
     info!(
         deployment_profile = %env::var(DEPLOYMENT_PROFILE_ENV).unwrap_or_default(),
@@ -206,6 +206,13 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     // would be invisible to them and they would keep the configured fallback.
     let listener = TcpListener::bind(bind).await?;
     let local_addr = listener.local_addr()?;
+    // Embedded consumers resolve this process through the HTTP service registry
+    // and call back over the advertised private endpoint, so that origin is an
+    // accepted Host regardless of the public-domain allowlist.
+    sdkwork_api_cloud_gateway::service_registry::accept_own_published_origin(
+        &mut config,
+        local_addr,
+    );
     let registry_config = config.clone();
     // Registration is fail-open: a registry outage degrades to the authored
     // topology values instead of failing startup.

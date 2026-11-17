@@ -250,8 +250,11 @@ Security controls are configured through `[security]`. `secureHeadersEnabled` ad
 headers such as `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
 `Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. `allowedHosts`
 enforces a host allowlist and returns `421` with `host_not_allowed` when a request host is rejected.
-`maxHeaderBytes` and `maxHeaderCount` reject oversized request headers with `431` and the
-`request_headers_too_large` problem title.
+The listener's own published origins are always accepted in addition to `allowedHosts`: the bound
+address and the HTTP service registry endpoint this process advertises, so an embedded consumer that
+resolves `cloudrouter`/peer surfaces through the registry and calls back over that private IP origin
+is not rejected by the gateway's own allowlist. `maxHeaderBytes` and `maxHeaderCount` reject
+oversized request headers with `431` and the `request_headers_too_large` problem title.
 
 `[security.waf]` enables a baseline in-process WAF. In `mode = "monitor"`, suspicious query strings
 or headers are allowed through and responses include `X-SDKWork-WAF-Action: monitor`. In

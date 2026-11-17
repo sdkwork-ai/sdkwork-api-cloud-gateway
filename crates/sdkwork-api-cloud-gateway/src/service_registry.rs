@@ -18,6 +18,7 @@
 //! down (`RPC_RESILIENCE_SPEC.md` degradation posture).
 
 use std::collections::BTreeMap;
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -410,6 +411,30 @@ fn env_u64(key: &str) -> Option<u64> {
     std::env::var(key)
         .ok()
         .and_then(|value| value.trim().parse::<u64>().ok())
+}
+
+/// Accepts this process's own published HTTP surface as an inbound `Host`.
+///
+/// The gateway composes the very surfaces embedded consumers resolve, so a
+/// generations media call to `cloudrouter` travels from this process to the
+/// private endpoint the registry advertises for it (`http://172.18.0.5:8080`)
+/// and comes back with that IP literal as its `Host`. Production keeps
+/// `allowIpHosts=false` on purpose, so without this step every in-process hop
+/// is rejected with `421 host_not_allowed` — the video generation incident.
+/// Only hosts that name this listener are admitted; the operator allowlist
+/// still decides every other caller.
+///
+/// Must run after the listener binds (the port is part of the origin) and
+/// before the router is assembled, because the HTTP SDK clients embedded
+/// consumers build during assembly resolve through the registry.
+pub fn accept_own_published_origin(config: &mut GatewayRuntimeConfig, local_addr: SocketAddr) {
+    let advertised = advertised_base_url(local_addr.port());
+    crate::security::record_own_hosts(&mut config.security, local_addr, advertised.as_str());
+    info!(
+        origins = ?config.security.own_hosts,
+        advertised = %advertised,
+        "gateway accepts its own published origin as a Host value"
+    );
 }
 
 /// Absolute LAN origin of this gateway for cluster-internal registry consumers.

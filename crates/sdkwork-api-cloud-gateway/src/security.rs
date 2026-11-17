@@ -1,3 +1,5 @@
+use std::net::{IpAddr, SocketAddr};
+
 use axum::{
     body::{to_bytes, Body},
     http::{header, HeaderMap, HeaderName, HeaderValue, Method, Request, StatusCode},
@@ -133,6 +135,7 @@ fn validate_allowed_host(
     let allowed = config
         .allowed_hosts
         .iter()
+        .chain(config.own_hosts.iter())
         .any(|allowed_host| normalize_host(allowed_host) == host);
     if allowed {
         return Ok(());
@@ -141,7 +144,9 @@ fn validate_allowed_host(
     // Deployments that must stay reachable directly through the host IP (LAN
     // smoke checks, load-balancer health probes) accept raw IP literal Host
     // headers explicitly via SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS;
-    // registered domain names keep matching the allowlist as before.
+    // registered domain names keep matching the allowlist as before. Hosts that
+    // name this process's own listener are accepted independently of that
+    // switch (`record_own_hosts`).
     if config.allow_ip_hosts && is_ip_literal_host(&host) {
         return Ok(());
     }
@@ -153,6 +158,69 @@ fn validate_allowed_host(
         headers: Vec::new(),
         events: Vec::new(),
     })
+}
+
+/// Records this process's own published hosts as accepted `Host` values.
+///
+/// The gateway is a composition root: embedded consumers resolve peer surfaces
+/// through the HTTP service registry and call this process back over the
+/// advertised private endpoint, so that request's `Host` is an IP literal
+/// (`172.18.0.5:8080`) that the operator allowlist and the production
+/// `allowIpHosts=false` posture reject. Those hosts name the socket the process
+/// itself owns, so accepting them restores in-process traffic without widening
+/// the caller policy that `allowed_hosts` enforces.
+pub(crate) fn record_own_hosts(
+    config: &mut GatewaySecurityConfig,
+    local_addr: SocketAddr,
+    advertised_origin: &str,
+) {
+    for host in own_hosts_for(local_addr, advertised_origin) {
+        if !config.own_hosts.contains(&host) {
+            config.own_hosts.push(host);
+        }
+    }
+}
+
+/// Hosts that unambiguously name this process's own listener: the advertised
+/// registry origin, the concrete bind address and both loopback literals.
+fn own_hosts_for(local_addr: SocketAddr, advertised_origin: &str) -> Vec<String> {
+    let mut hosts = Vec::new();
+    if let Some(host) = origin_host(advertised_origin) {
+        hosts.push(host);
+    }
+    match local_addr.ip() {
+        IpAddr::V4(ip) if !ip.is_unspecified() => hosts.push(ip.to_string()),
+        IpAddr::V6(ip) if !ip.is_unspecified() => hosts.push(format!("[{ip}]")),
+        _ => {}
+    }
+    hosts.push("127.0.0.1".to_string());
+    hosts.push("[::1]".to_string());
+    hosts.sort();
+    hosts.dedup();
+    hosts
+}
+
+/// Normalized host of an absolute `http(s)` origin, a bare `host:port`
+/// authority, or a bracketed IPv6 literal.
+fn origin_host(origin: &str) -> Option<String> {
+    let trimmed = origin.trim();
+    let authority = trimmed
+        .strip_prefix("http://")
+        .or_else(|| trimmed.strip_prefix("https://"))
+        .unwrap_or(trimmed)
+        .split('/')
+        .next()
+        .unwrap_or_default()
+        .trim();
+    let authority = authority
+        .rsplit_once('@')
+        .map_or(authority, |(_userinfo, host)| host);
+    let host = normalize_host(authority);
+    if host.is_empty() {
+        None
+    } else {
+        Some(host)
+    }
 }
 
 /// Reports whether the normalized host (ports already stripped) is a raw IP
@@ -449,6 +517,62 @@ mod tests {
         assert!(!is_ip_literal_host("api-test.sdkwork.com"));
         assert!(!is_ip_literal_host("localhost"));
         assert!(!is_ip_literal_host("999.1.1.1"));
+    }
+
+    #[test]
+    fn own_published_host_is_accepted_while_foreign_ip_literals_stay_rejected() {
+        let host_header = |value: &str| {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::HOST, value.parse().expect("host header"));
+            headers
+        };
+        let mut config = GatewaySecurityConfig {
+            allowed_hosts: vec!["api.noaper.com".to_string()],
+            ..GatewaySecurityConfig::default()
+        };
+        record_own_hosts(
+            &mut config,
+            SocketAddr::from(([0, 0, 0, 0], 8080)),
+            "http://172.18.0.5:8080",
+        );
+
+        assert!(validate_allowed_host(&config, &host_header("api.noaper.com:443")).is_ok());
+        assert!(
+            validate_allowed_host(&config, &host_header("172.18.0.5:8080")).is_ok(),
+            "the advertised registry endpoint must be accepted as a Host value"
+        );
+        assert!(
+            validate_allowed_host(&config, &host_header("172.18.0.9:8080")).is_err(),
+            "a foreign IP literal must stay rejected"
+        );
+        assert!(validate_allowed_host(&config, &host_header("evil.example.com")).is_err());
+    }
+
+    #[test]
+    fn own_hosts_cover_advertised_origin_bind_address_and_loopback() {
+        let hosts = own_hosts_for(
+            SocketAddr::from(([127, 0, 0, 1], 8080)),
+            "http://10.0.0.5:8080",
+        );
+        assert!(hosts.contains(&"10.0.0.5".to_string()));
+        assert!(hosts.contains(&"127.0.0.1".to_string()));
+        assert!(hosts.contains(&"[::1]".to_string()));
+        assert!(!hosts.iter().any(|host| host.contains("http")));
+    }
+
+    #[test]
+    fn origin_host_normalizes_scheme_path_userinfo_and_port() {
+        assert_eq!(
+            origin_host("http://172.18.0.5:8080").as_deref(),
+            Some("172.18.0.5")
+        );
+        assert_eq!(
+            origin_host("https://Gateway.Example.com:443/base").as_deref(),
+            Some("gateway.example.com")
+        );
+        assert_eq!(origin_host("[fd00::5]:8080").as_deref(), Some("[fd00::5]"));
+        assert_eq!(origin_host("10.0.0.5").as_deref(), Some("10.0.0.5"));
+        assert_eq!(origin_host("   "), None);
     }
 }
 

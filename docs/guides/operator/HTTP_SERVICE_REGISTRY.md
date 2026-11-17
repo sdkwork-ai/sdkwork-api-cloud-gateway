@@ -29,13 +29,17 @@ registration idempotent.
 At startup the gateway:
 
 1. binds its listener and learns the real port;
-2. connects to `SDKWORK_DISCOVERY_DATABASE_URL` (falls back to
+2. accepts its own published origin as an inbound `Host` — the bound address
+   plus the advertised registry endpoint — so an embedded consumer that calls
+   back over that private IP origin is not rejected by the ingress host
+   allowlist (see §7);
+3. connects to `SDKWORK_DISCOVERY_DATABASE_URL` (falls back to
    `SDKWORK_DATABASE_URL`) and creates the table when missing;
-3. registers **every composed surface and SDK alias** for
+4. registers **every composed surface and SDK alias** for
    `instance_id = <profile-id>:<hostname>:<port>`;
-4. installs the process-global resolver **before** building the router, so
+5. installs the process-global resolver **before** building the router, so
    dependency assemblies that create HTTP clients during assembly see it;
-5. heartbeats every 10s against a 30s lease, re-registers when a lease is lost,
+6. heartbeats every 10s against a 30s lease, re-registers when a lease is lost,
    sweeps expired rows every minute, and deregisters on graceful shutdown.
 
 Registration is fail-open: a registry outage logs a warning and the gateway
@@ -121,6 +125,7 @@ Gateway startup log markers:
 
 ```text
 HTTP service registry registered this gateway instance
+gateway accepts its own published origin as a Host value
 embedded cloud router turn surface installed for in-process dispatch
 ```
 
@@ -144,6 +149,7 @@ Behaviour checks:
 | Symptom | Cause | Fix |
 | --- | --- | --- |
 | Turn/media call dials `http://127.0.0.1:3900` | process profile is `split` without a registry target | ensure the canonical `SDKWORK_DEPLOYMENT_PROFILE=standalone` and the gateway registered; check the table |
+| In-process media/agent call fails with `421 host_not_allowed` | the consumer dialled the advertised private IP origin and the ingress allowlist only named public domains | the gateway accepts its own published origin since this fix; if the log line below is missing, the process predates it — do **not** paper over it with `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true` |
 | Registry table empty after startup | DB unreachable / no DDL permission | check gateway logs for `HTTP service registry ...` warnings; grant CREATE/INSERT/UPDATE on the schema |
 | Repeated `lease expired; re-registering` | heartbeat blocked or DB latency | check DB connectivity/timeouts; lease is 30s, heartbeat 10s |
 | Consumers outside the compose network cannot reach the endpoint | the registry advertises a LAN address by design | use an explicit per-service override or the public edge; do not register the public domain |
@@ -155,5 +161,13 @@ Behaviour checks:
 - The registry contains endpoints and metadata, never credentials.
 - Database access uses the process service account; do not grant cross-tenant
   registry visibility without a namespace policy.
+- The ingress host allowlist (`[security].allowedHosts`) still decides every
+  caller. The only hosts added at runtime are the process's own listener
+  origins: the concrete bind address, both loopback literals, and the advertised
+  registry endpoint. They name the socket this process already owns, so they do
+  not widen who may reach it; a foreign IP literal or unknown domain still
+  returns `421 host_not_allowed`. `GATEWAY_SECURITY_ALLOW_IP_HOSTS=true` remains
+  a separate, explicit operator choice for direct host-IP access and is not
+  required for east-west registry traffic.
 - Media/agent identity headers are still applied per call; the registry only
   selects the base URL.
