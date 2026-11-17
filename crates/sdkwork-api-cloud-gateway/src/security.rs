@@ -574,6 +574,103 @@ mod tests {
         assert_eq!(origin_host("10.0.0.5").as_deref(), Some("10.0.0.5"));
         assert_eq!(origin_host("   "), None);
     }
+
+    fn body_inspection_config(mode: &str) -> GatewaySecurityConfig {
+        GatewaySecurityConfig {
+            waf: sdkwork_api_cloud_gateway_config::GatewayWafConfig {
+                enabled: true,
+                mode: mode.to_string(),
+                inspect_json_body: true,
+                ..sdkwork_api_cloud_gateway_config::GatewayWafConfig::default()
+            },
+            ..GatewaySecurityConfig::default()
+        }
+    }
+
+    fn json_post(body: String) -> Request<Body> {
+        Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/generations/videos/text_to_video")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .expect("json request")
+    }
+
+    #[tokio::test]
+    async fn oversized_json_body_is_forwarded_intact_instead_of_truncated() {
+        let config = body_inspection_config("enforce");
+        // Media payloads carry inline images far past the WAF inspection budget.
+        let payload = format!(
+            "{{\"prompt\":\"{}\"}}",
+            "a".repeat(WAF_JSON_BODY_LIMIT + 4096)
+        );
+        let request = json_post(payload.clone());
+
+        let (request, events) = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect("a body inside the gateway cap is not rejected");
+        assert!(events.is_empty(), "over-budget bodies are not inspected");
+
+        let (_, body) = request.into_parts();
+        let forwarded = to_bytes(body, 64 * 1024 * 1024).await.expect("body");
+        assert_eq!(
+            forwarded.len(),
+            payload.len(),
+            "the handler must receive every byte the client sent"
+        );
+    }
+
+    #[tokio::test]
+    async fn declared_oversized_content_length_skips_inspection_without_reading() {
+        let config = body_inspection_config("enforce");
+        let payload = format!("{{\"image\":\"{}\"}}", "b".repeat(2048));
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/generations/images/text_to_image")
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(
+                header::CONTENT_LENGTH,
+                (WAF_JSON_BODY_LIMIT + 1).to_string(),
+            )
+            .body(Body::from(payload.clone()))
+            .expect("json request");
+
+        let (request, events) = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect("declared oversized body passes through");
+        assert!(events.is_empty());
+
+        let (_, body) = request.into_parts();
+        let forwarded = to_bytes(body, 64 * 1024 * 1024).await.expect("body");
+        assert_eq!(forwarded.len(), payload.len());
+    }
+
+    #[tokio::test]
+    async fn streamed_body_beyond_the_gateway_cap_is_rejected_not_emptied() {
+        let config = body_inspection_config("enforce");
+        // No Content-Length: the WAF stage has to buffer to meter the body.
+        let request = json_post(format!("{{\"prompt\":\"{}\"}}", "c".repeat(4096)));
+
+        let rejection = inspect_json_body(&config, request, 1024)
+            .await
+            .err()
+            .expect("body above the gateway cap is rejected");
+        assert_eq!(rejection.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert_eq!(rejection.title, "request_body_too_large");
+    }
+
+    #[tokio::test]
+    async fn inspectable_json_body_still_blocks_a_baseline_signature() {
+        let config = body_inspection_config("enforce");
+        let request = json_post("{\"prompt\":\"../../etc/passwd\"}".to_string());
+
+        let rejection = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .err()
+            .expect("signature match is blocked");
+        assert_eq!(rejection.status, StatusCode::FORBIDDEN);
+        assert_eq!(rejection.title, "waf_request_blocked");
+    }
 }
 
 fn inspect_waf(
@@ -661,12 +758,23 @@ fn waf_value_matches(value: &str) -> bool {
 /// Inspect JSON request bodies against the WAF baseline signature when
 /// `waf.inspectJsonBody` is enabled (config `waf.inspectJsonBody`).
 ///
-/// The body is buffered up to [`WAF_JSON_BODY_LIMIT`] and recursively scanned
-/// for signature matches. In blocking mode the request is rejected; in
-/// monitor mode a WAF event is returned so the middleware can record it.
+/// Bodies within [`WAF_JSON_BODY_LIMIT`] are buffered and recursively scanned
+/// for signature matches. A larger body is skipped by the WAF stage and left to
+/// the request body limit downstream, but it is **never truncated**: the handler
+/// must receive exactly the bytes the client sent (media generation payloads
+/// carry inline images well past one megabyte). In blocking mode a matched
+/// request is rejected; in monitor mode a WAF event is returned so the
+/// middleware can record it.
+///
+/// `max_body_bytes` is the gateway request cap (`request.maxBodyBytes`). It
+/// bounds the buffer used for a streamed body with no declared length; a body
+/// beyond it is rejected here with the same problem the downstream body-limit
+/// enforcement would produce, because consuming it would leave the handler with
+/// an empty body.
 pub(crate) async fn inspect_json_body(
     config: &GatewaySecurityConfig,
     request: Request<Body>,
+    max_body_bytes: usize,
 ) -> Result<(Request<Body>, Vec<SecurityEvent>), SecurityRejection> {
     if !config.waf.enabled || !config.waf.inspect_json_body {
         return Ok((request, Vec::new()));
@@ -693,19 +801,38 @@ pub(crate) async fn inspect_json_body(
         return Ok((request, Vec::new()));
     }
 
+    // A declared length beyond the inspection budget is skipped without reading
+    // the stream, so oversized payloads cost no WAF buffer at all.
+    let declared_length = request
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.trim().parse::<usize>().ok());
+    if declared_length.is_some_and(|length| length > WAF_JSON_BODY_LIMIT) {
+        return Ok((request, Vec::new()));
+    }
+
     let (parts, body) = request.into_parts();
-    let bytes = match to_bytes(body, WAF_JSON_BODY_LIMIT).await {
+    let bytes = match to_bytes(body, max_body_bytes).await {
         Ok(bytes) => bytes,
         Err(error) => {
-            // Bodies beyond the WAF budget are handled by the request body
-            // limit enforcement downstream; do not fail the request here.
             let _ = error;
-            return Ok((Request::from_parts(parts, Body::empty()), Vec::new()));
+            return Err(SecurityRejection {
+                status: StatusCode::PAYLOAD_TOO_LARGE,
+                title: "request_body_too_large",
+                detail: "request body exceeded configured gateway limit".to_string(),
+                headers: Vec::new(),
+                events: Vec::new(),
+            });
         }
     };
-    let matched = serde_json::from_slice::<serde_json::Value>(&bytes)
-        .map(|value| json_value_matches(&value))
-        .unwrap_or(false);
+    // Streamed bodies (chunked, or a client that understated Content-Length) can
+    // only be measured by buffering; anything past the inspection budget is
+    // forwarded uninspected rather than dropped.
+    let matched = bytes.len() <= WAF_JSON_BODY_LIMIT
+        && serde_json::from_slice::<serde_json::Value>(&bytes)
+            .map(|value| json_value_matches(&value))
+            .unwrap_or(false);
     let request = Request::from_parts(parts, Body::from(bytes));
     if !matched {
         return Ok((request, Vec::new()));

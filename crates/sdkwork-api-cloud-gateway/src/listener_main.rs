@@ -239,9 +239,15 @@ async fn run_gateway(process_mode: ProcessMode) -> anyhow::Result<()> {
     let app = build_sdkwork_api_cloud_gateway_router(config).await?;
 
     info!(%local_addr, "sdkwork api gateway listening");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    // Connect info carries the unspoofable socket peer into the router, so
+    // per-IP rate limits identify east-west registry calls and direct clients
+    // instead of collapsing every peer into one shared bucket.
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
 
     if let Some(service_registry) = service_registry {
         service_registry.shutdown().await;

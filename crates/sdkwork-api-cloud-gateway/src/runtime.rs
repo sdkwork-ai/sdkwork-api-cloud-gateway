@@ -2,13 +2,14 @@ use std::{
     collections::HashMap,
     error::Error as StdError,
     fmt,
+    net::SocketAddr,
     sync::Arc,
     time::{Duration, Instant},
 };
 
 use axum::{
     body::{to_bytes, Body},
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{header, HeaderMap, HeaderValue, Request, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -792,43 +793,48 @@ async fn security_middleware(
         );
     }
 
-    let (request, waf_body_events) =
-        match security::inspect_json_body(&state.config.security, request).await {
-            Ok((request, events)) => (request, events),
-            Err(rejection) => {
-                for event in rejection.events() {
-                    state.metrics.record_security_event(
-                        state.config.service.name.as_str(),
-                        event.kind,
-                        event.action,
-                        event.rule,
-                    );
-                    emit_audit_log(
-                        state.as_ref(),
-                        GatewayAuditLogEmitInput {
-                            category: "security",
-                            action: event.action,
-                            reason: security_audit_reason(event),
-                            scope: Some(event.rule),
-                            status: rejection.status,
-                            method: method.as_str(),
-                            path: path.as_str(),
-                            headers: &headers,
-                        },
-                    );
-                }
-                let mut response = problem_response_with_request_headers(
-                    rejection.status,
-                    rejection.title,
-                    rejection.detail.as_str(),
-                    &headers,
-                    instance.as_str(),
+    let (request, waf_body_events) = match security::inspect_json_body(
+        &state.config.security,
+        request,
+        state.config.request.max_body_bytes,
+    )
+    .await
+    {
+        Ok((request, events)) => (request, events),
+        Err(rejection) => {
+            for event in rejection.events() {
+                state.metrics.record_security_event(
+                    state.config.service.name.as_str(),
+                    event.kind,
+                    event.action,
+                    event.rule,
                 );
-                rejection.apply_headers(response.headers_mut());
-                apply_gateway_cors_headers(state.as_ref(), &headers, &mut response);
-                return apply_configured_secure_response_headers(state.as_ref(), response);
+                emit_audit_log(
+                    state.as_ref(),
+                    GatewayAuditLogEmitInput {
+                        category: "security",
+                        action: event.action,
+                        reason: security_audit_reason(event),
+                        scope: Some(event.rule),
+                        status: rejection.status,
+                        method: method.as_str(),
+                        path: path.as_str(),
+                        headers: &headers,
+                    },
+                );
             }
-        };
+            let mut response = problem_response_with_request_headers(
+                rejection.status,
+                rejection.title,
+                rejection.detail.as_str(),
+                &headers,
+                instance.as_str(),
+            );
+            rejection.apply_headers(response.headers_mut());
+            apply_gateway_cors_headers(state.as_ref(), &headers, &mut response);
+            return apply_configured_secure_response_headers(state.as_ref(), response);
+        }
+    };
     for event in &waf_body_events {
         state.metrics.record_security_event(
             state.config.service.name.as_str(),
@@ -872,6 +878,13 @@ async fn traffic_middleware(
         .registry
         .resolve(method.as_str(), path.as_str())
         .map(|route| route.service_id.clone());
+    // The socket peer is the only unspoofable client identity: rate-limit rules
+    // keyed by `client-ip` use it, and only honour `X-Forwarded-For` when this
+    // peer is a configured trusted proxy.
+    let peer_ip = request
+        .extensions()
+        .get::<ConnectInfo<SocketAddr>>()
+        .map(|connect_info| connect_info.0.ip());
     let permit = match state
         .traffic
         .acquire(
@@ -879,6 +892,7 @@ async fn traffic_middleware(
             path.as_str(),
             service_id.as_deref(),
             request.headers(),
+            peer_ip,
         )
         .await
     {
