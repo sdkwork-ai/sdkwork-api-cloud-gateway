@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved sites, **16 aligned**, **3 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved call sites, **16 aligned**, **3 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -393,3 +393,48 @@ Gate status: 19 sites, **16 aligned**, **3 tracked** — aiot device turn, voice
 (unwired), image provider (blocked on cloudrouter SDK reconciliation). Every
 remaining tracked site needs a product/credential decision or an upstream SDK
 reconciliation, not another mechanical migration.
+
+## 15. Round 9 — the gate now audits every registry call site, not only SDK callers
+
+The checker used to require a generated-SDK constructor before it applied the
+identity rule, so a **raw HTTP client** that resolved its target through the
+registry was invisible. An independent sweep for `registry_base_url_or` found one:
+`sdkwork-deploy-identity-provisioning-port` (the split IAM provisioning adapter).
+It is not a defect — it authenticates with a dedicated IAM backend provisioning
+token from a secret file, carried in the provisioning body — but the gate could
+not see it, so a future regression there would have passed silently.
+
+Changes (`sdkwork-specs` `318e72a`, `sdkwork-deployments` `97c1b8d`):
+
+- the identity rule now keys on an actual resolution call
+  (`registry_base_url_or` / `registry_base_url` / `registry_http_target`), so
+  generated-SDK and raw-HTTP call sites are audited alike;
+- a new rule rejects `set_api_key` at a registry call site unless the module
+  declares `identity:service` — applying `X-Api-Key` is now a machine-checked
+  substitution, not a code-review expectation;
+- `APP_SDK_INTEGRATION_SPEC.md` gained §5.2.1.1: the two machine profiles, the
+  `ServiceCredentials` helper, the fail-closed diagnostic, and the requirement to
+  provision an IAM application access token (never an inline secret);
+- the deploy IAM provisioning adapter declares `identity:service` with its
+  justification.
+
+Current matrix: 19 registry-resolved call sites, **16 aligned**, **3 tracked**
+(aiot device turn, voice, image), each with a per-site removal plan. The
+independent sweep also confirmed no unclassified site remains: every file that
+resolves through the registry either carries a caller pair, declares
+`identity:service`, or is tracked in the gate.
+
+### The three remaining sites need a decision or an upstream fix
+
+- **aiot device turn**: the device edge authenticates a device bearer and derives
+  an association (tenant/organization) from the device credential repository; the
+  Xiaozhi session retains no end-user dual token, and `SpeechTurnInput` carries no
+  identity at all. Either the device session binds a user credential at pairing
+  (then the caller pair can be forwarded), or the turn is declared a device-level
+  service identity with explicit attribution — a product/security decision.
+- **voice**: latent (no wired route); migrate with the `with_caller` shape when it
+  is wired.
+- **image**: the adapter no longer compiles against the regenerated
+  `cloudrouter_open_sdk` (midjourney/nano-banana models and accessors removed,
+  OpenAI image request reshaped). Reconcile first, then apply the §7 `with_caller`
+  shape.
