@@ -498,3 +498,59 @@ or service identity, 3 are tracked with removal plans *and* the tracked set is
 provably current, and the identity rule covers generated SDKs, raw HTTP clients,
 and `set_api_key` substitution. The three tracked sites remain blocked on the
 decisions recorded in §15/§16, so the goal stays active.
+
+## 18. Final verification and open decisions
+
+Re-ran the verification set on the current working trees (round 12):
+
+| Check | Result |
+|---|---|
+| `check-http-registry-resolution.mjs --workspace <root>` | passed: 6,268 files, 19 call sites, **16 aligned, 3 tracked** (stale-baseline rule active) |
+| `cargo test -p sdkwork-utils-rust --lib` | 199 passed (caller + service identity helpers) |
+| `cargo test -p sdkwork-web-core --lib caller` | 4 passed (request-scoped caller carrier) |
+| `cargo test -p sdkwork-agents-tool-cloudrouter --lib` | 68 passed (credential precedence, both transports) |
+| `cargo test -p sdkwork-knowledgebase-agent-provider --lib` | 31 passed (caller-scoped cloudrouter client) |
+| `cargo test -p sdkwork-deploy-web-port` | 6 passed (header pair + fail-closed) |
+| `cargo test -p sdkwork-deploy-content-provider-port` | 19 passed (two legs, pair + fail-closed) |
+| `cargo test -p sdkwork-content-course-service --lib` | 16 passed |
+
+Earlier in the migration: generations 70 lib + registry integration, canvas
+24/7/5, notes 22/56/9/2, course workspace 25/26, webserver gateway 471 (WSL),
+webserver daemon 25 + 4.
+
+### What is complete
+
+- Shared helpers: `sdkwork_utils_rust::caller_identity::CallerCredentials`
+  (user-scoped pair, `apply_typed`, wire order, fingerprint, redacted Debug) and
+  `sdkwork_utils_rust::service_identity::{ServiceCredentials, ServiceTokenKind,
+  missing_service_credentials}` (machine pair, fail-closed diagnostic).
+- Framework carrier: request-scoped `CALLER_CREDENTIALS` task-local injected with
+  `WebRequestContext`, deliberately not inherited across spawn/blocking
+  boundaries; adapters take the pair from the context or from a per-call client.
+- 16 migrated call sites: every user-scoped site carries the caller pair on the
+  destination's wire order; every machine site declares `identity:service` and
+  presents the service-token + `Access-Token` pair, failing closed with the
+  settings that are missing. Per-call clients are keyed by
+  `(base URL, credential fingerprint)` where pooling exists.
+- Gate: covers generated SDKs and raw HTTP clients, rejects `set_api_key`
+  without `identity:service`, and now fails on stale baseline entries.
+
+### Open decisions (the three tracked sites)
+
+1. **aiot device speech turn** — the edge authenticates a device bearer and
+   derives tenant/organization from the device association; the Xiaozhi session
+   retains no end-user dual token and the cloud-router audio endpoints carry no
+   tenant field. Decide: bind a user credential to the device association at
+   pairing (forward the pair), or declare a device-level service identity with
+   explicit attribution. Then implement `SpeechTurnInput` identity fields plus
+   the pair application.
+2. **image provider** — the adapter does not compile against the regenerated
+   `cloudrouter_open_sdk` (midjourney/nano-banana models and client accessors
+   removed, OpenAI image request reshaped, Vidu request field dropped). Decide
+   the vendor surface, reconcile the adapter, then apply the §7 `with_caller`
+   shape.
+3. **voice** — the route is not wired; migrate with the same `with_caller` shape
+   when it is.
+
+The goal is reported blocked on those three decisions; the migration itself has
+no unexplained or silently exempted site left.
