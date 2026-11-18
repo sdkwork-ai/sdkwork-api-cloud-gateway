@@ -626,3 +626,24 @@ repository this work touched:
 The remaining worktree entries are another session's edits
 (`sdkwork-voice/Cargo.lock`, `sdkwork-specs/workspace/consumers/sdkwork-cloudrouter.json`)
 and were left untouched.
+
+## 21. Regression found by the new binding test
+
+While adding a service-level test that proves `with_caller` reaches the provider,
+the test failed on the image `generate` path: `ImageGenerationService::generate`
+selected the registry entry directly while only `retrieve`/`cancel` went through
+the caller-binding helper. A user image dispatch therefore still authenticated
+with the deployment key — the exact defect the migration was meant to remove, and
+a reminder that a per-method path needs its own assertion.
+
+Fixed in `sdkwork-image` `451b3eb`: `generate` applies `with_caller(&self.caller)`
+before validate/generate, and the new test records the carrier in a fake
+provider's `with_caller` for both scopes (caller-less service binds the empty
+service-identity carrier; a caller-bound service binds the request caller).
+
+Workspace tests then pass (image service 2 contract tests, host 4, MCP 3, adapter
+contract and lib tests). The cross-site audit was rechecked: generations binds
+per dispatch, voice applies the caller to the per-scope client at build time,
+knowledgebase builds the client per turn, and the per-call adapters
+(canvas/notes/course/deploy drive/agents) already bind per request, so no other
+site had this shape.
