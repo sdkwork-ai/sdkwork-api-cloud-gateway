@@ -187,16 +187,88 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.80",
+    "currentVersion": "0.1.85",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.80"
+      "BETA": "0.1.85"
     },
     "notes": [
       {
-        "version": "0.1.80",
+        "version": "0.1.85",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.85",
+        "summary": "Follow-up to the 0.1.84 workspace sync: the startup audience-allow-list diagnostic still queried the retired iam_tenant_application table, which IAM migration 0043 renamed to iam_application_installation. Every start logged `could not verify enabled IAM applications against the gateway audience allow-list ... relation \"iam_tenant_application\" does not exist` and silently skipped the check, so an enabled application missing from SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES went unreported. The query now reads the renamed installation table and the warning is gone; nothing else changed.",
+        "highlights": [
+          "runtime fix: warn_missing_gateway_iam_audiences now reads app_id from iam_application_installation (status = 'enabled'), matching sdkwork-iam 0043_rename_tenant_application_to_application_installation; the missing_gateway_iam_audiences unit test is unchanged and still passes",
+          "lock sync: Cargo.lock was regenerated for the synced workspace (it was missing sdkwork-appstore-remix-service, sdkwork-deploy-identity-provisioning-port and sdkwork-cloudrouter-config), so cargo check --locked and cargo test --workspace --locked now resolve without a rewrite",
+          "gates: cargo fmt -- --check, cargo check --locked -p sdkwork-api-cloud-gateway and cargo test --workspace --locked all exited 0 in the bookworm build container, and check-module-bin plus the main-branch audit pass on the host",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.85 (471.3 MB / 494,236,837 B) and the release binary inside it carries iam_application_installation (20 occurrences, zero iam_tenant_application); the self-contained bundle packaged from that image has image.tar.gz sha256 e38dfc9e",
+          "local parity: the local production-parity stack upgraded first and reported healthy after 65s with RestartCount 0, passed 18/18 read-only checks, keeps 5 backup sets whose 7 checksums all verify, and its startup log no longer carries the retired-table warning",
+          "deployment: remote production backed itself up first (set 20261117T175345Z created before any mutation), then upgraded in place from the locally packaged bundle over passwordless ssh (docker load, no registry pull), reported healthy after 40s and passed 18/18 read-only checks with RestartCount 0",
+          "public edge: https://api.birdcoder.com/healthz and /readyz answer HTTPS 200 with TLS verified, an unknown path answers 401 from the gateway and the sdkwork-v3 ProblemDetail carries traceId (4/4 checks)",
+          "availability: the remote loopback sampler recorded 302 HTTP 200 samples and 8 unreachable samples confined to 17:56:17Z-17:56:49Z (the single-replica recreate); the public sampler stayed 200 outside 17:56:23Z-17:56:51Z, plus three isolated pre-deploy connection blips at 17:54:45Z-17:55:26Z while the loopback was still answering 200",
+          "backup safety: exactly 5 production backup sets are retained on both hosts; the newest remote set (20261117T175345Z, 134 MB) verifies config.tar.gz, a 34,416,937-byte container-side pg_dump (sha256 6e5be16b) and all 5 data volumes, and the newest local set (20261117T174751Z) verifies the same seven checksums with a 20,412,131-byte dump",
+          "migration convergence: no migration file changed in this cut and both hosts still report deploy=0013 iam=0043 appstore=0011",
+          "audience diagnostic restored: with the query fixed the startup check now reports the real gap — app_100001 (\"SDKWork Default\") is enabled in iam_application_installation but absent from GATEWAY_IAM_ALLOWED_AUDIENCES, so sessions for it will be rejected until an operator decides whether to allow or disable it; changing that allow-list is a security decision left to human review",
+          "housekeeping: the superseded 0.1.82 image was reclaimed (production back to 6.8G free), 0.1.84 stays addressable as the rollback image, and the demo stack stays on its pinned 0.1.25 image"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.84",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.84",
+        "summary": "Workspace sync cut for the deployment-application identity surface: all 111 sdkwork-space checkouts were fetched to their origin/main tip, nine HEADs moved merge-only, and the embedded gateway composition was rebuilt on the IAM deploy-application token authority (application templates retired, tenant applications renamed to installations), the deployments application source/remix and resource-binding model, the appstore expert catalog with its remix storefront, distributor attribution on mall and order reads, and frontend model configuration stored in dedicated tables.",
+        "highlights": [
+          "provenance: 111 git checkouts synced merge-only (84 current, 4 fast-forwarded, 2 fast-forwarded over a non-overlapping dirty tree, 3 forward-merged, 12 local-ahead preserved, 5 dirty/diverged preserved, 1 detached-head preserved, 2 non-git); no reset, rebase, stash, clean, checkout -f, restore or push",
+          "closure advances: sdkwork-iam (deploy application as the identity of every access token, installation environment and credentials, application template columns and tables retired, installation rename), sdkwork-deployments (application source and remix, identity provisioning with retry, resource bindings, per-application idempotency), sdkwork-appstore (expert catalog table and backfill, template family retirement, remix flow, visibility-gated installs and download grants), sdkwork-order and sdkwork-mall (snapshotted distributor attribution on order reads and mobile surfaces), sdkwork-models (frontend model configuration in dedicated tables), sdkwork-aiot and sdkwork-local-router (gitignore only) and sdkwork-specs (application identity standard, deploy-anchored token audiences)",
+          "gateway defect fixed forward: origin/main carried 705530f, which pointed the embedded IAM surface at sdkwork_api_iam_assembly::assemble_business_router, a symbol sdkwork-iam never exported, and was forward-merged so default_dependency_surfaces()/default_executable_export_for_service() now name web_module_with_pool as component.spec.json already declared",
+          "gateway surface closure: the sync added GET /app/v3/api/appstore/listings/{listingId}/remix and POST /backend/v3/api/apps/{appId}/identity_provision, so component.spec.json now declares the /app/v3/api/appstore/listings and /backend/v3/api/apps dependency surfaces (3856 routes, 20 more than 0.1.82)",
+          "migration safety fixed forward: no already-applied migration file was modified, but two upstream convergence gaps that only appear on an already-initialized database were repaired in new, never-applied files — sdkwork-deployments 0007 now creates deploy_build_recipe and the deploy_application_scaffold family and re-points the two child foreign keys before dropping deploy_build_template (which failed with `cannot drop table deploy_build_template because other objects depend on it`), and 0012 now creates deploy_application_resource_link before reconciling it; both were verified against a clone of the production schema with zero legacy template rows",
+          "gates: cargo metadata --locked, cargo fmt -- --check, pnpm check, pnpm workflow:validate and cargo test --workspace all exited 0 in the bookworm build container",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.84 and the self-contained install bundle was packaged from that image; the two repaired migration files were read back out of the loaded image to prove the bundle carries the fixed SQL",
+          "local parity: the local production-parity stack was upgraded first and reached healthy in 60s with RestartCount 0, then passed 18/18 read-only checks (healthz/readyz 200, sdkwork-v3 401 ProblemDetail with traceId, bundle identity 0.1.84, 5 backup sets) before any remote mutation; its migration history converged at deploy=0013 iam=0043 appstore=0011",
+          "deployment: remote production was upgraded in place from the locally packaged bundle over passwordless ssh (docker load, no registry pull), reported healthy after 45s, and passed 18/18 read-only checks there with the same deploy=0013 iam=0043 appstore=0011 convergence and no error/panic/migrate-failed log line",
+          "public edge: https://api.birdcoder.com/healthz and /readyz answer HTTPS 200 with TLS verified, an unknown path answers 401 from the gateway (never 502/000) and the sdkwork-v3 ProblemDetail carries traceId (4/4 checks)",
+          "availability: a 2s loopback sampler on the remote host recorded 315 HTTP 200 samples and 9 unreachable samples confined to the single-replica recreate window; every sample before and after the swap was 200, so the only gap was the container replacement itself",
+          "backup safety: exactly 5 production backup sets are retained and each verifies against its stored sha256; the pre-change set pre-0.1.83 now carries a 34,319,580-byte logical dump (sha256 93b8a7af) captured with pg_dump -Fc inside the embedded postgres container because embedded mode publishes no host port, plus all 5 data volumes",
+          "backup defect fixed forward: the shared backup helper now prefers a module-provided in-container dump/restore hook, rejects a zero-byte dump instead of sealing it, and the ssh wrappers pass -n so the volume loop no longer stops after the first volume; a re-run produced the complete dump and volume set",
+          "housekeeping: 0.1.83 was never promoted to production (its migration failed locally and was fixed forward as 0.1.84), 0.1.82 stays addressable for rollback, the demo stack stays on its pinned 0.1.25 image, and production keeps about 6.8G free"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.82",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.82",
+        "summary": "Workspace sync cut for the partner settlement surface: every sdkwork-space repository was fetched to its origin/main tip (111 checkouts, twelve HEADs moved) and the embedded gateway composition rebuilt on partner commission intake and settlement on the payment path, order commission events with unbound-customer guards, merchandise SPU list pagination on a stable placeholder pair, and messaging template-to-provider binding with per-provider template ids.",
+        "highlights": [
+          "provenance: 111 git checkouts synced merge-only (82 current, 3 fast-forwarded, 4 forward-merged, 10 local-ahead preserved, 4 dirty/diverged preserved, 8 fetch-blocked, 2 non-git); no reset, rebase, stash, clean, checkout -f, restore or push",
+          "closure advances: sdkwork-partner (order commission intake and settlement), sdkwork-order (commission events on payment success, unbound-customer guard), sdkwork-merchandise (SPU list pagination fix), sdkwork-messaging (template provider binding and preset initialization), sdkwork-iam, sdkwork-shop, sdkwork-plugins, sdkwork-skills, sdkwork-mcp, sdkwork-utils, sdkwork-account and sdkwork-birdcoder2",
+          "migration safety: no advanced checkout changed any migrations/* file and no repository carries a duplicate numeric migration version prefix, so applied history stays byte-identical",
+          "gates: cargo metadata --locked, cargo fmt -- --check, pnpm check, pnpm workflow:validate and cargo test --workspace all exited 0 in the bookworm build container",
+          "image: bin/docker-image.sh built registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.82 and the self-contained install bundle was packaged from that image",
+          "local parity: the local production-parity stack was upgraded first and passed 18/18 checks (healthy, 0 restarts, 0.1.82 images, bundle manifest 0.1.82, 5 backup sets) before any remote mutation",
+          "deployment: remote production was upgraded in place from the locally packaged bundle over passwordless ssh (docker load, no registry pull) at 2026-11-16T19:24:10Z-19:27:13Z and passed 18/18 checks with 0 restarts",
+          "availability: the node-local /healthz sampler saw only the 35s recreate window (8 samples, 2026-11-16T19:26:31Z-19:27:03Z) while the public https://api.noaper.com sampler returned HTTP 200 on all 100 samples spanning the swap",
+          "backup safety: exactly 5 production backup sets are retained (newest 20261116T192411Z checksum-verified) and a pre-change logical dump of 33,464,486 bytes was taken inside the postgres container with its sha256 verified",
+          "housekeeping: superseded 0.1.79 was reclaimed (7.2G free), 0.1.80 stays addressable for rollback, and the demo environment's pinned 0.1.25 was left untouched"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.80",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.80",
         "summary": "Workspace sync cut for the settlement and fulfilment surface: every sdkwork-space repository was advanced to its origin/main tip (111 checkouts, sixteen HEADs moved) and the embedded gateway composition rebuilt on order shipment logistics and voucher flows, payment cashier link storage with token key settings, the shop checkout service with its schema repair migration, the IAM mini-program session module and the IM notification-centre service. Plugins, skills and MCP now fold their catalog routes into the shared contract, so the rebuilt route inventory is composed from one manifest surface instead of three hand-kept copies.",
         "highlights": [

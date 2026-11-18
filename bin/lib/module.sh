@@ -70,6 +70,42 @@ sdkwork_module_backup_db_name_suffix() {
   printf '_DB'
 }
 
+# Embedded dependency stacks (`--deps embedded`) publish no PostgreSQL port on
+# the host, so the shared host-side pg_dump cannot reach the database. These
+# hooks dump and restore inside the dependency container instead; ops-backup
+# prefers them when they are defined.
+sdkwork_module_backup_db_dump_script() {
+  local env_file="$1" file="$2" environment container
+  environment="$(basename "${env_file}")"
+  environment="${environment%.env}"
+  container="${SDKWORK_MODULE_ID}-${environment}-deps-postgres-1"
+  cat <<EOF
+set -a; . $(printf '%q' "${env_file}"); set +a
+CONTAINER=$(printf '%q' "${container}")
+docker ps --format '{{.Names}}' | grep -qx "\$CONTAINER" || {
+  echo "FATAL: embedded postgres container \$CONTAINER is not running" >&2
+  exit 1
+}
+docker exec "\$CONTAINER" sh -lc 'pg_dump -U "\$POSTGRES_USER" -d "\$POSTGRES_DB" -Fc' > $(printf '%q' "${file}")
+EOF
+}
+
+sdkwork_module_backup_db_restore_script() {
+  local env_file="$1" file="$2" environment container
+  environment="$(basename "${env_file}")"
+  environment="${environment%.env}"
+  container="${SDKWORK_MODULE_ID}-${environment}-deps-postgres-1"
+  cat <<EOF
+set -a; . $(printf '%q' "${env_file}"); set +a
+CONTAINER=$(printf '%q' "${container}")
+docker ps --format '{{.Names}}' | grep -qx "\$CONTAINER" || {
+  echo "FATAL: embedded postgres container \$CONTAINER is not running" >&2
+  exit 1
+}
+docker exec -i "\$CONTAINER" sh -lc 'pg_restore -U "\$POSTGRES_USER" -d "\$POSTGRES_DB" --clean --if-exists' < $(printf '%q' "${file}")
+EOF
+}
+
 # ----------------------------------------------------------------------------
 # Native installer packaging (apps-pkg-installer.sh, MODULE_BIN_SPEC.md §4.9)
 # ----------------------------------------------------------------------------

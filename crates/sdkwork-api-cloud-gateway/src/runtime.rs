@@ -562,7 +562,7 @@ async fn warn_missing_gateway_iam_audiences(pool: &DatabasePool, audiences: &[St
         return;
     };
     let enabled_app_ids = match sqlx::query_scalar::<_, String>(
-        "SELECT app_id FROM iam_tenant_application WHERE status = 'enabled' ORDER BY app_id",
+        "SELECT app_id FROM iam_application_installation WHERE status = 'enabled' ORDER BY app_id",
     )
     .fetch_all(pg)
     .await
