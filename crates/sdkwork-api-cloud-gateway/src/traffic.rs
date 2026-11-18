@@ -10,7 +10,7 @@ use sdkwork_api_cloud_gateway_config::{
     ConcurrencyLimitConfig, GatewayTrafficConfig, RateLimitRuleConfig,
 };
 use sdkwork_utils_rust::rate_limit::{unix_millis, RedisTokenBucketClient};
-use sdkwork_utils_rust::trusted_proxy::TrustedProxyConfig;
+use sdkwork_utils_rust::trusted_proxy::{extract_client_ip, TrustedProxyConfig};
 
 #[derive(Clone, Default)]
 pub(crate) struct GatewayTrafficState {
@@ -142,6 +142,7 @@ impl GatewayTrafficState {
         path: &str,
         service_id: Option<&str>,
         headers: &HeaderMap,
+        peer_ip: Option<IpAddr>,
     ) -> Result<TrafficPermit, TrafficRejection> {
         let mut permit = self.acquire_concurrency(config, path, service_id)?;
 
@@ -151,7 +152,7 @@ impl GatewayTrafficState {
                 .iter()
                 .filter(|rule| rate_limit_matches(rule, path, service_id))
             {
-                let decision = self.check_rate_limit(rule, headers).await;
+                let decision = self.check_rate_limit(rule, headers, peer_ip).await;
                 let rate_headers =
                     rate_limit_headers(&decision, config.compat_x_rate_limit_headers);
                 if decision.allowed {
@@ -229,6 +230,7 @@ impl GatewayTrafficState {
         &self,
         rule: &RateLimitRuleConfig,
         headers: &HeaderMap,
+        peer_ip: Option<IpAddr>,
     ) -> RateLimitDecision {
         let now = Instant::now();
         let limit = rule.capacity.or(rule.limit).or(rule.burst).unwrap_or(60);
@@ -244,7 +246,7 @@ impl GatewayTrafficState {
 
         let identity = {
             let state = self.inner.lock().expect("gateway traffic mutex poisoned");
-            rate_limit_identity(rule, headers, &state.trusted_proxies)
+            rate_limit_identity(rule, headers, &state.trusted_proxies, peer_ip)
         };
 
         if let Some(redis) = self.redis_client().await {
@@ -408,9 +410,10 @@ fn rate_limit_identity(
     rule: &RateLimitRuleConfig,
     headers: &HeaderMap,
     trusted_proxies: &TrustedProxyConfig,
+    peer_ip: Option<IpAddr>,
 ) -> String {
     match rule.key.trim().to_ascii_lowercase().as_str() {
-        "client-ip" => client_ip_for_rate_limit(headers, trusted_proxies),
+        "client-ip" => client_ip_for_rate_limit(headers, trusted_proxies, peer_ip),
         "host" => headers
             .get(header::HOST)
             .and_then(|value| value.to_str().ok())
@@ -420,41 +423,36 @@ fn rate_limit_identity(
     }
 }
 
-/// Resolve the rate-limit client identity from `X-Forwarded-For`.
+/// Resolve the rate-limit client identity from the TCP peer and, behind a
+/// trusted proxy, the forwarded chain.
 ///
-/// Forwarded headers are honoured only when trusted proxies are configured and
-/// the last hop of the chain is inside a trusted CIDR. Without trusted proxies
-/// the header is ignored entirely, so clients cannot spoof their identity by
-/// sending a synthetic `X-Forwarded-For`.
-fn client_ip_for_rate_limit(headers: &HeaderMap, trusted: &TrustedProxyConfig) -> String {
-    if trusted.is_empty() {
-        return "unknown".to_string();
-    }
-    let Some(raw) = headers
-        .get("x-forwarded-for")
-        .and_then(|value| value.to_str().ok())
-    else {
-        return "unknown".to_string();
-    };
-    let chain = raw
-        .split(',')
-        .map(str::trim)
-        .filter(|segment| !segment.is_empty())
-        .collect::<Vec<_>>();
-    let Some(last) = chain.last() else {
+/// The socket peer is the authority: it cannot be spoofed by the caller. A
+/// forwarded header is honoured only when that peer is inside
+/// `[security].trustedProxyCidrs`; otherwise the header is ignored. Returning a
+/// single shared `unknown` identity for every peer-less request (the previous
+/// behaviour) collapsed public traffic **and** east-west registry calls into one
+/// token bucket, so one noisy caller could starve the gateway's own media and
+/// agent hops. Falling back to `unknown` is kept only when no peer is available
+/// at all (a router exercised without connect info).
+fn client_ip_for_rate_limit(
+    headers: &HeaderMap,
+    trusted: &TrustedProxyConfig,
+    peer_ip: Option<IpAddr>,
+) -> String {
+    let Some(peer_ip) = peer_ip else {
         return "unknown".to_string();
     };
-    let Ok(last_ip) = last.parse::<IpAddr>() else {
-        return "unknown".to_string();
-    };
-    if !trusted.is_trusted(&last_ip) {
-        return "unknown".to_string();
-    }
-    chain
-        .first()
-        .and_then(|entry| entry.parse::<IpAddr>().ok())
-        .map(|ip| ip.to_string())
-        .unwrap_or_else(|| "unknown".to_string())
+    extract_client_ip(
+        Some(peer_ip),
+        |name| {
+            headers
+                .get(name)
+                .and_then(|value| value.to_str().ok())
+                .map(str::to_owned)
+        },
+        trusted,
+    )
+    .to_string()
 }
 
 fn refill_per_second(rule: &RateLimitRuleConfig, limit: u64) -> u64 {
@@ -570,7 +568,7 @@ mod tests {
             ..GatewayTrafficConfig::default()
         };
         let permit = state
-            .acquire(&config, "/healthz", None, &headers)
+            .acquire(&config, "/healthz", None, &headers, None)
             .await
             .unwrap_or_else(|rejection| {
                 panic!(
@@ -581,5 +579,130 @@ mod tests {
         drop(permit);
         let fallback_count = state.inner.lock().expect("lock").redis_fallback_count;
         assert!(fallback_count >= 1, "redis fallback was recorded");
+    }
+
+    fn single_request_budget_rule() -> GatewayTrafficConfig {
+        GatewayTrafficConfig {
+            rate_limit_enabled: true,
+            rate_limits: vec![RateLimitRuleConfig {
+                id: "client-ip-budget".to_string(),
+                match_path_prefix: None,
+                match_service_id: None,
+                key: "client-ip".to_string(),
+                algorithm: "token-bucket".to_string(),
+                capacity: Some(1),
+                refill_per_second: Some(0),
+                burst: None,
+                limit: None,
+                window_seconds: None,
+                reject_status: 429,
+            }],
+            ..GatewayTrafficConfig::default()
+        }
+    }
+
+    #[test]
+    fn socket_peer_identifies_the_client_when_no_forwarded_chain_exists() {
+        let trusted = TrustedProxyConfig::from_cidrs(["172.16.0.0/12"]);
+        let empty = HeaderMap::new();
+        assert_eq!(
+            client_ip_for_rate_limit(&empty, &trusted, Some("172.18.0.5".parse().expect("peer"))),
+            "172.18.0.5",
+            "an east-west call without X-Forwarded-For keeps its own identity"
+        );
+        assert_eq!(
+            client_ip_for_rate_limit(
+                &empty,
+                &trusted,
+                Some("198.51.100.9".parse().expect("peer"))
+            ),
+            "198.51.100.9",
+            "a direct public client is identified by its peer address"
+        );
+        assert_eq!(
+            client_ip_for_rate_limit(&empty, &trusted, None),
+            "unknown",
+            "without connect info the conservative shared identity stays"
+        );
+    }
+
+    #[test]
+    fn forwarded_chain_is_only_honoured_behind_a_trusted_peer() {
+        let trusted = TrustedProxyConfig::from_cidrs(["172.16.0.0/12"]);
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", HeaderValue::from_static("203.0.113.10"));
+
+        assert_eq!(
+            client_ip_for_rate_limit(
+                &headers,
+                &trusted,
+                Some("172.18.0.1".parse().expect("proxy"))
+            ),
+            "203.0.113.10",
+            "a trusted proxy may assert the client address"
+        );
+        assert_eq!(
+            client_ip_for_rate_limit(
+                &headers,
+                &trusted,
+                Some("198.51.100.4".parse().expect("direct peer"))
+            ),
+            "198.51.100.4",
+            "an untrusted peer cannot spoof its identity through the header"
+        );
+    }
+
+    #[tokio::test]
+    async fn rate_limit_buckets_are_isolated_per_socket_peer() {
+        let state = GatewayTrafficState::from_config(
+            &["172.16.0.0/12".to_string()],
+            None,
+            "test".to_string(),
+        );
+        let config = single_request_budget_rule();
+        let headers = HeaderMap::new();
+        let internal: IpAddr = "172.18.0.5".parse().expect("gateway peer");
+        let external: IpAddr = "198.51.100.9".parse().expect("client peer");
+
+        let permit = state
+            .acquire(
+                &config,
+                "/vidu/ent/v2/text2video",
+                None,
+                &headers,
+                Some(internal),
+            )
+            .await
+            .unwrap_or_else(|rejection| {
+                panic!("first east-west call is allowed: {}", rejection.detail)
+            });
+        drop(permit);
+
+        let rejection = state
+            .acquire(
+                &config,
+                "/vidu/ent/v2/text2video",
+                None,
+                &headers,
+                Some(internal),
+            )
+            .await
+            .err()
+            .expect("the same peer exhausts its own one-request budget");
+        assert_eq!(rejection.title, "rate_limit_exceeded");
+
+        let permit = state
+            .acquire(
+                &config,
+                "/vidu/ent/v2/text2video",
+                None,
+                &headers,
+                Some(external),
+            )
+            .await
+            .unwrap_or_else(|rejection| {
+                panic!("another peer keeps its own bucket: {}", rejection.detail)
+            });
+        drop(permit);
     }
 }

@@ -1,3 +1,5 @@
+use std::net::{IpAddr, SocketAddr};
+
 use axum::{
     body::{to_bytes, Body},
     http::{header, HeaderMap, HeaderName, HeaderValue, Method, Request, StatusCode},
@@ -133,6 +135,7 @@ fn validate_allowed_host(
     let allowed = config
         .allowed_hosts
         .iter()
+        .chain(config.own_hosts.iter())
         .any(|allowed_host| normalize_host(allowed_host) == host);
     if allowed {
         return Ok(());
@@ -141,7 +144,9 @@ fn validate_allowed_host(
     // Deployments that must stay reachable directly through the host IP (LAN
     // smoke checks, load-balancer health probes) accept raw IP literal Host
     // headers explicitly via SDKWORK_API_CLOUD_GATEWAY_SECURITY_ALLOW_IP_HOSTS;
-    // registered domain names keep matching the allowlist as before.
+    // registered domain names keep matching the allowlist as before. Hosts that
+    // name this process's own listener are accepted independently of that
+    // switch (`record_own_hosts`).
     if config.allow_ip_hosts && is_ip_literal_host(&host) {
         return Ok(());
     }
@@ -153,6 +158,69 @@ fn validate_allowed_host(
         headers: Vec::new(),
         events: Vec::new(),
     })
+}
+
+/// Records this process's own published hosts as accepted `Host` values.
+///
+/// The gateway is a composition root: embedded consumers resolve peer surfaces
+/// through the HTTP service registry and call this process back over the
+/// advertised private endpoint, so that request's `Host` is an IP literal
+/// (`172.18.0.5:8080`) that the operator allowlist and the production
+/// `allowIpHosts=false` posture reject. Those hosts name the socket the process
+/// itself owns, so accepting them restores in-process traffic without widening
+/// the caller policy that `allowed_hosts` enforces.
+pub(crate) fn record_own_hosts(
+    config: &mut GatewaySecurityConfig,
+    local_addr: SocketAddr,
+    advertised_origin: &str,
+) {
+    for host in own_hosts_for(local_addr, advertised_origin) {
+        if !config.own_hosts.contains(&host) {
+            config.own_hosts.push(host);
+        }
+    }
+}
+
+/// Hosts that unambiguously name this process's own listener: the advertised
+/// registry origin, the concrete bind address and both loopback literals.
+fn own_hosts_for(local_addr: SocketAddr, advertised_origin: &str) -> Vec<String> {
+    let mut hosts = Vec::new();
+    if let Some(host) = origin_host(advertised_origin) {
+        hosts.push(host);
+    }
+    match local_addr.ip() {
+        IpAddr::V4(ip) if !ip.is_unspecified() => hosts.push(ip.to_string()),
+        IpAddr::V6(ip) if !ip.is_unspecified() => hosts.push(format!("[{ip}]")),
+        _ => {}
+    }
+    hosts.push("127.0.0.1".to_string());
+    hosts.push("[::1]".to_string());
+    hosts.sort();
+    hosts.dedup();
+    hosts
+}
+
+/// Normalized host of an absolute `http(s)` origin, a bare `host:port`
+/// authority, or a bracketed IPv6 literal.
+fn origin_host(origin: &str) -> Option<String> {
+    let trimmed = origin.trim();
+    let authority = trimmed
+        .strip_prefix("http://")
+        .or_else(|| trimmed.strip_prefix("https://"))
+        .unwrap_or(trimmed)
+        .split('/')
+        .next()
+        .unwrap_or_default()
+        .trim();
+    let authority = authority
+        .rsplit_once('@')
+        .map_or(authority, |(_userinfo, host)| host);
+    let host = normalize_host(authority);
+    if host.is_empty() {
+        None
+    } else {
+        Some(host)
+    }
 }
 
 /// Reports whether the normalized host (ports already stripped) is a raw IP
@@ -450,6 +518,159 @@ mod tests {
         assert!(!is_ip_literal_host("localhost"));
         assert!(!is_ip_literal_host("999.1.1.1"));
     }
+
+    #[test]
+    fn own_published_host_is_accepted_while_foreign_ip_literals_stay_rejected() {
+        let host_header = |value: &str| {
+            let mut headers = HeaderMap::new();
+            headers.insert(header::HOST, value.parse().expect("host header"));
+            headers
+        };
+        let mut config = GatewaySecurityConfig {
+            allowed_hosts: vec!["api.noaper.com".to_string()],
+            ..GatewaySecurityConfig::default()
+        };
+        record_own_hosts(
+            &mut config,
+            SocketAddr::from(([0, 0, 0, 0], 8080)),
+            "http://172.18.0.5:8080",
+        );
+
+        assert!(validate_allowed_host(&config, &host_header("api.noaper.com:443")).is_ok());
+        assert!(
+            validate_allowed_host(&config, &host_header("172.18.0.5:8080")).is_ok(),
+            "the advertised registry endpoint must be accepted as a Host value"
+        );
+        assert!(
+            validate_allowed_host(&config, &host_header("172.18.0.9:8080")).is_err(),
+            "a foreign IP literal must stay rejected"
+        );
+        assert!(validate_allowed_host(&config, &host_header("evil.example.com")).is_err());
+    }
+
+    #[test]
+    fn own_hosts_cover_advertised_origin_bind_address_and_loopback() {
+        let hosts = own_hosts_for(
+            SocketAddr::from(([127, 0, 0, 1], 8080)),
+            "http://10.0.0.5:8080",
+        );
+        assert!(hosts.contains(&"10.0.0.5".to_string()));
+        assert!(hosts.contains(&"127.0.0.1".to_string()));
+        assert!(hosts.contains(&"[::1]".to_string()));
+        assert!(!hosts.iter().any(|host| host.contains("http")));
+    }
+
+    #[test]
+    fn origin_host_normalizes_scheme_path_userinfo_and_port() {
+        assert_eq!(
+            origin_host("http://172.18.0.5:8080").as_deref(),
+            Some("172.18.0.5")
+        );
+        assert_eq!(
+            origin_host("https://Gateway.Example.com:443/base").as_deref(),
+            Some("gateway.example.com")
+        );
+        assert_eq!(origin_host("[fd00::5]:8080").as_deref(), Some("[fd00::5]"));
+        assert_eq!(origin_host("10.0.0.5").as_deref(), Some("10.0.0.5"));
+        assert_eq!(origin_host("   "), None);
+    }
+
+    fn body_inspection_config(mode: &str) -> GatewaySecurityConfig {
+        GatewaySecurityConfig {
+            waf: sdkwork_api_cloud_gateway_config::GatewayWafConfig {
+                enabled: true,
+                mode: mode.to_string(),
+                inspect_json_body: true,
+                ..sdkwork_api_cloud_gateway_config::GatewayWafConfig::default()
+            },
+            ..GatewaySecurityConfig::default()
+        }
+    }
+
+    fn json_post(body: String) -> Request<Body> {
+        Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/generations/videos/text_to_video")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .expect("json request")
+    }
+
+    #[tokio::test]
+    async fn oversized_json_body_is_forwarded_intact_instead_of_truncated() {
+        let config = body_inspection_config("enforce");
+        // Media payloads carry inline images far past the WAF inspection budget.
+        let payload = format!(
+            "{{\"prompt\":\"{}\"}}",
+            "a".repeat(WAF_JSON_BODY_LIMIT + 4096)
+        );
+        let request = json_post(payload.clone());
+
+        let (request, events) = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect("a body inside the gateway cap is not rejected");
+        assert!(events.is_empty(), "over-budget bodies are not inspected");
+
+        let (_, body) = request.into_parts();
+        let forwarded = to_bytes(body, 64 * 1024 * 1024).await.expect("body");
+        assert_eq!(
+            forwarded.len(),
+            payload.len(),
+            "the handler must receive every byte the client sent"
+        );
+    }
+
+    #[tokio::test]
+    async fn declared_oversized_content_length_skips_inspection_without_reading() {
+        let config = body_inspection_config("enforce");
+        let payload = format!("{{\"image\":\"{}\"}}", "b".repeat(2048));
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/generations/images/text_to_image")
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(
+                header::CONTENT_LENGTH,
+                (WAF_JSON_BODY_LIMIT + 1).to_string(),
+            )
+            .body(Body::from(payload.clone()))
+            .expect("json request");
+
+        let (request, events) = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect("declared oversized body passes through");
+        assert!(events.is_empty());
+
+        let (_, body) = request.into_parts();
+        let forwarded = to_bytes(body, 64 * 1024 * 1024).await.expect("body");
+        assert_eq!(forwarded.len(), payload.len());
+    }
+
+    #[tokio::test]
+    async fn streamed_body_beyond_the_gateway_cap_is_rejected_not_emptied() {
+        let config = body_inspection_config("enforce");
+        // No Content-Length: the WAF stage has to buffer to meter the body.
+        let request = json_post(format!("{{\"prompt\":\"{}\"}}", "c".repeat(4096)));
+
+        let rejection = inspect_json_body(&config, request, 1024)
+            .await
+            .err()
+            .expect("body above the gateway cap is rejected");
+        assert_eq!(rejection.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert_eq!(rejection.title, "request_body_too_large");
+    }
+
+    #[tokio::test]
+    async fn inspectable_json_body_still_blocks_a_baseline_signature() {
+        let config = body_inspection_config("enforce");
+        let request = json_post("{\"prompt\":\"../../etc/passwd\"}".to_string());
+
+        let rejection = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .err()
+            .expect("signature match is blocked");
+        assert_eq!(rejection.status, StatusCode::FORBIDDEN);
+        assert_eq!(rejection.title, "waf_request_blocked");
+    }
 }
 
 fn inspect_waf(
@@ -537,12 +758,23 @@ fn waf_value_matches(value: &str) -> bool {
 /// Inspect JSON request bodies against the WAF baseline signature when
 /// `waf.inspectJsonBody` is enabled (config `waf.inspectJsonBody`).
 ///
-/// The body is buffered up to [`WAF_JSON_BODY_LIMIT`] and recursively scanned
-/// for signature matches. In blocking mode the request is rejected; in
-/// monitor mode a WAF event is returned so the middleware can record it.
+/// Bodies within [`WAF_JSON_BODY_LIMIT`] are buffered and recursively scanned
+/// for signature matches. A larger body is skipped by the WAF stage and left to
+/// the request body limit downstream, but it is **never truncated**: the handler
+/// must receive exactly the bytes the client sent (media generation payloads
+/// carry inline images well past one megabyte). In blocking mode a matched
+/// request is rejected; in monitor mode a WAF event is returned so the
+/// middleware can record it.
+///
+/// `max_body_bytes` is the gateway request cap (`request.maxBodyBytes`). It
+/// bounds the buffer used for a streamed body with no declared length; a body
+/// beyond it is rejected here with the same problem the downstream body-limit
+/// enforcement would produce, because consuming it would leave the handler with
+/// an empty body.
 pub(crate) async fn inspect_json_body(
     config: &GatewaySecurityConfig,
     request: Request<Body>,
+    max_body_bytes: usize,
 ) -> Result<(Request<Body>, Vec<SecurityEvent>), SecurityRejection> {
     if !config.waf.enabled || !config.waf.inspect_json_body {
         return Ok((request, Vec::new()));
@@ -569,19 +801,38 @@ pub(crate) async fn inspect_json_body(
         return Ok((request, Vec::new()));
     }
 
+    // A declared length beyond the inspection budget is skipped without reading
+    // the stream, so oversized payloads cost no WAF buffer at all.
+    let declared_length = request
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.trim().parse::<usize>().ok());
+    if declared_length.is_some_and(|length| length > WAF_JSON_BODY_LIMIT) {
+        return Ok((request, Vec::new()));
+    }
+
     let (parts, body) = request.into_parts();
-    let bytes = match to_bytes(body, WAF_JSON_BODY_LIMIT).await {
+    let bytes = match to_bytes(body, max_body_bytes).await {
         Ok(bytes) => bytes,
         Err(error) => {
-            // Bodies beyond the WAF budget are handled by the request body
-            // limit enforcement downstream; do not fail the request here.
             let _ = error;
-            return Ok((Request::from_parts(parts, Body::empty()), Vec::new()));
+            return Err(SecurityRejection {
+                status: StatusCode::PAYLOAD_TOO_LARGE,
+                title: "request_body_too_large",
+                detail: "request body exceeded configured gateway limit".to_string(),
+                headers: Vec::new(),
+                events: Vec::new(),
+            });
         }
     };
-    let matched = serde_json::from_slice::<serde_json::Value>(&bytes)
-        .map(|value| json_value_matches(&value))
-        .unwrap_or(false);
+    // Streamed bodies (chunked, or a client that understated Content-Length) can
+    // only be measured by buffering; anything past the inspection budget is
+    // forwarded uninspected rather than dropped.
+    let matched = bytes.len() <= WAF_JSON_BODY_LIMIT
+        && serde_json::from_slice::<serde_json::Value>(&bytes)
+            .map(|value| json_value_matches(&value))
+            .unwrap_or(false);
     let request = Request::from_parts(parts, Body::from(bytes));
     if !matched {
         return Ok((request, Vec::new()));

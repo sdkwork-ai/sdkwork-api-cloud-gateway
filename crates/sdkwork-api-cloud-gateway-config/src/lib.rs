@@ -362,6 +362,23 @@ pub struct GatewayOtelConfig {
 pub struct GatewaySecurityConfig {
     #[serde(default)]
     pub allowed_hosts: Vec<String>,
+    /// Hosts this process publishes for its own HTTP surface, normalized the
+    /// same way as an incoming `Host` value.
+    ///
+    /// The gateway is a composition root: embedded consumers (generations media
+    /// providers, image host, drive facades, the agents/cloud-router turn
+    /// surface) resolve peer surfaces through the HTTP service registry and call
+    /// this very process over the advertised private endpoint
+    /// (`http://172.18.0.5:8080`), so those requests carry an IP-literal `Host`
+    /// that the operator allowlist and `allow_ip_hosts=false` reject — the
+    /// production `421 host_not_allowed` incident behind video generation.
+    ///
+    /// These values describe the socket the process owns, not a caller
+    /// privilege, so accepting them cannot widen who may reach the gateway.
+    /// Filled at startup from the listener address and the registry endpoint;
+    /// never loaded from TOML or the environment.
+    #[serde(skip)]
+    pub own_hosts: Vec<String>,
     /// Accept requests whose Host header is a raw IP literal (IPv4/IPv6) even
     /// when `allowed_hosts` is non-empty. Disabled by default: production
     /// keeps the exact domain allowlist. Standalone container deployments
@@ -1280,6 +1297,7 @@ impl Default for GatewaySecurityConfig {
     fn default() -> Self {
         Self {
             allowed_hosts: Vec::new(),
+            own_hosts: Vec::new(),
             allow_ip_hosts: false,
             trusted_proxy_cidrs: Vec::new(),
             secure_headers_enabled: true,

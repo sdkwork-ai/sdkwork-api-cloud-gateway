@@ -250,22 +250,31 @@ Security controls are configured through `[security]`. `secureHeadersEnabled` ad
 headers such as `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
 `Permissions-Policy`, `Content-Security-Policy`, and `Strict-Transport-Security`. `allowedHosts`
 enforces a host allowlist and returns `421` with `host_not_allowed` when a request host is rejected.
-`maxHeaderBytes` and `maxHeaderCount` reject oversized request headers with `431` and the
-`request_headers_too_large` problem title.
+The listener's own published origins are always accepted in addition to `allowedHosts`: the bound
+address and the HTTP service registry endpoint this process advertises, so an embedded consumer that
+resolves `cloudrouter`/peer surfaces through the registry and calls back over that private IP origin
+is not rejected by the gateway's own allowlist. `maxHeaderBytes` and `maxHeaderCount` reject
+oversized request headers with `431` and the `request_headers_too_large` problem title.
 
 `[security.waf]` enables a baseline in-process WAF. In `mode = "monitor"`, suspicious query strings
 or headers are allowed through and responses include `X-SDKWork-WAF-Action: monitor`. In
 `mode = "enforce"` or `mode = "block"`, matching requests return `403` with the
 `waf_request_blocked` problem title and `X-SDKWork-WAF-Action: block`. The Phase 2 baseline detects
 common script, SQL injection, path traversal, and sensitive file probes in query strings and headers;
-body inspection remains a later hardening step.
+when `inspectJsonBody` is enabled it also scans JSON string values up to a 1 MiB budget. A body past
+that budget is skipped by the WAF body stage and forwarded **intact** to the handler, where
+`request.maxBodyBytes` and policy body limits still meter it; the gateway never truncates a request
+body to satisfy inspection.
 
 Traffic controls are configured through `[traffic]`. `rateLimitEnabled` activates in-memory
 token-bucket rules from `traffic.rateLimits`; rejected requests return `429` by default with
 `Retry-After`, `RateLimit`, and `RateLimit-Policy` headers. `globalMaxInFlight` and
 `traffic.concurrencyLimits` enforce in-memory concurrency limits; rejected requests return `503`
-with the `concurrency_limit_exceeded` problem title. These stores are process-local and intended as
-Phase 1 defaults; shared Redis-backed policy state belongs in a later deployment phase.
+with the `concurrency_limit_exceeded` problem title. `client-ip` rule keys resolve the identity from
+the socket peer, honouring `X-Forwarded-For` / `X-Real-IP` only when that peer is inside
+`[security].trustedProxyCidrs`; an east-west registry call therefore keeps its own bucket instead of
+sharing one `unknown` bucket with every uninspectable client. These stores are process-local and
+intended as Phase 1 defaults; shared Redis-backed policy state belongs in a later deployment phase.
 
 Policy governance is configured through `[policy]`. Empty `rules = []` is a no-op. Each rule can
 match `matchServiceId` and/or `matchPathPrefix`, then enforce `allowedMethods` or a stricter
