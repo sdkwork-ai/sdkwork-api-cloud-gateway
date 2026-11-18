@@ -187,16 +187,40 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.86",
+    "currentVersion": "0.1.87",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.86"
+      "BETA": "0.1.87"
     },
     "notes": [
       {
-        "version": "0.1.86",
+        "version": "0.1.87",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.87",
+        "summary": "Workspace sync cut: the gateway now resolves Cloud Router-issued vendor open-api API keys (OpenAI/Anthropic `Authorization: Bearer` wire bridged to the canonical `X-API-Key` profile) and the synced sdkwork-order surface adds the backend fulfillment query plus the shipment create/mark-shipped admin actions.",
+        "highlights": [
+          "provenance: the 2026-11-18 sync fetched every sdkwork-space checkout and moved HEAD merge-only on 17 repositories (gateway 3 upstream commits, birdcoder2 819, daxuedazi 832, cloudrouter 5, specs 3, voice 3, order 3, aiot/documents/image/inventory/shop 2 each, agents/company/deployments/generations/iam/webserver 1 each); sdkwork-notary stayed preserved behind a dirty Cargo.lock; no reset, rebase, stash, clean, checkout -f or restore",
+          "vendor open-api credentials: 0c716a2 adds vendor_open_api_auth.rs — Cloud Router keys stored as peppered HMAC-SHA256 in iam_gateway_api_key are now resolved from the validated key record (API_SPEC §827) instead of a client header, and the vendor prefixes accept the published Bearer credential through a scoped bridge (APPLICATION_GATEWAY_SPEC §2.3); the pepper already reaches the container as SDKWORK_CLOUDROUTER_API_KEY_PEPPER via the GATEWAY_CLOUDROUTER_API_KEY_PEPPER compose mapping",
+          "order surface closure: sdkwork-order added GET /backend/v3/api/fulfillments and POST /backend/v3/api/shipments{,/{shipmentId}/mark_shipped}; the fulfillment backend surface is declared in specs/component.spec.json so the closure check covers 3877 method/path routes",
+          "dependency lock: the appstore upstream added sdkwork-appstore-remix-service, so Cargo.lock was regenerated and committed before the --locked build",
+          "gates: cargo fmt -- --check, cargo metadata --locked, cargo test --workspace --locked and pnpm check all exited 0 in the bookworm build container",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.87 (472.4 MB) built through bin/docker-image.sh inside the docker-socket bookworm container, then packaged into the self-contained install bundle (image.tar.gz) that the rollout loads with docker load",
+          "local parity: the local production-parity stack upgraded from the packaged bundle first — the gateway container reports 0.1.87 healthy, healthz/readyz answer 200, an unknown path answers the 401 problem envelope with code 40101 and traceId, and doctor reports 8 PASS / 1 WARN / 0 FAIL (the WARN is a false positive: the log scan matches an `errors=0` startup line, no ERROR or panic line exists)",
+          "deployment: remote production backed itself up first (set 20261118T133143Z created before any mutation), then upgraded in place from the locally packaged bundle over passwordless ssh (docker load — no registry pull), and the gateway health check passed 40s after the recreate",
+          "availability: the remote loopback sampler recorded 282 samples, 275 HTTP 200 and 7 connection failures from 13:34:19Z to 13:34:55Z (40s wall) while the single replica stopped, ran its startup schema ensure and resumed serving at 13:34:58Z; public https://api.birdcoder.com /healthz and /readyz answer 200 and an unknown path answers 401 with code 40101 and traceId",
+          "config and host: doctor on the remote reports image 0.1.87 running, 4 containers up, readyz 200, no blocking configuration drift in production and /var/lib/docker at 77%",
+          "backup safety: exactly 5 backup sets are retained on both hosts (SDKWORK_BACKUP_KEEP=5); the newest remote set (20261118T133143Z) verifies every .sha256 including a 35,138,364-byte database.dump, and the newest local set verifies the same way",
+          "rollback: 0.1.86 stays loaded on the remote; use an explicit `bin/docker-deploy.sh rollback --environment production --to 0.1.86` because the bundle release ledger is stale (its last recorded success is 0.1.37 from the older install flow, so the default no-argument rollback would not pick 0.1.86)"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.86",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.86",
         "summary": "Workspace sync cut for the east-west ingress hardening and caller-identity propagation: the gateway rate-limits by socket peer instead of client-supplied headers while keeping large request bodies, accepts its own published origin as an inbound Host, and the synced workspace carries the Drive caller dual-token propagation for canvas and notes plus the appstore remix storefront surface.",
         "highlights": [
