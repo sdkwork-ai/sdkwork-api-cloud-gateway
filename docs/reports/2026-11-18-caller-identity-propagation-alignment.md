@@ -602,3 +602,27 @@ fails on stale baseline entries.
 All three sites carry per-site tests and build in their own workspaces (image
 `cargo test --workspace`; aiot bridge 3 + edge runtime 50 in WSL with the system
 libopus; voice adapter 4 + service 1 plus workspace check).
+
+## 20. Post-completion gate sweep
+
+After the migration closed, the cross-repository gates were run over every
+repository this work touched:
+
+- `check-rust-crate-naming-standard.mjs` and `check-rust-manifest-standard.mjs`
+  over all 13 repositories (utils, web-framework, generations, canvas, notes,
+  course, knowledgebase, agents, image, aiot, voice, deployments, webserver):
+  **0 errors** everywhere.
+- `check-rust-backend-composition.mjs` for image (its SPI/service gained the
+  utils dependency): passed.
+- `cargo metadata --locked` for image, voice and utils: lockfiles consistent.
+- `check-embedded-self-loop.mjs` surfaced one **pre-existing** finding, not an
+  identity defect: the nginx importer parsed `listen` ports inline instead of
+  using the shared listener-bind helper. `sdkwork-webserver` `806d7360` delegates
+  both the http and mail listen port parsing to
+  `sdkwork_utils_rust::service_base_url::bind_port`; nginx tests pass in WSL
+  (193) and the self-loop audit now passes.
+- `check-http-registry-resolution.mjs`: 19 call sites, **19 aligned, 0 tracked**.
+
+The remaining worktree entries are another session's edits
+(`sdkwork-voice/Cargo.lock`, `sdkwork-specs/workspace/consumers/sdkwork-cloudrouter.json`)
+and were left untouched.
