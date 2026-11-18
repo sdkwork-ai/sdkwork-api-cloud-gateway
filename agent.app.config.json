@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.85",
+    "currentVersion": "0.1.86",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.85"
+      "BETA": "0.1.86"
     },
     "notes": [
       {
-        "version": "0.1.85",
+        "version": "0.1.86",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.86",
+        "summary": "Workspace sync cut for the east-west ingress hardening and caller-identity propagation: the gateway rate-limits by socket peer instead of client-supplied headers while keeping large request bodies, accepts its own published origin as an inbound Host, and the synced workspace carries the Drive caller dual-token propagation for canvas and notes plus the appstore remix storefront surface.",
+        "highlights": [
+          "provenance: the 2026-11-18 sync fetched every sdkwork-space checkout to its origin/main tip and moved five HEADs merge-only (gateway 16 upstream commits, cloudrouter 3, webserver 1, canvas 2, notes 1); agents, daxuedazi, local-mall and local-platform stayed preserved behind origin/main because a dirty file blocks their merge; no reset, rebase, stash, clean, checkout -f, restore or push",
+          "ingress hardening merged: origin/main 4419261 rate-limits by socket peer instead of client-supplied headers while keeping large request bodies, and 956671b accepts the gateway's own published origin as an inbound Host (traffic.rs, security.rs, config, service_registry, listener_main)",
+          "caller-identity propagation merged: sdkwork-canvas and sdkwork-notes carry the caller's dual tokens to the Drive app-api (their drive_in_process.rs merge conflicts resolved in favor of origin/main, whose content subsumes the local adaptation)",
+          "sibling advances: sdkwork-cloudrouter (admin product center reinstatement, model-catalog-sync contract), sdkwork-webserver (aggregated TLS SAN bootstrap includes product-edge brands), sdkwork-agents upstream Rust changes remain blocked by a dirty apps gitlink and are NOT in this cut"
+        ],
+        "packageIds": [
+          "container-x64-cloud-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.85",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.85",
         "summary": "Follow-up to the 0.1.84 workspace sync: the startup audience-allow-list diagnostic still queried the retired iam_tenant_application table, which IAM migration 0043 renamed to iam_application_installation. Every start logged `could not verify enabled IAM applications against the gateway audience allow-list ... relation \"iam_tenant_application\" does not exist` and silently skipped the check, so an enabled application missing from SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES went unreported. The query now reads the renamed installation table and the warning is gone; nothing else changed.",
         "highlights": [

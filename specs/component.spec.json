@@ -429,6 +429,13 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/carriers",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/promotions",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-promotion-backend-api",
@@ -3144,7 +3151,8 @@
         "/backend/v3/api/account_value_packages",
         "/backend/v3/api/token_bank_plans",
         "/backend/v3/api/refund_requests",
-        "/backend/v3/api/withdrawal_requests"
+        "/backend/v3/api/withdrawal_requests",
+        "/backend/v3/api/carriers"
       ],
       "cargoFeature": "foundation-order",
       "cargoDependency": "sdkwork-api-order-assembly",
