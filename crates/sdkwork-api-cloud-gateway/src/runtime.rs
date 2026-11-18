@@ -395,6 +395,16 @@ async fn build_embedded_router(
         )
         .await
         .map_err(|message| GatewayRuntimeError::ApiAssemblyComposition { message })?;
+    // API_SPEC §827: open-api API-key credentials resolve tenant/organization/
+    // user from the validated key record. Cloud Router issues its vendor keys
+    // into `iam_gateway_api_key` (HMAC-SHA256, peppered), which the platform
+    // resolver does not know about; the wrapper adds that channel and delegates
+    // every other credential channel unchanged (APPLICATION_GATEWAY_SPEC §2.3).
+    let resolver = crate::vendor_open_api_auth::wrap_gateway_api_key_resolver(
+        &config,
+        pool.as_postgres().cloned().map(std::sync::Arc::new),
+        resolver,
+    );
     #[cfg_attr(not(feature = "foundation-im-realtime"), allow(unused_mut))]
     let mut public_path_prefixes = vec!["/openapi/index.json".to_owned()];
     #[cfg(feature = "foundation-im-realtime")]

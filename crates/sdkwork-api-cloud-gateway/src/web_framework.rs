@@ -16,15 +16,45 @@ pub fn web_framework_enabled() -> bool {
     }
 }
 
-pub fn finalize_gateway_router(_config: &GatewayRuntimeConfig, router: Router) -> Router {
-    with_server_request_identity(router)
+pub fn finalize_gateway_router(config: &GatewayRuntimeConfig, router: Router) -> Router {
+    vendor_credential_bridge(config, with_server_request_identity(router))
 }
 
 pub async fn finalize_gateway_router_async(
-    _config: &GatewayRuntimeConfig,
+    config: &GatewayRuntimeConfig,
     router: Router,
 ) -> Router {
-    with_server_request_identity(router)
+    vendor_credential_bridge(config, with_server_request_identity(router))
+}
+
+/// Presents a vendor-compatible surface's published bearer credential as the
+/// canonical `X-API-Key` credential, before the Web Framework pipeline runs.
+///
+/// OpenAI/Anthropic-compatible operations publish `Authorization: Bearer <key>`
+/// (`API_SPEC.md` §4.5.2); the profile that serves them reads `X-API-Key`. The
+/// bridge keeps the published wire usable without relaxing that profile, and it
+/// is scoped to the composed dependency prefixes that actually speak that wire.
+fn vendor_credential_bridge(config: &GatewayRuntimeConfig, router: Router) -> Router {
+    let prefixes = std::sync::Arc::new(crate::vendor_open_api_auth::vendor_open_api_prefixes(
+        config,
+    ));
+    if prefixes.is_empty() {
+        return router;
+    }
+    router.layer(axum::middleware::from_fn(
+        move |mut request: axum::extract::Request, next: axum::middleware::Next| {
+            let prefixes = std::sync::Arc::clone(&prefixes);
+            async move {
+                if crate::vendor_open_api_auth::is_vendor_open_api_path(
+                    request.uri().path(),
+                    prefixes.as_slice(),
+                ) {
+                    crate::vendor_open_api_auth::bridge_vendor_authorization(request.headers_mut());
+                }
+                next.run(request).await
+            }
+        },
+    ))
 }
 
 /// Builds the platform CORS settings contribution.

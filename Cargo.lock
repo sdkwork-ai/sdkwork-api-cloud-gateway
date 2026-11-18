@@ -7073,7 +7073,6 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
- "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-appstore-routes-common",
  "sdkwork-appstore-service-host",
@@ -8504,15 +8503,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sdkwork-appstore-remix-service"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "serde",
- "tracing",
-]
-
-[[package]]
 name = "sdkwork-appstore-repository-sqlx"
 version = "0.1.0"
 dependencies = [
@@ -8526,7 +8516,6 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
- "sdkwork-appstore-remix-service",
  "sdkwork-appstore-user-store-service",
  "sdkwork-database-sqlx",
  "sdkwork-web-core",
@@ -8550,7 +8539,6 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
- "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-appstore-user-store-service",
  "sdkwork-utils-rust",
@@ -8574,7 +8562,6 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
- "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-database-sqlx",
  "sdkwork-drive-object-runtime",
@@ -11413,6 +11400,7 @@ name = "sdkwork-image-generation-provider-spi"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
@@ -11463,6 +11451,7 @@ dependencies = [
  "async-trait",
  "sdkwork-drive-workspace-service",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
 ]

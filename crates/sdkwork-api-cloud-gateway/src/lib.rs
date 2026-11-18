@@ -23,6 +23,7 @@ mod security;
 mod service_config_loader;
 pub mod service_registry;
 mod traffic;
+pub mod vendor_open_api_auth;
 pub mod web_framework;
 
 pub use error::GatewayRuntimeError;

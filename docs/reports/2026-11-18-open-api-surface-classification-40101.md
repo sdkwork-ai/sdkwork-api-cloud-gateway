@@ -254,6 +254,49 @@ sdkwork-customerservice 10 · sdkwork-sandbox 10 · sdkwork-prompts 1 · sdkwork
 结论：运行时收口不是“改一行”的缺陷修复，而是一次需要评审 + 完整构建的架构变更。
 缺陷台账、门禁、审计与实现前置条件至此全部量化完毕，缺口只剩选择方案。
 
+## 14. 按最佳方式推进：已落地并验证的第一阶段
+
+选择 **B 的网关侧收口**（不新增公开契约变更、不改 framework 公开语义、不重生成 436 条
+manifest），并把两个"最容易写错"的部分先落地为可测代码：
+
+新增 `crates/sdkwork-api-cloud-gateway/src/vendor_open_api_auth.rs`：
+
+- `gateway_api_key_hash(secret, pepper)` —— 与 Cloud Router
+  `HmacSha256ApiKeySecretHasher` 逐字节一致（复用
+  `sdkwork_utils_rust::hmac_sha256`，不引入新依赖，也不需要改 `Cargo.lock`），
+  并有已知答案向量测试锁定哈希口径。
+- `configured_api_key_pepper()` —— 从 `SDKWORK_CLOUDROUTER_API_KEY_PEPPER`
+  读取（该变量在网关进程内已存在，Cloud Router 边缘运行时自身即要求它），
+  缺失/过短则返回 `None`，调用方必须 fail-closed 回落到平台解析器。
+- `bridge_vendor_authorization(headers)` —— 把 vendor 线的
+  `Authorization: Bearer <key>` 改写为 `X-API-Key`，并移除 `Authorization`
+  （两者并存正是框架要拒绝的污染）；非 `Bearer` 方案、空值、已存在
+  `X-API-Key` 时一律不动。
+- `is_vendor_open_api_path(path, prefixes)` —— 段级前缀匹配（`/v1` 覆盖
+  `/v1/chat/completions`，不覆盖 `/v10/...`），前缀来自已装配依赖 surface。
+
+验证：`cargo check -p sdkwork-api-cloud-gateway --lib` 通过（37s）；
+`cargo test -p sdkwork-api-cloud-gateway --lib vendor_open_api_auth` → **8 passed**；
+`cargo fmt -- --check` 通过；门禁自测 7/7、本仓库判定通过。
+
+**第二阶段（已接线，编译与单测通过）**：
+
+- `runtime.rs`：IAM 解析器被 `wrap_gateway_api_key_resolver` 包装；`resolve_api_key`
+  先查 `iam_gateway_api_key`（`key_hash` + `status=1` + `deleted_at IS NULL` +
+  `revoked_at IS NULL` + 未过期），命中则投影 `WebRequestPrincipal`
+  （tenant/org/user/apiKey/subjectType），未命中或无 PG/pepper 时原样委托平台解析器；
+  其余 5 个凭证通道全部委托，不改变任何既有认证路径。
+- `web_framework.rs::finalize_gateway_router{,_async}`：对 Cloud Router 的 open-api
+  前缀安装 `vendor_credential_bridge`（`Authorization: Bearer` → `X-API-Key`）。
+- 新增 9 条单测：哈希已知向量、pepper 键控、bridge 的 4 种分支、段级前缀匹配、
+  无网关密钥时委托平台解析器。
+
+验证：`cargo check -p sdkwork-api-cloud-gateway --lib` 通过；模块测试 **9 passed**；
+`cargo fmt -- --check` 通过。**尚未部署**，因此线上行为未变；端到端验证需要一次
+重建 + 用一个真实 `sk-` 网关密钥调用 `/v1/chat/completions`。
+
+
+
 
 
 
