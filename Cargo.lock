@@ -7073,6 +7073,7 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
+ "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-appstore-routes-common",
  "sdkwork-appstore-service-host",
@@ -7287,6 +7288,7 @@ dependencies = [
  "sdkwork-im-database-pool",
  "sdkwork-image-generation-provider-adapter",
  "sdkwork-image-generation-provider-spi",
+ "sdkwork-payment-providers",
  "sdkwork-utils-rust",
  "sdkwork-web-axum",
  "sdkwork-web-bootstrap",
@@ -7347,6 +7349,7 @@ dependencies = [
  "sdkwork-account-service-host",
  "sdkwork-api-feeds-assembly",
  "sdkwork-api-models-assembly",
+ "sdkwork-cloudrouter-config",
  "sdkwork-cloudrouter-edge-runtime",
  "sdkwork-cloudrouter-http",
  "sdkwork-cloudrouter-security",
@@ -8501,6 +8504,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-appstore-remix-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-appstore-repository-sqlx"
 version = "0.1.0"
 dependencies = [
@@ -8514,6 +8526,7 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
+ "sdkwork-appstore-remix-service",
  "sdkwork-appstore-user-store-service",
  "sdkwork-database-sqlx",
  "sdkwork-web-core",
@@ -8537,6 +8550,7 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
+ "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-appstore-user-store-service",
  "sdkwork-utils-rust",
@@ -8560,6 +8574,7 @@ dependencies = [
  "sdkwork-appstore-moderation-service",
  "sdkwork-appstore-publisher-service",
  "sdkwork-appstore-release-service",
+ "sdkwork-appstore-remix-service",
  "sdkwork-appstore-repository-sqlx",
  "sdkwork-database-sqlx",
  "sdkwork-drive-object-runtime",
@@ -9747,6 +9762,7 @@ name = "sdkwork-content-course-service"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "sqlx",
@@ -10164,6 +10180,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-deploy-identity-provisioning-port"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest 0.13.1",
+ "sdkwork-iam-web-adapter",
+ "sdkwork-utils-rust",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-deploy-runtime-compiler"
 version = "0.1.0"
 dependencies = [
@@ -10190,6 +10220,7 @@ dependencies = [
  "sdkwork-deploy-core",
  "sdkwork-deploy-database-host",
  "sdkwork-deploy-drive-port",
+ "sdkwork-deploy-identity-provisioning-port",
  "sdkwork-deploy-web-port",
  "sdkwork-intelligence-deploy-repository-sqlx",
  "sdkwork-intelligence-deploy-service",
@@ -11524,6 +11555,7 @@ dependencies = [
  "chrono",
  "idna",
  "psl",
+ "reqwest 0.13.1",
  "sdkwork-database-id",
  "sdkwork-deploy-certificate-material",
  "sdkwork-deploy-cloud-account-port",
@@ -11532,11 +11564,13 @@ dependencies = [
  "sdkwork-deploy-core",
  "sdkwork-deploy-drive-port",
  "sdkwork-deploy-feed",
+ "sdkwork-deploy-identity-provisioning-port",
  "sdkwork-deploy-runtime-compiler",
  "sdkwork-deploy-web-port",
  "sdkwork-utils-rust",
  "sdkwork-webserver-acme-service",
  "serde_json",
+ "tokio",
  "tracing",
 ]
 
@@ -11920,6 +11954,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "uuid",
 ]
 
 [[package]]
@@ -13343,6 +13378,7 @@ dependencies = [
 name = "sdkwork-order-integration-partner"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "sdkwork-commerce-partner-repository-sqlx",
  "sdkwork-commerce-partner-service",
  "sdkwork-contract-service",
@@ -13407,6 +13443,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "sdkwork-contract-service",
+ "sdkwork-order-integration-partner",
  "sdkwork-order-service",
  "sdkwork-payment-repository-sqlx",
  "sdkwork-payment-service",

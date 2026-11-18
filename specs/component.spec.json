@@ -429,6 +429,13 @@
     },
     {
       "surface": "backend",
+      "prefix": "/backend/v3/api/carriers",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
       "prefix": "/backend/v3/api/promotions",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-promotion-backend-api",
@@ -528,6 +535,13 @@
     {
       "surface": "app",
       "prefix": "/app/v3/api/withdrawals",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/cashier",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-order-app-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -1251,6 +1265,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/appstore/listings",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-appstore-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/listings",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-appstore-app-api",
@@ -1539,6 +1560,13 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/audit_logs",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-deploy-backend-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "backend",
+      "prefix": "/backend/v3/api/apps",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route"
@@ -2558,6 +2586,7 @@
       "sdkFamily": "sdkwork-appstore-app-sdk",
       "apiPrefixes": [
         "/app/v3/api/appstore/catalog",
+        "/app/v3/api/appstore/listings",
         "/app/v3/api/listings",
         "/app/v3/api/publishers",
         "/app/v3/api/releases",
@@ -3099,7 +3128,8 @@
         "/app/v3/api/recharges",
         "/app/v3/api/memberships/orders",
         "/app/v3/api/app_template_orders",
-        "/app/v3/api/withdrawals"
+        "/app/v3/api/withdrawals",
+        "/app/v3/api/cashier"
       ],
       "cargoFeature": "foundation-order",
       "cargoDependency": "sdkwork-api-order-assembly",
@@ -3121,7 +3151,8 @@
         "/backend/v3/api/account_value_packages",
         "/backend/v3/api/token_bank_plans",
         "/backend/v3/api/refund_requests",
-        "/backend/v3/api/withdrawal_requests"
+        "/backend/v3/api/withdrawal_requests",
+        "/backend/v3/api/carriers"
       ],
       "cargoFeature": "foundation-order",
       "cargoDependency": "sdkwork-api-order-assembly",
@@ -3330,6 +3361,7 @@
       "sdkFamily": "sdkwork-deployments-backend-sdk",
       "apiPrefixes": [
         "/backend/v3/api/audit_logs",
+        "/backend/v3/api/apps",
         "/backend/v3/api/app_templates",
         "/backend/v3/api/template_categories",
         "/backend/v3/api/build_queue",
