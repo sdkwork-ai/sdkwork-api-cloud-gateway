@@ -71,7 +71,7 @@ silent pass, never an unrecorded new site. The infrastructure check also require
 `caller_identity.rs`. The spec section now states the carrier contract, the access-first wire order,
 the per-call/credential-keyed client rule, and points its verification at this gate.
 
-Workspace run: 6,268 Rust files, **19** registry-resolved call sites, **16 aligned**, **3 tracked**.
+Workspace run: 6,268 Rust files, **19** registry-resolved call sites, **19 aligned**, **0 tracked**.
 
 ## 3. Audit matrix (read-only, four parallel audits)
 
@@ -554,3 +554,51 @@ webserver daemon 25 + 4.
 
 The goal is reported blocked on those three decisions; the migration itself has
 no unexplained or silently exempted site left.
+
+## 19. Final round — the three decided sites (image, aiot, voice)
+
+With the owner's decisions recorded in the decision note
+(`2026-11-18-registry-identity-open-decisions.md`), all three remaining sites are
+migrated and the gate is clean.
+
+### image (`95eb48f`)
+
+The regenerated cloudrouter open-api no longer publishes midjourney or
+nano-banana image operations. The adapter drops those vendor routes (routing
+returns no route, `validate` reports unsupported capability), keeps OpenAI image
+generation and Vidu reference-to-image, and reconciles the request builders with
+the regenerated models. Identity: `with_caller` on the provider trait,
+`ImageGenerationService::with_caller` binding, clients pooled by
+`(base URL, credential fingerprint)`, caller pair on a user dispatch, declared
+open-api key only on the caller-less background/retrieval path, host binds the
+caller from the app-api handler. Tests: pool key separation, OpenAI/Vidu request
+contracts, no-route decisions, test doubles implement `with_caller`.
+
+### aiot (`87c5fc8`)
+
+`SpeechTurnInput` carries tenant/organization/user/device attribution, populated
+from the device association already registered at the WebSocket handshake (new
+`association_for_ws_session_id` lookup). The bridge declares `identity:service`
+with its justification: the edge holds no end-user tokens and the cloud-router
+ASR/TTS endpoints take no tenant field, so attribution travels with the turn
+while the dispatch presents the declared machine identity. Tests: session lookup
+returns the attribution; simulator turn construction uses defaults.
+
+### voice (`b511d53`)
+
+The speech request reconciles with the regenerated SDK (removed `metadata`
+parameter now rejected explicitly), and the module gains
+`build_voice_generation_service_for_caller` for a user-scoped route while the
+caller-less builder stays the declared bootstrap path (marker with
+justification). Tests: regenerated model mapping, metadata rejection.
+
+### Final matrix
+
+`node sdkwork-specs/tools/check-http-registry-resolution.mjs --workspace <root>`
+→ 6,268 Rust files, **19 call sites, 19 aligned, 0 tracked**; the gate also
+covers raw HTTP clients, rejects `set_api_key` without `identity:service`, and
+fails on stale baseline entries.
+
+All three sites carry per-site tests and build in their own workspaces (image
+`cargo test --workspace`; aiot bridge 3 + edge runtime 50 in WSL with the system
+libopus; voice adapter 4 + service 1 plus workspace check).
