@@ -1,12 +1,12 @@
-# SDKWork API Cloud Gateway — container runtime config (host-mounted override).
+# SDKWork API Cloud Gateway 鈥?container runtime config (host-mounted override).
 #
 # This file is mounted read-only at the canonical container/Ubuntu config path
 #   /etc/sdkwork/api-gateway/config.toml
-# (APPLICATION_DEPLOY_LAYOUT_SPEC + RUNTIME_DIRECTORY_SPEC §4.5). Same layout
+# (APPLICATION_DEPLOY_LAYOUT_SPEC + RUNTIME_DIRECTORY_SPEC 搂4.5). Same layout
 # as the Ubuntu systemd install. Edit host-side to change settings that
 # environment variables do not cover.
 #
-# Configuration precedence (ENVIRONMENT_SPEC §3):
+# Configuration precedence (ENVIRONMENT_SPEC 搂3):
 #   1. built-in defaults
 #   2. this TOML file
 #   3. process environment (docker-compose.yml / .env)  <- wins over this file
@@ -22,7 +22,7 @@
 # /run/secrets/sdkwork/api-gateway/<secret-name> (container) or
 # /etc/sdkwork/api-gateway/secrets/ (Ubuntu install) and reference file paths
 # from config, or inject SDKWORK_*_FILE env pointers
-# (ENVIRONMENT_SPEC §7.3, RUNTIME_DIRECTORY_SPEC §11).
+# (ENVIRONMENT_SPEC 搂7.3, RUNTIME_DIRECTORY_SPEC 搂11).
 
 mode = "embedded"
 
@@ -111,6 +111,9 @@ rateLimitEnabled = true
 compatXRateLimitHeaders = true
 globalMaxInFlight = 4096
 rateLimits = [
+  # Buyer cart writes: add/update/delete mutate buyer-owned rows, so a scripted
+  # client gets a strict per-IP budget instead of the wide default.
+  { id = "cart-write-ip", matchPathPrefix = "/app/v3/api/cart", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },
   # Credential routes: brute-force protection, strict per-IP budget.
   { id = "auth-credential-ip", matchPathPrefix = "/app/v3/api/auth", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },
   { id = "iam-backend-ip", matchPathPrefix = "/backend/v3/api/iam", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },

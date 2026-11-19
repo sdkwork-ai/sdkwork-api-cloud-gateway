@@ -99,6 +99,9 @@ rateLimitEnabled = true
 compatXRateLimitHeaders = true
 globalMaxInFlight = 4096
 rateLimits = [
+  # Buyer cart writes: add/update/delete mutate buyer-owned rows, so a scripted
+  # client gets a strict per-IP budget instead of the wide default.
+  { id = "cart-write-ip", matchPathPrefix = "/app/v3/api/cart", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },
   # Credential routes: brute-force protection, strict per-IP budget.
   { id = "auth-credential-ip", matchPathPrefix = "/app/v3/api/auth", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },
   { id = "iam-backend-ip", matchPathPrefix = "/backend/v3/api/iam", key = "client-ip", capacity = 20, refillPerSecond = 10, rejectStatus = 429 },

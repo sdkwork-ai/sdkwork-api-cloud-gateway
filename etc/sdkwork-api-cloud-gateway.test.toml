@@ -83,7 +83,10 @@ inspectJsonBody = false
 rateLimitEnabled = false
 compatXRateLimitHeaders = true
 globalMaxInFlight = 32
-rateLimits = []
+rateLimits = [
+  # Buyer cart writes: add/update/delete mutate buyer-owned rows, so a scripted
+  # client gets a strict per-IP budget instead of the wide default.
+  { id = "cart-write-ip", matchPathPrefix = "/app/v3/api/cart", key = "client-ip", capacity = 60, refillPerSecond = 30, rejectStatus = 429 },]
 concurrencyLimits = []
 
 [policy]
