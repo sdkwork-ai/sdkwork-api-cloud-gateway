@@ -108,18 +108,21 @@ CREATE UNIQUE INDEX uk_storage_vendor_asset_ttl
 - `GET /backend/v3/api/storage/vendor_asset_ttls`（`vendorAssetTtl.list`）
 - `PUT /backend/v3/api/storage/vendor_asset_ttls/{vendorCode}/{mediaKind}`（`vendorAssetTtl.update`）
 
-### 5.2 内部解析接口（机器身份 + `Access-Token`，复用已完成的 `ServiceCredentials` 链路）
+### 5.2 解析接口（按调用者身份解析，创建时快照）
 
-`GET /internal/v3/api/storage/generation_delivery?mediaKind=video&userId=...`
+`GET /app/v3/api/storage/generation_delivery?mediaKind=video&vendorCode=vidu`
 
-返回解析后的有效策略（含 `source_scope`、`resolved_from`、`assets_expires_at` 所需 TTL、`drive_target`）。生成服务在生成完成事件里调用一次并缓存（带 revision，策略变更可通过缓存失效生效）。
+- **为什么不用 internal-api**：CloudRouter 目前没有 internal-api surface（只有 app/backend/open），而解析必须按**目标租户/组织/用户**进行；用部署级机器密钥无法安全地替任意租户解析（会跨租户越权），新增 internal surface 又要重建一套清单/契约/SDK 链。app-api 天然携带登录用户的 `Authorization + Access-Token`，由 IAM 解析出 tenant/org/user，正好是策略作用域，且本会话已保证调用方双令牌透传。
+- 生成服务在**创建生成时**（用户请求上下文内）调用一次，得到解析后的有效策略并**随生成记录持久化快照**（含 `source_scope`、TTL、截止时间）；后台完成/轮询任务只消费快照，不需要再次取用户凭证。
+- 无用户上下文的纯后台流程（如设备轮次触发）使用系统默认（`remote_only`），并在记录中标记 `policySnapshotSource = default`。
+- 内部一致性：解析实现只有一个（`AdminStorageStore::resolve_generation_delivery` + `domain/storage_delivery`），管理端列表/更新与 app-api 解析共用同一规则。
 
 ## 6. 生成侧集成
 
 统一流程（generations/image/voice 共用）：
 
-1. 生成完成（vendor 返回资产 URL/bytes + 到期时间）。
-2. 解析投递策略（§5.2；调用方身份已由本会话的 `CallerCredentials`/服务身份链路保证）。
+1. **创建生成时**（用户请求内）调用 §5.2 解析有效策略，并随生成记录持久化快照（含来源作用域、TTL、下载截止）。
+2. 生成完成（vendor 返回资产 URL/bytes + 到期时间）后，后台任务消费该快照；没有快照（纯后台触发）时按系统默认（`remote_only`）。
 3. `remote_only`：记录 `remote_url` 与 `expires_at`，状态 `skipped`；到接近过期仍未下载时按 `vendor_expiry_action` 处理（告警/保留引用/清理）。
 4. `to_drive`：按目标空间/目录创建节点 → 分片上传（复用 image 的 Drive import 运行时）→ 回填 `drive_*`；成功后按 `delete_remote_after_download` 清理远端。
 5. 失败：指数退避重试（受 `download_deadline_seconds` 约束），超过截止置 `failed` 并发出可观测事件；**绝不**在过期后伪造成功。
