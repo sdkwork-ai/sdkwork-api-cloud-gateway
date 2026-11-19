@@ -485,6 +485,13 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/cart",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-order-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/cashier",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-order-app-api",
