@@ -48,7 +48,7 @@ Scope: sdkwork-cloudrouter（存储中心）、sdkwork-generations、sdkwork-ima
 
 - 取第一个命中行；缺失字段继承下一层（逐字段合并，不整行覆盖），避免"只改一个字段就得复制整行"。
 - 解析结果带 `source_scope` 与 `resolved_from` 链，便于审计与 UI 展示来源。
-- 无任何行时使用**系统默认**：`delivery_mode = to_drive`（推荐，见 §11）、`vendor_expiry_action = keep_reference`、`delete_remote_after_download = true`。
+- 无任何行时使用**系统默认**：`delivery_mode = remote_only`（**默认不落 Drive，节约存储与流量成本**，已确认）、`vendor_expiry_action = keep_reference`、`delete_remote_after_download = true`；只有显式配置了 `to_drive` 的作用域才把生成物下载到 Drive。
 
 ### 3.3 vendor 过期表
 
@@ -153,13 +153,13 @@ CREATE UNIQUE INDEX uk_storage_vendor_asset_ttl
 
 ## 10. 迁移与兼容
 
-- 默认策略 = `to_drive`（推荐）或"保持现状"（`remote_only` 等价），由租户显式切换；上线初期默认值应与当前实际行为一致，避免静默改变。
+- 默认策略 = `remote_only`（**已确认：默认不保存到 Drive，节约成本**）；租户/组织/用户显式配置 `to_drive` 后才下载，且策略缺省时与"仅保留 vendor 远端引用"的现状一致，不会静默改变行为。
 - 旧结果回填 `skipped`；image 现有导入行为通过缺省策略保留。
 - feature flag 控制"策略读取失败时回退到当前硬编码行为"，并在指标中暴露回退次数。
 
 ## 11. 待确认决策（附推荐）
 
-1. **默认投递模式**：推荐 `to_drive`（生成物进入 Drive，符合产品定位与"存储中心可配置"的目标）；备选"保持现状"。
+1. **默认投递模式**：已确认 **`remote_only`**（生成物默认只保留 vendor 远端引用，不进入 Drive，节约存储与流量成本）；需要沉淀到 Drive 的租户/组织/用户显式配置 `to_drive`。
 2. **Drive 目标默认**：推荐租户存储中心里"按媒体类型配置默认空间+目录"（`image/video/audio` 三行默认），用户可覆盖；空则落到用户默认空间根目录。
 3. **过期未下载的默认动作**：推荐 `keep_reference`（保留远端引用 + 告警，不自动删除用户可能还想要的内容），运营可按租户改为 `fail_job`/`delete_remote`。
 
