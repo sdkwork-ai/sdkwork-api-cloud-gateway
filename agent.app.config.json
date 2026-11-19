@@ -194,9 +194,33 @@
     },
     "notes": [
       {
-        "version": "0.1.87",
+        "version": "0.1.92",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.92",
+        "summary": "Workspace sync rollout with two upstream-defect fixes landed forward: the cloudrouter generation-asset-delivery migration was renumbered past the taken 0052 (checksum_mismatch crash-loop) and the duplicated mcp/agents manifest entries 10f614e2 added on top of the mounted sdkwork-mcp/sdkwork-agents capabilities were dropped (composed route collision crash-loop). Ship includes the synced workspace: cloudrouter storage generation_delivery app surface, IAM application-type validation, community native mini-program pages, agents/plugins/skills catalog admin surfaces, and the invocation timeout + billing settlement hardening.",
+        "highlights": [
+          "provenance: the 2026-11-20 sync fetched all 108 registered sdkwork-space submodules and moved 2 HEADs merge-only (birdcoder2 2 commits, cloudrouter already synced); gateway itself had 0 upstream commits; no reset, rebase, stash, clean, checkout -f or restore",
+          "local parity caught defect 1 before any remote mutation: the upstream 0052_generation_asset_delivery migration (11-19) reused version 0052 of the already-applied 0052_upstream_account_group_default_per_modality (11-17, shipped in 0.1.89), so sqlx bootstrap failed with checksum_mismatch on every environment database; fixed forward in sdkwork-cloudrouter 5ce8dc79 by renumbering to 0053 (lossless: never applied anywhere)",
+          "local parity caught defect 2: 10f614e2 re-declared the mcp admin domain (9 paths) and the ai agents/agent_categories domain (8 paths) in the cloudrouter host backend manifest while sdkwork-mcp and sdkwork-agents stay mounted dependencies owning those exact paths; try_merge_mounts rejected same-method/same-path entries from two owners and the gateway crash-looped at composition (RestartCount 17); fixed forward in sdkwork-cloudrouter 11e31a32 by dropping the duplicated host entries, keeping the mounted capabilities' ownership and the non-colliding /ai/plugins* and /ai/skill_* additions",
+          "gates: cargo fmt -- --check, cargo metadata --locked, cargo test --workspace --locked, pnpm check (standards/topology/closure/db-pool/model-catalog/cors) and the three openssl-dependent cargo feature checks all exited 0 (feature checks inside the bookworm build container); two cloudrouter unit tests remain failing for pre-existing reasons documented in 11e31a32 (stale IAM applications.register assertion after the 2026-11-19 sdkwork-iam installation-lifecycle rework)",
+          "closure fix: the synced cloudrouter app-api added GET /app/v3/api/storage/generation_delivery; the gateway apiSurfaces contract declares the prefix route (2478f85) so the closure check covers it",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.92 (472.9 MB, sha256:7066475a) built through bin/docker-image.sh inside the docker-socket bookworm container; the self-contained install bundle packaged afterwards via pnpm build:container:install (image.tar.gz sha256 46c6e171) — the first remote upgrade attempt pushed the stale 0.1.89 bundle because docker-image.sh build does not refresh dist/docker-install; packaging the install bundle is a required step for remote rollouts",
+          "local parity: the local production stack upgraded 0.1.87 -> 0.1.92, healthy after 60s, RestartCount 0, healthz/readyz 200, doctor 7 PASS / 0 FAIL (2 benign WARN: errors=0 log-line false positive, pre-upgrade image-version comparison)",
+          "deployment: remote production backed itself up first (set 20261119T183949Z, 7 components, checksums verified) then upgraded in place from the packaged bundle over passwordless ssh (docker load, no registry pull — registry.sdkwork.com TLS cert mismatch remains benign for the bundle channel); healthy after 45s with RestartCount 0 and untouched postgres/redis",
+          "availability: the remote loopback sampler recorded 2051 HTTP 200 samples and exactly 24 connection failures confined to 18:42:18Z-18:43:21Z (~5s single-replica recreate window)",
+          "public edge: https://api.birdcoder.com/healthz and /readyz answer 200; an unknown path answers 404 with numeric code 40401 and traceId in the sdkwork-v3 ProblemDetail",
+          "backup safety: remote production keeps exactly 5 backup sets (SDKWORK_BACKUP_KEEP=5 auto-prune plus explicit removal of the two oldest sets 20261118T101027Z and 20261118T133143Z after two upgrade attempts created two new sets); the newest set verifies all checksums including a 37,004,194-byte database.dump",
+          "rollback: 0.1.89 stays loaded on the remote; use an explicit `bin/docker-deploy.sh rollback --environment production --to 0.1.89 --host ssh://ubuntu@api.noaper.com --yes` because the bundle release ledger is stale"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.87",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.87",
         "summary": "Workspace sync cut: the gateway now resolves Cloud Router-issued vendor open-api API keys (OpenAI/Anthropic `Authorization: Bearer` wire bridged to the canonical `X-API-Key` profile) and the synced sdkwork-order surface adds the backend fulfillment query plus the shipment create/mark-shipped admin actions.",
         "highlights": [
