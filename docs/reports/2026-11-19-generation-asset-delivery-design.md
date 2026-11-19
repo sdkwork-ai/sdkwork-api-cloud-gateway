@@ -185,7 +185,8 @@ CREATE UNIQUE INDEX uk_storage_vendor_asset_ttl
 | P1b 存储中心管理 API（策略 + vendor TTL） | 完成 | cloudrouter `03e10a60` |
 | P2a app-api 解析端点（按调用者身份） | 完成 | cloudrouter `e9def02d`、`2b795dd2` |
 | P2b-1 generations 投递快照表 + 领域契约 + 默认解析器 | 完成 | generations `da47de0` |
-| P2b-2 解析客户端 + 创建时解析写快照 + 完成时应用（remote_only 记录 / to_drive 上传） | 待做 | — |
+| P2b-2 解析适配器（app-api、按调用者绑定） | 完成 | generations `3ccc584` |
+| P2b-3 仓储 + 创建时解析写快照 + 完成时应用（remote_only 记录 / to_drive 上传） | 待做（generations 的 service/ports 正被并发会话修改，等其合并后再接线） | — |
 | P3 image / voice 接入策略 | 待做 | — |
 | P4 vendor 过期扫描/告警、用户级设置、配额联动 | 待做 | — |
 
