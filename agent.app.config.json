@@ -194,9 +194,31 @@
     },
     "notes": [
       {
-        "version": "0.1.93",
+        "version": "0.1.94",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.94",
+        "summary": "Buyer cart app-api rollout: the parallel session's cart work landed upstream (nine sdkwork-order cart commits, gateway per-IP write-path bounding, payment refund-compensation unification) and 0.1.94 ships it end to end — the gateway manifest now materializes /app/v3/api/cart/current and /app/v3/api/cart/items{,/{cartItemId}}, order migration 0023_commerce_cart applied on the production database, and the storefront cart calls that answered 40401 on 0.1.92-0.1.93 now reach the authenticated order surface. Built as 0.1.94 per the renumber declared at the 0.1.93 collision merge; one upstream build defect was fixed forward (order assembly E0004 under the container feature set).",
+        "highlights": [
+          "provenance: ff-only sync pulled sdkwork-order d911541..7a735a1 (cart-app-api publish, transactional validated buyer cart, checkout cart consumption, PostgreSQL regression suite, abandonment expiry, sellable-stock shortage flags, decision docs), sdkwork-payment 6d21c35 (provider refund-flow unification) and gateway e508f92 (buyer-cart write-path per-IP bounding) + 32eff02 (lockfile resync); the 0.1.94 version was pre-declared at the 0.1.93 collision merge (34f5f6e)",
+          "build fix-forward: sdkwork-order e11c22d — the cart abandonment sweep matched only DatabasePool::Postgres, which compiled under the order workspace's own feature set but broke the gateway's platform-foundation-suite-container build with E0004 (`&DatabasePool::Sqlite(_, _)` not covered; the container feature unification exposes the Sqlite variant); the sweep now stays off non-Postgres pools per DATABASE_SPEC authoritative-server instead of failing assembly",
+          "concurrent-session race: a parallel webserver session ran `pnpm build:container` on this host and its staging rm removed this session's staged docker context mid-build — the legacy builder failed at the chmod RUN layer and the leftover checksums.sha256 listed only data/sdkwork-models (proof the context was truncated after staging completed); resolved by a coordination message to that session and re-running the docker-build step with --skip-build reusing the finished cargo artifacts inside the bookworm build container",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.94 (477.4 MB, imageId sha256:8d1993e9e936) built through the bookworm container (cargo artifacts 15m26s + 21m26s); install bundle packaged via pnpm build:container:install (image.tar.gz sha256 537a2904140d657232e96834e4201f25ab83d9d6f01c1e5566b1f662b66ecf31) and verified as the newest dist/docker-install bundle before the remote push",
+          "local parity: the local production stack upgraded 0.1.93 -> 0.1.94, healthy after the 85s wait (first boot applies order 0023_commerce_cart — the 1.33s DDL exceeded the 1s slow-statement alert, benign); the composed manifest declares /app/v3/api/cart/current and /app/v3/api/cart/items{,/{cartItemId}}; GET /app/v3/api/cart/current answers 40101 authentication-required (route registered, tenant auth gate active); no panics, composed-route collisions or checksum mismatches",
+          "backup safety: explicit pre-deploy set 20261119T221029Z and the upgrade's own auto-backup 20261119T221116Z (config + 37,189,984-byte database.dump + four volumes + secrets, sha256-verified) with SDKWORK_BACKUP_KEEP=5 pruning the oldest sets — remote production keeps exactly 5 backup sets",
+          "deployment: remote production upgraded in place 0.1.93 -> 0.1.94 over passwordless ssh from the packaged bundle (docker load, no registry pull); knowledgebase-rpc and gateway recreated onto 0.1.94 and healthy within the 40s compose wait; postgres/redis untouched (36h uptime); doctor 7 PASS / 0 FAIL with 2 WARN (benign errors=0 log-keyword match, /var/lib/docker at 87% with ~17G free)",
+          "verification: remote GET /app/v3/api/cart/current answers 40101 (registered) instead of the 40401 route-not-in-manifest seen on 0.1.92/0.1.93; information_schema on the production database confirms commerce_cart and commerce_cart_item were created by 0023 on boot; public edge https://api.birdcoder.com/healthz and /readyz answer 200 through the upgraded gateway",
+          "rollback: the 0.1.93 image stays loaded on the remote as the rollback target; `bin/docker-deploy.sh rollback --environment production --to 0.1.93 --host ssh://ubuntu@api.noaper.com --yes`",
+          "follow-up: /var/lib/docker at 87% — gateway images 0.1.85 through 0.1.94 are all loaded; a human-approved docker rmi sequence keeping the 0.1.93 rollback target is recommended before the next rollout"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.93",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.93",
         "summary": "Publish-and-sync rollout: the pending local gateway/cloudrouter/mall commits were pushed to origin main first, the workspace re-pulled ff-only (community/deployments/documents/iam/order updated), and 0.1.93 was built, validated on the local parity production stack, then upgraded in place on remote production over passwordless ssh. The gateway behavior delta is the freshly pulled sibling updates only; the release's engineering note is that the container image build now requires the bookworm build container because the synced graph compiles native-tls/openssl-sys under the container feature set and the Ubuntu 26.04 host ships no libssl-dev.",
         "highlights": [
@@ -1485,26 +1507,6 @@
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
           "linux-x64-cloud-server-tar-gz",
-          "container-x64-standalone-container-oci"
-        ]
-      },
-      {
-        "version": "0.1.94",
-        "channel": "BETA",
-        "current": false,
-        "title": "sdkwork-api-cloud-gateway-v0.1.94",
-        "summary": "Buyer cart app-api integrated into the sdkwork-order dependency surface. POST /app/v3/api/cart/items answered 40401 route-not-in-manifest because the published commerce app contract declares cart.current.retrieve and cart.items.create|update|delete while no T1 assembly exported those routes: the retired catalog module dropped commerce_cart/commerce_cart_item together with its handlers, so the gateway route manifest carried 0 of the 1161 app-api paths for cart. Order now owns the buyer cart (one active cart per tenant+buyer, lines snapshotted against the merchandise SKU) and the gateway composes it through the existing embedded sdkwork-order-app-api surface. Renumbered 0.1.93 -> 0.1.94 at merge time because a parallel session already built and deployed a different 0.1.93 (the workspace-sync rollout above); this entry ships once the sdkwork-order cart-app-api commit reaches origin.",
-        "highlights": [
-          "root cause: contract and runtime had diverged, not a gateway misconfiguration. The gateway is embedded-only and materializes its route manifest from the WebModule each dependency assembly exports; /app/v3/api/cart was absent from every assembly. Verified on production 0.1.92: /openapi.json declares 2919 paths (1161 under /app/v3/api) with catalog 7, shops 35, orders 28, checkout 5, payments, wallet, promotions, memberships, invoices and refunds all present, and 0 cart paths; the production database held 1251 tables and none matching cart",
-          "ownership: the storefront calls commerce().cart.items.create from @sdkwork/cloudrouter-app-sdk, and sdkwork-order already owns checkout (POST /app/v3/api/checkout/sessions) that consumes cartItemIds, so the cart lands in sdkwork-order",
-          "sdkwork-order change: migration 0023_commerce_cart (commerce_cart + commerce_cart_item, partial unique index uk_commerce_cart_owner_active on tenant+owner where status='active', unique (cart_id, sku_id), quantity>0 check, cart-delete cascade); domain rules and CommerceCartStore port; PostgresCartStore; cart_router with GET /cart/current, POST /cart/items, PATCH and DELETE /cart/items/{cartItemId}; 4 manifest entries keeping operation ids cart.current.retrieve and cart.items.create|update|delete; the order app OpenAPI authority plus the regenerated order app SDK (order-cart transport + cart types); commerce_cart/commerce_cart_item added to the database table registry",
-          "response shape matches the clients already shipping: data.item is the cart for the current-cart read, the line (with its id) for create/update, and delete answers 204; quantity travels as int32 and every id/amount stays a decimal string per the int64 wire contract",
-          "gates: cargo test -p sdkwork-order-service (70 passed), -p sdkwork-routes-order-app-api (66 passed incl. manifest_methods_match_openapi_authority), -p sdkwork-api-order-assembly (cart_route_manifest passed); check-api-operation-patterns and check-api-response-envelope passed; materialize-api-assembly and validate-api-assembly passed",
-          "database proof on real PostgreSQL 18: the migration applied inside a throwaway schema (dropped afterwards) and the repository SQL held every invariant — duplicate cart insert left 1 active cart, re-adding a SKU incremented 1->3, owner-scoped update matched 1 row, foreign-scoped delete matched 0, cart delete cascaded the last line to 0, and quantity 0 was rejected by the check constraint",
-          "gateway change: specs/component.spec.json declares /app/v3/api/cart on the sdkwork-order-app-api surface so the prefix closure check covers the new routes",
-          "image not built in this session: this workstation has no Docker daemon (no Docker Desktop service, no docker binary in WSL Ubuntu-22.04, and WSL has no outbound network so it cannot be installed), so the image and the remote rollout still need bin/docker-image.sh build --image-tag 0.1.93 followed by bin/docker-deploy.sh install --environment production --yes; the container entrypoint runs --migrate-databases, so 0023 applies on boot"
-        ],
-        "packageIds": [
           "container-x64-standalone-container-oci"
         ]
       }
