@@ -113,6 +113,10 @@ ENV SDKWORK_API_CLOUD_GATEWAY_RUNTIME_TARGET=container
 # are installed at the install root; the gateway resolves the component
 # contract and IAM tenant provisioning through it (application root ".").
 ENV SDKWORK_APP_ROOT=${INSTALL_ROOT}
+# Local filesystem drive export root for the in-process memory grounding
+# (sdkwork-memory-drive): the gateway-data volume keeps the content-addressed
+# object store alongside the rest of the gateway's writable state.
+ENV SDKWORK_MEMORY_DRIVE_OBJECT_STORE_ROOT=/var/lib/sdkwork/api-gateway/memory-drive-object-store
 # Packaged database module root: each host resolves its packaged module under
 # <install root>/database-modules/<workspace>/database (compile-time app roots
 # do not exist inside the image). The per-workspace app roots below mirror the
@@ -158,6 +162,7 @@ ENV SDKWORK_DATABASE_MODULES_ROOT=${INSTALL_ROOT}/database-modules \
     SDKWORK_MAHJONG_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-mahjong \
     SDKWORK_MAIL_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-mail \
     SDKWORK_MANAGER_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-manager \
+    SDKWORK_MEMORY_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-memory \
     SDKWORK_MCP_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-mcp \
     SDKWORK_MEMBERSHIP_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-membership \
     SDKWORK_MERCHANDISE_APP_ROOT=${INSTALL_ROOT}/database-modules/sdkwork-merchandise \
