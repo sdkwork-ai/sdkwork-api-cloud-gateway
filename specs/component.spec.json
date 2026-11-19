@@ -722,6 +722,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/storage/generation_delivery",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/ai",
       "ownership": "dependency",
