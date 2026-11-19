@@ -187,10 +187,10 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.93",
+    "currentVersion": "0.1.94",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.93"
+      "BETA": "0.1.94"
     },
     "notes": [
       {
@@ -1485,6 +1485,26 @@
         "packageIds": [
           "linux-x64-standalone-server-tar-gz",
           "linux-x64-cloud-server-tar-gz",
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.94",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.94",
+        "summary": "Buyer cart app-api integrated into the sdkwork-order dependency surface. POST /app/v3/api/cart/items answered 40401 route-not-in-manifest because the published commerce app contract declares cart.current.retrieve and cart.items.create|update|delete while no T1 assembly exported those routes: the retired catalog module dropped commerce_cart/commerce_cart_item together with its handlers, so the gateway route manifest carried 0 of the 1161 app-api paths for cart. Order now owns the buyer cart (one active cart per tenant+buyer, lines snapshotted against the merchandise SKU) and the gateway composes it through the existing embedded sdkwork-order-app-api surface. Renumbered 0.1.93 -> 0.1.94 at merge time because a parallel session already built and deployed a different 0.1.93 (the workspace-sync rollout above); this entry ships once the sdkwork-order cart-app-api commit reaches origin.",
+        "highlights": [
+          "root cause: contract and runtime had diverged, not a gateway misconfiguration. The gateway is embedded-only and materializes its route manifest from the WebModule each dependency assembly exports; /app/v3/api/cart was absent from every assembly. Verified on production 0.1.92: /openapi.json declares 2919 paths (1161 under /app/v3/api) with catalog 7, shops 35, orders 28, checkout 5, payments, wallet, promotions, memberships, invoices and refunds all present, and 0 cart paths; the production database held 1251 tables and none matching cart",
+          "ownership: the storefront calls commerce().cart.items.create from @sdkwork/cloudrouter-app-sdk, and sdkwork-order already owns checkout (POST /app/v3/api/checkout/sessions) that consumes cartItemIds, so the cart lands in sdkwork-order",
+          "sdkwork-order change: migration 0023_commerce_cart (commerce_cart + commerce_cart_item, partial unique index uk_commerce_cart_owner_active on tenant+owner where status='active', unique (cart_id, sku_id), quantity>0 check, cart-delete cascade); domain rules and CommerceCartStore port; PostgresCartStore; cart_router with GET /cart/current, POST /cart/items, PATCH and DELETE /cart/items/{cartItemId}; 4 manifest entries keeping operation ids cart.current.retrieve and cart.items.create|update|delete; the order app OpenAPI authority plus the regenerated order app SDK (order-cart transport + cart types); commerce_cart/commerce_cart_item added to the database table registry",
+          "response shape matches the clients already shipping: data.item is the cart for the current-cart read, the line (with its id) for create/update, and delete answers 204; quantity travels as int32 and every id/amount stays a decimal string per the int64 wire contract",
+          "gates: cargo test -p sdkwork-order-service (70 passed), -p sdkwork-routes-order-app-api (66 passed incl. manifest_methods_match_openapi_authority), -p sdkwork-api-order-assembly (cart_route_manifest passed); check-api-operation-patterns and check-api-response-envelope passed; materialize-api-assembly and validate-api-assembly passed",
+          "database proof on real PostgreSQL 18: the migration applied inside a throwaway schema (dropped afterwards) and the repository SQL held every invariant — duplicate cart insert left 1 active cart, re-adding a SKU incremented 1->3, owner-scoped update matched 1 row, foreign-scoped delete matched 0, cart delete cascaded the last line to 0, and quantity 0 was rejected by the check constraint",
+          "gateway change: specs/component.spec.json declares /app/v3/api/cart on the sdkwork-order-app-api surface so the prefix closure check covers the new routes",
+          "image not built in this session: this workstation has no Docker daemon (no Docker Desktop service, no docker binary in WSL Ubuntu-22.04, and WSL has no outbound network so it cannot be installed), so the image and the remote rollout still need bin/docker-image.sh build --image-tag 0.1.93 followed by bin/docker-deploy.sh install --environment production --yes; the container entrypoint runs --migrate-databases, so 0023 applies on boot"
+        ],
+        "packageIds": [
           "container-x64-standalone-container-oci"
         ]
       }
