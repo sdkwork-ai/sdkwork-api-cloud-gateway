@@ -176,3 +176,17 @@ CREATE UNIQUE INDEX uk_storage_vendor_asset_ttl
 | P4 | vendor 过期扫描/告警/审计 + 用户级设置接口 + 配额联动 | 定时任务测试、审计断言、配额超额测试 |
 
 每阶段独立可合并、可回滚；P1 不改变任何现有运行时行为。
+
+## 13. 实现进度
+
+| 阶段 | 状态 | 提交 |
+|---|---|---|
+| P1a 存储中心表 / 契约 / 解析规则 / 持久化 | 完成 | cloudrouter `af9874f6`；默认 `remote_only` `4575eb9e` |
+| P1b 存储中心管理 API（策略 + vendor TTL） | 完成 | cloudrouter `03e10a60` |
+| P2a app-api 解析端点（按调用者身份） | 完成 | cloudrouter `e9def02d`、`2b795dd2` |
+| P2b-1 generations 投递快照表 + 领域契约 + 默认解析器 | 完成 | generations `da47de0` |
+| P2b-2 解析客户端 + 创建时解析写快照 + 完成时应用（remote_only 记录 / to_drive 上传） | 待做 | — |
+| P3 image / voice 接入策略 | 待做 | — |
+| P4 vendor 过期扫描/告警、用户级设置、配额联动 | 待做 | — |
+
+已确认默认：**不保存到 Drive（`remote_only`）**，只有显式配置 `to_drive` 的 tenant/organization/user 才下载。
