@@ -194,9 +194,30 @@
     },
     "notes": [
       {
-        "version": "0.1.92",
+        "version": "0.1.93",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.93",
+        "summary": "Publish-and-sync rollout: the pending local gateway/cloudrouter/mall commits were pushed to origin main first, the workspace re-pulled ff-only (community/deployments/documents/iam/order updated), and 0.1.93 was built, validated on the local parity production stack, then upgraded in place on remote production over passwordless ssh. The gateway behavior delta is the freshly pulled sibling updates only; the release's engineering note is that the container image build now requires the bookworm build container because the synced graph compiles native-tls/openssl-sys under the container feature set and the Ubuntu 26.04 host ships no libssl-dev.",
+        "highlights": [
+          "provenance: pull-all-repos.sh ran ff-only across the 108 sdkwork-space checkouts (community, deployments, documents, iam, order moved HEAD; birdcoder2/daxuedazi skipped as dirty non-dependencies); before the build, the local gateway (b76c3a3), cloudrouter (ebceca3b incl. the 0053 migration renumber and mcp/agents manifest dedup) and mall (5141f45) commits were pushed to origin main; no reset, rebase, stash, clean, checkout -f or restore",
+          "image build defect: bin/docker-image.sh build failed on the host at openssl-sys v0.9.117 — the synced upstream graph pulls native-tls into platform-foundation-suite-container (sdkwork-im audit-service and reqwest/opentelemetry-otlp paths) and the previously cached 10-29 openssl-sys artifact no longer satisfied the fingerprint, forcing a rebuild the Ubuntu 26.04 host cannot perform (no libssl-dev/pkg-config, no passwordless sudo); fixed operationally by running the same bin/docker-image.sh entrypoint inside the running gw-build-023 bookworm container (mounted /work, RUSTUP_HOME=/opt/rustup, CARGO_HOME=/opt/cargo-home, openssl 3.0.22, docker socket) so the evidence trap stayed in the loop",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.93 (473.0 MB) built in the bookworm container; install bundle packaged afterwards via pnpm build:container:install (image.tar.gz sha256 75e9780bd1f7ac1786b3cfaa23dc60660b88f28424b188734603f724cfbbcdbf) and verified as the newest dist/docker-install bundle so the remote push could not pick a stale 0.1.92 bundle",
+          "local parity: the local production stack upgraded 0.1.92 -> 0.1.93, healthy after the 60s wait, healthz {\"status\":\"ok\"}, sqlx migrations clean (no checksum_mismatch), no composed-route collisions, background workers running, postgres/redis untouched (up 38h)",
+          "backup safety: explicit pre-deploy set 20261119T200815Z created on the remote with SDKWORK_BACKUP_KEEP=5 (config + 37,111,015-byte database.dump + postgres/redis volumes + secrets, sha256-verified) and the upgrade's own auto-backup 20261119T200906Z; retention pruned the oldest sets so remote production keeps exactly 5 backup sets",
+          "deployment: remote production upgraded in place 0.1.92 -> 0.1.93 over passwordless ssh from the packaged bundle (docker load, no registry pull — the registry.sdkwork.com TLS mismatch stays benign for the bundle channel); knowledgebase-rpc and gateway recreated onto 0.1.93 and healthy within the compose wait (~50s), postgres/redis untouched (up 34h)",
+          "availability: single-replica recreate window confined to the compose recreate step (seconds-scale, same pattern as 0.1.92); public edge https://api.birdcoder.com/healthz and /readyz answer 200 through the upgraded gateway; doctor 7 PASS / 0 FAIL with 2 WARN (benign errors=0 log-line match, /var/lib/docker at 85% with 18G free)",
+          "rollback: the 0.1.92 image stays loaded on the remote as the rollback target; `bin/docker-deploy.sh rollback --environment production --to 0.1.92 --host ssh://ubuntu@api.noaper.com --yes`",
+          "follow-up: /var/lib/docker at 85% — gateway images 0.1.85 through 0.1.93 are all loaded (~2.4 GB each before layer sharing); a human-approved docker rmi sequence keeping the 0.1.92 rollback target is recommended before the next rollout"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.92",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.92",
         "summary": "Workspace sync rollout with two upstream-defect fixes landed forward: the cloudrouter generation-asset-delivery migration was renumbered past the taken 0052 (checksum_mismatch crash-loop) and the duplicated mcp/agents manifest entries 10f614e2 added on top of the mounted sdkwork-mcp/sdkwork-agents capabilities were dropped (composed route collision crash-loop). Ship includes the synced workspace: cloudrouter storage generation_delivery app surface, IAM application-type validation, community native mini-program pages, agents/plugins/skills catalog admin surfaces, and the invocation timeout + billing settlement hardening.",
         "highlights": [
