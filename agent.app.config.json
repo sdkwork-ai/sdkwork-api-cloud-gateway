@@ -187,12 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.93",
+    "currentVersion": "0.1.94",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.93"
+      "BETA": "0.1.94"
     },
     "notes": [
+      {
+        "version": "0.1.93",
+        "channel": "BETA",
+        "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.93",
+        "summary": "Publish-and-sync rollout: the pending local gateway/cloudrouter/mall commits were pushed to origin main first, the workspace re-pulled ff-only (community/deployments/documents/iam/order updated), and 0.1.93 was built, validated on the local parity production stack, then upgraded in place on remote production over passwordless ssh. The gateway behavior delta is the freshly pulled sibling updates only; the release's engineering note is that the container image build now requires the bookworm build container because the synced graph compiles native-tls/openssl-sys under the container feature set and the Ubuntu 26.04 host ships no libssl-dev.",
+        "highlights": [
+          "provenance: pull-all-repos.sh ran ff-only across the 108 sdkwork-space checkouts (community, deployments, documents, iam, order moved HEAD; birdcoder2/daxuedazi skipped as dirty non-dependencies); before the build, the local gateway (b76c3a3), cloudrouter (ebceca3b incl. the 0053 migration renumber and mcp/agents manifest dedup) and mall (5141f45) commits were pushed to origin main; no reset, rebase, stash, clean, checkout -f or restore",
+          "image build defect: bin/docker-image.sh build failed on the host at openssl-sys v0.9.117 — the synced upstream graph pulls native-tls into platform-foundation-suite-container (sdkwork-im audit-service and reqwest/opentelemetry-otlp paths) and the previously cached 10-29 openssl-sys artifact no longer satisfied the fingerprint, forcing a rebuild the Ubuntu 26.04 host cannot perform (no libssl-dev/pkg-config, no passwordless sudo); fixed operationally by running the same bin/docker-image.sh entrypoint inside the running gw-build-023 bookworm container (mounted /work, RUSTUP_HOME=/opt/rustup, CARGO_HOME=/opt/cargo-home, openssl 3.0.22, docker socket) so the evidence trap stayed in the loop",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.93 (473.0 MB) built in the bookworm container; install bundle packaged afterwards via pnpm build:container:install (image.tar.gz sha256 75e9780bd1f7ac1786b3cfaa23dc60660b88f28424b188734603f724cfbbcdbf) and verified as the newest dist/docker-install bundle so the remote push could not pick a stale 0.1.92 bundle",
+          "local parity: the local production stack upgraded 0.1.92 -> 0.1.93, healthy after the 60s wait, healthz {\"status\":\"ok\"}, sqlx migrations clean (no checksum_mismatch), no composed-route collisions, background workers running, postgres/redis untouched (up 38h)",
+          "backup safety: explicit pre-deploy set 20261119T200815Z created on the remote with SDKWORK_BACKUP_KEEP=5 (config + 37,111,015-byte database.dump + postgres/redis volumes + secrets, sha256-verified) and the upgrade's own auto-backup 20261119T200906Z; retention pruned the oldest sets so remote production keeps exactly 5 backup sets",
+          "deployment: remote production upgraded in place 0.1.92 -> 0.1.93 over passwordless ssh from the packaged bundle (docker load, no registry pull — the registry.sdkwork.com TLS mismatch stays benign for the bundle channel); knowledgebase-rpc and gateway recreated onto 0.1.93 and healthy within the compose wait (~50s), postgres/redis untouched (up 34h)",
+          "availability: single-replica recreate window confined to the compose recreate step (seconds-scale, same pattern as 0.1.92); public edge https://api.birdcoder.com/healthz and /readyz answer 200 through the upgraded gateway; doctor 7 PASS / 0 FAIL with 2 WARN (benign errors=0 log-line match, /var/lib/docker at 85% with 18G free)",
+          "rollback: the 0.1.92 image stays loaded on the remote as the rollback target; `bin/docker-deploy.sh rollback --environment production --to 0.1.92 --host ssh://ubuntu@api.noaper.com --yes`",
+          "follow-up: /var/lib/docker at 85% — gateway images 0.1.85 through 0.1.93 are all loaded (~2.4 GB each before layer sharing); a human-approved docker rmi sequence keeping the 0.1.92 rollback target is recommended before the next rollout"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
       {
         "version": "0.1.92",
         "channel": "BETA",
@@ -1468,11 +1489,11 @@
         ]
       },
       {
-        "version": "0.1.93",
+        "version": "0.1.94",
         "channel": "BETA",
-        "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.93",
-        "summary": "Buyer cart app-api integrated into the sdkwork-order dependency surface. POST /app/v3/api/cart/items answered 40401 route-not-in-manifest because the published commerce app contract declares cart.current.retrieve and cart.items.create|update|delete while no T1 assembly exported those routes: the retired catalog module dropped commerce_cart/commerce_cart_item together with its handlers, so the gateway route manifest carried 0 of the 1161 app-api paths for cart. Order now owns the buyer cart (one active cart per tenant+buyer, lines snapshotted against the merchandise SKU) and the gateway composes it through the existing embedded sdkwork-order-app-api surface.",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.94",
+        "summary": "Buyer cart app-api integrated into the sdkwork-order dependency surface. POST /app/v3/api/cart/items answered 40401 route-not-in-manifest because the published commerce app contract declares cart.current.retrieve and cart.items.create|update|delete while no T1 assembly exported those routes: the retired catalog module dropped commerce_cart/commerce_cart_item together with its handlers, so the gateway route manifest carried 0 of the 1161 app-api paths for cart. Order now owns the buyer cart (one active cart per tenant+buyer, lines snapshotted against the merchandise SKU) and the gateway composes it through the existing embedded sdkwork-order-app-api surface. Renumbered 0.1.93 -> 0.1.94 at merge time because a parallel session already built and deployed a different 0.1.93 (the workspace-sync rollout above); this entry ships once the sdkwork-order cart-app-api commit reaches origin.",
         "highlights": [
           "root cause: contract and runtime had diverged, not a gateway misconfiguration. The gateway is embedded-only and materializes its route manifest from the WebModule each dependency assembly exports; /app/v3/api/cart was absent from every assembly. Verified on production 0.1.92: /openapi.json declares 2919 paths (1161 under /app/v3/api) with catalog 7, shops 35, orders 28, checkout 5, payments, wallet, promotions, memberships, invoices and refunds all present, and 0 cart paths; the production database held 1251 tables and none matching cart",
           "ownership: the storefront calls commerce().cart.items.create from @sdkwork/cloudrouter-app-sdk, and sdkwork-order already owns checkout (POST /app/v3/api/checkout/sessions) that consumes cartItemIds, so the cart lands in sdkwork-order",
