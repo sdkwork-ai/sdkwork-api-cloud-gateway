@@ -3143,7 +3143,8 @@
         "/app/v3/api/memberships/orders",
         "/app/v3/api/app_template_orders",
         "/app/v3/api/withdrawals",
-        "/app/v3/api/cashier"
+        "/app/v3/api/cashier",
+        "/app/v3/api/cart"
       ],
       "cargoFeature": "foundation-order",
       "cargoDependency": "sdkwork-api-order-assembly",
