@@ -550,12 +550,21 @@ fn gateway_iam_allowed_audiences() -> Result<Vec<String>, GatewayRuntimeError> {
     Ok(audiences)
 }
 
-/// Enabled tenant applications whose session audience the gateway would reject.
+/// Enabled installations whose credential audience the gateway would reject.
 ///
 /// The audience allow-list is an environment value, while applications are
 /// registered in the IAM database; a newly enabled application silently fails
 /// every API call until an operator edits the environment. Startup reports the
 /// mismatch instead of leaving it to a user-visible 401.
+///
+/// The compared value is the audience the installation's credentials actually
+/// carry, not its registration id: `iam_session.app_id` and a deployment
+/// credential's `app_id`/`aud` are the deploy application anchor whenever the
+/// row has one (`iam_application_installation.deploy_application_id`), and only
+/// a legacy installation without an anchor keeps the registration `app_id`.
+/// Reporting the registration id would tell an operator to allow an id that no
+/// credential ever presents, while the anchor that is really rejected stays out
+/// of the list.
 fn missing_gateway_iam_audiences(enabled_app_ids: &[String], audiences: &[String]) -> Vec<String> {
     let allowed = audiences
         .iter()
@@ -568,15 +577,22 @@ fn missing_gateway_iam_audiences(enabled_app_ids: &[String], audiences: &[String
         .collect()
 }
 
+/// Effective credential audience of every enabled installation.
+///
+/// `COALESCE` mirrors `resolve_access_token_app_id`: an installation linked to a
+/// deploy application is identified by that anchor, an unlinked legacy
+/// installation by its own registration id.
+const ENABLED_INSTALLATION_AUDIENCE_SQL: &str =
+    "SELECT COALESCE(NULLIF(BTRIM(deploy_application_id), ''), app_id) \
+     FROM iam_application_installation WHERE status = 'enabled' ORDER BY 1";
+
 async fn warn_missing_gateway_iam_audiences(pool: &DatabasePool, audiences: &[String]) {
     let Some(pg) = pool.as_postgres() else {
         return;
     };
-    let enabled_app_ids = match sqlx::query_scalar::<_, String>(
-        "SELECT app_id FROM iam_application_installation WHERE status = 'enabled' ORDER BY app_id",
-    )
-    .fetch_all(pg)
-    .await
+    let enabled_app_ids = match sqlx::query_scalar::<_, String>(ENABLED_INSTALLATION_AUDIENCE_SQL)
+        .fetch_all(pg)
+        .await
     {
         Ok(app_ids) => app_ids,
         Err(error) => {
@@ -593,7 +609,7 @@ async fn warn_missing_gateway_iam_audiences(pool: &DatabasePool, audiences: &[St
         tracing::warn!(
             target: "sdkwork.api.cloud_gateway",
             missing = ?missing,
-            "SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES is missing enabled tenant applications; sessions for these app ids will be rejected by the gateway"
+            "SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES is missing enabled tenant applications; credentials for these audiences will be rejected by the gateway"
         );
     }
 }
