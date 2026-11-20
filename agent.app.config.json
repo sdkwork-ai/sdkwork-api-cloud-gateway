@@ -187,16 +187,31 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.95",
+    "currentVersion": "0.1.96",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.95"
+      "BETA": "0.1.96"
     },
     "notes": [
       {
-        "version": "0.1.95",
+        "version": "0.1.96",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.96",
+        "summary": "Workspace sync rollout for the application-factory wave: the gateway startup audience diagnostic now reports the credential audience that is actually rejected, and the synced workspace carries the sdkwork-iam application-factory safety guards with materialized v3 command and nested provider-account boundaries, the sdkwork-deployments factory reconciliation worker with lifecycle and environment-promotion guards, and the sdkwork-utils machine/caller service-identity carriers.",
+        "highlights": [
+          "provenance: ff-only sync moved 9 of 110 sdkwork-space checkouts — sdkwork-api-cloud-gateway f2b5751..a4617c9 (startup audience diagnostic reports the actually-rejected audience), sdkwork-iam 3cd10e57..0301b3c0 (application factory safety guards, tenant sql scope checks, v3 command/nested provider account boundaries, oauth scan-login fixtures), sdkwork-deployments 1402e1e..84d69e4 (factory reconciliation worker, application factory lifecycle and environment promotion guards, app-token tenant id fix), sdkwork-utils d6bfd85..7f97637 (machine service-identity carrier, caller-identity carrier for backend SDK calls), sdkwork-cloudrouter 9e94a183..d99ec890, sdkwork-specs 3413b85..27e9a5d (contract check command-verb tolerance, application factory standard tooling), sdkwork-birdcoder2, sdkwork-missory and sdkwork-sandbox; no reset, rebase, stash, clean, checkout -f or restore",
+          "lock: Cargo.lock regenerated for the synced sibling manifests (+17 lines) and pushed to origin main as 987943e before the build per the release-cut-before-build discipline",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.95",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.95",
         "summary": "Anonymous device/QR login recovery and after-sales refund settlement linking: the gateway credential-header guard no longer rejects the ambient browser Cookie header on anonymous auth entry points, so a same-origin device authorization call succeeds for visitors who already hold an unrelated session cookie, and sdkwork-order now links after-sales refunds to settlement records (migration 0024_after_sales_refund_link, applied on boot).",
         "highlights": [
