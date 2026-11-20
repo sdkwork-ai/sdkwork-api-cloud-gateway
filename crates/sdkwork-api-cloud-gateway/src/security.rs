@@ -317,10 +317,19 @@ fn validate_csrf(
     Ok(())
 }
 
-/// Reject credential headers on anonymous auth entry points when
-/// `rejectCredentialHeadersOnAnonymousAuthRoutes` is enabled. Anonymous
-/// routes must not carry session/API credentials; forwarding them risks
-/// credential leakage to downstream services and silent auth confusion.
+/// Reject caller-attached credential headers on anonymous auth entry points
+/// when `rejectCredentialHeadersOnAnonymousAuthRoutes` is enabled. Anonymous
+/// routes cannot act on a credential, so forwarding one risks credential
+/// leakage to downstream services and silent auth confusion.
+///
+/// `Cookie` is intentionally NOT in this set. A same-origin browser `fetch`
+/// always carries every cookie stored for the origin, and the generated SDKs
+/// never suppress it, so rejecting `Cookie` here turns a normal browser
+/// device/QR login (`POST /app/v3/api/oauth/device_authorizations`) into a
+/// `400` for any visitor who happens to hold an unrelated session cookie —
+/// including the desktop/web clients that call this gateway. Cookies are
+/// ambient browser state, not a credential the calling code attaches; the
+/// cookie-bearing state-changing path stays governed by `validate_csrf`.
 fn validate_credential_headers_on_anonymous_routes(
     config: &GatewaySecurityConfig,
     request: &Request<Body>,
@@ -334,7 +343,6 @@ fn validate_credential_headers_on_anonymous_routes(
     let credential_headers = [
         header::AUTHORIZATION,
         HeaderName::from_static("access-token"),
-        header::COOKIE,
         HeaderName::from_static("x-api-key"),
     ];
     if let Some(name) = credential_headers
@@ -443,9 +451,85 @@ mod tests {
         ] {
             assert!(
                 is_anonymous_auth_route(path),
-                "expected anonymous route `{path}` to reject credential headers"
+                "expected anonymous route `{path}` to be subject to the credential-header rule"
             );
         }
+    }
+
+    fn anonymous_route_request(
+        header_name: HeaderName,
+        header_value: &'static str,
+    ) -> Request<Body> {
+        Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/oauth/device_authorizations")
+            .header(header_name, header_value)
+            .body(Body::empty())
+            .expect("anonymous device authorization request")
+    }
+
+    #[test]
+    fn anonymous_device_flow_routes_reject_caller_attached_credentials() {
+        let config = GatewaySecurityConfig {
+            reject_credential_headers_on_anonymous_auth_routes: true,
+            ..GatewaySecurityConfig::default()
+        };
+
+        for (name, value) in [
+            (header::AUTHORIZATION, "Bearer stale-session-token"),
+            (
+                HeaderName::from_static("access-token"),
+                "stale-access-token",
+            ),
+            (HeaderName::from_static("x-api-key"), "stale-api-key"),
+        ] {
+            let request = anonymous_route_request(name.clone(), value);
+            let rejection = validate_credential_headers_on_anonymous_routes(&config, &request)
+                .expect_err("caller-attached credential must be rejected on an anonymous route");
+            assert_eq!(rejection.status, StatusCode::BAD_REQUEST);
+            assert_eq!(
+                rejection.title,
+                "credential_headers_not_allowed_on_anonymous_route"
+            );
+            assert!(
+                rejection.detail.contains(&name.to_string()),
+                "detail `{}` must name header `{name}`",
+                rejection.detail
+            );
+        }
+    }
+
+    #[test]
+    fn anonymous_device_flow_routes_tolerate_browser_cookies() {
+        let config = GatewaySecurityConfig {
+            reject_credential_headers_on_anonymous_auth_routes: true,
+            ..GatewaySecurityConfig::default()
+        };
+
+        // A browser attaches every cookie for the origin to a same-origin
+        // device/QR-login call, even when that cookie has nothing to do with
+        // the anonymous flow. The route must stay reachable.
+        let request = anonymous_route_request(header::COOKIE, "sdkwork_session=unrelated");
+        validate_credential_headers_on_anonymous_routes(&config, &request)
+            .expect("browser-attached cookie must not block an anonymous device route");
+
+        // Tolerating the ambient cookie never masks an explicit credential.
+        let mixed = Request::builder()
+            .method(Method::POST)
+            .uri("/app/v3/api/oauth/device_authorizations")
+            .header(header::COOKIE, "sdkwork_session=unrelated")
+            .header(
+                HeaderName::from_static("access-token"),
+                "stale-access-token",
+            )
+            .body(Body::empty())
+            .expect("mixed anonymous device authorization request");
+        let mixed_rejection = validate_credential_headers_on_anonymous_routes(&config, &mixed)
+            .expect_err("explicit credential must still be rejected alongside a cookie");
+        assert_eq!(
+            mixed_rejection.title,
+            "credential_headers_not_allowed_on_anonymous_route"
+        );
     }
 
     #[test]
