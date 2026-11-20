@@ -674,6 +674,22 @@
       "outputGlobs": [
         "dist/container/*.tar"
       ]
+    },
+    {
+      "id": "container-x64-standalone-container-oci",
+      "profileBinding": "fixed",
+      "deploymentProfile": "standalone",
+      "runtimeTarget": "container",
+      "profile": "container",
+      "platform": "container",
+      "architecture": "x64",
+      "formats": [
+        "oci"
+      ],
+      "runner": "ubuntu-24.04",
+      "outputGlobs": [
+        "dist/container/*.tar"
+      ]
     }
   ],
   "security": {

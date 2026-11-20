@@ -187,16 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.94",
+    "currentVersion": "0.1.95",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.94"
+      "BETA": "0.1.95"
     },
     "notes": [
       {
-        "version": "0.1.94",
+        "version": "0.1.95",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.95",
+        "summary": "Anonymous device/QR login recovery and after-sales refund settlement linking: the gateway credential-header guard no longer rejects the ambient browser Cookie header on anonymous auth entry points, so a same-origin device authorization call succeeds for visitors who already hold an unrelated session cookie, and sdkwork-order now links after-sales refunds to settlement records (migration 0024_after_sales_refund_link, applied on boot).",
+        "highlights": [
+          "provenance: ff-only sync pulled sdkwork-api-cloud-gateway f363c94..8398fb3 (ambient-cookie tolerance on anonymous device authorization), sdkwork-order e11c22d..a4f1fe7 (after-sales refund to settlement link, backend commerce-admin routes, migration 0024) and sdkwork-cloudrouter b300120e..9e94a183 (edge deployment bundle) with sdkwork-specs 467ea58..3413b85",
+          "security: `validate_credential_headers_on_anonymous_routes` keeps rejecting caller-attached Authorization/access-token/x-api-key headers on anonymous routes while tolerating Cookie; the cookie-bearing state-changing path stays governed by the CSRF validator, and new tests cover both the rejection and the ambient-cookie pass-through",
+          "database: order migration 0024_after_sales_refund_link is applied by the embedded database bootstrap on boot; it adds the refund-request to settlement-record link used by the commerce-admin after-sales surface",
+          "gate: cargo metadata --locked, cargo fmt --check, cargo test --workspace --locked and the full pnpm check aggregate pass in the bookworm build container; `pnpm check` surfaced a pre-existing manifest/workflow gap (the current release package `container-x64-standalone-container-oci` had no matching single-format workflow target) fixed forward by declaring that standalone container target in agent.workflow.json",
+          "image: registry.sdkwork.com/apps/sdkwork-api-cloud-gateway:0.1.95 (473.4 MB, imageId sha256:e9790a03ca9b) built through the bookworm container; install bundle packaged via `pnpm build:container:install --skip-image-build` (image.tar.gz sha256 69cbda4c77dc…) and confirmed as the newest dist/docker-install bundle before the remote push",
+          "local parity: the local production stack upgraded 0.1.94 -> 0.1.95 and reported healthy after 65s; order migration 0024_after_sales_refund_link applied on boot at 08:39:19Z with the commerce_after_sales_request.refund_request_id column present; healthz/readyz answer 200; doctor 8 PASS / 0 FAIL with 1 WARN (/var/lib/docker 81%); local production backups pruned to exactly 5 sets",
+          "deployment: remote production upgraded in place 0.1.94 -> 0.1.95 over passwordless ssh from the packaged bundle (docker load, no registry pull); knowledgebase-rpc and gateway recreated onto 0.1.95 and healthy within the 40s compose wait; postgres/redis untouched (47h uptime); doctor 8 PASS / 0 FAIL with 1 WARN (disk 89%, ~13G free)",
+          "backup safety: the upgrade's pre-change backup 20261120T084046Z carries config + a 37,534,258-byte database.dump + four volumes + secrets (sha256-verified) and SDKWORK_BACKUP_KEEP=5 pruned the oldest sets — remote production keeps exactly 5 backup sets",
+          "verification: remote order migration 0024 applied at 08:43:38Z with refund_request_id present; a browser-style anonymous device authorization (Cookie + Origin + Sec-Fetch-Site: same-origin) answers code 0 and returns a QR session instead of the previous 400 credential-header rejection, while a caller-attached access-token still answers 400 credential_headers_not_allowed_on_anonymous_route; public edge healthz/readyz answer 200 and the 5s edge sampler recorded 41 x 200 against 4 connection failures (~20s) across the recreate",
+          "rollback: the 0.1.94 image stays loaded on the remote as the rollback target; `bin/docker-deploy.sh rollback --environment production --to 0.1.94 --host ssh://ubuntu@api.noaper.com --yes`",
+          "follow-up: remote /var/lib/docker at 89% (~13G free) with gateway images 0.1.85 through 0.1.95 loaded; a human-approved docker rmi sequence keeping the 0.1.94 rollback target is recommended before the next rollout"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.94",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.94",
         "summary": "Buyer cart app-api rollout: the parallel session's cart work landed upstream (nine sdkwork-order cart commits, gateway per-IP write-path bounding, payment refund-compensation unification) and 0.1.94 ships it end to end — the gateway manifest now materializes /app/v3/api/cart/current and /app/v3/api/cart/items{,/{cartItemId}}, order migration 0023_commerce_cart applied on the production database, and the storefront cart calls that answered 40401 on 0.1.92-0.1.93 now reach the authenticated order surface. Built as 0.1.94 per the renumber declared at the 0.1.93 collision merge; one upstream build defect was fixed forward (order assembly E0004 under the container feature set).",
         "highlights": [
