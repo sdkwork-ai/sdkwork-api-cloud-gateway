@@ -15,6 +15,8 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use sdkwork_api_cloud_gateway_config::{DependencyRuntimeMode, GatewayRuntimeConfig};
+// The route-auth assertions are compiled behind `foundation-birdcoder2`.
+#[cfg(feature = "foundation-birdcoder2")]
 use sdkwork_web_contract::RouteAuth;
 
 fn application_root() -> &'static Path {
