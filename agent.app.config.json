@@ -110,7 +110,7 @@
           "deploymentProfile": "standalone",
           "runtimeTarget": "container",
           "targetPlatform": "linux",
-          "enabled": true,
+          "enabled": false,
           "url": "https://registry.sdkwork.com/apps/sdkwork-api-cloud-gateway@sha256:d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08",
           "checksumAlgorithm": "SHA-256",
           "checksum": "d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08"
@@ -178,7 +178,7 @@
           "deploymentProfile": "cloud",
           "runtimeTarget": "container",
           "targetPlatform": "linux",
-          "enabled": true,
+          "enabled": false,
           "url": "https://registry.sdkwork.com/apps/sdkwork-api-cloud-gateway@sha256:d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08",
           "checksumAlgorithm": "SHA-256",
           "checksum": "d85647a6918315c7adab648f94b6222ba91fa8c7a90a9918b08aa5d630ad7f08"
@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.99",
+    "currentVersion": "0.1.100",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.99"
+      "BETA": "0.1.100"
     },
     "notes": [
       {
-        "version": "0.1.99",
+        "version": "0.1.100",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.100",
+        "summary": "Fresh production rollout to the new api.aidaxuesheng.com host (43.142.122.230) with external PostgreSQL 19 + Redis 8.10.3 dependencies per DEPLOYMENT_SPEC.md 6.1, carrying the fresh-install baseline-migration wave from the 8-repo workspace sync (sdkwork-database lifecycle baseline coverage on fresh installs, sdkwork-iam wechat component operator platform tables folded into the IAM baseline, sdkwork-webserver disposable-PostgreSQL lifecycle alignment) and the node contract suite / clippy cleanliness restoration that removes the workflow-matrix container targets.",
+        "highlights": [
+          "provenance: update-all --latest advanced 8 of 110 sdkwork-space checkouts (sdkwork-agents, sdkwork-cloudrouter, sdkwork-database, sdkwork-deployments, sdkwork-drive, sdkwork-iam, sdkwork-specs, sdkwork-webserver) plus gateway fd23cf9 (node contract suite and clippy restoration); no reset, rebase, stash, clean, checkout -f or restore; sdkwork-birdcoder/sdkwork-test were already at their recorded origin/main tips (proxy flake, behind=0)",
+          "contract: agent.workflow.json no longer declares container targets (deployment-contract.test.mjs + GITHUB_WORKFLOW_SPEC.md bind OCI evidence to the repository@sha256 locator in dist/container-image.json; the container channel stays bin/docker-image.sh); pnpm test was absent from the 0.1.95-0.1.99 gate runs so the drift went unnoticed until this sync",
+          "clippy: security.rs helpers now precede the tests module with expect_err conversions, service_registry.rs builds GatewayRuntimeConfig with struct-update syntax, cors_admin.rs authorize keeps the rendered ProblemDetail error with an annotated allow(clippy::result_large_err), comments_proxy.rs drops a useless Bytes conversion, embedded_dependency_routes.rs gates its tracing import behind foundation-agents-cloudrouter-embedded",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked, pnpm check aggregate, pnpm test (108 node tests), pnpm lint (clippy -D warnings), workflow:validate all exit 0 in the gw-build-023 bookworm build container",
+          "target: local production-parity upgrade verified first, then a fresh install --deps external onto api.aidaxuesheng.com (43.142.122.230) whose PostgreSQL 19 carries a dedicated sdkwork CA + SAN server cert (api.aidaxuesheng.com, host.docker.internal), hostssl scram pg_hba for the docker bridge, and the sdkwork_ai_prod role/database/schema"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.99",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.99",
         "summary": "Second local-parity fix-forward of the 0.1.97 workspace sync wave: the sdkwork-rtc boot-time provider defaults seeding now acts as the numeric system actor \"0\" (matching the SQL seeds and the BIGINT created_by/updated_by persistence schema) on top of the natural-key legacy-id adoption, so the gateway builds the sdkwork-cloudrouter-app-api embedded router cleanly on seeded databases. Carries the full 0.1.97 wave: deployments app templates renamed to application scaffolds with the gateway component contract following, sdkwork-iam tenant applications renamed to installations across APIs and SDKs, and sdkwork-deployments consuming installation lifecycle endpoints.",
         "highlights": [
