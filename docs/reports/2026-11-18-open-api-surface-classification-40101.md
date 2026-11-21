@@ -309,13 +309,13 @@ manifest），并把两个"最容易写错"的部分先落地为可测代码：
    而生产 embedded 组装直接调用 `build_embedded_router`，从未执行过桥。
    现在 `web_framework::attach_vendor_credential_bridge` 是桥的唯一所有者，
    `finalize_gateway_router{,_async}` 与 embedded 组装都调用它。
-2. **`vendor_open_api_auth.rs::GatewayApiKeyResolver::resolve_api_key` 增加登录令牌通道**。
-   `iam_gateway_api_key` 未命中后，按与 Cloud Router 相同的分类器判断凭证形态：
-   带 `sk-`/`sp-` 前缀只走平台 API Key 通道；不带前缀的凭证先尝试
-   `resolve_bearer_auth_token`（IAM 会话 auth token），该通道报
-   `InvalidCredentials`（会话不认这个值）或 `DependencyUnavailable`（组装未接线）时
-   回落到平台 API Key 通道，因此既有的无前缀密钥与开发态 claim-string 不受影响；
-   `ExpiredCredentials` 等真实会话错误原样上抛，不会被重新解释成"无效 API Key"。
+2. **API Key 通道按凭证形态分流，且只有一个所有者**。
+   `sdkwork-iam` 的 `IamDatabaseWebRequestContextResolver::resolve_api_key` 负责分流：
+   带 `sk-`/`sp-` 前缀只走 API Key 存储；无前缀凭证先查
+   `iam_session.auth_token_hash`，查不到再落到 API Key 存储，因此既有的无前缀密钥与
+   开发态 claim-string 不受影响。网关的 `GatewayApiKeyResolver` 只贡献
+   `iam_gateway_api_key` 一个密钥源，其余原样委托 —— 一处实现，所有组装同构
+   （平台网关 / 应用 standalone 网关 / 单 crate served router 不再各自为政）。
 3. **`sdkwork-iam` 的 `resolve_bearer_auth_token` 真正解析登录 auth token**。
    该通道原本直接委托 `resolve_oauth_bearer`，只查 `iam_session.access_token_hash`，
    登录 `authToken`（`auth_token_hash`）永远查不到。现在先查 auth token，未命中再回落
@@ -327,8 +327,8 @@ manifest），并把两个"最容易写错"的部分先落地为可测代码：
 Authorization: Bearer <authToken>
   → attach_vendor_credential_bridge：改写为 X-API-Key，移除 Authorization
   → SurfaceClassification：api-key-or-dual-token 只看到 X-API-Key，通过
-  → RequestContextResolution：resolve_api_key → iam_gateway_api_key 未命中
-      → 非 sk-/sp- → IAM resolve_bearer_auth_token → iam_session.auth_token_hash
+  → RequestContextResolution：resolve_api_key → 网关 iam_gateway_api_key 未命中
+      → IAM resolve_api_key：非 sk-/sp- → iam_session.auth_token_hash
       → principal（tenant/org/user/app）
   → Cloud Router handler 从 X-API-Key 重新认证：分类器判为 AuthToken
       → IamAuthTokenAuthenticator → 默认上游账号分组（按 Chat/LLM 模态）
@@ -336,15 +336,29 @@ Authorization: Bearer <authToken>
 
 云侧不需要改动：`IamAuthTokenAuthenticator`、`authenticated_context_from_auth_token_identity`
 与默认分组选择（`llm` 默认分组 → `mixed` 默认分组 → `default-group` 编码 → 唯一分组）
-早已实现并有 e2e 覆盖；本轮的缺口全在网关与 IAM 适配器的凭证通道上。
+早已实现并有 e2e 覆盖。
+
+**通道归属（本轮最终形态）**：`sk-`/`sp-` 与登录令牌的分流只由 IAM 的
+`IamDatabaseWebRequestContextResolver::resolve_api_key` 负责，网关包装器只提供
+`iam_gateway_api_key` 一个密钥源。这样平台网关、各应用 standalone 网关、单 crate
+的 served router 对同一请求给同一答案，不会再出现"同一路由换个组装就换结论"。
 
 ### 15.3 验证
 
-- `cargo test -p sdkwork-api-cloud-gateway --lib` → **79 passed**（新增 4 条：登录令牌命中、
-  `sk-` 前缀不进入令牌通道、未知令牌回落、过期令牌不透传成 API Key）。
-- `cargo test -p sdkwork-api-cloud-gateway --tests` → 全绿（`web_framework_tests` **7 passed**，
-  新增：桥把 bearer 变成 `X-API-Key` 且不留双凭证头、非 vendor 路径不被改写、
-  embedded 组装确实安装桥、shipped `component.spec.json` 的 `/v1` 前缀确实被桥覆盖）。
+- `cargo test -p sdkwork-api-cloud-gateway --lib` → **77 passed**；其中
+  `vendor_open_api_auth` 模块 **12 passed**（桥的 6 种分支：bearer 改写、Google 头改写、
+  双令牌对保留、非 Bearer 不动、已有 `X-API-Key` 不动、空值不动；哈希已知向量；
+  pepper 键控；段级前缀匹配；API Key 通道对所有凭证形态原样委托）。
+- `cargo test -p sdkwork-api-cloud-gateway --tests` → 全绿（`web_framework_tests`
+  **7 passed**：bearer→`X-API-Key`、非 vendor 路径不改写、embedded 组装确实装桥、
+  shipped `component.spec.json` 的 `/v1` 前缀被桥覆盖）。
+- `cargo test -p sdkwork-iam-web-adapter --lib` → **303 passed**（新增：无会话存储时
+  通道拒绝回落到 API Key 通道、`sk-` 前缀永不进入会话通道）。
+- `cargo test -p sdkwork-iam-web-adapter --test installation_ownership_scope_postgres
+  -- --ignored`（需 `SDKWORK_DATABASE_URL` + 迁移）→ 新增
+  `the_api_key_channel_resolves_a_login_auth_token_to_a_session_principal`：
+  真实 `iam_session` 的 auth token 在 API Key 通道解析为会话 principal（无 `api_key_id`），
+  且 `sk-` 凭证留在 API Key 通道。
 - `cargo test -p sdkwork-iam-web-adapter --test open_api_resolver` → **3 passed**。
 - `cargo fmt -- --check`（两个仓库）→ 通过。
 
@@ -398,18 +412,37 @@ Authorization: Bearer <authToken>
 - 网关的 vendor 前缀来自 shipped `component.spec.json`，`/v1` 与 `/anthropic/v1` 均在列；
   非凭证头（如 `anthropic-version`）不参与凭证校验，不会被拒。
 
-### 16.3 仍然存在的、与"同头传递"无关的残余缺口
+### 16.3 本轮回归后新增的两条桥规则
 
-1. **legacy 部署分支**（未配 provider secret resolver 的 relay 回退）：
-   `/v1/responses`、`/v1/embeddings` 只有 API Key 单通道（`openai_responses.rs`、
-   `openai_embeddings.rs` 未接 flex 分类器）。生产 embedded 组合走 invocation 面，
-   不受影响；且内置客户端只发 chat/models，不触达这两个端点。
-2. **值形态分类的边界**：若某个登录令牌字面量恰好以 `sk-`/`sp-` 开头，会被判为
-   API Key 而查不到记录（401 `invalid_api_key`）。登录令牌为不透明串，属理论风险。
-3. **`/v1/vendors`、`/v1/user/balance`**：由网关 router 提供但不在 open-api 契约与组合
-   manifest 中，两种凭证都会 404 —— 与凭证类型无关；birdcoder2 客户端不调用。
-4. **端到端 pin 缺失**：本仓库补到了"桥 + 通道选择 + 组合接线 + shipped 前缀"四层
-   （见 15.3），但"真实 token 穿过框架 + 嵌入 CloudRouter"的端到端仍需部署后验证。
+- **双令牌对必须原样保留**：`api-key-or-dual-token` 的第二种合法形态正是
+  `Authorization` + `Access-Token`。若桥把 bearer 半段改名成 `X-API-Key` 而留下
+  `Access-Token`，框架会判为"mixed credential profile"并 400 —— 也就是说修 `/v1`
+  单 bearer 的同时会打断文档里公开的双令牌调用。桥现在遇到 `Access-Token` 直接返回
+  `DualTokenPreserved`，两个头都不动。
+- **Google wire 的 `X-Goog-Api-Key` 也要桥**：框架 `STANDARD_CREDENTIAL_HEADERS`
+  不含该头，`/google/v1beta` 客户端只发这个头时会被判成"无凭证"→ 401，API Key 与
+  Auth Token 一起失败。桥现在把它同样改写为 `X-API-Key`，让 Gemini 兼容面与 `/v1`
+  在同一凭证通道上对齐。
+
+### 16.4 全量 open-api 回归（18 个 workspace / 45 个前缀）
+
+按"同一凭证头、同一通道"逐 surface 核对的结果：
+
+| 归类 | surface | 结论 |
+| --- | --- | --- |
+| 框架主渠道 | agents `/agent/v3/api`（56 ops，全部 `ApiKey`）、appstore 3 个 `ApiKey` op、IAM `provider_callbacks`、cloudrouter `/v1` 等 13 个前缀、drive/documents/knowledge/llm/prompts/community/cms/feeds/news/company/local-router | **对齐**：handler 只读框架注入 principal，不重读凭证；`sk-` 与登录令牌同头同通道 |
+| 匿名面 | IAM `.well-known`/OAuth 端点/微信回调、appstore 5 个 `Public` op | **N-A（设计如此）**：`Public` 的凭证白名单为空，任何凭证头都 400，两种凭证完全同构 |
+| 机器面 | cloudrouter `/internal/v3/gateway/*`（HMAC 签名） | **N-A（设计如此）**：永不接受用户会话 |
+| 值形态边界 | 全部 | 以 `sk-`/`sp-` 开头的登录令牌会被判为 API Key；登录令牌为不透明串，属理论风险 |
+| 残余 1 | IAM `GET /iam/v3/api/oauth/userinfo` | handler 只重读 `Authorization` 并只认 OAuth access token，**API Key 与登录令牌都失败**；这是契约（`[{ApiKey},{OAuthBearer}]`）与实现的偏差，与本轮凭证对齐无关，需单独决策 |
+| 残余 2 | cloudrouter legacy relay posture | `/anthropic`、`/google`、`/kling`、`/minimax`、`/suno`、`/elevenlabs`、`/volcengine`、`/vidu` 的 provider-native 直通 handler 只认 API Key（仅未配 provider secret resolver 的旧部署） |
+| 残余 3 | 部分应用 standalone 网关 | 未声明自身 open-api 前缀或仍接裸 IAM 解析器：前者两种凭证一起 401（组装缺陷），后者已由"通道归 IAM"修复 |
+| 残余 4 | cloudrouter `/v1/vendors`、`/v1/user/balance` | 网关有路由但不在 open-api 契约与组合 manifest 中，两种凭证都 404 |
+| 残余 5 | `?key=` 查询参数 | 网关框架不解析查询凭证；该形态仅在 standalone-desktop 策略下由依赖侧接受 |
+
+结论：**所有由框架注入 principal 的 open-api 面已在同一凭证头、同一通道上与 API Key
+完全对齐**；剩余项中没有任何一条是"同一凭证在 API Key 下成功、在登录令牌下失败"的
+差异（残余 1 两者都失败，残余 2/3/4/5 与凭证类型无关）。
 
 
 

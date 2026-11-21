@@ -6,22 +6,22 @@
 //! (peppered with `SDKWORK_CLOUDROUTER_API_KEY_PEPPER`). The platform gateway
 //! composes that surface into the single Web Framework pipeline
 //! (`APPLICATION_GATEWAY_SPEC.md` §2.3), so the framework's open-api API-key
-//! resolver is the layer that must recognise the credential — `API_SPEC.md`
+//! resolver is the layer that must recognise the credential —`API_SPEC.md`
 //! §827 requires the server to resolve tenant/organization/user from the
 //! validated API-key record rather than from a client-supplied header.
 //!
 //! This module owns the two deterministic, security-critical pieces of that
 //! path:
 //!
-//! * [`gateway_api_key_hash`] — the hash parity contract with Cloud Router.
+//! * [`gateway_api_key_hash`] —the hash parity contract with Cloud Router.
 //!   If this drifts, every `sk-` credential fails closed, so it is pinned by a
 //!   known-answer test against an independently computed HMAC vector.
-//! * [`bridge_vendor_authorization`] — the vendor wire bridge. The published
+//! * [`bridge_vendor_authorization`] —the vendor wire bridge. The published
 //!   contract of the vendor-compatible surface is `Authorization: Bearer
 //!   <key>` (OpenAI/Anthropic wire, `API_SPEC.md` §4.5.2), while the framework
 //!   profile that serves it reads `X-API-Key`. The bridge renames that one
 //!   header for the vendor prefixes and leaves every other header untouched.
-//! * [`GatewayApiKeyResolver`] — the credential authority for both vendor
+//! * [`GatewayApiKeyResolver`] —the credential authority for both vendor
 //!   credential kinds: an API-key-prefixed value resolves against
 //!   `iam_gateway_api_key`, and a signed-in user's login token resolves through
 //!   the IAM session auth-token channel. The dependency's own handler then picks
@@ -32,17 +32,19 @@
 //! without a database or a listener; the resolver wiring that consumes them
 //! lives next to the framework composition.
 
-use axum::http::{header, HeaderMap, HeaderValue};
-use sdkwork_web_core::{
-    default_open_api_bearer_classifier, DynOpenApiBearerCredentialClassifier,
-    OpenApiCredentialKind, WebFrameworkErrorKind,
-};
+use axum::http::{header, HeaderMap, HeaderName, HeaderValue};
 
 /// Environment key that carries Cloud Router's API-key hashing pepper.
 pub const API_KEY_PEPPER_ENV: &str = "SDKWORK_CLOUDROUTER_API_KEY_PEPPER";
 
 /// Lowercase header name the canonical `api-key` open-api profile reads.
 const API_KEY_HEADER: &str = "x-api-key";
+
+/// Lowercase header name of the second half of the dual-token credential pair.
+const ACCESS_TOKEN_HEADER: &str = "access-token";
+
+/// Lowercase header name the Google-compatible vendor wire publishes.
+const GOOGLE_API_KEY_HEADER: &str = "x-goog-api-key";
 
 /// Minimum pepper length accepted by Cloud Router's own configuration
 /// (`ApiKeySecurityConfig`); a shorter value can never have produced a stored
@@ -86,46 +88,63 @@ pub enum VendorCredentialBridge {
     /// An `X-API-Key` credential was already present; the vendor header was
     /// left untouched so the framework's contamination guard can decide.
     AlreadyCanonical,
+    /// The request carries the dual-token pair (`Authorization` plus
+    /// `Access-Token`) that the vendor profile also accepts; both headers were
+    /// left untouched, because renaming the bearer half would turn a complete
+    /// credential pair into the mixed profile the framework must reject.
+    DualTokenPreserved,
 }
 
-/// Presents a vendor `Authorization: Bearer <key>` credential as the canonical
-/// `X-API-Key` credential.
+/// Presents a vendor credential as the canonical `X-API-Key` credential.
 ///
 /// OpenAI-compatible clients (and Cloud Router's own documentation) authenticate
-/// with `Authorization: Bearer <key>`; the `api-key-or-dual-token` profile that
-/// serves those operations reads `X-API-Key`. Rewriting the header keeps the
-/// published wire working without relaxing the framework profile.
+/// with `Authorization: Bearer <key>`, Google-compatible clients with
+/// `X-Goog-Api-Key`; the `api-key-or-dual-token` profile that serves those
+/// operations reads `X-API-Key` for its API-key alternative and the
+/// `Authorization` + `Access-Token` pair for its session alternative. Rewriting
+/// the header keeps each published single-credential wire working without
+/// relaxing the framework profile.
 ///
 /// Only a `Bearer` scheme is bridged: any other scheme is left for the
-/// framework to reject as the credential-profile violation it is. The
-/// `Authorization` header is removed when bridged, because a request carrying
-/// both headers is exactly the contamination the guard must reject.
+/// framework to reject as the credential-profile violation it is. The vendor
+/// header is removed when bridged, because a request carrying both headers is
+/// exactly the contamination the guard must reject. A request that also carries
+/// `Access-Token` is a dual-token caller and is left alone: splitting its pair
+/// would invalidate a credential the profile accepts.
 pub fn bridge_vendor_authorization(headers: &mut HeaderMap) -> VendorCredentialBridge {
     if headers.contains_key(API_KEY_HEADER) {
         return VendorCredentialBridge::AlreadyCanonical;
     }
-    let Some(raw) = headers.get(header::AUTHORIZATION) else {
-        return VendorCredentialBridge::NoCredential;
-    };
-    let Ok(raw) = raw.to_str() else {
-        return VendorCredentialBridge::NoCredential;
-    };
-    let Some((scheme, credential)) = raw.split_once(' ') else {
-        return VendorCredentialBridge::NoCredential;
-    };
+    if headers.contains_key(ACCESS_TOKEN_HEADER) {
+        return VendorCredentialBridge::DualTokenPreserved;
+    }
+    if let Some(value) = bearer_credential(headers.get(header::AUTHORIZATION)) {
+        headers.remove(header::AUTHORIZATION);
+        headers.insert(HeaderName::from_static(API_KEY_HEADER), value);
+        return VendorCredentialBridge::Bridged;
+    }
+    // The Google-compatible wire publishes `X-Goog-Api-Key` instead of a bearer;
+    // the framework profile does not know that header, so a request carrying only
+    // it would be classified as credential-less. Present it canonically too.
+    if let Some(value) = headers.remove(GOOGLE_API_KEY_HEADER) {
+        headers.insert(HeaderName::from_static(API_KEY_HEADER), value);
+        return VendorCredentialBridge::Bridged;
+    }
+    VendorCredentialBridge::NoCredential
+}
+
+/// The credential of one vendor `Authorization` header, when it is a usable
+/// `Bearer` value.
+fn bearer_credential(raw: Option<&HeaderValue>) -> Option<HeaderValue> {
+    let (scheme, credential) = raw?.to_str().ok()?.split_once(' ')?;
     if !scheme.eq_ignore_ascii_case("bearer") {
-        return VendorCredentialBridge::NoCredential;
+        return None;
     }
     let credential = credential.trim();
     if credential.is_empty() {
-        return VendorCredentialBridge::NoCredential;
+        return None;
     }
-    let Ok(value) = HeaderValue::from_str(credential) else {
-        return VendorCredentialBridge::NoCredential;
-    };
-    headers.remove(header::AUTHORIZATION);
-    headers.insert(header::HeaderName::from_static(API_KEY_HEADER), value);
-    VendorCredentialBridge::Bridged
+    HeaderValue::from_str(credential).ok()
 }
 
 /// Whether `path` belongs to a vendor-compatible open-api prefix.
@@ -279,7 +298,11 @@ impl GatewayApiKeyLookup {
 /// Framework resolver that adds gateway API keys to the platform API-key channel.
 ///
 /// Every other credential channel delegates unchanged, so this cannot weaken or
-/// reroute the platform's own open-api authentication.
+/// reroute the platform's own open-api authentication. The login-token
+/// alternative of that same channel lives in the IAM resolver
+/// (`IamDatabaseWebRequestContextResolver::resolve_api_key`), so every
+/// composition that mounts it answers the same request the same way; this
+/// wrapper only contributes the gateway-issued key store.
 #[derive(Clone)]
 pub struct GatewayApiKeyResolver<R> {
     inner: R,
@@ -287,7 +310,6 @@ pub struct GatewayApiKeyResolver<R> {
     app_id: std::sync::Arc<str>,
     environment: sdkwork_web_core::WebEnvironment,
     deployment_mode: sdkwork_web_core::WebDeploymentMode,
-    bearer_classifier: DynOpenApiBearerCredentialClassifier,
 }
 
 impl<R> GatewayApiKeyResolver<R> {
@@ -305,21 +327,7 @@ impl<R> GatewayApiKeyResolver<R> {
             app_id: app_id.into(),
             environment,
             deployment_mode,
-            bearer_classifier: default_open_api_bearer_classifier(),
         }
-    }
-
-    /// Whether a presented credential is an SDKWork login auth token rather
-    /// than an API key.
-    ///
-    /// The vendor-compatible wire (Cloud Router's `/v1` face) publishes one
-    /// `Authorization: Bearer` credential and lets a signed-in user use the
-    /// session's login token in place of an API key. The classifier is the same
-    /// one Cloud Router's own handler applies — a value that does not carry an
-    /// API-key prefix is a login token — so the gateway and the dependency agree
-    /// on which channel a credential belongs to.
-    fn is_login_token(&self, raw_credential: &str) -> bool {
-        self.bearer_classifier.classify(raw_credential) == OpenApiCredentialKind::AuthToken
     }
 }
 
@@ -359,26 +367,11 @@ impl<R: sdkwork_web_core::WebRequestContextResolver> sdkwork_web_core::WebReques
         {
             return Ok(principal);
         }
-        // Vendor login-token channel: a signed-in SDKWork user authenticates the
-        // vendor-compatible open-api with the session's login token instead of an
-        // API key, so a credential without an API-key prefix resolves through the
-        // session's auth-token lookup. An API-key-prefixed value never enters this
-        // channel. A credential the session store does not know — and a
-        // composition whose resolver wires no auth-token channel at all — falls
-        // through to the platform API-key channel, which stays authoritative for
-        // unprefixed key records and the development claim-string form.
-        if self.is_login_token(raw_api_key) {
-            match self.inner.resolve_bearer_auth_token(raw_api_key).await {
-                Ok(principal) => return Ok(principal),
-                Err(error)
-                    if matches!(
-                        error.kind,
-                        WebFrameworkErrorKind::InvalidCredentials
-                            | WebFrameworkErrorKind::DependencyUnavailable
-                    ) => {}
-                Err(error) => return Err(error),
-            }
-        }
+        // Every other credential on this channel belongs to the platform
+        // resolver: an API key against `iam_api_key`, an unprefixed login
+        // `authToken` against the IAM session, or the development claim-string
+        // form. Keeping one owner for that split is what makes a standalone
+        // application gateway and this platform edge answer identically.
         self.inner.resolve_api_key(raw_api_key).await
     }
 
@@ -599,12 +592,54 @@ mod tests {
         assert!(!is_vendor_open_api_path("/app/v3/api/iam", &prefixes));
     }
 
-    /// The credential channels one scripted inner resolver reports.
+    #[test]
+    fn bridge_presents_the_google_api_key_header() {
+        // Google-compatible clients publish `X-Goog-Api-Key`; the framework
+        // profile does not know that header, so without the bridge the request
+        // would classify as credential-less and 401 for both credential kinds.
+        let mut map = headers(&[("x-goog-api-key", "google-wire-credential")]);
+        assert_eq!(
+            VendorCredentialBridge::Bridged,
+            bridge_vendor_authorization(&mut map)
+        );
+        assert_eq!(
+            "google-wire-credential",
+            map.get(API_KEY_HEADER)
+                .expect("bridged")
+                .to_str()
+                .expect("ascii")
+        );
+        assert!(!map.contains_key(GOOGLE_API_KEY_HEADER));
+    }
+
+    #[test]
+    fn bridge_preserves_a_dual_token_pair() {
+        // The same vendor profile also accepts the dual-token pair. Renaming the
+        // bearer half would leave X-API-Key next to Access-Token — the mixed
+        // profile the framework rejects — so the pair must reach it intact.
+        let mut map = headers(&[
+            ("authorization", "Bearer session-auth-token"),
+            ("access-token", "session-access-token"),
+        ]);
+        assert_eq!(
+            VendorCredentialBridge::DualTokenPreserved,
+            bridge_vendor_authorization(&mut map)
+        );
+        assert_eq!(
+            "Bearer session-auth-token",
+            map.get(header::AUTHORIZATION)
+                .expect("pair preserved")
+                .to_str()
+                .expect("ascii")
+        );
+        assert!(map.contains_key("access-token"));
+        assert!(!map.contains_key(API_KEY_HEADER));
+    }
+
+    /// Records which credential channel the wrapper delegated to.
     #[derive(Clone, Default)]
     struct ScriptedInner {
         calls: std::sync::Arc<std::sync::Mutex<Vec<String>>>,
-        /// What the auth-token channel answers; `None` answers a login-token principal.
-        bearer: Option<sdkwork_web_core::WebFrameworkErrorKind>,
     }
 
     impl ScriptedInner {
@@ -613,11 +648,11 @@ mod tests {
         }
     }
 
-    fn scripted_principal(channel: &str) -> sdkwork_web_core::WebRequestPrincipal {
+    fn scripted_principal() -> sdkwork_web_core::WebRequestPrincipal {
         sdkwork_web_core::WebRequestPrincipal::builder()
             .tenant_id("100001")
             .user_id("30")
-            .app_id(format!("appbase-{channel}"))
+            .app_id("appbase-api-key")
             .environment(sdkwork_web_core::WebEnvironment::Prod)
             .deployment_mode(sdkwork_web_core::WebDeploymentMode::Saas)
             .auth_level(sdkwork_web_core::WebAuthLevel::Password)
@@ -636,7 +671,7 @@ mod tests {
                 .lock()
                 .expect("calls")
                 .push(format!("api-key:{raw_api_key}"));
-            Ok(scripted_principal("api-key"))
+            Ok(scripted_principal())
         }
 
         async fn resolve_dual_token(
@@ -659,28 +694,6 @@ mod tests {
                 "unused",
             ))
         }
-
-        async fn resolve_bearer_auth_token(
-            &self,
-            raw_bearer_token: &str,
-        ) -> Result<sdkwork_web_core::WebRequestPrincipal, sdkwork_web_core::WebFrameworkError>
-        {
-            self.calls
-                .lock()
-                .expect("calls")
-                .push(format!("auth-token:{raw_bearer_token}"));
-            match self.bearer.clone() {
-                None => Ok(scripted_principal("auth-token")),
-                Some(kind) => Err(sdkwork_web_core::WebFrameworkError {
-                    kind,
-                    message: "scripted auth-token failure".to_owned(),
-                    retry_after_seconds: None,
-                    auth_profile: None,
-                    failed_stage: None,
-                    reason: None,
-                }),
-            }
-        }
     }
 
     fn resolver_over(inner: ScriptedInner) -> GatewayApiKeyResolver<ScriptedInner> {
@@ -693,90 +706,26 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn login_token_resolves_through_the_auth_token_channel() {
+    async fn api_key_channel_delegates_every_credential_shape() {
         use sdkwork_web_core::WebRequestContextResolver as _;
 
-        let inner = ScriptedInner::default();
-        let resolver = resolver_over(inner.clone());
-        let principal = resolver
-            .resolve_api_key("login-token-without-an-api-key-prefix")
-            .await
-            .expect("signed-in user resolves as a session");
-        assert_eq!("appbase-auth-token", principal.app_id());
-        // The API-key channel must not be consulted for a login token: it would
-        // only report the token as an invalid key.
-        assert_eq!(
-            vec!["auth-token:login-token-without-an-api-key-prefix".to_owned()],
-            inner.calls()
-        );
-    }
-
-    #[tokio::test]
-    async fn prefixed_api_key_never_enters_the_auth_token_channel() {
-        use sdkwork_web_core::WebRequestContextResolver as _;
-
-        let inner = ScriptedInner::default();
-        let resolver = resolver_over(inner.clone());
-        let principal = resolver
-            .resolve_api_key("sk-live-123")
-            .await
-            .expect("api key resolves on the platform channel");
-        assert_eq!("appbase-api-key", principal.app_id());
-        assert_eq!(vec!["api-key:sk-live-123".to_owned()], inner.calls());
-    }
-
-    #[tokio::test]
-    async fn unknown_login_token_falls_back_to_the_api_key_channel() {
-        use sdkwork_web_core::WebRequestContextResolver as _;
-
-        // A composition whose resolver wires no auth-token lookup, or a token the
-        // session store does not know, keeps the unprefixed api-key channel
-        // authoritative instead of failing the request on an unavailable channel.
-        for kind in [
-            sdkwork_web_core::WebFrameworkErrorKind::InvalidCredentials,
-            sdkwork_web_core::WebFrameworkErrorKind::DependencyUnavailable,
+        // The wrapper owns only the gateway-issued key store. Both credential
+        // kinds — and the development claim-string form — reach the platform
+        // resolver unchanged, which is where the API-key/login-token split lives
+        // so that every composition mounting that resolver behaves the same.
+        for credential in [
+            "sk-live-123",
+            "login-token-without-an-api-key-prefix",
+            "api_key_id=key-1;tenant_id=100001",
         ] {
-            let inner = ScriptedInner {
-                bearer: Some(kind.clone()),
-                ..ScriptedInner::default()
-            };
+            let inner = ScriptedInner::default();
             let resolver = resolver_over(inner.clone());
             let principal = resolver
-                .resolve_api_key("api_key_id=key-1;tenant_id=100001")
+                .resolve_api_key(credential)
                 .await
-                .expect("falls through to the api-key channel");
+                .expect("the platform resolver answers");
             assert_eq!("appbase-api-key", principal.app_id());
-            assert_eq!(
-                vec![
-                    "auth-token:api_key_id=key-1;tenant_id=100001".to_owned(),
-                    "api-key:api_key_id=key-1;tenant_id=100001".to_owned(),
-                ],
-                inner.calls(),
-                "{kind:?} must fall through, not fail the request"
-            );
+            assert_eq!(vec![format!("api-key:{credential}")], inner.calls());
         }
-    }
-
-    #[tokio::test]
-    async fn expired_login_token_failure_is_not_reinterpreted_as_an_api_key() {
-        use sdkwork_web_core::WebRequestContextResolver as _;
-
-        let inner = ScriptedInner {
-            bearer: Some(sdkwork_web_core::WebFrameworkErrorKind::ExpiredCredentials),
-            ..ScriptedInner::default()
-        };
-        let resolver = resolver_over(inner.clone());
-        let error = resolver
-            .resolve_api_key("expired-login-token")
-            .await
-            .expect_err("an expired session is reported as such");
-        assert_eq!(
-            sdkwork_web_core::WebFrameworkErrorKind::ExpiredCredentials,
-            error.kind
-        );
-        assert_eq!(
-            vec!["auth-token:expired-login-token".to_owned()],
-            inner.calls()
-        );
     }
 }
