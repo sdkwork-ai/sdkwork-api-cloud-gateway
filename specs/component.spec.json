@@ -2035,14 +2035,14 @@
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/template_categories",
+      "prefix": "/app/v3/api/scaffold_categories",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
     },
     {
       "surface": "app",
-      "prefix": "/app/v3/api/app_templates",
+      "prefix": "/app/v3/api/scaffolds",
       "dependencyServiceId": "sdkwork-deploy-app-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
@@ -2056,14 +2056,14 @@
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/app_templates",
+      "prefix": "/backend/v3/api/scaffolds",
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
     },
     {
       "surface": "backend",
-      "prefix": "/backend/v3/api/template_categories",
+      "prefix": "/backend/v3/api/scaffold_categories",
       "dependencyServiceId": "sdkwork-deploy-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
@@ -3355,7 +3355,7 @@
       "apiAuthority": "sdkwork-deploy-app-api",
       "sdkFamily": "sdkwork-deployments-app-sdk",
       "apiPrefixes": [
-        "/app/v3/api/app_templates",
+        "/app/v3/api/scaffolds",
         "/app/v3/api/apps",
         "/app/v3/api/artifacts",
         "/app/v3/api/build_templates",
@@ -3363,7 +3363,7 @@
         "/app/v3/api/cloud_accounts",
         "/app/v3/api/domain_zones",
         "/app/v3/api/signing_identities",
-        "/app/v3/api/template_categories",
+        "/app/v3/api/scaffold_categories",
         "/app/v3/api/marketplace",
         "/app/v3/api/upload_sessions",
         "/app/v3/api/usage_events",
@@ -3385,8 +3385,8 @@
       "apiPrefixes": [
         "/backend/v3/api/audit_logs",
         "/backend/v3/api/apps",
-        "/backend/v3/api/app_templates",
-        "/backend/v3/api/template_categories",
+        "/backend/v3/api/scaffolds",
+        "/backend/v3/api/scaffold_categories",
         "/backend/v3/api/build_queue",
         "/backend/v3/api/certificates",
         "/backend/v3/api/entitlements",
