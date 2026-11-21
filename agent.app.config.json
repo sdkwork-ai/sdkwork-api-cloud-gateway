@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.100",
+    "currentVersion": "0.1.101",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.100"
+      "BETA": "0.1.101"
     },
     "notes": [
       {
-        "version": "0.1.100",
+        "version": "0.1.101",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.101",
+        "summary": "Fresh-install fix-forward of 0.1.100: the api.aidaxuesheng.com production install crash-looped on stale consolidated baselines — the appstore, inventory, and order modules still carried pre-consolidation states while the lifecycle records packaged migration versions as baseline coverage without replay (sdkwork-database 03987fa). Their accumulated migrations are folded into the consolidated baselines (sdkwork-appstore 4328662, sdkwork-inventory 99e522f, sdkwork-order f17978b) so a freshly provisioned database reaches the full end state before seeds run. sdkwork-iam needed no change: its deployed baseline already produces the renamed installation end state.",
+        "highlights": [
+          "provenance: workspace-sync wave advanced 8 of 110 checkouts plus gateway fd23cf9/6845b51 (0.1.100 cut) and sibling baseline folds sdkwork-appstore 4328662, sdkwork-inventory 99e522f, sdkwork-order f17978b; no reset, rebase, stash, clean, checkout -f or restore of any working tree",
+          "defect chain: 0.1.100 fresh production install applied baselines + recorded coverage (1228 tables, 270 history rows) then crash-looped — knowledgebase needed the vector extension relocated into the search_path schema (operator fix: CREATE EXTENSION WITH SCHEMA), appstore seeds referenced appstore_application and 11 renamed/new listing tables missing from its pre-rename baseline, iam needed nothing (75 end-state tables verified on the deployed database)",
+          "repair: reset-database-initialization-state.mjs folded every accumulated migration into ddl/baseline/postgres/0001_*.sql for appstore (11 migrations), inventory (2), order (22); existing databases keep recorded history and replay nothing; replay-verified on a scratch postgres 18 — the folded baselines apply cleanly and every seed-referenced table exists afterwards",
+          "0.1.100 retired as failed-build evidence: its image never reached a healthy remote stack and is never redeployed; the remote database is reset to fresh before this install",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked, pnpm check aggregate, pnpm test (108 node tests), pnpm lint (clippy -D warnings), workflow:validate all exit 0 in the gw-build-023 bookworm build container"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.100",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.100",
         "summary": "Fresh production rollout to the new api.aidaxuesheng.com host (43.142.122.230) with external PostgreSQL 19 + Redis 8.10.3 dependencies per DEPLOYMENT_SPEC.md 6.1, carrying the fresh-install baseline-migration wave from the 8-repo workspace sync (sdkwork-database lifecycle baseline coverage on fresh installs, sdkwork-iam wechat component operator platform tables folded into the IAM baseline, sdkwork-webserver disposable-PostgreSQL lifecycle alignment) and the node contract suite / clippy cleanliness restoration that removes the workflow-matrix container targets.",
         "highlights": [
