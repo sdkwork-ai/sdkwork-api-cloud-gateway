@@ -207,6 +207,10 @@ async fn update_cors_settings(
 }
 
 /// Restricts the platform-scoped row to the configured platform tenant.
+// The error arm is a fully rendered ProblemDetail response, matching every
+// other handler in this crate; boxing it would only add indirection on the
+// failure path.
+#[allow(clippy::result_large_err)]
 fn authorize(ctx: &WebRequestContext, state: &CorsAdminState) -> Result<(), Response> {
     let tenant = match ctx.require_tenant_id() {
         Ok(tenant) => tenant,
