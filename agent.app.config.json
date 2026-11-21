@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.96",
+    "currentVersion": "0.1.97",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.96"
+      "BETA": "0.1.97"
     },
     "notes": [
       {
-        "version": "0.1.96",
+        "version": "0.1.97",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.97",
+        "summary": "Workspace sync rollout for the application-factory installation terminology wave: the deployments surface renames app templates to application scaffolds (the gateway component contract now declares /app/v3/api/scaffolds and /app/v3/api/scaffold_categories plus their backend equivalents), sdkwork-iam renames tenant applications to installations across APIs and SDKs and adds the wechat component operator platform, sdkwork-deployments consumes installation lifecycle endpoints for deploy identity, and sdkwork-specs aligns IAM specs and tooling with installation terminology.",
+        "highlights": [
+          "provenance: ff-only sync advanced 17 of 110 sdkwork-space checkouts — sdkwork-agents (→ca50075), sdkwork-appstore (→26c375e), sdkwork-birdcoder2 (→233f5154), sdkwork-cloudrouter (→c3f6600f), sdkwork-deployments (→1917077), sdkwork-github-workflow 0b7eceb6→c48701fc (planner raw package version normalization), sdkwork-iam 3cd10e57→b4726938 (tenant applications renamed to installations across APIs and SDKs, wechat component operator platform, access-token application anchor fix for installations), sdkwork-manager 7b7b6132→1b57d06c, sdkwork-mcp 79f15a87→09001ade, sdkwork-missory c648f424→2005baff, sdkwork-order e11c22dc→a4f1fe7e (after-sales refund to settlement link), sdkwork-rtc 2c8e856d→d74b44a4, sdkwork-sandbox 09b297a6→f77a4032, sdkwork-sdk-generator 602443dd→4ac9ee56, sdkwork-skills 45f243bf→6a4dae1c, sdkwork-specs 467ea580→3355450c (installation terminology alignment, per-market store submission plans), sdkwork-utils d6bfd85c→7f97637c; no reset, rebase, stash, clean, checkout -f or restore",
+          "contract: the deployments app-template surface rename (sdkwork-deployments 9f36394) moved provider routes to /app/v3/api/scaffolds and /app/v3/api/scaffold_categories (backend equivalents /backend/v3/api/scaffolds and /backend/v3/api/scaffold_categories); specs/component.spec.json apiSurfaces entries and apiPrefixes lists follow the rename and the gateway API closure passes with 3902 method/path routes",
+          "lock: Cargo.lock resynced for the synced sibling manifests (+1 line recording tracing on the platform-foundation-suite-container graph) per the release-cut-before-build discipline",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.96",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.96",
         "summary": "Workspace sync rollout for the application-factory wave: the gateway startup audience diagnostic now reports the credential audience that is actually rejected, and the synced workspace carries the sdkwork-iam application-factory safety guards with materialized v3 command and nested provider-account boundaries, the sdkwork-deployments factory reconciliation worker with lifecycle and environment-promotion guards, and the sdkwork-utils machine/caller service-identity carriers.",
         "highlights": [
