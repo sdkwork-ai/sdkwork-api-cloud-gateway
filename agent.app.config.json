@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.104",
+    "currentVersion": "0.1.105",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.104"
+      "BETA": "0.1.105"
     },
     "notes": [
       {
-        "version": "0.1.104",
+        "version": "0.1.105",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.105",
+        "summary": "Fresh-install coverage-recording fix-forward of 0.1.104: the lifecycle's baseline-coverage recording enumerates the packaged migration files, so folding them away left every root module's ops_schema_migration_history empty and compiled readiness gates that require a minimum recorded version (the IM service's REQUIRED_IM_SCHEMA_VERSION=0012) failed forever on freshly provisioned databases even though the folded baselines materialised every table. The folded migration files are restored across all 50 consolidated modules so the coverage recording has its version source while the baseline remains the fresh-install bootstrap.",
+        "highlights": [
+          "defect chain: the 0.1.104 fresh local parity install bootstrapped every table and reached schema_current/seeded installation states, then healthz answered 200 while readyz stayed 503 — 'IM database schema is at migration \"\"; this binary requires 0012' — because record_baseline_migration_coverage enumerates database/migrations/postgres/*.up.sql, which the fold had deleted, so plan_migrations had no versions to record; iam kept its files and was the only root module with 37 recorded rows",
+          "repair: restore database/migrations/postgres/ next to the consolidated baseline across the 50 folded modules (sdkwork-im c960c97f landed first from the coordinated parallel session; the remaining 49 pushed by this session) — on fresh installs the files only feed the coverage recording (plan_migrations skips recorded versions), on pre-baseline databases the recorded history keeps driving upgrades, and a mid-chain database still replays the missing tail",
+          "also carried: the sdkwork-cloudrouter ownership fix 6ba7f436 (the folded 0041 no longer creates the sdkwork-mcp-owned ai_mcp_server/ai_mcp_tool, so the mcp baseline materialises its authoritative shape and its seeds pass) and every earlier wave of this rollout",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked, pnpm check aggregate, pnpm test, pnpm lint (clippy -D warnings), workflow:validate all exit 0 in the gw-build-023 bookworm build container; fresh local parity install verified end-to-end (healthz + readyz + doctor) before the remote rollout",
+          "0.1.104 retired as failed-build evidence (fresh local parity install crash-looped on the im readiness gate); the remote production database is reset to fresh before this install"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.104",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.104",
         "summary": "Fresh-install ownership fix-forward of 0.1.103: folded migration 0041 of the cloudrouter baseline created ai_mcp_server/ai_mcp_tool with Cloud Router's legacy shape, winning the IF-NOT-EXISTS shape race against the sibling sdkwork-mcp baseline on freshly provisioned databases; sdkwork-mcp's baseline then silently no-opped behind its anchor-table guard and its seeds crashed on missing columns. The consolidated cloudrouter baseline no longer creates the two sdkwork-mcp-owned tables (folded 0042 already documented the ownership split), so the mcp baseline materialises its authoritative shape and its seeds pass. Carries the 0.1.103 workspace-sync content.",
         "highlights": [
