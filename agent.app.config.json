@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.103",
+    "currentVersion": "0.1.104",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.103"
+      "BETA": "0.1.104"
     },
     "notes": [
       {
-        "version": "0.1.103",
+        "version": "0.1.104",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.104",
+        "summary": "Fresh-install ownership fix-forward of 0.1.103: folded migration 0041 of the cloudrouter baseline created ai_mcp_server/ai_mcp_tool with Cloud Router's legacy shape, winning the IF-NOT-EXISTS shape race against the sibling sdkwork-mcp baseline on freshly provisioned databases; sdkwork-mcp's baseline then silently no-opped behind its anchor-table guard and its seeds crashed on missing columns. The consolidated cloudrouter baseline no longer creates the two sdkwork-mcp-owned tables (folded 0042 already documented the ownership split), so the mcp baseline materialises its authoritative shape and its seeds pass. Carries the 0.1.103 workspace-sync content.",
+        "highlights": [
+          "defect chain: 0.1.103 fresh install crash-looped on sdkwork-mcp seeds (relation ai_mcp_server_category does not exist) — cloudrouter's folded 0041 created ai_mcp_server/ai_mcp_tool first, the mcp anchor-table guard (anchor=ai_mcp_server) then skipped the mcp baseline entirely, and the mcp seed INSERT needed five columns (lifecycle_status/tags_json/allowed_role_codes/created_by/updated_by) that only the mcp shape has",
+          "repair: sdkwork-cloudrouter 6ba7f436 removes the two sdkwork-mcp-owned CREATE TABLE statements and their five indexes from the consolidated baseline (the folded 0041/0042 pair keeps replaying the Cloud Router-owned ai_mcp_binding/ai_mcp_server_revision create-and-retire history); scratch postgres 18 replay leaves zero ai_mcp_* tables so the mcp baseline materialises the authoritative shape and the seeds pass",
+          "also carried: the 50-module fresh-install baseline consolidation wave (0.1.102), the sdkwork-memory native-sql plugin single-baseline bootstrap (24b4fea), the documents/promotion repository baseline embeds (395f83b/249b593), and the sdkwork-database sqlite_decimal unsafe-block fixes (e7d0fdd) that the BirdCoder2 assembly merge exposed",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked, pnpm check aggregate, pnpm test, pnpm lint (clippy -D warnings), workflow:validate all exit 0 in the gw-build-023 bookworm build container; fresh local parity install is verified healthy before the remote rollout",
+          "0.1.103 retired as failed-build evidence (fresh local parity install crash-looped on the mcp seeds); the remote production database is reset to fresh before this install"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.103",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.103",
         "summary": "Workspace sync rollout: upstream gateway auth-failure classification refactor (4e473fd) plus sdkwork-iam and sdkwork-specs updates folded into a production rollout cut; first container release built on the consolidated fresh-install baselines of 0.1.102.",
         "highlights": [
