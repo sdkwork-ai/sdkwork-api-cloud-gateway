@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.101",
+    "currentVersion": "0.1.102",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.101"
+      "BETA": "0.1.102"
     },
     "notes": [
       {
-        "version": "0.1.101",
+        "version": "0.1.102",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.102",
+        "summary": "Workspace-wide fresh-install baseline consolidation: 50 packaged database modules (appstore, inventory, order, cloudrouter, course, documents, drive, iam-class exceptions excluded, rtc, and the remaining 41) had their accumulated migrations folded into their consolidated baselines via reset-database-initialization-state.mjs, so a freshly provisioned gateway database reaches the full migration-chain end state before seeds run. Each folded baseline was verified on scratch postgres 18 to replay cleanly and to be column-equal to its baseline+migration-chain end state.",
+        "highlights": [
+          "defect chain: 0.1.100 remote install crash-looped on appstore seeds (missing renamed tables); the 0.1.101 three-module fix-forward moved the failure to sdkwork-documents seeds (missing app_key column) — the parity database is itself baseline-only for newly composed modules (coverage recorded without replay), so it could not serve as the end-state reference; the failure class is systemic to every module whose baseline predates its migrations",
+          "repair: reset-database-initialization-state.mjs folded the migration debt of 50 modules into ddl/baseline/postgres/0001_*.sql (sdkwork-appstore 4328662, sdkwork-inventory 99e522f, sdkwork-order f17978b, plus 47 follow-up module commits pushed to their origin mains; sdkwork-cloudrouter and sdkwork-deployments carried the fold over merge commits with concurrent remote tips)",
+          "verification: per module, the folded baseline replays top-down without error on scratch postgres 18 and the resulting table/column inventory is EQUAL to the baseline+migration-chain replay (50/50; sdkwork-iam excluded — its deployed baseline already expresses the renamed installation end state, and the tool's fold dedup cannot see its pre-existing fold sections); sdkwork-rtc's environment-check migration folds with DO-guard re-adds so both fresh and legacy baselines converge; sdkwork-cloudrouter's cross-module commerce references verify with the order/payment baselines present (the gateway's dependency-ordered baseline phase provides them)",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked, pnpm check aggregate, pnpm test (108 node tests), pnpm lint (clippy -D warnings), workflow:validate all exit 0 in the gw-build-023 bookworm build container",
+          "0.1.101 retired as failed-build evidence (fresh local parity install crash-looped on documents seeds); the remote production database is reset to fresh before this install"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.101",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.101",
         "summary": "Fresh-install fix-forward of 0.1.100: the api.aidaxuesheng.com production install crash-looped on stale consolidated baselines — the appstore, inventory, and order modules still carried pre-consolidation states while the lifecycle records packaged migration versions as baseline coverage without replay (sdkwork-database 03987fa). Their accumulated migrations are folded into the consolidated baselines (sdkwork-appstore 4328662, sdkwork-inventory 99e522f, sdkwork-order f17978b) so a freshly provisioned database reaches the full end state before seeds run. sdkwork-iam needed no change: its deployed baseline already produces the renamed installation end state.",
         "highlights": [
