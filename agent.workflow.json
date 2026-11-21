@@ -265,6 +265,12 @@
       "ref": "main"
     },
     {
+      "id": "sdkwork-birdcoder2",
+      "repository": "sdkwork-ai/sdkwork-birdcoder2",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN",
+      "ref": "main"
+    },
+    {
       "id": "sdkwork-browser",
       "repository": "sdkwork-ai/sdkwork-browser",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN",

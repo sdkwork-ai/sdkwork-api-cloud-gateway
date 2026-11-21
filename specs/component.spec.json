@@ -2231,6 +2231,27 @@
     },
     {
       "surface": "app",
+      "prefix": "/app/v3/api/birdcoder",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-birdcoder2-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
+      "prefix": "/app/v3/api/installation",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-birdcoder2-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "internal",
+      "prefix": "/internal/v3/api/birdcoder",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-birdcoder2-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
+      "surface": "app",
       "prefix": "/app/v3/api/canvas",
       "ownership": "dependency",
       "dependencyServiceId": "sdkwork-canvas-app-api",
@@ -4142,6 +4163,24 @@
       ],
       "executableExport": "sdkwork_api_birdcoder_assembly::web_module",
       "coverage": "sdkwork-birdcoder-app-api-embedded-assembly-routes"
+    },
+    {
+      "serviceId": "sdkwork-birdcoder2-app-api",
+      "workspace": "sdkwork-birdcoder2",
+      "apiAuthority": "sdkwork-birdcoder2-app-api",
+      "sdkFamily": "sdkwork-birdcoder2-app-sdk",
+      "apiPrefixes": [
+        "/app/v3/api/birdcoder",
+        "/app/v3/api/installation",
+        "/internal/v3/api/birdcoder"
+      ],
+      "cargoFeature": "foundation-birdcoder2",
+      "cargoDependency": "sdkwork-api-birdcoder2-assembly",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_birdcoder2_assembly::web_module",
+      "coverage": "sdkwork-birdcoder2-app-api-embedded-assembly-routes"
     },
     {
       "serviceId": "sdkwork-canvas-app-api",

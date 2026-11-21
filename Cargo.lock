@@ -7145,6 +7145,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-api-birdcoder2-assembly"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder2-host-runtime-service",
+ "sdkwork-birdcoder2-installation-service",
+ "sdkwork-routes-birdcoder2-app-api",
+ "sdkwork-routes-birdcoder2-installation-app-api",
+ "sdkwork-routes-birdcoder2-internal-api",
+ "sdkwork-web-bootstrap",
+ "sdkwork-web-core",
+ "tokio",
+]
+
+[[package]]
 name = "sdkwork-api-browser-assembly"
 version = "0.1.0"
 dependencies = [
@@ -7224,6 +7239,7 @@ dependencies = [
  "sdkwork-api-appstore-assembly",
  "sdkwork-api-assets-assembly",
  "sdkwork-api-birdcoder-assembly",
+ "sdkwork-api-birdcoder2-assembly",
  "sdkwork-api-browser-assembly",
  "sdkwork-api-canvas-assembly",
  "sdkwork-api-catalog-assembly",
@@ -8722,6 +8738,26 @@ dependencies = [
  "sdkwork-web-contract",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "sdkwork-birdcoder2-host-runtime-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
+name = "sdkwork-birdcoder2-installation-service"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
@@ -14008,6 +14044,44 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tokio",
+]
+
+[[package]]
+name = "sdkwork-routes-birdcoder2-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder2-host-runtime-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "sdkwork-routes-birdcoder2-installation-app-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder2-installation-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
+]
+
+[[package]]
+name = "sdkwork-routes-birdcoder2-internal-api"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "sdkwork-birdcoder2-host-runtime-service",
+ "sdkwork-utils-rust",
+ "sdkwork-web-contract",
+ "sdkwork-web-core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
