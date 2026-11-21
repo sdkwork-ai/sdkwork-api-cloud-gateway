@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.98",
+    "currentVersion": "0.1.99",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.98"
+      "BETA": "0.1.99"
     },
     "notes": [
       {
-        "version": "0.1.98",
+        "version": "0.1.99",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.99",
+        "summary": "Second local-parity fix-forward of the 0.1.97 workspace sync wave: the sdkwork-rtc boot-time provider defaults seeding now acts as the numeric system actor \"0\" (matching the SQL seeds and the BIGINT created_by/updated_by persistence schema) on top of the natural-key legacy-id adoption, so the gateway builds the sdkwork-cloudrouter-app-api embedded router cleanly on seeded databases. Carries the full 0.1.97 wave: deployments app templates renamed to application scaffolds with the gateway component contract following, sdkwork-iam tenant applications renamed to installations across APIs and SDKs, and sdkwork-deployments consuming installation lifecycle endpoints.",
+        "highlights": [
+          "provenance: ff-only sync advanced 17 of 110 sdkwork-space checkouts (0.1.97 wave) plus the two fix-forward commits sdkwork-rtc d74b44a4→5a79830 (natural-key legacy-id adoption) and 5a79830→bea6ab3 (numeric system actor for boot-time seeding); no reset, rebase, stash, clean, checkout -f or restore",
+          "defect chain: 0.1.97 crash-looped on ensure RTC provider defaults Conflict(seed-rtc-account-volcengine) — deterministic bootstrap ids vs legacy SQL seed ids; 0.1.98 adopted by natural key but still crash-looped on BadRequest(created_by: sdkwork-rtc-bootstrap) — kebab actor label vs BIGINT persistence column; both caught by the local production-parity stack before any remote rollout and fixed upstream in sdkwork-rtc (5a79830, bea6ab3; sdkwork-rtc-service-host 47 tests pass)",
+          "contract: the deployments app-template surface rename (sdkwork-deployments 9f36394) moved provider routes to /app/v3/api/scaffolds and /app/v3/api/scaffold_categories (backend equivalents /backend/v3/api/scaffolds and /backend/v3/api/scaffold_categories); specs/component.spec.json apiSurfaces entries and apiPrefixes lists follow the rename and the gateway API closure passes with 3902 method/path routes",
+          "lock: Cargo.lock unchanged from 0.1.97 (source-only sibling fixes; cargo metadata --locked passes)",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.98",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.98",
         "summary": "Local-parity fix-forward of the 0.1.97 workspace sync wave: sdkwork-rtc boot-time provider defaults seeding now adopts legacy seed ids by natural key instead of conflicting, so the gateway builds the sdkwork-cloudrouter-app-api embedded router on databases seeded by 002_rtc_provider_catalog.sql. Carries the full 0.1.97 wave: deployments app templates renamed to application scaffolds with the gateway component contract following, sdkwork-iam tenant applications renamed to installations across APIs and SDKs plus the wechat component operator platform, and sdkwork-deployments consuming installation lifecycle endpoints.",
         "highlights": [
@@ -204,7 +221,8 @@
           "defect: 0.1.97 failed local production parity before any remote rollout — the gateway crash-looped (RestartCount=22) with 'failed to build embedded router for sdkwork-cloudrouter-app-api: ensure RTC provider defaults: Conflict(seed-rtc-account-volcengine)'; the boot seeding resolved deterministic bootstrap ids while the seeded database holds legacy ids; fixed upstream in sdkwork-rtc 5a79830 by resolving each natural key ((tenant, organization, provider, code) for accounts/profiles, (provider account, code) for applications, (application, role, label) for credentials) and adopting the existing row before creating, mirroring each upsert guard's predicate; sdkwork-rtc-service-host 47 tests pass",
           "contract: the deployments app-template surface rename (sdkwork-deployments 9f36394) moved provider routes to /app/v3/api/scaffolds and /app/v3/api/scaffold_categories (backend equivalents /backend/v3/api/scaffolds and /backend/v3/api/scaffold_categories); specs/component.spec.json apiSurfaces entries and apiPrefixes lists follow the rename and the gateway API closure passes with 3902 method/path routes",
           "lock: Cargo.lock unchanged from 0.1.97 (source-only sibling fix; cargo metadata --locked passes)",
-          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container",
+          "supersession: local production parity (upgrade to 0.1.98) cleared the legacy-id Conflict but exposed a second defect in the same new boot path — every seeding create failed with BadRequest(\"created_by: sdkwork-rtc-bootstrap\") because the RTC persistence schema stores created_by/updated_by as BIGINT (parse_i64_field) and the kebab actor label does not parse; the gateway crash-looped (RestartCount>20, 900s compose wait expired twice); 0.1.98 never reached the remote production bundle and is kept as failed-build evidence; superseded by 0.1.99 carrying the sdkwork-rtc numeric system actor fix (bea6ab3)"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
