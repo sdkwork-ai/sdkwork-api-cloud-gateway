@@ -187,16 +187,28 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.102",
+    "currentVersion": "0.1.103",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.102"
+      "BETA": "0.1.103"
     },
     "notes": [
       {
-        "version": "0.1.102",
+        "version": "0.1.103",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.103",
+        "summary": "Workspace sync rollout: upstream gateway auth-failure classification refactor (4e473fd) plus sdkwork-iam and sdkwork-specs updates folded into a production rollout cut; first container release built on the consolidated fresh-install baselines of 0.1.102.",
+        "highlights": [
+          "carries upstream 4e473fd simplify vendor OpenAPI auth failure classification on top of the 0.1.102 baseline consolidation",
+          "sibling sync: sdkwork-iam 8a4e71e9..318ebaff, sdkwork-specs 3e99342..52956da; workspace ff-only pull across 105 repositories",
+          "deployment: local production parity verified before remote production upgrade on api.noaper.com (0.1.99 -> 0.1.103)"
+        ]
+      },
+      {
+        "version": "0.1.102",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.102",
         "summary": "Workspace-wide fresh-install baseline consolidation: 50 packaged database modules (appstore, inventory, order, cloudrouter, course, documents, drive, iam-class exceptions excluded, rtc, and the remaining 41) had their accumulated migrations folded into their consolidated baselines via reset-database-initialization-state.mjs, so a freshly provisioned gateway database reaches the full migration-chain end state before seeds run. Each folded baseline was verified on scratch postgres 18 to replay cleanly and to be column-equal to its baseline+migration-chain end state.",
         "highlights": [
