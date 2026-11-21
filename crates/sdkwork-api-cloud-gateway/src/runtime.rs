@@ -504,6 +504,7 @@ async fn build_embedded_router(
     let dynamic_cors_source: Arc<dyn sdkwork_web_core::DynamicCorsPolicySource> = cors.clone();
     let framework = framework.dynamic_cors_policy_source(dynamic_cors_source);
     let hosted = composed.into_hosted(framework);
+    let bridge_config = config.clone();
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
         .map(|runtime| {
             runtime
@@ -513,6 +514,10 @@ async fn build_embedded_router(
         .layer(axum::middleware::from_fn(
             crate::dependency_error_observer::observe_dependency_server_errors,
         ));
+    // The composed dependency wire publishes `Authorization: Bearer <credential>`
+    // while the framework profile it was composed into reads `X-API-Key`; the
+    // bridge presents the published header canonically for those prefixes only.
+    let router = crate::web_framework::attach_vendor_credential_bridge(&bridge_config, router);
     Ok((router, dependency_bootstrap.runtime))
 }
 

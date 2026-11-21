@@ -295,6 +295,74 @@ manifest），并把两个"最容易写错"的部分先落地为可测代码：
 `cargo fmt -- --check` 通过。**尚未部署**，因此线上行为未变；端到端验证需要一次
 重建 + 用一个真实 `sk-` 网关密钥调用 `/v1/chat/completions`。
 
+## 15. 登录 Auth Token 作为 API Key 的兼容收口（本轮实现）
+
+第三阶段暴露了一个真实的接线缺口与一处凭证权威缺口。线上客户端
+（BirdCoder 桌面端）按 vendor wire 只发一个 `Authorization: Bearer <IAM authToken>`，
+因此每次请求都落在第 1 节的失败形态上；即使用 `sk-` 网关密钥，只要走
+`Authorization: Bearer` 也同样被拒。
+
+### 15.1 三处改动
+
+1. **`runtime.rs::build_embedded_router` 安装 vendor 凭证桥**（接线缺口）。
+   桥此前只挂在 `GatewayRuntime::router()` → `finalize_gateway_router` 上，
+   而生产 embedded 组装直接调用 `build_embedded_router`，从未执行过桥。
+   现在 `web_framework::attach_vendor_credential_bridge` 是桥的唯一所有者，
+   `finalize_gateway_router{,_async}` 与 embedded 组装都调用它。
+2. **`vendor_open_api_auth.rs::GatewayApiKeyResolver::resolve_api_key` 增加登录令牌通道**。
+   `iam_gateway_api_key` 未命中后，按与 Cloud Router 相同的分类器判断凭证形态：
+   带 `sk-`/`sp-` 前缀只走平台 API Key 通道；不带前缀的凭证先尝试
+   `resolve_bearer_auth_token`（IAM 会话 auth token），该通道报
+   `InvalidCredentials`（会话不认这个值）或 `DependencyUnavailable`（组装未接线）时
+   回落到平台 API Key 通道，因此既有的无前缀密钥与开发态 claim-string 不受影响；
+   `ExpiredCredentials` 等真实会话错误原样上抛，不会被重新解释成"无效 API Key"。
+3. **`sdkwork-iam` 的 `resolve_bearer_auth_token` 真正解析登录 auth token**。
+   该通道原本直接委托 `resolve_oauth_bearer`，只查 `iam_session.access_token_hash`，
+   登录 `authToken`（`auth_token_hash`）永远查不到。现在先查 auth token，未命中再回落
+   OAuth 通道，符合 `RouteAuth::OpenApiBearerFlexible` 的 trait 契约。
+
+### 15.2 请求链路（修复后）
+
+```
+Authorization: Bearer <authToken>
+  → attach_vendor_credential_bridge：改写为 X-API-Key，移除 Authorization
+  → SurfaceClassification：api-key-or-dual-token 只看到 X-API-Key，通过
+  → RequestContextResolution：resolve_api_key → iam_gateway_api_key 未命中
+      → 非 sk-/sp- → IAM resolve_bearer_auth_token → iam_session.auth_token_hash
+      → principal（tenant/org/user/app）
+  → Cloud Router handler 从 X-API-Key 重新认证：分类器判为 AuthToken
+      → IamAuthTokenAuthenticator → 默认上游账号分组（按 Chat/LLM 模态）
+```
+
+云侧不需要改动：`IamAuthTokenAuthenticator`、`authenticated_context_from_auth_token_identity`
+与默认分组选择（`llm` 默认分组 → `mixed` 默认分组 → `default-group` 编码 → 唯一分组）
+早已实现并有 e2e 覆盖；本轮的缺口全在网关与 IAM 适配器的凭证通道上。
+
+### 15.3 验证
+
+- `cargo test -p sdkwork-api-cloud-gateway --lib` → **79 passed**（新增 4 条：登录令牌命中、
+  `sk-` 前缀不进入令牌通道、未知令牌回落、过期令牌不透传成 API Key）。
+- `cargo test -p sdkwork-api-cloud-gateway --tests` → 全绿（`web_framework_tests` **7 passed**，
+  新增：桥把 bearer 变成 `X-API-Key` 且不留双凭证头、非 vendor 路径不被改写、
+  embedded 组装确实安装桥、shipped `component.spec.json` 的 `/v1` 前缀确实被桥覆盖）。
+- `cargo test -p sdkwork-iam-web-adapter --test open_api_resolver` → **3 passed**。
+- `cargo fmt -- --check`（两个仓库）→ 通过。
+
+### 15.4 上线前置条件
+
+1. 重建并部署网关镜像（本轮改动在网关 + IAM web-adapter 两个 crate）。
+2. `SDKWORK_API_CLOUD_GATEWAY_IAM_ALLOWED_AUDIENCES` 必须包含首方客户端的登录
+   `app_id`（桌面端为 `birdcoder`），否则会话 principal 会被
+   `IAM credential audience is not allowed for this application host` 拒绝；
+   启动日志会列出缺失的已启用应用。
+3. 租户必须存在 Chat 模态可用的默认上游账号分组（`llm` 默认分组或 `mixed` 默认分组），
+   否则请求在依赖侧以 `503 account_group_unavailable` 失败（这是授权前置条件缺失，
+   不是认证失败）。种子数据只为 `100_001` 租户建了 `mixed` 默认分组。
+4. 客户端无需改动：`apiKeyEnv: BIRDCODER_API_KEY` 注入的正是登录 `authToken`，
+   relay profile 的 `api: openai-completions` 指向 `/v1` 面。用户若手工建过
+   `providers.birdcoder` 且 `api: anthropic-messages`，登录令牌会打到 `/anthropic`
+   面（只接受 API Key），需要删掉该 profile 让内置 profile 生效。
+
 
 
 
