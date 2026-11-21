@@ -555,15 +555,17 @@ mod tests {
 
     #[test]
     fn registers_the_gateway_and_every_surface_with_its_sdk_alias_once() {
-        let mut config = GatewayRuntimeConfig::default();
-        config.dependency_surfaces = vec![
-            surface("sdkwork-cloudrouter", "sdkwork-cloudrouter-open-api", "/v1"),
-            surface(
-                "sdkwork-agents",
-                "sdkwork-agents-app-api",
-                "/app/v3/api/ai/agents",
-            ),
-        ];
+        let config = GatewayRuntimeConfig {
+            dependency_surfaces: vec![
+                surface("sdkwork-cloudrouter", "sdkwork-cloudrouter-open-api", "/v1"),
+                surface(
+                    "sdkwork-agents",
+                    "sdkwork-agents-app-api",
+                    "/app/v3/api/ai/agents",
+                ),
+            ],
+            ..GatewayRuntimeConfig::default()
+        };
 
         let names = service_names_for_test(&config);
 

@@ -3,7 +3,6 @@ use axum::{
     http::{header, HeaderName, HeaderValue, Request, StatusCode},
     response::{IntoResponse, Response},
 };
-use bytes::Bytes;
 
 const COMMENTS_RUNTIME_DEFAULT: &str = "http://127.0.0.1:3901";
 const COMMENTS_PATH_PREFIXES: [&str; 2] = ["/app/v3/api/comments", "/app/v3/api/engagement"];
@@ -51,7 +50,7 @@ pub(crate) async fn proxy_comments_request(request: Request<Body>) -> Response {
         }
     }
     if !body.is_empty() {
-        upstream = upstream.body(Bytes::from(body));
+        upstream = upstream.body(body);
     }
     match upstream.send().await {
         Ok(response) => {

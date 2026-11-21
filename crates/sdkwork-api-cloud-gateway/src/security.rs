@@ -421,6 +421,218 @@ fn is_anonymous_auth_route(path: &str) -> bool {
         && (path.contains("/session_exchanges") || path.ends_with("/token"))
 }
 
+fn inspect_waf(
+    config: &GatewaySecurityConfig,
+    request: &Request<Body>,
+) -> Result<bool, SecurityRejection> {
+    if !config.waf.enabled {
+        return Ok(false);
+    }
+
+    let matched_query = if config.waf.inspect_query {
+        request.uri().query().is_some_and(waf_value_matches)
+    } else {
+        false
+    };
+    let matched_headers = if config.waf.inspect_headers {
+        request
+            .headers()
+            .iter()
+            .any(|(_name, value)| value.to_str().is_ok_and(waf_value_matches))
+    } else {
+        false
+    };
+
+    if !(matched_query || matched_headers) {
+        return Ok(false);
+    }
+
+    if is_waf_blocking_mode(config.waf.mode.as_str()) {
+        return Err(SecurityRejection {
+            status: StatusCode::FORBIDDEN,
+            title: "waf_request_blocked",
+            detail: "request matched a gateway WAF baseline signature".to_string(),
+            headers: waf_headers("block"),
+            events: vec![waf_event("block")],
+        });
+    }
+
+    Ok(true)
+}
+
+fn waf_event(action: &'static str) -> SecurityEvent {
+    SecurityEvent {
+        kind: "waf",
+        action,
+        rule: "baseline-signature",
+    }
+}
+
+fn waf_headers(action: &'static str) -> Vec<(HeaderName, HeaderValue)> {
+    vec![
+        (
+            HeaderName::from_static("x-sdkwork-waf-action"),
+            HeaderValue::from_static(action),
+        ),
+        (
+            HeaderName::from_static("x-sdkwork-waf-rule"),
+            HeaderValue::from_static("baseline-signature"),
+        ),
+    ]
+}
+
+fn is_waf_blocking_mode(mode: &str) -> bool {
+    matches!(
+        mode.trim().to_ascii_lowercase().as_str(),
+        "enforce" | "block" | "blocking" | "prevent"
+    )
+}
+
+fn waf_value_matches(value: &str) -> bool {
+    let value = value.to_ascii_lowercase();
+    let normalized = value.replace('+', " ");
+    normalized.contains("<script")
+        || normalized.contains("%3cscript")
+        || normalized.contains("javascript:")
+        || normalized.contains("union select")
+        || (normalized.contains(" or ") && normalized.contains("1=1"))
+        || normalized.contains("' or 1=1")
+        || normalized.contains("\" or 1=1")
+        || normalized.contains("../")
+        || normalized.contains("%2e%2e%2f")
+        || normalized.contains("/etc/passwd")
+}
+
+/// Inspect JSON request bodies against the WAF baseline signature when
+/// `waf.inspectJsonBody` is enabled (config `waf.inspectJsonBody`).
+///
+/// Bodies within [`WAF_JSON_BODY_LIMIT`] are buffered and recursively scanned
+/// for signature matches. A larger body is skipped by the WAF stage and left to
+/// the request body limit downstream, but it is **never truncated**: the handler
+/// must receive exactly the bytes the client sent (media generation payloads
+/// carry inline images well past one megabyte). In blocking mode a matched
+/// request is rejected; in monitor mode a WAF event is returned so the
+/// middleware can record it.
+///
+/// `max_body_bytes` is the gateway request cap (`request.maxBodyBytes`). It
+/// bounds the buffer used for a streamed body with no declared length; a body
+/// beyond it is rejected here with the same problem the downstream body-limit
+/// enforcement would produce, because consuming it would leave the handler with
+/// an empty body.
+pub(crate) async fn inspect_json_body(
+    config: &GatewaySecurityConfig,
+    request: Request<Body>,
+    max_body_bytes: usize,
+) -> Result<(Request<Body>, Vec<SecurityEvent>), SecurityRejection> {
+    if !config.waf.enabled || !config.waf.inspect_json_body {
+        return Ok((request, Vec::new()));
+    }
+    if matches!(
+        request.method(),
+        &Method::GET | &Method::HEAD | &Method::OPTIONS
+    ) {
+        return Ok((request, Vec::new()));
+    }
+    let is_json = request
+        .headers()
+        .get(header::CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .map(|content_type| {
+            content_type
+                .split(';')
+                .next()
+                .map(str::trim)
+                .is_some_and(|media| media.eq_ignore_ascii_case("application/json"))
+        })
+        .unwrap_or(false);
+    if !is_json {
+        return Ok((request, Vec::new()));
+    }
+
+    // A declared length beyond the inspection budget is skipped without reading
+    // the stream, so oversized payloads cost no WAF buffer at all.
+    let declared_length = request
+        .headers()
+        .get(header::CONTENT_LENGTH)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.trim().parse::<usize>().ok());
+    if declared_length.is_some_and(|length| length > WAF_JSON_BODY_LIMIT) {
+        return Ok((request, Vec::new()));
+    }
+
+    let (parts, body) = request.into_parts();
+    let bytes = match to_bytes(body, max_body_bytes).await {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            let _ = error;
+            return Err(SecurityRejection {
+                status: StatusCode::PAYLOAD_TOO_LARGE,
+                title: "request_body_too_large",
+                detail: "request body exceeded configured gateway limit".to_string(),
+                headers: Vec::new(),
+                events: Vec::new(),
+            });
+        }
+    };
+    // Streamed bodies (chunked, or a client that understated Content-Length) can
+    // only be measured by buffering; anything past the inspection budget is
+    // forwarded uninspected rather than dropped.
+    let matched = bytes.len() <= WAF_JSON_BODY_LIMIT
+        && serde_json::from_slice::<serde_json::Value>(&bytes)
+            .map(|value| json_value_matches(&value))
+            .unwrap_or(false);
+    let request = Request::from_parts(parts, Body::from(bytes));
+    if !matched {
+        return Ok((request, Vec::new()));
+    }
+
+    if is_waf_blocking_mode(config.waf.mode.as_str()) {
+        return Err(SecurityRejection {
+            status: StatusCode::FORBIDDEN,
+            title: "waf_request_blocked",
+            detail: "request body matched a gateway WAF baseline signature".to_string(),
+            headers: waf_headers("block"),
+            events: vec![waf_event("block")],
+        });
+    }
+
+    Ok((request, vec![waf_event("monitor")]))
+}
+
+fn json_value_matches(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::String(text) => waf_value_matches(text.as_str()),
+        serde_json::Value::Array(items) => items.iter().any(json_value_matches),
+        serde_json::Value::Object(map) => map.values().any(json_value_matches),
+        _ => false,
+    }
+}
+
+fn insert_if_absent(headers: &mut HeaderMap, name: &'static str, value: &'static str) {
+    if headers.contains_key(name) {
+        return;
+    }
+    headers.insert(
+        HeaderName::from_static(name),
+        HeaderValue::from_static(value),
+    );
+}
+
+fn normalize_host(value: &str) -> String {
+    let value = value.trim().to_ascii_lowercase();
+    if let Some(end) = value
+        .strip_prefix('[')
+        .and_then(|rest| rest.find(']').map(|index| index + 1))
+    {
+        return value[..=end].to_string();
+    }
+    value
+        .split_once(':')
+        .map(|(host, _)| host)
+        .unwrap_or(value.as_str())
+        .to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -737,8 +949,7 @@ mod tests {
 
         let rejection = inspect_json_body(&config, request, 1024)
             .await
-            .err()
-            .expect("body above the gateway cap is rejected");
+            .expect_err("body above the gateway cap is rejected");
         assert_eq!(rejection.status, StatusCode::PAYLOAD_TOO_LARGE);
         assert_eq!(rejection.title, "request_body_too_large");
     }
@@ -750,221 +961,8 @@ mod tests {
 
         let rejection = inspect_json_body(&config, request, 32 * 1024 * 1024)
             .await
-            .err()
-            .expect("signature match is blocked");
+            .expect_err("signature match is blocked");
         assert_eq!(rejection.status, StatusCode::FORBIDDEN);
         assert_eq!(rejection.title, "waf_request_blocked");
     }
-}
-
-fn inspect_waf(
-    config: &GatewaySecurityConfig,
-    request: &Request<Body>,
-) -> Result<bool, SecurityRejection> {
-    if !config.waf.enabled {
-        return Ok(false);
-    }
-
-    let matched_query = if config.waf.inspect_query {
-        request.uri().query().is_some_and(waf_value_matches)
-    } else {
-        false
-    };
-    let matched_headers = if config.waf.inspect_headers {
-        request
-            .headers()
-            .iter()
-            .any(|(_name, value)| value.to_str().is_ok_and(waf_value_matches))
-    } else {
-        false
-    };
-
-    if !(matched_query || matched_headers) {
-        return Ok(false);
-    }
-
-    if is_waf_blocking_mode(config.waf.mode.as_str()) {
-        return Err(SecurityRejection {
-            status: StatusCode::FORBIDDEN,
-            title: "waf_request_blocked",
-            detail: "request matched a gateway WAF baseline signature".to_string(),
-            headers: waf_headers("block"),
-            events: vec![waf_event("block")],
-        });
-    }
-
-    Ok(true)
-}
-
-fn waf_event(action: &'static str) -> SecurityEvent {
-    SecurityEvent {
-        kind: "waf",
-        action,
-        rule: "baseline-signature",
-    }
-}
-
-fn waf_headers(action: &'static str) -> Vec<(HeaderName, HeaderValue)> {
-    vec![
-        (
-            HeaderName::from_static("x-sdkwork-waf-action"),
-            HeaderValue::from_static(action),
-        ),
-        (
-            HeaderName::from_static("x-sdkwork-waf-rule"),
-            HeaderValue::from_static("baseline-signature"),
-        ),
-    ]
-}
-
-fn is_waf_blocking_mode(mode: &str) -> bool {
-    matches!(
-        mode.trim().to_ascii_lowercase().as_str(),
-        "enforce" | "block" | "blocking" | "prevent"
-    )
-}
-
-fn waf_value_matches(value: &str) -> bool {
-    let value = value.to_ascii_lowercase();
-    let normalized = value.replace('+', " ");
-    normalized.contains("<script")
-        || normalized.contains("%3cscript")
-        || normalized.contains("javascript:")
-        || normalized.contains("union select")
-        || (normalized.contains(" or ") && normalized.contains("1=1"))
-        || normalized.contains("' or 1=1")
-        || normalized.contains("\" or 1=1")
-        || normalized.contains("../")
-        || normalized.contains("%2e%2e%2f")
-        || normalized.contains("/etc/passwd")
-}
-
-/// Inspect JSON request bodies against the WAF baseline signature when
-/// `waf.inspectJsonBody` is enabled (config `waf.inspectJsonBody`).
-///
-/// Bodies within [`WAF_JSON_BODY_LIMIT`] are buffered and recursively scanned
-/// for signature matches. A larger body is skipped by the WAF stage and left to
-/// the request body limit downstream, but it is **never truncated**: the handler
-/// must receive exactly the bytes the client sent (media generation payloads
-/// carry inline images well past one megabyte). In blocking mode a matched
-/// request is rejected; in monitor mode a WAF event is returned so the
-/// middleware can record it.
-///
-/// `max_body_bytes` is the gateway request cap (`request.maxBodyBytes`). It
-/// bounds the buffer used for a streamed body with no declared length; a body
-/// beyond it is rejected here with the same problem the downstream body-limit
-/// enforcement would produce, because consuming it would leave the handler with
-/// an empty body.
-pub(crate) async fn inspect_json_body(
-    config: &GatewaySecurityConfig,
-    request: Request<Body>,
-    max_body_bytes: usize,
-) -> Result<(Request<Body>, Vec<SecurityEvent>), SecurityRejection> {
-    if !config.waf.enabled || !config.waf.inspect_json_body {
-        return Ok((request, Vec::new()));
-    }
-    if matches!(
-        request.method(),
-        &Method::GET | &Method::HEAD | &Method::OPTIONS
-    ) {
-        return Ok((request, Vec::new()));
-    }
-    let is_json = request
-        .headers()
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .map(|content_type| {
-            content_type
-                .split(';')
-                .next()
-                .map(str::trim)
-                .is_some_and(|media| media.eq_ignore_ascii_case("application/json"))
-        })
-        .unwrap_or(false);
-    if !is_json {
-        return Ok((request, Vec::new()));
-    }
-
-    // A declared length beyond the inspection budget is skipped without reading
-    // the stream, so oversized payloads cost no WAF buffer at all.
-    let declared_length = request
-        .headers()
-        .get(header::CONTENT_LENGTH)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.trim().parse::<usize>().ok());
-    if declared_length.is_some_and(|length| length > WAF_JSON_BODY_LIMIT) {
-        return Ok((request, Vec::new()));
-    }
-
-    let (parts, body) = request.into_parts();
-    let bytes = match to_bytes(body, max_body_bytes).await {
-        Ok(bytes) => bytes,
-        Err(error) => {
-            let _ = error;
-            return Err(SecurityRejection {
-                status: StatusCode::PAYLOAD_TOO_LARGE,
-                title: "request_body_too_large",
-                detail: "request body exceeded configured gateway limit".to_string(),
-                headers: Vec::new(),
-                events: Vec::new(),
-            });
-        }
-    };
-    // Streamed bodies (chunked, or a client that understated Content-Length) can
-    // only be measured by buffering; anything past the inspection budget is
-    // forwarded uninspected rather than dropped.
-    let matched = bytes.len() <= WAF_JSON_BODY_LIMIT
-        && serde_json::from_slice::<serde_json::Value>(&bytes)
-            .map(|value| json_value_matches(&value))
-            .unwrap_or(false);
-    let request = Request::from_parts(parts, Body::from(bytes));
-    if !matched {
-        return Ok((request, Vec::new()));
-    }
-
-    if is_waf_blocking_mode(config.waf.mode.as_str()) {
-        return Err(SecurityRejection {
-            status: StatusCode::FORBIDDEN,
-            title: "waf_request_blocked",
-            detail: "request body matched a gateway WAF baseline signature".to_string(),
-            headers: waf_headers("block"),
-            events: vec![waf_event("block")],
-        });
-    }
-
-    Ok((request, vec![waf_event("monitor")]))
-}
-
-fn json_value_matches(value: &serde_json::Value) -> bool {
-    match value {
-        serde_json::Value::String(text) => waf_value_matches(text.as_str()),
-        serde_json::Value::Array(items) => items.iter().any(json_value_matches),
-        serde_json::Value::Object(map) => map.values().any(json_value_matches),
-        _ => false,
-    }
-}
-
-fn insert_if_absent(headers: &mut HeaderMap, name: &'static str, value: &'static str) {
-    if headers.contains_key(name) {
-        return;
-    }
-    headers.insert(
-        HeaderName::from_static(name),
-        HeaderValue::from_static(value),
-    );
-}
-
-fn normalize_host(value: &str) -> String {
-    let value = value.trim().to_ascii_lowercase();
-    if let Some(end) = value
-        .strip_prefix('[')
-        .and_then(|rest| rest.find(']').map(|index| index + 1))
-    {
-        return value[..=end].to_string();
-    }
-    value
-        .split_once(':')
-        .map(|(host, _)| host)
-        .unwrap_or(value.as_str())
-        .to_string()
 }

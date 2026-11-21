@@ -9,6 +9,9 @@
 use sdkwork_api_cloud_gateway_config::GatewayRuntimeConfig;
 use sdkwork_database_sqlx::DatabasePool;
 use sdkwork_web_bootstrap::WebModule;
+// The embedded cloud router turn surface is the only tracing user here and it
+// is compiled behind `foundation-agents-cloudrouter-embedded`.
+#[cfg(feature = "foundation-agents-cloudrouter-embedded")]
 use tracing::{info, warn};
 
 use crate::GatewayRuntimeError;
