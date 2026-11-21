@@ -93,6 +93,14 @@
           ]
         },
         {
+          "module": "sdkwork-birdcoder2",
+          "ownerAssembly": "sdkwork-api-birdcoder2-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
           "module": "sdkwork-browser",
           "ownerAssembly": "sdkwork-api-browser-assembly",
           "poolMode": "injected",

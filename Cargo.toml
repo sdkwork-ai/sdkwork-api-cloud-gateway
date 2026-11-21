@@ -87,6 +87,7 @@ sdkwork-api-doudizhu-assembly = { path = "../sdkwork-doudizhu/crates/sdkwork-api
 sdkwork-api-xiangqi-assembly = { path = "../sdkwork-xiangqi/crates/sdkwork-api-xiangqi-assembly" }
 sdkwork-api-appbase-assembly = { path = "../sdkwork-appbase/crates/sdkwork-api-appbase-assembly" }
 sdkwork-api-birdcoder-assembly = { path = "../sdkwork-birdcoder/crates/sdkwork-api-birdcoder-assembly" }
+sdkwork-api-birdcoder2-assembly = { path = "../sdkwork-birdcoder2/crates/sdkwork-api-birdcoder2-assembly" }
 sdkwork-api-canvas-assembly = { path = "../sdkwork-canvas/crates/sdkwork-api-canvas-assembly" }
 sdkwork-api-company-assembly = { path = "../sdkwork-company/crates/sdkwork-api-company-assembly" }
 sdkwork-api-feeds-assembly = { path = "../sdkwork-feeds/crates/sdkwork-api-feeds-assembly" }

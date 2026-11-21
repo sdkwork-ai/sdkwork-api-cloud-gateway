@@ -125,6 +125,10 @@ foundation-xiangqi = ["dep:sdkwork-api-xiangqi-assembly"]
 # sdkwork-appbase data surfaces use an explicit `-data` feature name.
 foundation-appbase-data = ["dep:sdkwork-api-appbase-assembly"]
 foundation-birdcoder = ["dep:sdkwork-api-birdcoder-assembly"]
+# The new BirdCoder2 app system (mobile app-api, host-runtime internal-api, and
+# the installation identity App API the About surface reads). Its assembly owns
+# the whole surface set; the gateway only composes the module.
+foundation-birdcoder2 = ["dep:sdkwork-api-birdcoder2-assembly"]
 foundation-canvas = ["dep:sdkwork-api-canvas-assembly"]
 foundation-company = ["dep:sdkwork-api-company-assembly"]
 foundation-feeds = ["dep:sdkwork-api-feeds-assembly"]
@@ -185,6 +189,7 @@ platform-foundation-suite-container = [
     "foundation-generations",
     "foundation-appbase-data",
     "foundation-birdcoder",
+    "foundation-birdcoder2",
     "foundation-canvas",
     "foundation-company",
     "foundation-feeds",
@@ -293,6 +298,7 @@ sdkwork-api-doudizhu-assembly = { workspace = true, optional = true }
 sdkwork-api-xiangqi-assembly = { workspace = true, optional = true }
 sdkwork-api-appbase-assembly = { workspace = true, optional = true }
 sdkwork-api-birdcoder-assembly = { workspace = true, optional = true }
+sdkwork-api-birdcoder2-assembly = { workspace = true, optional = true }
 sdkwork-api-canvas-assembly = { workspace = true, optional = true }
 sdkwork-api-company-assembly = { workspace = true, optional = true }
 sdkwork-api-feeds-assembly = { workspace = true, optional = true }

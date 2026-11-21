@@ -21,12 +21,22 @@
 //!   <key>` (OpenAI/Anthropic wire, `API_SPEC.md` §4.5.2), while the framework
 //!   profile that serves it reads `X-API-Key`. The bridge renames that one
 //!   header for the vendor prefixes and leaves every other header untouched.
+//! * [`GatewayApiKeyResolver`] — the credential authority for both vendor
+//!   credential kinds: an API-key-prefixed value resolves against
+//!   `iam_gateway_api_key`, and a signed-in user's login token resolves through
+//!   the IAM session auth-token channel. The dependency's own handler then picks
+//!   the subject's default upstream account group for the request's modality, so
+//!   a logged-in user needs no separately issued key to use the relay.
 //!
 //! Both functions are pure and side-effect free so they can be unit tested
 //! without a database or a listener; the resolver wiring that consumes them
 //! lives next to the framework composition.
 
 use axum::http::{header, HeaderMap, HeaderValue};
+use sdkwork_web_core::{
+    default_open_api_bearer_classifier, DynOpenApiBearerCredentialClassifier,
+    OpenApiCredentialKind, WebFrameworkErrorKind,
+};
 
 /// Environment key that carries Cloud Router's API-key hashing pepper.
 pub const API_KEY_PEPPER_ENV: &str = "SDKWORK_CLOUDROUTER_API_KEY_PEPPER";
@@ -277,6 +287,7 @@ pub struct GatewayApiKeyResolver<R> {
     app_id: std::sync::Arc<str>,
     environment: sdkwork_web_core::WebEnvironment,
     deployment_mode: sdkwork_web_core::WebDeploymentMode,
+    bearer_classifier: DynOpenApiBearerCredentialClassifier,
 }
 
 impl<R> GatewayApiKeyResolver<R> {
@@ -294,7 +305,21 @@ impl<R> GatewayApiKeyResolver<R> {
             app_id: app_id.into(),
             environment,
             deployment_mode,
+            bearer_classifier: default_open_api_bearer_classifier(),
         }
+    }
+
+    /// Whether a presented credential is an SDKWork login auth token rather
+    /// than an API key.
+    ///
+    /// The vendor-compatible wire (Cloud Router's `/v1` face) publishes one
+    /// `Authorization: Bearer` credential and lets a signed-in user use the
+    /// session's login token in place of an API key. The classifier is the same
+    /// one Cloud Router's own handler applies — a value that does not carry an
+    /// API-key prefix is a login token — so the gateway and the dependency agree
+    /// on which channel a credential belongs to.
+    fn is_login_token(&self, raw_credential: &str) -> bool {
+        self.bearer_classifier.classify(raw_credential) == OpenApiCredentialKind::AuthToken
     }
 }
 
@@ -333,6 +358,26 @@ impl<R: sdkwork_web_core::WebRequestContextResolver> sdkwork_web_core::WebReques
             .await?
         {
             return Ok(principal);
+        }
+        // Vendor login-token channel: a signed-in SDKWork user authenticates the
+        // vendor-compatible open-api with the session's login token instead of an
+        // API key, so a credential without an API-key prefix resolves through the
+        // session's auth-token lookup. An API-key-prefixed value never enters this
+        // channel. A credential the session store does not know — and a
+        // composition whose resolver wires no auth-token channel at all — falls
+        // through to the platform API-key channel, which stays authoritative for
+        // unprefixed key records and the development claim-string form.
+        if self.is_login_token(raw_api_key) {
+            match self.inner.resolve_bearer_auth_token(raw_api_key).await {
+                Ok(principal) => return Ok(principal),
+                Err(error)
+                    if matches!(
+                        error.kind,
+                        WebFrameworkErrorKind::InvalidCredentials
+                            | WebFrameworkErrorKind::DependencyUnavailable
+                    ) => {}
+                Err(error) => return Err(error),
+            }
         }
         self.inner.resolve_api_key(raw_api_key).await
     }
@@ -552,5 +597,186 @@ mod tests {
         assert!(!is_vendor_open_api_path("/v10/models", &prefixes));
         assert!(!is_vendor_open_api_path("/v1beta/models", &prefixes));
         assert!(!is_vendor_open_api_path("/app/v3/api/iam", &prefixes));
+    }
+
+    /// The credential channels one scripted inner resolver reports.
+    #[derive(Clone, Default)]
+    struct ScriptedInner {
+        calls: std::sync::Arc<std::sync::Mutex<Vec<String>>>,
+        /// What the auth-token channel answers; `None` answers a login-token principal.
+        bearer: Option<sdkwork_web_core::WebFrameworkErrorKind>,
+    }
+
+    impl ScriptedInner {
+        fn calls(&self) -> Vec<String> {
+            self.calls.lock().expect("calls").clone()
+        }
+    }
+
+    fn scripted_principal(channel: &str) -> sdkwork_web_core::WebRequestPrincipal {
+        sdkwork_web_core::WebRequestPrincipal::builder()
+            .tenant_id("100001")
+            .user_id("30")
+            .app_id(format!("appbase-{channel}"))
+            .environment(sdkwork_web_core::WebEnvironment::Prod)
+            .deployment_mode(sdkwork_web_core::WebDeploymentMode::Saas)
+            .auth_level(sdkwork_web_core::WebAuthLevel::Password)
+            .subject_type(sdkwork_web_core::WebSubjectType::User)
+            .build()
+    }
+
+    #[async_trait::async_trait]
+    impl sdkwork_web_core::WebRequestContextResolver for ScriptedInner {
+        async fn resolve_api_key(
+            &self,
+            raw_api_key: &str,
+        ) -> Result<sdkwork_web_core::WebRequestPrincipal, sdkwork_web_core::WebFrameworkError>
+        {
+            self.calls
+                .lock()
+                .expect("calls")
+                .push(format!("api-key:{raw_api_key}"));
+            Ok(scripted_principal("api-key"))
+        }
+
+        async fn resolve_dual_token(
+            &self,
+            _raw_auth_token: &str,
+            _raw_access_token: &str,
+        ) -> Result<sdkwork_web_core::WebRequestPrincipal, sdkwork_web_core::WebFrameworkError>
+        {
+            Err(sdkwork_web_core::WebFrameworkError::invalid_credentials(
+                "unused",
+            ))
+        }
+
+        async fn resolve_access_token(
+            &self,
+            _raw_access_token: &str,
+        ) -> Result<sdkwork_web_core::WebRequestPrincipal, sdkwork_web_core::WebFrameworkError>
+        {
+            Err(sdkwork_web_core::WebFrameworkError::invalid_credentials(
+                "unused",
+            ))
+        }
+
+        async fn resolve_bearer_auth_token(
+            &self,
+            raw_bearer_token: &str,
+        ) -> Result<sdkwork_web_core::WebRequestPrincipal, sdkwork_web_core::WebFrameworkError>
+        {
+            self.calls
+                .lock()
+                .expect("calls")
+                .push(format!("auth-token:{raw_bearer_token}"));
+            match self.bearer.clone() {
+                None => Ok(scripted_principal("auth-token")),
+                Some(kind) => Err(sdkwork_web_core::WebFrameworkError {
+                    kind,
+                    message: "scripted auth-token failure".to_owned(),
+                    retry_after_seconds: None,
+                    auth_profile: None,
+                    failed_stage: None,
+                    reason: None,
+                }),
+            }
+        }
+    }
+
+    fn resolver_over(inner: ScriptedInner) -> GatewayApiKeyResolver<ScriptedInner> {
+        GatewayApiKeyResolver::new(
+            inner,
+            GatewayApiKeyLookup::new(None, None),
+            "appbase",
+            sdkwork_web_core::WebEnvironment::Prod,
+        )
+    }
+
+    #[tokio::test]
+    async fn login_token_resolves_through_the_auth_token_channel() {
+        use sdkwork_web_core::WebRequestContextResolver as _;
+
+        let inner = ScriptedInner::default();
+        let resolver = resolver_over(inner.clone());
+        let principal = resolver
+            .resolve_api_key("login-token-without-an-api-key-prefix")
+            .await
+            .expect("signed-in user resolves as a session");
+        assert_eq!("appbase-auth-token", principal.app_id());
+        // The API-key channel must not be consulted for a login token: it would
+        // only report the token as an invalid key.
+        assert_eq!(
+            vec!["auth-token:login-token-without-an-api-key-prefix".to_owned()],
+            inner.calls()
+        );
+    }
+
+    #[tokio::test]
+    async fn prefixed_api_key_never_enters_the_auth_token_channel() {
+        use sdkwork_web_core::WebRequestContextResolver as _;
+
+        let inner = ScriptedInner::default();
+        let resolver = resolver_over(inner.clone());
+        let principal = resolver
+            .resolve_api_key("sk-live-123")
+            .await
+            .expect("api key resolves on the platform channel");
+        assert_eq!("appbase-api-key", principal.app_id());
+        assert_eq!(vec!["api-key:sk-live-123".to_owned()], inner.calls());
+    }
+
+    #[tokio::test]
+    async fn unknown_login_token_falls_back_to_the_api_key_channel() {
+        use sdkwork_web_core::WebRequestContextResolver as _;
+
+        // A composition whose resolver wires no auth-token lookup, or a token the
+        // session store does not know, keeps the unprefixed api-key channel
+        // authoritative instead of failing the request on an unavailable channel.
+        for kind in [
+            sdkwork_web_core::WebFrameworkErrorKind::InvalidCredentials,
+            sdkwork_web_core::WebFrameworkErrorKind::DependencyUnavailable,
+        ] {
+            let inner = ScriptedInner {
+                bearer: Some(kind.clone()),
+                ..ScriptedInner::default()
+            };
+            let resolver = resolver_over(inner.clone());
+            let principal = resolver
+                .resolve_api_key("api_key_id=key-1;tenant_id=100001")
+                .await
+                .expect("falls through to the api-key channel");
+            assert_eq!("appbase-api-key", principal.app_id());
+            assert_eq!(
+                vec![
+                    "auth-token:api_key_id=key-1;tenant_id=100001".to_owned(),
+                    "api-key:api_key_id=key-1;tenant_id=100001".to_owned(),
+                ],
+                inner.calls(),
+                "{kind:?} must fall through, not fail the request"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn expired_login_token_failure_is_not_reinterpreted_as_an_api_key() {
+        use sdkwork_web_core::WebRequestContextResolver as _;
+
+        let inner = ScriptedInner {
+            bearer: Some(sdkwork_web_core::WebFrameworkErrorKind::ExpiredCredentials),
+            ..ScriptedInner::default()
+        };
+        let resolver = resolver_over(inner.clone());
+        let error = resolver
+            .resolve_api_key("expired-login-token")
+            .await
+            .expect_err("an expired session is reported as such");
+        assert_eq!(
+            sdkwork_web_core::WebFrameworkErrorKind::ExpiredCredentials,
+            error.kind
+        );
+        assert_eq!(
+            vec!["auth-token:expired-login-token".to_owned()],
+            inner.calls()
+        );
     }
 }

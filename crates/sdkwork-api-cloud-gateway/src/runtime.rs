@@ -504,6 +504,7 @@ async fn build_embedded_router(
     let dynamic_cors_source: Arc<dyn sdkwork_web_core::DynamicCorsPolicySource> = cors.clone();
     let framework = framework.dynamic_cors_policy_source(dynamic_cors_source);
     let hosted = composed.into_hosted(framework);
+    let bridge_config = config.clone();
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
         .map(|runtime| {
             runtime
@@ -513,6 +514,10 @@ async fn build_embedded_router(
         .layer(axum::middleware::from_fn(
             crate::dependency_error_observer::observe_dependency_server_errors,
         ));
+    // The composed dependency wire publishes `Authorization: Bearer <credential>`
+    // while the framework profile it was composed into reads `X-API-Key`; the
+    // bridge presents the published header canonically for those prefixes only.
+    let router = crate::web_framework::attach_vendor_credential_bridge(&bridge_config, router);
     Ok((router, dependency_bootstrap.runtime))
 }
 
@@ -2007,5 +2012,36 @@ mod tests {
             vec!["app_a".to_owned(), "app_c".to_owned()]
         );
         assert!(missing_gateway_iam_audiences(&enabled, &enabled).is_empty());
+    }
+
+    // Regression: the new BirdCoder2 app system was served by its own assembly
+    // but never composed by this gateway, so `GET /app/v3/api/installation`
+    // (the About surface) answered 404 at the edge. This pins the composition
+    // step that turns the assembly's route manifest into gateway descriptors.
+    #[cfg(feature = "foundation-birdcoder2")]
+    #[tokio::test]
+    async fn birdcoder2_app_system_routes_are_declared_by_the_component_contract() {
+        let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let mut config = GatewayRuntimeConfig::from_application_root(root)
+            .expect("gateway component contract parses");
+        config
+            .dependency_surfaces
+            .retain(|surface| surface.workspace == "sdkwork-birdcoder2");
+        let module = sdkwork_api_birdcoder2_assembly::web_module()
+            .await
+            .expect("BirdCoder2 assembly composes");
+
+        let registry = exact_registry_for_modules(&config, &[module])
+            .expect("every BirdCoder2 route must match a declared API surface");
+        let installation = registry
+            .resolve("GET", "/app/v3/api/installation")
+            .expect("the About installation read resolves at the edge");
+        assert_eq!(installation.surface, "app");
+        assert_eq!(installation.service_id, "sdkwork-birdcoder2-app-api");
+
+        let internal = registry
+            .resolve("POST", "/internal/v3/api/birdcoder/host_runtimes/hello")
+            .expect("the host-runtime Internal API resolves at the edge");
+        assert_eq!(internal.surface, "internal");
     }
 }

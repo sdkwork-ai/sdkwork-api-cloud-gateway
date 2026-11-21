@@ -677,6 +677,21 @@ pub async fn bootstrap_embedded_dependency_contributions(
         modules.push(module);
     }
 
+    // The new BirdCoder2 app system: one assembly owns the mobile App API
+    // (`/app/v3/api/birdcoder`), the host-runtime Internal API
+    // (`/internal/v3/api/birdcoder`), and the installation identity App API
+    // (`/app/v3/api/installation`) the About surface reads. Mounting one module
+    // keeps the relay surfaces on the same in-process host registry
+    // (API_ASSEMBLY_SPEC §4.1.1); splitting them would break pairing, lease, and
+    // turn ownership across the two ends.
+    #[cfg(feature = "foundation-birdcoder2")]
+    if workspace_surface_enabled(config, "sdkwork-birdcoder2") {
+        let module = sdkwork_api_birdcoder2_assembly::web_module()
+            .await
+            .map_err(|message| workspace_build_error(config, "sdkwork-birdcoder2", message))?;
+        modules.push(module);
+    }
+
     #[cfg(feature = "foundation-canvas")]
     if workspace_surface_enabled(config, "sdkwork-canvas") {
         let module = sdkwork_api_canvas_assembly::web_module()
@@ -908,6 +923,7 @@ mod tests {
         assert!(workspace_surface_enabled(&config, "sdkwork-local-router"));
         assert!(workspace_surface_enabled(&config, "sdkwork-appbase"));
         assert!(workspace_surface_enabled(&config, "sdkwork-birdcoder"));
+        assert!(workspace_surface_enabled(&config, "sdkwork-birdcoder2"));
         assert!(workspace_surface_enabled(&config, "sdkwork-canvas"));
         assert!(workspace_surface_enabled(&config, "sdkwork-company"));
         assert!(workspace_surface_enabled(&config, "sdkwork-feeds"));
