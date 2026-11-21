@@ -187,23 +187,41 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.97",
+    "currentVersion": "0.1.98",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.97"
+      "BETA": "0.1.98"
     },
     "notes": [
       {
-        "version": "0.1.97",
+        "version": "0.1.98",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.98",
+        "summary": "Local-parity fix-forward of the 0.1.97 workspace sync wave: sdkwork-rtc boot-time provider defaults seeding now adopts legacy seed ids by natural key instead of conflicting, so the gateway builds the sdkwork-cloudrouter-app-api embedded router on databases seeded by 002_rtc_provider_catalog.sql. Carries the full 0.1.97 wave: deployments app templates renamed to application scaffolds with the gateway component contract following, sdkwork-iam tenant applications renamed to installations across APIs and SDKs plus the wechat component operator platform, and sdkwork-deployments consuming installation lifecycle endpoints.",
+        "highlights": [
+          "provenance: ff-only sync advanced 17 of 110 sdkwork-space checkouts (sdkwork-agents, sdkwork-appstore, sdkwork-birdcoder2, sdkwork-cloudrouter →c3f6600f, sdkwork-deployments →1917077, sdkwork-github-workflow 0b7eceb6→c48701fc, sdkwork-iam 3cd10e57→b4726938, sdkwork-manager, sdkwork-mcp, sdkwork-missory, sdkwork-order e11c22dc→a4f1fe7e, sdkwork-rtc 2c8e856d→d74b44a4, sdkwork-sandbox, sdkwork-sdk-generator, sdkwork-skills, sdkwork-specs 467ea580→3355450c, sdkwork-utils) plus the fix-forward sdkwork-rtc d74b44a4→5a79830 (boot-time provider defaults natural-key adoption); no reset, rebase, stash, clean, checkout -f or restore",
+          "defect: 0.1.97 failed local production parity before any remote rollout — the gateway crash-looped (RestartCount=22) with 'failed to build embedded router for sdkwork-cloudrouter-app-api: ensure RTC provider defaults: Conflict(seed-rtc-account-volcengine)'; the boot seeding resolved deterministic bootstrap ids while the seeded database holds legacy ids; fixed upstream in sdkwork-rtc 5a79830 by resolving each natural key ((tenant, organization, provider, code) for accounts/profiles, (provider account, code) for applications, (application, role, label) for credentials) and adopting the existing row before creating, mirroring each upsert guard's predicate; sdkwork-rtc-service-host 47 tests pass",
+          "contract: the deployments app-template surface rename (sdkwork-deployments 9f36394) moved provider routes to /app/v3/api/scaffolds and /app/v3/api/scaffold_categories (backend equivalents /backend/v3/api/scaffolds and /backend/v3/api/scaffold_categories); specs/component.spec.json apiSurfaces entries and apiPrefixes lists follow the rename and the gateway API closure passes with 3902 method/path routes",
+          "lock: Cargo.lock unchanged from 0.1.97 (source-only sibling fix; cargo metadata --locked passes)",
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.97",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.97",
         "summary": "Workspace sync rollout for the application-factory installation terminology wave: the deployments surface renames app templates to application scaffolds (the gateway component contract now declares /app/v3/api/scaffolds and /app/v3/api/scaffold_categories plus their backend equivalents), sdkwork-iam renames tenant applications to installations across APIs and SDKs and adds the wechat component operator platform, sdkwork-deployments consumes installation lifecycle endpoints for deploy identity, and sdkwork-specs aligns IAM specs and tooling with installation terminology.",
         "highlights": [
           "provenance: ff-only sync advanced 17 of 110 sdkwork-space checkouts — sdkwork-agents (→ca50075), sdkwork-appstore (→26c375e), sdkwork-birdcoder2 (→233f5154), sdkwork-cloudrouter (→c3f6600f), sdkwork-deployments (→1917077), sdkwork-github-workflow 0b7eceb6→c48701fc (planner raw package version normalization), sdkwork-iam 3cd10e57→b4726938 (tenant applications renamed to installations across APIs and SDKs, wechat component operator platform, access-token application anchor fix for installations), sdkwork-manager 7b7b6132→1b57d06c, sdkwork-mcp 79f15a87→09001ade, sdkwork-missory c648f424→2005baff, sdkwork-order e11c22dc→a4f1fe7e (after-sales refund to settlement link), sdkwork-rtc 2c8e856d→d74b44a4, sdkwork-sandbox 09b297a6→f77a4032, sdkwork-sdk-generator 602443dd→4ac9ee56, sdkwork-skills 45f243bf→6a4dae1c, sdkwork-specs 467ea580→3355450c (installation terminology alignment, per-market store submission plans), sdkwork-utils d6bfd85c→7f97637c; no reset, rebase, stash, clean, checkout -f or restore",
           "contract: the deployments app-template surface rename (sdkwork-deployments 9f36394) moved provider routes to /app/v3/api/scaffolds and /app/v3/api/scaffold_categories (backend equivalents /backend/v3/api/scaffolds and /backend/v3/api/scaffold_categories); specs/component.spec.json apiSurfaces entries and apiPrefixes lists follow the rename and the gateway API closure passes with 3902 method/path routes",
           "lock: Cargo.lock resynced for the synced sibling manifests (+1 line recording tracing on the platform-foundation-suite-container graph) per the release-cut-before-build discipline",
-          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container"
+          "gate: cargo metadata --locked (full graph), cargo fmt -- --check, cargo test --workspace --locked and the full pnpm check aggregate all exit 0 in the bookworm build container",
+          "supersession: local production parity (upgrade 0.1.96 -> 0.1.97) exposed a deterministic boot crash loop (RestartCount=22) — failed to build embedded router for sdkwork-cloudrouter-app-api: ensure RTC provider defaults: Conflict(seed-rtc-account-volcengine); root cause is the boot-time defaults seeding looking up deterministic bootstrap ids while 002_rtc_provider_catalog.sql holds the same natural keys under legacy seed ids; 0.1.97 never reached the remote production bundle and is kept only as the failed build evidence; superseded by 0.1.98 carrying the sdkwork-rtc natural-key adoption fix (5a79830)"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
