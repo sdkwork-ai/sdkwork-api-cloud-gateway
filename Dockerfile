@@ -79,8 +79,13 @@ ARG ARCHITECTURE=x64
 # Unlike the cloudrouter image, no gnupg/postgresql-client is installed: the
 # gateway has no operator backup/restore CLI, so those tools would only bloat
 # the image.
+# `libopus0` is a runtime dependency of the audio/opus codec path: a binary built
+# with the opus feature records a DT_NEEDED entry for `libopus.so.0`, so without
+# it the entrypoint fails with exit 127 before any logging exists. The base image
+# does not carry it, and it was previously only present when the build host's
+# toolchain happened to link statically.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends libssl3 ca-certificates curl openssl \
+  && apt-get install -y --no-install-recommends libssl3 libopus0 ca-certificates curl openssl \
   && rm -rf /var/lib/apt/lists/* \
   && groupadd --system sdkwork \
   && useradd --system --gid sdkwork --home-dir ${INSTALL_ROOT} sdkwork \
