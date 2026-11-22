@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.106",
+    "currentVersion": "0.1.107",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.106"
+      "BETA": "0.1.107"
     },
     "notes": [
       {
-        "version": "0.1.106",
+        "version": "0.1.107",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.107",
+        "summary": "Workspace-sync redeploy carrying the sdkwork-iam installation readiness assessment and reconcile repair lane (c8a8a74a), the iam-pc app authorization surface with desktop launch handling (b4142a8d), and the hosted auth brand lockup reuse (be7c065a); same verified pipeline as 0.1.106 — container gates, local production-parity fresh install, state-preserving remote upgrade on api.noaper.com.",
+        "highlights": [
+          "sibling sync: sdkwork-iam be7c065a..c8a8a74a (installation readiness assessment with stable defect codes, iam.installations.reconcile additive repair lane, iam-pc app authorization + desktop launch, hosted auth brand lockup); workspace ff-only pull across 106 repositories, 0 failures",
+          "gate: cargo metadata/fmt/test, pnpm check/test/lint (clippy -D warnings), workflow:validate, gateway:matrix/package/validate:standalone all exit 0 in the gw-build-023 bookworm build container",
+          "local production parity: fresh install (down --purge + install) of the 0.1.107 bundle on the local embedded-deps production stack must pass healthz + readyz before the remote rollout",
+          "remote production: api.noaper.com (49.233.93.219) upgraded in place from 0.1.106 to 0.1.107 via bundle upgrade (state-preserving, minimal downtime), verified with status, readyz, and doctor; production backup retention stays at the newest 5 sets (SDKWORK_BACKUP_KEEP=5)"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.106",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.106",
         "summary": "Workspace-sync production redeploy of the api.noaper.com production gateway: full sdkwork-space ff-only pull (106 repositories, updates in sdkwork-cloudrouter cb52437d and sdkwork-iam a5df43d2 app-registration contract work) rebuilt into a fresh container, verified on the local production-parity stack before the remote upgrade, with the remote configuration drift fixed and backup retention tightened to 5 sets.",
         "highlights": [
