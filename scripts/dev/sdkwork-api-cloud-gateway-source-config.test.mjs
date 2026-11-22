@@ -48,8 +48,18 @@ test('source configuration declares the complete deployment profile matrix', () 
       // Registered public base-domain family (ENVIRONMENT_SPEC §5.1.0.1):
       // api[-<suffix>].<base-domain> for all 16 registered base domains
       // (sdkwork / birdcoder / dtupay / noaper / skubc / zowalk / offer86 /
-      // 86offer, each in .com + .cn).
-      assert.equal(profile.environmentConfig.publicHosts.length, 16);
+      // 86offer, each in .com + .cn). Production additionally serves the
+      // campaign host api.aidaxuesheng.com (ae9edb2), which has no
+      // dev/test/staging/demo variants.
+      const familySize = 16;
+      const expectedSize = environment === 'production' ? familySize + 1 : familySize;
+      assert.equal(profile.environmentConfig.publicHosts.length, expectedSize);
+      if (environment === 'production') {
+        assert.ok(
+          profile.environmentConfig.publicHosts.includes('api.aidaxuesheng.com'),
+          'production must serve the api.aidaxuesheng.com campaign host',
+        );
+      }
       assert.doesNotThrow(() => assertCloudPublicProfile(profile));
     }
   }

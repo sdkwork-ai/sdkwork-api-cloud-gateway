@@ -36,16 +36,30 @@ const suffixes = {
   production: '',
 };
 
+// Campaign production host served by the gateway (ae9edb2): it lives outside
+// the registered base-domain family (ENVIRONMENT_SPEC §5.1.0.1) — no
+// dev/test/staging/demo variants exist for it, it leads the registry's
+// production publicHosts list, and it is host-specific configuration applied
+// on the aidaxuesheng deployment rather than a docker template or cloud
+// topology value.
+const campaignProductionHosts = ['api.aidaxuesheng.com'];
+
 function expectedHosts(environment) {
   const role = suffixes[environment] ? `api-${suffixes[environment]}` : 'api';
   return baseDomains.map((domain) => `${role}.${domain}`);
+}
+
+function expectedRegistryHosts(environment) {
+  return environment === 'production'
+    ? [...campaignProductionHosts, ...expectedHosts(environment)]
+    : expectedHosts(environment);
 }
 
 test('deployment index and topology expose the complete canonical profile matrix', () => {
   const index = JSON.parse(readFileSync(path.join(appRoot, 'etc', 'sdkwork.deployment.config.json')));
   const topology = JSON.parse(readFileSync(path.join(appRoot, 'specs', 'topology.spec.json')));
   for (const environment of environments) {
-    assert.deepEqual(index.environments[environment].publicHosts, expectedHosts(environment));
+    assert.deepEqual(index.environments[environment].publicHosts, expectedRegistryHosts(environment));
     for (const deploymentProfile of profiles) {
       const profileId = `${deploymentProfile}.${environment}`;
       assert.equal(index.profiles[profileId].config, `topology/${profileId}.env`);
