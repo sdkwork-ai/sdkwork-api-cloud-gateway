@@ -247,6 +247,9 @@ x-gateway-common: &gateway-common
     # GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET wins, otherwise the entrypoint
     # provisions one durable KEK in the gateway-secrets volume.
     SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET: ${GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET:-}
+    # Previously active KEKs (comma-separated) that must keep opening sealed
+    # signing secrets during a rotation overlap window. They never seal new ones.
+    SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED: ${GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED:-}
     SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE: /run/secrets/sdkwork/api-gateway/commerce-cashier-token.secret
     SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET: ${GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-true}
     RUST_LOG: ${RUST_LOG:-info}

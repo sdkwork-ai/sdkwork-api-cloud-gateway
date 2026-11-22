@@ -528,6 +528,11 @@ test('containers provision the anonymous cashier token secret like the Payment k
       compose,
       /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE: \/run\/secrets\/sdkwork\/api-gateway\/commerce-cashier-token\.secret/u,
     );
+    // Rotation overlap: retired KEKs keep opening already-sealed secrets.
+    assert.match(
+      compose,
+      /SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED: \$\{GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED:-\}/u,
+    );
     assert.match(
       compose,
       /GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-true/u,
