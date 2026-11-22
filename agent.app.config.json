@@ -202,8 +202,9 @@
         "highlights": [
           "sibling sync: sdkwork-iam be7c065a..c8a8a74a (installation readiness assessment with stable defect codes, iam.installations.reconcile additive repair lane, iam-pc app authorization + desktop launch, hosted auth brand lockup); workspace ff-only pull across 106 repositories, 0 failures",
           "gate: cargo metadata/fmt/test, pnpm check/test/lint (clippy -D warnings), workflow:validate, gateway:matrix/package/validate:standalone all exit 0 in the gw-build-023 bookworm build container",
-          "local production parity: fresh install (down --purge + install) of the 0.1.107 bundle on the local embedded-deps production stack must pass healthz + readyz before the remote rollout",
-          "remote production: api.noaper.com (49.233.93.219) upgraded in place from 0.1.106 to 0.1.107 via bundle upgrade (state-preserving, minimal downtime), verified with status, readyz, and doctor; production backup retention stays at the newest 5 sets (SDKWORK_BACKUP_KEEP=5)"
+          "local production parity: fresh install (down --purge + install) of the 0.1.107 bundle on the local embedded-deps production stack passed the full bootstrap — healthz 200, readyz 200, doctor 7 PASS / 0 FAIL, running images match 0.1.107",
+          "remote production evidence: api.noaper.com (49.233.93.219) upgraded in place from 0.1.106 to 0.1.107 on 2026-11-22 via bundle upgrade (state-preserving; deps postgres/redis untouched; gateway + knowledgebase-rpc recreated healthy in seconds) — healthz 200, readyz 200, doctor image/probe/bundle/compose/health/toolchain PASS; the config FAIL and logs WARN are the documented 0.1.106 known-benign findings (CORS console suffix is empty by contract; the log scan matches errors=0 inside INFO lines), disk 87% under the 90 FAIL threshold",
+          "backup: SDKWORK_BACKUP_KEEP=5 pre-upgrade set 20261122T120917Z plus the upgrade's automatic pre-change set 20261122T120952Z; verified list of exactly 5 production sets (20261121T202937Z onward); rollback = bin/docker-deploy.sh upgrade --image-tag 0.1.106 (0.1.106 image still loaded remotely)"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
