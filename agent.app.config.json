@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.105",
+    "currentVersion": "0.1.106",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.105"
+      "BETA": "0.1.106"
     },
     "notes": [
       {
-        "version": "0.1.105",
+        "version": "0.1.106",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.106",
+        "summary": "Workspace-sync production redeploy of the api.noaper.com production gateway: full sdkwork-space ff-only pull (106 repositories, updates in sdkwork-cloudrouter cb52437d and sdkwork-iam a5df43d2 app-registration contract work) rebuilt into a fresh container, verified on the local production-parity stack before the remote upgrade, with the remote configuration drift fixed and backup retention tightened to 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-cloudrouter bcfb07fc..cb52437d, sdkwork-iam 318ebaff..a5df43d2 (registration contract and tooling tests); workspace ff-only pull across 106 repositories, 0 failures",
+          "local production parity: the local embedded-deps production stack on 3913 is upgraded to 0.1.106 and must pass healthz + readyz before the remote rollout (the established catch-upstream-defects gate)",
+          "remote production: api.noaper.com (49.233.93.219) upgraded in place from 0.1.105 to 0.1.106 via bundle upgrade (state-preserving, minimal downtime), verified with docker-deploy status, readyz probe, and doctor",
+          "operations hardening: GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET placeholder fixed via bin/config.sh so the production doctor config check passes; backup retention tightened to the newest 5 production sets on the remote host",
+          "gate: cargo metadata, cargo fmt --check, cargo test --workspace, pnpm check, pnpm verify, workflow:validate all exit 0 before the image build"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.105",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.105",
         "summary": "Fresh-install coverage-recording fix-forward of 0.1.104: the lifecycle's baseline-coverage recording enumerates the packaged migration files, so folding them away left every root module's ops_schema_migration_history empty and compiled readiness gates that require a minimum recorded version (the IM service's REQUIRED_IM_SCHEMA_VERSION=0012) failed forever on freshly provisioned databases even though the folded baselines materialised every table. The folded migration files are restored across all 50 consolidated modules so the coverage recording has its version source while the baseline remains the fresh-install bootstrap.",
         "highlights": [
