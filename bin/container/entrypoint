@@ -97,6 +97,30 @@ provision_payment_credential_key() {
   }
 }
 
+# Warns when an explicit cashier-token KEK disagrees with the durable provisioned
+# one. The payment database seals every tenant signing secret with the KEK that
+# was live when it was written, so a different value here leaves those secrets
+# unopenable: the anonymous cashier silently downgrades to the login-required
+# link and the failure only shows up as a payment-center error. The two values
+# live in different places, so nothing else detects the divergence.
+warn_configured_cashier_token_secret_divergence() {
+  cashier_secret_file=${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE:-}
+  case "$cashier_secret_file" in
+    /run/secrets/sdkwork/api-gateway/*) ;;
+    *) return 0 ;;
+  esac
+  [ -s "$cashier_secret_file" ] || return 0
+  cashier_durable_secret=$(tr -d '\r\n' < "$cashier_secret_file")
+  [ -n "$cashier_durable_secret" ] || return 0
+  if [ "$cashier_durable_secret" = "$SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET" ]; then
+    return 0
+  fi
+  echo "warning: SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET differs from the durable cashier KEK in ${cashier_secret_file}" >&2
+  echo "warning: signing secrets already sealed in commerce_payment_cashier_token_setting cannot be" >&2
+  echo "warning: opened with this value; checkout keeps working with the login-required cashier link." >&2
+  echo "warning: restore the durable key, or unset this variable so ${cashier_secret_file} is loaded." >&2
+}
+
 provision_commerce_cashier_token_secret() {
   enabled=${SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET:-false}
   case "$enabled" in
@@ -111,7 +135,10 @@ provision_commerce_cashier_token_secret() {
   # An explicit deployment secret always wins. Never rotate a configured value:
   # already-issued cashier links stay valid and every replica derives the same
   # tenant keys.
-  [ -z "${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-}" ] || return 0
+  if [ -n "${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-}" ]; then
+    warn_configured_cashier_token_secret_divergence
+    return 0
+  fi
 
   secret_file=${SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET_FILE:-}
   case "$secret_file" in

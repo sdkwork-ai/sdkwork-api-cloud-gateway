@@ -539,10 +539,21 @@ test('containers provision the anonymous cashier token secret like the Payment k
     /SDKWORK_API_CLOUD_GATEWAY_PROVISION_COMMERCE_CASHIER_TOKEN_SECRET/u,
   );
   assert.match(entrypoint, /openssl rand -hex 32 > "\$secret_file"/u);
-  // A configured secret must never be rotated by a restart.
+  // A configured secret must never be rotated by a restart, but a configured
+  // value that disagrees with the durable KEK must be reported: replacing the
+  // KEK leaves every sealed signing secret unopenable, which silently downgrades
+  // the anonymous cashier and surfaces only as a payment-center error.
   assert.match(
     entrypoint,
-    /\[ -z "\$\{SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-\}" \] \|\| return 0/u,
+    /if \[ -n "\$\{SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET:-\}" \]; then\n\s+warn_configured_cashier_token_secret_divergence\n\s+return 0\n\s+fi/u,
+  );
+  assert.match(
+    entrypoint,
+    /warn_configured_cashier_token_secret_divergence\(\) \{/u,
+  );
+  assert.match(
+    entrypoint,
+    /if \[ "\$cashier_durable_secret" = "\$SDKWORK_COMMERCE_CASHIER_TOKEN_SECRET" \]; then/u,
   );
   assert.match(
     entrypoint,
