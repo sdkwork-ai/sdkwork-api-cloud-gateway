@@ -9,7 +9,12 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {
+  describeCargoBuildTargetDir,
+  resolveCargoBuildTargetDir,
+} from './cargo-build-target.mjs';
 import { needsPrebuiltWindowsOpus, resolveRustTargetTriple } from './ci/rust-host-target.mjs';
+import { resolveLinuxBuildPrerequisiteIssues } from './linux-build-prerequisites.mjs';
 
 const APP_ID = 'sdkwork-api-cloud-gateway';
 const BINARY_NAME = 'sdkwork-api-cloud-gateway';
@@ -101,6 +106,12 @@ async function main() {
   const context = await createPackageContext(options);
 
   if (command === 'package') {
+    // Announce the build location and refuse an unbuildable guest *before*
+    // `cargo metadata` re-resolves the 1,500-package graph, which costs ~80s on
+    // this workspace. A missing Opus toolchain must cost milliseconds, not
+    // minutes.
+    console.log(`[sdkwork-api-cloud-gateway] ${describeCargoBuildTargetDir(context.cargoTarget)}`);
+    assertLinuxBuildPrerequisites(context);
     context.databaseModules = await resolveDatabaseAssetModules();
     await packageServer(context);
     return;
@@ -244,7 +255,8 @@ async function createPackageContext(options) {
     KNOWLEDGEBASE_RPC_BINARY_NAME,
     platform,
   );
-  const cargoTargetDir = resolveCargoTargetDir(appRoot, process.env.CARGO_TARGET_DIR);
+  const cargoTarget = resolveCargoBuildTargetDir({ appRoot, appId: APP_ID });
+  const cargoTargetDir = cargoTarget.targetDir;
   const releaseDir = resolveCargoReleaseDir(appRoot, cargoTargetDir, rustTarget);
   const binaryPath = path.join(releaseDir, binaryName);
   const knowledgebaseRpcBinaryPath = path.join(releaseDir, knowledgebaseRpcBinaryName);
@@ -254,6 +266,7 @@ async function createPackageContext(options) {
     archivePath,
     binaryName,
     binaryPath,
+    cargoTarget,
     cargoTargetDir,
     knowledgebaseRpcBinaryName,
     knowledgebaseRpcBinaryPath,
@@ -372,6 +385,25 @@ export function resolveDeploymentProfile({
   );
 }
 
+/**
+ * Fail closed when the Linux build guest cannot finish the dependency graph.
+ *
+ * `--skip-build` reuses an already-produced binary, so the toolchain is not
+ * required in that mode.
+ *
+ * @param {{ skipBuild: boolean }} context Packaging context.
+ * @returns {void}
+ */
+function assertLinuxBuildPrerequisites(context) {
+  if (context.skipBuild) {
+    return;
+  }
+  const issues = resolveLinuxBuildPrerequisiteIssues();
+  if (issues.length > 0) {
+    throw new Error(issues.join('; '));
+  }
+}
+
 async function packageServer(context) {
   if (!context.skipBuild) {
     runCargoBuild(context);
@@ -407,12 +439,26 @@ async function packageServer(context) {
   await copyIfExists('agent.app.config.json', path.join(context.stageRoot, 'agent.app.config.json'));
   await copyIfExists(path.join('specs', 'component.spec.json'), path.join(context.stageRoot, 'specs', 'component.spec.json'));
   await writeFile(path.join(context.stageRoot, 'INSTALL.md'), renderInstallGuide(context), 'utf8');
+  // Hash the stage tree once, before the manifest exists. `createInstallManifest`
+  // declares `contentManifestExclusions: [install-manifest.json,
+  // checksums.sha256]`, so the manifest must not describe itself; the checksum
+  // file, which is written last, must still cover the manifest — so its record
+  // is appended from a single extra read of one small file.
+  const installManifestPath = path.join(context.stageRoot, 'install-manifest.json');
+  context.stageFiles = await collectStageFiles(context.stageRoot);
   await writeFile(
-    path.join(context.stageRoot, 'install-manifest.json'),
+    installManifestPath,
     `${JSON.stringify(await createInstallManifest(context), null, 2)}\n`,
     'utf8'
   );
-  await writeChecksums(context.stageRoot);
+  await writeChecksums(context.stageRoot, [
+    ...context.stageFiles,
+    {
+      path: 'install-manifest.json',
+      size: (await stat(installManifestPath)).size,
+      sha256: await sha256File(installManifestPath),
+    },
+  ]);
   await createArchive(context);
   await writeArtifactChecksum(context.archivePath);
   await validateArchive(context);
@@ -830,35 +876,46 @@ async function createInstallManifest(context) {
       'install-manifest.json',
       'checksums.sha256',
     ],
-    files: await describeFiles(context.stageRoot),
+    files: context.stageFiles ?? await collectStageFiles(context.stageRoot),
   };
 }
 
-async function describeFiles(stageRoot) {
+/**
+ * Hash every file of the staged package exactly once.
+ *
+ * The stage tree carries a ~800 MB release binary, so this used to be the
+ * single most expensive packaging step: it was walked twice (once for the
+ * install manifest, once for `checksums.sha256`) and each file was pulled into
+ * memory whole. Collect once, hash by streaming, and feed both consumers.
+ *
+ * @param {string} stageRoot Absolute stage root.
+ * @returns {Promise<Array<{ path: string, size: number, sha256: string }>>}
+ *   One record per staged file, excluding the checksum file itself.
+ */
+async function collectStageFiles(stageRoot) {
   const files = [];
-  for (const filePath of await listFiles(stageRoot)) {
-    const relativePath = toPosixPath(path.relative(stageRoot, filePath));
-    const fileStats = await stat(filePath);
-    files.push({
-      path: relativePath,
-      size: fileStats.size,
-      sha256: createHash('sha256').update(await readFile(filePath)).digest('hex'),
-    });
-  }
-  return files;
-}
-
-async function writeChecksums(stageRoot) {
-  const entries = [];
   for (const filePath of await listFiles(stageRoot)) {
     const relativePath = toPosixPath(path.relative(stageRoot, filePath));
     if (relativePath === 'checksums.sha256') {
       continue;
     }
-    const digest = createHash('sha256').update(await readFile(filePath)).digest('hex');
-    entries.push(`${digest}  ${relativePath}`);
+    const fileStats = await stat(filePath);
+    files.push({
+      path: relativePath,
+      size: fileStats.size,
+      sha256: await sha256File(filePath),
+    });
   }
-  await writeFile(path.join(stageRoot, 'checksums.sha256'), `${entries.sort().join('\n')}\n`, 'utf8');
+  return files;
+}
+
+function writeChecksums(stageRoot, files) {
+  const entries = files.map((file) => `${file.sha256}  ${file.path}`);
+  return writeFile(
+    path.join(stageRoot, 'checksums.sha256'),
+    `${entries.sort().join('\n')}\n`,
+    'utf8',
+  );
 }
 
 async function listFiles(root) {

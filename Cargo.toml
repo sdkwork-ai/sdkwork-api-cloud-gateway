@@ -28,6 +28,40 @@ todo = "warn"
 unimplemented = "warn"
 exit = "warn"
 
+# Release binaries ship inside the container image and the host-native server
+# package, so the release profile is a delivery contract, not a local
+# preference (RUST_CODE_SPEC.md section 13).
+#
+# `overflow-checks = true` is REQUIRED by RUST_CODE_SPEC.md section 13: a
+# release build must surface arithmetic faults as process failures instead of
+# silently wrapping into corrupted ledger/quota state.
+#
+# `strip = "symbols"` is free at compile time and removes the symbol table from
+# the shipped payload. `lto` and `codegen-units` deliberately keep Cargo's
+# defaults: this workspace links 1,400+ crates into one binary and the release
+# compile already dominates the delivery pipeline, so trading build time for a
+# smaller payload is the wrong direction here. Revisit only together with a
+# measured rebuild-cost budget.
+[profile.release]
+overflow-checks = true
+strip = "symbols"
+
+# Development and test builds. Cargo's default `debug = 2` is what turned a
+# single route crate into a 305 MB rlib plus a 248 MB PDB and pushed a partially
+# built `target/` past 5 GB. Debug level 1 keeps line tables (usable backtraces)
+# while dropping full type/DWARF detail, and dependencies (crates.io plus every
+# sibling assembly reached through the workspace's path dependencies) carry no
+# debug info at all. Mirrors the tuning in ../sdkwork-cloudrouter.
+[profile.dev]
+debug = 1
+
+[profile.dev.package."*"]
+debug = 0
+opt-level = 0
+
+[profile.test]
+debug = 1
+
 [workspace.dependencies]
 sdkwork-api-drive-assembly = { path = "../sdkwork-drive/crates/sdkwork-api-drive-assembly" }
 sdkwork-api-assets-assembly = { path = "../sdkwork-assets/crates/sdkwork-api-assets-assembly" }

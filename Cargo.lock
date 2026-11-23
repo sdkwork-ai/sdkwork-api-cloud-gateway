@@ -10231,6 +10231,7 @@ dependencies = [
  "sdkwork-deploy-core",
  "sdkwork-drive-app-sdk-generated-rust",
  "sdkwork-drive-object-runtime",
+ "sdkwork-drive-storage-contract",
  "sdkwork-drive-workspace-service",
  "sdkwork-utils-rust",
  "sqlx",

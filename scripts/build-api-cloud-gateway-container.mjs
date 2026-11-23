@@ -21,13 +21,18 @@
 
 import { createHash } from 'node:crypto';
 import { execFile, spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import {
+  describeCargoBuildTargetDir,
+  resolveCargoBuildTargetDir,
+} from './cargo-build-target.mjs';
+import { resolveLinuxBuildPrerequisiteIssues } from './linux-build-prerequisites.mjs';
 import {
   CONTAINER_CARGO_FEATURES,
   CONTAINER_DATABASE_ASSET_METADATA_ARGS,
@@ -299,7 +304,13 @@ async function createBuildPlan(settings) {
   const declaredArchitecture = workflowArchitecture
     || await resolveBinChannelArchitecture(deploymentProfile);
   const packageId = resolveContainerPackageId(deploymentProfile, declaredArchitecture);
-  const releaseDir = resolveCargoReleaseDir(appRoot, process.env.CARGO_TARGET_DIR);
+  // The container image is a Linux artifact, so the release build runs inside
+  // WSL. When the repository sits on a Windows passthrough mount the target
+  // directory is relocated to the guest's native cache filesystem; see
+  // scripts/cargo-build-target.mjs for the measurement behind this.
+  const cargoTarget = resolveCargoBuildTargetDir({ appRoot, appId: APP_ID });
+  const cargoTargetDir = cargoTarget.targetDir;
+  const releaseDir = resolveCargoReleaseDir(appRoot, cargoTargetDir);
   const binaryPath = path.join(releaseDir, BINARY_NAME);
   const knowledgebaseRpcBinaryPath = path.join(releaseDir, KNOWLEDGEBASE_RPC_BINARY_NAME);
   const imageBuildDir = path.join(appRoot, IMAGE_BUILD_DIR);
@@ -330,6 +341,8 @@ async function createBuildPlan(settings) {
     knowledgebaseRpcBinaryPath,
     knowledgebaseRpcBinaryName: `bin/${KNOWLEDGEBASE_RPC_BINARY_NAME}`,
     databaseModules,
+    cargoTarget,
+    cargoTargetDir,
     releaseDir,
     skipBuild: settings.skipBuild === true,
     push: settings.push === true,
@@ -348,6 +361,12 @@ async function validateBuildPlan(plan) {
   }
   if (plan.skipBuild && !existsSync(plan.binaryPath)) {
     issues.push(`missing release binary for --skip-build: ${plan.binaryPath}`);
+  }
+  // Fail closed in milliseconds when the guest cannot finish the graph, instead
+  // of dying inside `audiopus_sys` after the compiler has already produced
+  // gigabytes of artifacts.
+  if (!plan.skipBuild) {
+    issues.push(...resolveLinuxBuildPrerequisiteIssues());
   }
   if (plan.skipBuild && !existsSync(plan.knowledgebaseRpcBinaryPath)) {
     issues.push(
@@ -404,6 +423,7 @@ function renderBuildPlan(plan) {
     `[container-image-build]   push: ${plan.push}`,
     `[container-image-build]   Dockerfile: ${plan.imageFile}`,
     `[container-image-build]   image build dir: ${plan.imageBuildDir}`,
+    `[container-image-build]   ${describeCargoBuildTargetDir(plan.cargoTarget)}`,
     `[container-image-build]   release binary: ${plan.binaryPath}`,
     `[container-image-build]   Knowledgebase RPC binary: ${plan.knowledgebaseRpcBinaryPath}`,
     `[container-image-build]   database modules: ${plan.databaseModules.length}`,
@@ -429,8 +449,13 @@ async function runCargoBuild(plan) {
     // Some path-dependency build scripts (sdkwork-cloudrouter-http) invoke
     // `python` to generate OpenAPI sources; Debian/Ubuntu only ships python3,
     // so default PYTHON to python3 on Linux hosts.
+    // CARGO_TARGET_DIR is pinned explicitly: the resolved target directory is
+    // not necessarily the repository default (it may be relocated off a
+    // Windows passthrough mount), and inheriting the ambient environment would
+    // silently build somewhere else than plan.releaseDir points at.
     env: {
       ...process.env,
+      CARGO_TARGET_DIR: plan.cargoTargetDir,
       CARGO_INCREMENTAL: '0',
       PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
     },
@@ -460,6 +485,7 @@ async function runCargoBuild(plan) {
     cwd: KNOWLEDGEBASE_ROOT,
     env: {
       ...process.env,
+      CARGO_TARGET_DIR: plan.cargoTargetDir,
       CARGO_INCREMENTAL: '0',
       PYTHON: process.env.PYTHON || (process.platform === 'linux' ? 'python3' : 'python'),
     },
@@ -692,10 +718,22 @@ async function writeChecksums(stageRoot) {
     if (relativePath === 'checksums.sha256') {
       continue;
     }
-    const digest = createHash('sha256').update(await readFile(filePath)).digest('hex');
-    entries.push(`${digest}  ${relativePath}`);
+    // Stream: the stage tree carries a release binary in the hundreds of MB,
+    // and reading it into a single buffer is what made this step both slow and
+    // memory-hungry inside WSL.
+    entries.push(`${await sha256FileStream(filePath)}  ${relativePath}`);
   }
   await writeFile(path.join(stageRoot, 'checksums.sha256'), `${entries.sort().join('\n')}\n`, 'utf8');
+}
+
+function sha256FileStream(filePath) {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const stream = createReadStream(filePath);
+    stream.on('error', reject);
+    stream.on('data', (chunk) => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+  });
 }
 
 async function listFiles(root) {

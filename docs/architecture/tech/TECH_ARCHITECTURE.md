@@ -205,6 +205,27 @@ Verification commands (repository root):
 Release builds on Windows may require `CARGO_INCREMENTAL=0` when rustc hits a known `windows-sys`
 ICE in incremental release mode.
 
+Build cost is a delivery constraint of this application, not a local preference. A container release
+build compiles 1,400+ crates into a single binary, so two things are fixed by contract:
+
+- **Where Cargo writes `target/`.** The container image and the host-native server package are Linux
+  artifacts, so their release builds run inside WSL. When the repository sits on a Windows drive,
+  WSL exposes it through a 9p passthrough mount where small-file metadata operations are ~200x and
+  small-file creation ~180x slower than on ext4. `scripts/cargo-build-target.mjs` therefore relocates
+  the target directory to the guest's own cache root (`~/.cache/sdkwork/cargo-target/<app-id>`) for
+  Linux builds on a passthrough mount, and keeps `<appRoot>/target` everywhere else. An explicit
+  `CARGO_TARGET_DIR` always wins, so CI and developers keep full control.
+- **The profiles in the workspace `Cargo.toml`.** `[profile.release]` carries `overflow-checks = true`
+  (`RUST_CODE_SPEC.md` section 13) and `strip = "symbols"`; `lto` and `codegen-units` stay at their
+  defaults because LTO would trade a smaller payload for a slower build in a workspace where the
+  release compile already dominates the pipeline. `[profile.dev]`/`[profile.test]` cap debug info at
+  level 1 and drop it entirely for dependencies.
+
+The Linux build guest also needs the Opus toolchain: `foundation-aiot` reaches `audiopus_sys`, which
+links host Opus through `pkg-config` or builds it from source with autotools. Packaging therefore
+fails closed in milliseconds when neither path is available — install `pkg-config` plus `libopus-dev`
+(or `autoconf`/`automake`/`libtool`) in the guest.
+
 ### 7.2 Embedded AIoT Protocol Edge
 
 The gateway can host the `sdkwork-aiot` protocol edge in-process so one
