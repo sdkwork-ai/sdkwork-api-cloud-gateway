@@ -187,12 +187,31 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.114",
+    "currentVersion": "0.1.115",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.114"
+      "BETA": "0.1.115"
     },
     "notes": [
+      {
+        "version": "0.1.115",
+        "channel": "BETA",
+        "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.115",
+        "summary": "Workspace-sync rebuild and production redeploy of the api.noaper.com gateway: ff-only pull across sdkwork-space (104 repositories pulled, 1 frontend-only update, 5 dirty and 1 diverged checkout recorded and skipped without resetting work), full gate run in the gw-build-023 container, local production-parity upgrade first, then state-preserving bundle upgrade on production with backup retention at exactly 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-space ff-only pull — sdkwork-appstore advanced 85d42f2..a6c4cf8 (MCP category label read from the filter copy, PC markets frontend only, no Rust surface); 5 dirty checkouts skipped as-is (sdkwork-agents, sdkwork-birdcoder2, sdkwork-cloudrouter, sdkwork-daxuedazi, sdkwork-webserver); sdkwork-iam diverged (local f2a65a1f ahead 1 / behind 14) recorded and left untouched per the no-reset rule",
+          "impact: no Rust dependency delta for the gateway in this cycle, so the 0.1.115 image carries the same embedded assembly set as 0.1.114 while the release gate is repaired forward (the previous note set left release.notes without a current entry, which the source-config standard rejects)",
+          "gate: cargo metadata --locked, cargo fmt --check, cargo test --workspace --locked and pnpm check all exit 0 in the gw-build-023 bookworm build container; image built via bin/docker-image.sh build --image-tag 0.1.115",
+          "local production parity: 0.1.115 bundle upgraded in place on the local embedded-deps production stack before touching the remote target — 4 containers healthy, healthz/readyz 200 on 3913, doctor 7 PASS / 1 WARN / 1 FAIL (localhost /var/lib/docker 96% full, host capacity only), 5 backup sets retained",
+          "remote production evidence: api.noaper.com upgraded in place from 0.1.114 to 0.1.115 on 2026-11-23 via bundle image load in 3m19s (deps postgres/redis untouched; gateway + knowledgebase-rpc recreated healthy, restart count 0) — internal healthz/readyz 200 on host 3913, public https://api.noaper.com healthz/readyz 200, and a 1s-interval public sampler recorded 502/502 HTTP 200 samples across the recreate window (no observed external interruption)",
+          "backup and rollback: pre-change backup sdkwork-api-cloud-gateway-production-20261123T073800Z carries a 42MB database dump plus config/secrets/data/volume archives, sha256 verification passed, and retention pruning leaves exactly 5 production sets; the previous 0.1.114 image stays loaded on the host as the explicit rollback target",
+          "remote doctor: 6 PASS / 1 WARN / 2 FAIL — image 0.1.115, probe and health pass; the two failures are the pre-existing example-declared GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED MISSING drift and /var/lib/docker at 91% (host capacity, no service impact); the log WARN is the benign scan matching 'errors=0' inside an INFO line"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
       {
         "version": "0.1.114",
         "channel": "BETA",
