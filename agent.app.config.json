@@ -187,16 +187,35 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.107",
+    "currentVersion": "0.1.114",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.107"
+      "BETA": "0.1.114"
     },
     "notes": [
       {
+        "version": "0.1.114",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.114",
+        "summary": "Workspace-sync production redeploy of the api.noaper.com production gateway: ff-only pull across sdkwork-space, upstream convergence gaps repaired forward (IAM applied-migration checksum, cloudrouter backend route/OpenAPI inventory drift, gateway API closure coverage, Cargo.lock drift), verified on the local production-parity embedded stack, then state-preserving remote upgrade with backup retention at 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-space ff-only pull (dirty checkouts recorded and skipped, never reset); sdkwork-iam, sdkwork-cloudrouter and deployment templates advanced to the 2026-11-23 upstream heads (incl. retired cashier KEK wiring 79fb412)",
+          "forward fixes required to boot: (1) sdkwork-iam migration 0048 comment restored so the applied sha256 (f81c…) still matches ops_schema_migration_history; (2) sdkwork-cloudrouter backend runtime manifest drops the 6 /backend/v3/api/ai/agents* rows that collide with the mounted sdkwork-agents module; (3) cloudrouter backend OpenAPI operationIds aligned to the mounted memories.list/spaces.list inventory; (4) gateway component.spec.json adds the /app/v3/api/iot dependency surface and drops the duplicate mcp prefix; (5) check-gateway-api-closure.mjs merges route-crate runtime manifests so OpenAPI/runtime drift is detected correctly; (6) Cargo.lock regenerated for the self-healed birdcoder2 manifest (async-trait removal only)",
+          "gate: cargo metadata --locked, cargo fmt --check, cargo test --workspace, pnpm check (gateway:api:validate, closure checker + unit test, foundation suite) all exit 0 in the gw-build-023 bookworm build container; image built via bin/docker-image.sh build --image-tag 0.1.114",
+          "local production parity: 0.1.114 bundle upgraded in place on the local embedded-deps production stack — gateway healthy, healthz 200, readyz 200, doctor 8 PASS / 1 FAIL (localhost /var/lib/docker 96% full, host disk limit, no service impact), 5 backup sets retained",
+          "remote production evidence: api.noaper.com (49.233.93.219) upgraded in place from 0.1.107 to 0.1.114 on 2026-11-23 via bundle upgrade (deps postgres/redis untouched; gateway + knowledgebase-rpc recreated healthy in ~50s) — 4 containers up, restart count 0, image 0.1.114, host 3913; internal healthz/readyz 200 and public https://api.noaper.com healthz/readyz 200 through the edge",
+          "known-benign doctor findings (unchanged posture, not image regressions): config FAIL counts longstanding empty optional keys (CORS dynamic, vault, drive COS, discovery) as placeholders and the example-declared GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED is absent from the live env while compose defaults it to empty; logs WARN is the log scan matching 'errors=0' inside an INFO line",
+          "backup and rollback: fold of the upgrade's automatic pre-change set leaves exactly 5 production sets (newest 20261123T035231Z, sha256 verified; config+database+postgres/redis data+secrets+tls complete); explicit rollback target 0.1.107 is still loaded on the host"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
         "version": "0.1.107",
         "channel": "BETA",
-        "current": true,
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.107",
         "summary": "Workspace-sync redeploy carrying the sdkwork-iam installation readiness assessment and reconcile repair lane (c8a8a74a), the iam-pc app authorization surface with desktop launch handling (b4142a8d), and the hosted auth brand lockup reuse (be7c065a); same verified pipeline as 0.1.106 — container gates, local production-parity fresh install, state-preserving remote upgrade on api.noaper.com.",
         "highlights": [

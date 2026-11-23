@@ -369,6 +369,35 @@ function routesFromAssemblyManifest(dependencyRoot, routeCrates, errors, service
   return routes;
 }
 
+// A route crate may declare a descriptor module (`src/manifest.rs`) as its
+// routeManifestRef while the served HTTP table lives in the generated
+// `src/http_route_manifest.rs`. When discovery falls back to the SDK/OpenAPI
+// contract, merge the runtime table in as well: a contract can lag behind the
+// router (or expose routes the router does not serve), and the closure
+// contract must account for every route the gateway actually dispatches.
+function mergeRuntimeRouteTables(dependencyRoot, routeCrates, surfaceNames, discovered) {
+  const present = new Set(
+    discovered.map(({ route }) => `${String(route.method).toUpperCase()} ${route.path}`),
+  );
+  for (const routeCrate of routeCrates) {
+    if (!surfaceNames.has(routeCrate.surface)) continue;
+    const runtimePath = path.join(
+      dependencyRoot,
+      routeCrate.memberDir ?? "",
+      "src",
+      "http_route_manifest.rs",
+    );
+    if (!fs.existsSync(runtimePath)) continue;
+    for (const route of routesFromRustManifest(runtimePath)) {
+      const key = `${String(route.method).toUpperCase()} ${route.path}`;
+      if (present.has(key)) continue;
+      present.add(key);
+      discovered.push({ route, sourcePath: runtimePath });
+    }
+  }
+  return discovered;
+}
+
 function discoverProviderRoutes(
   dependencyRoot,
   dependency,
@@ -388,10 +417,15 @@ function discoverProviderRoutes(
   if (sdkManifestPath) {
     const result = routesFromSdkManifest(dependencyRoot, sdkManifestPath);
     if (result.routes.length > 0) {
-      return result.routes.map((route) => ({
-        route,
-        sourcePath: result.sourcePath,
-      }));
+      return mergeRuntimeRouteTables(
+        dependencyRoot,
+        routeCrates,
+        surfaceNames,
+        result.routes.map((route) => ({
+          route,
+          sourcePath: result.sourcePath,
+        })),
+      );
     }
   }
 
@@ -401,10 +435,15 @@ function discoverProviderRoutes(
     surfaceNames,
   );
   if (apiContract?.routes.length > 0) {
-    return apiContract.routes.map((route) => ({
-      route,
-      sourcePath: apiContract.sourcePath,
-    }));
+    return mergeRuntimeRouteTables(
+      dependencyRoot,
+      routeCrates,
+      surfaceNames,
+      apiContract.routes.map((route) => ({
+        route,
+        sourcePath: apiContract.sourcePath,
+      })),
+    );
   }
 
 
@@ -413,7 +452,14 @@ function discoverProviderRoutes(
     dependency,
     surfaceNames,
   );
-  if (scopedOpenApiRoutes.length > 0) return scopedOpenApiRoutes;
+  if (scopedOpenApiRoutes.length > 0) {
+    return mergeRuntimeRouteTables(
+      dependencyRoot,
+      routeCrates,
+      surfaceNames,
+      scopedOpenApiRoutes,
+    );
+  }
 
   errors.push(
     `${dependency.serviceId}: selected assembly route manifests expose no exact HTTP method/path inventory`,

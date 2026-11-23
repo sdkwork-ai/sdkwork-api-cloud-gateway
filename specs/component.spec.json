@@ -736,6 +736,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/iot",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-cloudrouter-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/ai",
       "ownership": "dependency",
@@ -1987,13 +1994,6 @@
     {
       "surface": "backend",
       "prefix": "/backend/v3/api/billing",
-      "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
-      "routeGeneration": "dependency-surface-prefix-route",
-      "ownership": "dependency"
-    },
-    {
-      "surface": "backend",
-      "prefix": "/backend/v3/api/mcp",
       "dependencyServiceId": "sdkwork-cloudrouter-backend-api",
       "routeGeneration": "dependency-surface-prefix-route",
       "ownership": "dependency"
