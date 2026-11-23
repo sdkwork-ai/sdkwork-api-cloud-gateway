@@ -503,6 +503,34 @@ fn waf_value_matches(value: &str) -> bool {
         || normalized.contains("/etc/passwd")
 }
 
+/// Model-inference surfaces carry the caller's prompt, not request parameters.
+///
+/// Their JSON strings are conversation content: a body containing `../`,
+/// `/etc/passwd`, `union select` or `<script` is normally the *subject* of the
+/// conversation — a code review, an incident write-up, a security question —
+/// not an attack on this gateway. Signature-matching prompt bodies therefore
+/// rejects ordinary chat, which is what production reports as
+/// `waf_baseline_signature` 403 on `POST /v1/chat/completions`.
+///
+/// Body inspection stops at the door for these routes. Header, query and URI
+/// inspection still apply, and auth, body-size limits, routing and billing are
+/// untouched: the gateway still never forwards a prompt to an upstream it may
+/// not use.
+fn is_prompt_inference_path(path: &str) -> bool {
+    let path = path.trim_end_matches('/');
+    matches!(
+        path,
+        "/v1/chat/completions"
+            | "/v1/completions"
+            | "/v1/responses"
+            | "/v1/embeddings"
+            | "/v1/images/generations"
+            | "/v1/audio/speech"
+            | "/anthropic/v1/messages"
+    ) || path.ends_with(":generateContent")
+        || path.ends_with(":streamGenerateContent")
+}
+
 /// Inspect JSON request bodies against the WAF baseline signature when
 /// `waf.inspectJsonBody` is enabled (config `waf.inspectJsonBody`).
 ///
@@ -525,6 +553,11 @@ pub(crate) async fn inspect_json_body(
     max_body_bytes: usize,
 ) -> Result<(Request<Body>, Vec<SecurityEvent>), SecurityRejection> {
     if !config.waf.enabled || !config.waf.inspect_json_body {
+        return Ok((request, Vec::new()));
+    }
+    // A chat prompt is data the caller wants analysed, not input to this
+    // service; scanning it for attack signatures blocks legitimate traffic.
+    if is_prompt_inference_path(request.uri().path()) {
         return Ok((request, Vec::new()));
     }
     if matches!(
@@ -962,6 +995,53 @@ mod tests {
         let rejection = inspect_json_body(&config, request, 32 * 1024 * 1024)
             .await
             .expect_err("signature match is blocked");
+        assert_eq!(rejection.status, StatusCode::FORBIDDEN);
+        assert_eq!(rejection.title, "waf_request_blocked");
+    }
+
+    /// Production regression: `POST /v1/chat/completions` was answered with a
+    /// `waf_baseline_signature` 403 whenever the conversation mentioned a file
+    /// path, because the prompt body was scanned as if it were request input.
+    #[tokio::test]
+    async fn chat_prompt_body_is_not_signature_inspected() {
+        let config = body_inspection_config("enforce");
+        let payload = "{\"model\":\"deepseek/deepseek-flash\",\"messages\":[{\"role\":\"user\",\
+                       \"content\":\"why does ../../etc/passwd 404 and what is ' or 1=1?\"}]}"
+            .to_string();
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/v1/chat/completions")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(payload.clone()))
+            .expect("json request");
+
+        let (request, events) = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect("a prompt body is conversation content, not a WAF target");
+        assert!(events.is_empty(), "prompt bodies emit no WAF event");
+
+        let (_, body) = request.into_parts();
+        let forwarded = to_bytes(body, 64 * 1024 * 1024).await.expect("body");
+        assert_eq!(
+            String::from_utf8_lossy(&forwarded),
+            payload,
+            "the handler receives exactly the prompt the caller sent"
+        );
+    }
+
+    #[tokio::test]
+    async fn non_prompt_json_body_still_reaches_the_signature_matcher() {
+        let config = body_inspection_config("enforce");
+        let request = Request::builder()
+            .method(Method::POST)
+            .uri("/backend/v3/api/iam/users")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from("{\"name\":\"../../etc/passwd\"}"))
+            .expect("json request");
+
+        let rejection = inspect_json_body(&config, request, 32 * 1024 * 1024)
+            .await
+            .expect_err("management bodies stay inside the WAF");
         assert_eq!(rejection.status, StatusCode::FORBIDDEN);
         assert_eq!(rejection.title, "waf_request_blocked");
     }
