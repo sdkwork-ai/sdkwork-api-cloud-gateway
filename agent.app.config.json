@@ -187,24 +187,26 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.116",
+    "currentVersion": "0.1.118",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.116"
+      "BETA": "0.1.118"
     },
     "notes": [
       {
-        "version": "0.1.116",
+        "version": "0.1.118",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.116",
+        "title": "sdkwork-api-cloud-gateway-v0.1.118",
         "summary": "Workspace-sync rebuild and production redeploy of the api.noaper.com gateway: ff-only pull across sdkwork-space, the diverged gateway/IAM/kernel checkouts merged forward, the models document_page and holiday-window catalog contract adopted by CloudRouter, full gate run in the gw-build-023 container, then local production-parity verification before the state-preserving remote upgrade with backup retention at exactly 5 sets.",
         "highlights": [
           "sibling sync: sdkwork-space ff-only pull of 104 repositories — sdkwork-documents, sdkwork-im, sdkwork-models, sdkwork-promotion, sdkwork-specs and sdkwork-test advanced; 6 dirty checkouts skipped as-is (sdkwork-agents, sdkwork-birdcoder2, sdkwork-cloudrouter, sdkwork-daxuedazi, sdkwork-webserver, sdkwork-kernel external/rig pointer), never reset",
           "diverged checkouts merged forward on main: sdkwork-api-cloud-gateway absorbed 4c50905 (stop signature-inspecting prompt bodies on model-inference routes) and f5b9df9 (lockfile refresh); sdkwork-iam absorbed the personnel-management/data-scope wave (migrations 0049-0051); sdkwork-kernel absorbed 1781903 (rig structured HTTP contracts) via fast-forward",
           "forward fix required to boot: sdkwork-models added BillingMeter::DocumentPage and PricingSchedule.holiday_dates / PricingWeeklyWindow.holiday_only; CloudRouter had no arm or field for them, so its catalog import, Postgres row mapping, settlement ordinals (42), usage quantity buckets and edge-runtime ordinal table were completed in sdkwork-cloudrouter 5492dff7 before the gateway build was accepted",
           "gate: cargo fmt --check, cargo metadata --locked, cargo test --workspace --locked (rc=0) and pnpm check (rc=0: standards, topology, API closure 3929 routes, process-shared pool, model-catalog assets, CORS carriers, workflow validate, all-features/foundation-suite checks) in the gw-build-023 bookworm build container",
-          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.116 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel"
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.118 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel",
+          "build-context guard: the 0.1.116 candidate was abandoned before any remote use because a concurrent sibling sync landed CloudRouter 01f917ae (pricing migrations 0009/0010, holiday-only windows) after its staging copy, so the image shipped the models holiday schedule writer against the old pricing_rate trigger; 0.1.117 rebuilt the image from the settled tree and the local production-parity upgrade then exposed the remaining upstream defect — 0009 tightened the payload guard without normalizing the 72 pre-existing four-key schedules, so the catalog refresh soft-delete failed validation and bootstrap aborted",
+          "0.1.118 is the deploy candidate: CloudRouter 5c0fb7a8 adds pricing 0011 / billing 0005, which disable the immutability and payload triggers for the migration transaction (the 0003 pattern), add holidayDates/holidayOnly to pre-0009 schedules and re-enable the guards; the backfill is idempotent and was dry-run inside a rolled-back transaction on the production-parity database (0 rows left malformed)"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
