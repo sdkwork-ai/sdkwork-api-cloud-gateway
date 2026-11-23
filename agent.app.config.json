@@ -187,16 +187,34 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.118",
+    "currentVersion": "0.1.119",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.118"
+      "BETA": "0.1.119"
     },
     "notes": [
       {
-        "version": "0.1.118",
+        "version": "0.1.119",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.119",
+        "summary": "Forward fix for the 0.1.118 startup panic: the CloudRouter backend manifest is regenerated from a dependency-clean source so the gateway no longer re-declares the Agent and MCP admin surfaces owned by sdkwork-agents and sdkwork-mcp, then rebuilt for the local production-parity check and the state-preserving remote upgrade with backup retention at exactly 5 sets.",
+        "highlights": [
+          "0.1.118 was abandoned before any remote use: its local production-parity upgrade restart-looped on `cloud router backend-api manifest composition failed: composed route collision for GET /backend/v3/api/ai/agent_categories: sdkwork-agents (agentCategories.list) conflicts with sdkwork-cloudrouter (agentCategories.list)`",
+          "root cause: a4c88f50 regenerated http_route_manifest.rs from the backend route-manifest source, which still advertised the six Agent admin paths (agent_categories GET/PUT, agents GET/POST, agents/{agentId} GET/PATCH, restore, status) and the nine MCP admin paths (14 operations) already released to their owning modules; 0d1bd76f had removed the MCP surface only from the generated artifact, so every regeneration resurrected it",
+          "forward fix in sdkwork-cloudrouter 1f9c4699: remove the dependency-owned operations from both authored inputs (the canonical backend OpenAPI document and sdks/_route-manifests/backend-api/...route-manifest.json), then regenerate the Rust manifest with tools/generate-cloudrouter-http-route-manifest-rs.mjs --apply; the deployed URLs keep routing to the agents and MCP module handlers, so clients are unaffected",
+          "validation: the generator --check reports the derived manifest in sync (143 backend routes), and check-cross-module-api-collisions.mjs --workspace .. passes with no CloudRouter finding",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.119 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel",
+          "pricing safety carried over from 0.1.118: CloudRouter pricing 0011 / billing 0005 backfill holidayDates/holidayOnly on pre-0009 schedules behind temporarily disabled immutability and payload triggers, so the catalog refresh soft-delete passes the tightened 0009/0004 validation"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.118",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.118",
         "summary": "Workspace-sync rebuild and production redeploy of the api.noaper.com gateway: ff-only pull across sdkwork-space, the diverged gateway/IAM/kernel checkouts merged forward, the models document_page and holiday-window catalog contract adopted by CloudRouter, full gate run in the gw-build-023 container, then local production-parity verification before the state-preserving remote upgrade with backup retention at exactly 5 sets.",
         "highlights": [
