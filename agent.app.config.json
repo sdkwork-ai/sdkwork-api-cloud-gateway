@@ -187,16 +187,51 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.119",
+    "currentVersion": "0.1.121",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.119"
+      "BETA": "0.1.121"
     },
     "notes": [
       {
-        "version": "0.1.119",
+        "version": "0.1.121",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.121",
+        "summary": "Fix-forward for the models app-api 404: the CloudRouter app router mounted only the pricing-catalog half of the embedded sdkwork-models capability while the composed route manifest advertised the voice-catalog and video-profile half too, so the BirdCoder client's GET /app/v3/api/ai/video_profiles (and /app/v3/api/ai/voices plus both per-model variants) answered 404/40401 from the dispatcher even though the same paths were registered behind /backend/v3/api/ai. Rebuilt and redeployed with the live model-catalog readiness probe extended to cover the app-api profile reads.",
+        "highlights": [
+          "symptom: a BirdCoder desktop call to GET /app/v3/api/ai/video_profiles returned HTTP 404 code 40401 (operationId videoProfiles.list) with route_target=dependency service_id=sdkwork-cloudrouter-app-api, while GET /backend/v3/api/ai/video_profiles and /backend/v3/api/ai/voices answered 401 (registered, credentials required) — so the defect was the app-api dispatch composition, not authentication and not the frontend",
+          "root cause: crates/sdkwork-routes-cloudrouter-app-api/src/routes.rs composed the sdkwork-models capability by merging only app_model_catalog_router (model vendors, models, access channels, presets); the voice-catalog and video-profile routers ship as separate companion routers, so the four profile routes that sdkwork-routes-models-catalog-app-api::app_route_manifest() advertises were authorized by the bound manifest and still unrouted, which is why the 404 carried the correct operationId",
+          "fix in sdkwork-models: the app-api route crate now owns the pairing — load_profile_catalog() resolves SDKWORK_MODELS_CATALOG_ROOT/bundled tree once per process, merge_profile_catalog_routers() pairs the two companion routers, merge_profile_catalog_routers_from_env() is the host entrypoint, and gateway_mount reuses the same pairing so the two halves can never drift again",
+          "fix in sdkwork-cloudrouter: all four app-api composition sites (pure-catalog router_with_product_catalog, router_with_postgres_product_catalog, router_with_postgres_shared_runtime used by the embedded cloud assembly, and the startup-install path) now merge the profile routers through with_models_profile_catalog_routers(), failing closed at bootstrap when the portable catalog cannot load instead of publishing manifest-authorized paths that nothing answers",
+          "regression coverage: the models route crate asserts the merged router answers 200 with a {code:0,data.items} envelope on all four advertised profile routes (and that the manifest still advertises them); cloudrouter asserts the composition helper mounts them; scripts/verify-model-catalog-readiness.mjs now probes the six app-api catalog reads so a future under-mount fails the live probe as MISSING (40401) instead of silently regressing",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.121 inside gw-build-023 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel; verification covers live 200 on /app/v3/api/ai/video_profiles, /app/v3/api/ai/voices and both per-model variants, /healthz, /readyz and the extended readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.120",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.120",
+        "summary": "Forward fix for the 0.1.119 startup panic: the CloudRouter backend OpenAPI is realigned with the memory module's canonical operation ids, then rebuilt for the local production-parity check and the state-preserving remote upgrade with backup retention at exactly 5 sets.",
+        "highlights": [
+          "0.1.119 restart-looped locally at startup: `sdkwork-cloudrouter-app-api route manifest and OpenAPI inventories differ (manifest=614, OpenAPI=614); manifest-only: [backend-api GET /backend/v3/api/memory/memories (memories.list, dual-token), GET /backend/v3/api/memory/spaces (spaces.list, dual-token)]; OpenAPI-only: [... memoryAdmin.records.list / memoryAdmin.spaces.list]`",
+          "root cause: the legacy sdkwork-memory admin frontend surface was still declared in CloudRouter's authored backend contract (docs/schema-registry/frontend-field-contracts.yaml, generated/api/api-contract-manifest.json and the generated OpenAPI) with the retired operation ids memoryAdmin.records.list / memoryAdmin.spaces.list, while the embedded sdkwork-memory contribution now owns those routes as memories.list / spaces.list",
+          "forward fix in sdkwork-cloudrouter: align the four contract layers with the memory module's canonical ids (operationId, x-sdkwork-resource, schema x-operation-id) and re-materialize the API authority document with pnpm api:materialize:write; the paths and dual-token auth are unchanged, so clients are unaffected",
+          "validation: pnpm api:materialize:check passes; the resulting authority document advertises 163 operations including the Agent/MCP surfaces previously missing, and no memoryAdmin ids remain",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.120 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.119",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.119",
         "summary": "Forward fix for the 0.1.118 startup panic: the CloudRouter backend manifest is regenerated from a dependency-clean source so the gateway no longer re-declares the Agent and MCP admin surfaces owned by sdkwork-agents and sdkwork-mcp, then rebuilt for the local production-parity check and the state-preserving remote upgrade with backup retention at exactly 5 sets.",
         "highlights": [

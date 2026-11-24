@@ -50,6 +50,24 @@ const MUTATION_ROUTES = [
   { method: 'POST', path: '/backend/v3/api/ai/models/sync', expectItems: false },
 ];
 
+// Buyer-facing (app-api) catalog reads. These are public and DB-free: the
+// pricing-catalog router serves `models`/`model_vendors`, while `voices` and
+// `video_profiles` are served by the models capability's separate
+// portable-catalog routers. A host that mounts only the pricing-catalog router
+// keeps the composed manifest authorizing the profile paths and answers 404 at
+// dispatch, so every one of these probes is registration-proof only
+// (`expectItems: false`): the catalog bundle may legitimately publish no voice
+// or video profile for a given vendor set, but it must always answer an
+// envelope instead of 404.
+const APP_READ_ROUTES = [
+  { method: 'GET', path: '/app/v3/api/ai/models', expectItems: false },
+  { method: 'GET', path: '/app/v3/api/ai/model_vendors', expectItems: false },
+  { method: 'GET', path: '/app/v3/api/ai/voices', expectItems: false },
+  { method: 'GET', path: '/app/v3/api/ai/video_profiles', expectItems: false },
+  { method: 'GET', path: '/app/v3/api/ai/models/openai%2Fwhisper-1/voices', expectItems: false },
+  { method: 'GET', path: '/app/v3/api/ai/models/openai%2Fgpt-4o/video_profiles', expectItems: false },
+];
+
 function parseArgs(argv) {
   const args = {
     baseUrl: '',
@@ -200,7 +218,9 @@ async function main() {
     process.exit(2);
   }
 
-  const routes = args.allowMutations ? [...READ_ROUTES, ...MUTATION_ROUTES] : READ_ROUTES;
+  const routes = args.allowMutations
+    ? [...APP_READ_ROUTES, ...READ_ROUTES, ...MUTATION_ROUTES]
+    : [...APP_READ_ROUTES, ...READ_ROUTES];
   const failures = [];
   const rows = [];
 
