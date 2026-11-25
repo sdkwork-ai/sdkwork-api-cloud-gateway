@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.133",
+    "currentVersion": "0.1.134",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.133"
+      "BETA": "0.1.134"
     },
     "notes": [
       {
-        "version": "0.1.133",
+        "version": "0.1.134",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.134",
+        "summary": "Build-only correction of 0.1.133: the container build now packages database migration SQL with canonical LF endings. A Windows checkout staged CRLF, so every packaged migration failed the startup checksum gate (`checksum_mismatch`) and the 0.1.133 image crash-looped instead of serving; production was restored to 0.1.132 while this was diagnosed. Runtime code is identical to 0.1.133, which carries the IAM JSONB scan-login settings fix and the non-destructive body observation contract.",
+        "highlights": [
+          "root cause of the 0.1.133 boot loop: migration checksums are content hashes; the deployed schema history recorded LF forms while the Windows build context carried CRLF (e.g. sdkwork-knowledgebase 0001 current=2e5cebeb applied=ac2e0766, sdkwork-cloudrouter pricing 0009 current=5d7891f4 applied=db135d3f)",
+          "build fix: scripts/build-api-cloud-gateway-container.mjs normalizes packaged .sql assets under database-modules to LF after staging and before checksums/ docker build; the workspace is not modified",
+          "verification: the packaged knowledgebase 0001 and cloudrouter pricing 0009 SQL now hash to the applied checksums before deployment; production regression is attempted only after those hashes match",
+          "rollback evidence: 0.1.133 crash-looped the gateway and knowledgebase-rpc (restart loop); re-applying 0.1.132 restored healthz/readyz and both containers healthy within a minute",
+          "carried forward from 0.1.133: sdkwork-iam oauth scan-login settings decode the JSONB server_ips column instead of panicking into 50301, and every body-reading stage either replays exact bytes or leaves the body untouched"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.133",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.133",
         "summary": "Embedded sdkwork-iam fix: the backend-api and app-api scan-login settings handlers decoded the JSONB iam_oauth_scan_login_config.server_ips column as TEXT, panicked inside sqlx, and the framework answered 503/50301 for every GET /backend/v3/api/iam/oauth/scan_login_settings. The column is now decoded as JSONB with a TEXT compatibility fallback and written as JSONB. Also ships the non-destructive body observation contract: every stage that reads a request or streamed response body now either replays the exact bytes or leaves the body untouched, closing the relay failure where every POST /v1/* payload above 256 KiB reached CloudRouter as an empty body ('400 40002 request body is empty for openai.chat_completions').",
         "highlights": [

@@ -638,6 +638,13 @@ async function assembleBuildContext(plan) {
     }
   }
 
+  // Package SQL assets with canonical LF endings. Migration checksums are
+  // content hashes, and the deployed schema history recorded the LF form; a
+  // Windows checkout stages CRLF, so every packaged migration would fail the
+  // startup checksum gate with `checksum_mismatch` (the 0.1.133 boot loop).
+  // Normalize the packaged copy only; the workspace stays untouched.
+  await normalizeStagedSqlLineEndings(path.join(plan.imageBuildDir, 'database-modules'));
+
   // Official model catalog installed under <install root>/data/sdkwork-models:
   // the cloudrouter foundation module's first-install seed source
   // (SDKWORK_MODELS_CATALOG_ROOT image ENV). `schemas/` is declared by the
@@ -734,6 +741,23 @@ function sha256FileStream(filePath) {
     stream.on('data', (chunk) => hash.update(chunk));
     stream.on('end', () => resolve(hash.digest('hex')));
   });
+}
+
+async function normalizeStagedSqlLineEndings(root) {
+  let normalized = 0;
+  for (const filePath of await listFiles(root)) {
+    if (!filePath.toLowerCase().endsWith('.sql')) continue;
+    const bytes = await readFile(filePath);
+    if (!bytes.includes(0x0d)) continue;
+    const text = bytes.toString('utf8').replace(/\r\n/g, '\n');
+    await writeFile(filePath, text, 'utf8');
+    normalized += 1;
+  }
+  if (normalized > 0) {
+    console.log(
+      `[container-image-build] normalized ${normalized} CRLF SQL asset(s) to LF`,
+    );
+  }
 }
 
 async function listFiles(root) {
