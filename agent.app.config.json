@@ -187,16 +187,35 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.133",
+    "currentVersion": "0.1.134",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.133"
+      "BETA": "0.1.134"
     },
     "notes": [
       {
-        "version": "0.1.133",
+        "version": "0.1.134",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.134",
+        "summary": "Non-destructive body observation: every stage that reads a request or streamed response body now either replays the exact bytes or leaves the body untouched, so a body can no longer disappear between two readers. This closes the production relay failure where every POST /v1/* payload above 256 KiB reached CloudRouter as an empty body and was answered '400 40002 request body is empty for openai.chat_completions' (clients saw long conversations fail while short ones worked). Carries the 0.1.133 embedded IAM JSONB scan-login settings fix (that tag was never built).",
+        "highlights": [
+          "root cause: the CloudRouter open-api router is wrapped in the request-log capture layer (sdkwork-cloudrouter-edge-runtime runtime.rs); that layer only buffered the body when its declared size fit the 256 KiB capture cap, and otherwise forwarded an EMPTY body while the headers still carried the real content-length",
+          "request logging: capture now tees the stream (every frame forwarded unchanged, bounded prefix retained); bounded bodies keep the previous full-body recording, and a bounded body whose read fails answers 502 instead of an empty payload",
+          "response observation: problem enrichment, idempotency response capture, gateway dependency-error observation, cloudrouter problem localization, subrequest splice and CGI-cache fill no longer replace a body they could not buffer; they skip observation or answer an explicit 5xx",
+          "registration flow: account provisioning reads the signup response body; an unprovable body is forwarded untouched instead of returning an empty 2xx",
+          "contract: sdkwork_web_core::body_contract::may_buffer_whole decides BEFORE the first poll; WEB_FRAMEWORK_SPEC section 11.1 and WEB_FRAMEWORK_STANDARD section 10.1 make the rule normative, with a regression requirement for every reader",
+          "knobs: request-log capture budget is now 1 MiB by default and configurable via SDKWORK_LOG_CAPTURE_BODY_MAX_BYTES; it is a retention budget, never an acceptance limit",
+          "regression: web-core 258 unit tests, log tower adapter 11 (1 MiB and 8 MiB bodies forwarded byte for byte), log assembly 3, plus Linux (WSL) cargo check for cloudrouter-http, cloudrouter-assembly, cloudgateway and the webserver data plane"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.133",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.133",
         "summary": "Embedded sdkwork-iam fix: the backend-api and app-api scan-login settings handlers decoded the JSONB iam_oauth_scan_login_config.server_ips column as TEXT, panicked inside sqlx, and the framework answered 503/50301 for every GET /backend/v3/api/iam/oauth/scan_login_settings. The column is now decoded as JSONB with a TEXT compatibility fallback and written as JSONB.",
         "highlights": [
