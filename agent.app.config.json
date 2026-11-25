@@ -187,16 +187,39 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.124",
+    "currentVersion": "0.1.125",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.124"
+      "BETA": "0.1.125"
     },
     "notes": [
       {
-        "version": "0.1.124",
+        "version": "0.1.125",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.125",
+        "summary": "Workspace-sync release: every sdkwork-space sibling repository was refreshed and merged, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.124 this carries the upstream vendor-protocol body path (vendor prefixes are declared as external protocols so the client-context guard stops buffering a model prompt, and only end-to-end headers are forwarded), the edge connection-semantics alignment with a 25 MiB default write ceiling, the cloudrouter membership/billing surface with end-to-end relay response headers, the IAM reporting-line and position-headcount migrations, and the Web Framework external-protocol prefix guard.",
+        "highlights": [
+          "gateway: vendor compatibility prefixes are declared as external protocols, so the Web Framework client-context guard no longer reads (and cannot strand) a large model prompt before the embedded CloudRouter sees it",
+          "gateway: buffered request bodies still drop hop-by-hop headers and state the buffered content-length before the in-process dependency handoff, and only end-to-end headers are forwarded on the vendor path",
+          "gateway: default write ceiling raised to 26214400 bytes (the CloudRouter invocation buffer size) so the edge is not the tighter limit; bodies above the global 32 MiB request cap are still rejected by request.maxBodyBytes",
+          "edge snippets: the /api/ location no longer announces Connection: upgrade (no WebSocket surface lives there) and forwards the client's own connection semantics elsewhere, with buffering/cache/gzip disabled and 3600s streaming timeouts",
+          "readiness: the model-catalog readiness probe now asserts the app-api profile routes (voices, video profiles) as well as the pricing catalog",
+          "cloudrouter: membership token plan surface, provider error envelopes, billing recharge records, end-to-end header relay on responses, and the empty-invocation-body warning are merged in",
+          "iam: reporting lines and position headcount (migrations 0052/0053) plus the WeChat MP and component authorization flows are merged in",
+          "web-framework: the client-context guard skips external protocol prefixes, matching the gateway declaration",
+          "deployments: the certificate ARI-window migration stays at 0021 from 0.1.124 so the production ledger keeps upgrading cleanly",
+          "build: server packaging and image builds share one cargo target directory, and container packaging asserts the required Linux toolchain packages",
+          "verification: gateway rebuilt and reimaged as 0.1.125, upgraded locally on the production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.124",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.124",
         "summary": "Fix-forward release for the workspace sync. The 0.1.123 build failed local production validation because the refreshed sdkwork-deployments module introduced two migrations with version 0020 (deploy_certificate_ari_window alongside the existing domain_verification_drive_objects). The migration ledger is keyed by module/version, so the gateway applied the new ARI-window migration first, then rejected the pre-existing 0020 with a checksum_mismatch and restart-looped. The ARI-window migration is renumbered to 0021 and its forward/rollback ids follow, so the ledger no longer collides; 0.1.124 otherwise carries the same workspace-sync content as 0.1.123.",
         "highlights": [
