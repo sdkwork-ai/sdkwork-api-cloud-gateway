@@ -187,26 +187,41 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.135",
+    "currentVersion": "0.1.136",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.135"
+      "BETA": "0.1.136"
     },
     "notes": [
       {
-        "version": "0.1.135",
+        "version": "0.1.136",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.135",
-        "summary": "Workspace-sync release: every sdkwork-space sibling repository was fetched and the diverged ones merged forward, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.133 this carries the sdkwork-cloudrouter upstream head (24 commits: the request-log capture tees the stream so an oversized body survives localization, h5 team membership and seats, the pc cloud-account workspace, provider error envelopes and billing recharge records), sdkwork-company (39 commits), sdkwork-webserver (3 commits: CGI-cache fill and subrequest splice keep bodies they could not buffer), sdkwork-iam (the JSONB scan-login fix), sdkwork-web-framework (the body_contract may_buffer_whole rule and problem enrichment) and sdkwork-agents. The gateway dependency-error observer now keeps a dependency error body whose size cannot be proven instead of replacing it, and the cloudrouter route-ownership exclusions are preserved so no mounted surface is re-declared.",
+        "title": "sdkwork-api-cloud-gateway-v0.1.136",
+        "summary": "Fix-forward for the 0.1.135 workspace-sync build. sdkwork-company folded the exchange venue, industry standard, sector/theme, business segment, profile-sector, sector-map and company-event tables plus the securities-master columns into its 0001 baseline after that baseline had already been applied, so installed databases kept the older schema and the company seed aborted on relation company_market_venue, leaving the gateway in a restart loop. The delta now ships as the additive company 0003 migration, so the 016-030 seeds run on the databases that are actually deployed. Everything else matches 0.1.135: the cloudrouter body-loss fix, the IAM JSONB scan-login fix, the web-framework body contract, the webserver body preservation and the gateway dependency-error body observation.",
         "highlights": [
-          "sibling sync: sdkwork-cloudrouter merged its origin/main head (24 commits) including the body-loss fix (request-log capture tees every frame and retains a bounded prefix, the response-observation stages skip a body they cannot buffer, and an oversized problem body survives localization), h5 team membership/seats, the pc cloud-account workspace, provider error envelopes and billing recharge records",
-          "sibling sync: sdkwork-company merged 39 upstream commits, sdkwork-iam merged the JSONB scan-login settings fix, sdkwork-web-framework merged the sdkwork_web_core::body_contract::may_buffer_whole rule plus problem enrichment, sdkwork-webserver merged the CGI-cache and subrequest splice body-preservation changes, and sdkwork-agents advanced its apps submodule to the upstream pointer",
-          "gateway: the dependency error observer keeps the dependency error body when its size is not provable, so the gateway no longer replaces a body it could not buffer (covered by the new gateway test that proves dependency error bodies survive observation)",
-          "cloudrouter: the mcp admin surface, the memory admin surface, GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices stay excluded from the gateway contracts and route to their owning modules; the generated OpenAPI contracts, the route-manifest sources and http_route_manifest.rs all pass --check (139 backend routes, 37 app routes, 219 open routes)",
-          "assembly: the merged app and backend manifests pass the standalone gateway surface auth validation test before the image is built, so route composition cannot collide at startup",
-          "workflow: the release gate checks out sdkwork-specs so the body read contract verification resolves in CI",
-          "verification: gateway rebuilt as 0.1.135, upgraded on the local production-shaped embedded stack with /healthz, /readyz and the model-catalog readiness probe, then deployed to the remote production host with the same probes and backup retention at 5 sets"
+          "company: new additive 0003 migration carries the folded-baseline delta (exchange venues, industry standards, the sector/theme tree, business segments, profile sectors, the sector map and company events, plus the securities-master, financing-round and relation columns) with all nineteen dependent indexes",
+          "company: the 0003 statements are idempotent (IF NOT EXISTS) and were dry-run inside a rolled-back transaction against the production-shaped local database before the image was rebuilt",
+          "company: the 016-030 seeds (market venues, industry standards, sectors, sector map, profile sectors, profile normalization, derived tags, aliases, US CIK identifiers, IPO pipeline, business segments, US SIC industries, relations and Form D rounds) now run on an installed database instead of only on a fresh baseline",
+          "sibling sync: the 0.1.135 workspace merges are unchanged - cloudrouter (24 commits with the body-loss fix), company (39), webserver (3), iam (2), web-framework (2) and agents (1)",
+          "gateway: the dependency error observer keeps a dependency error body whose size cannot be proven instead of replacing it, covered by the dependency error body test",
+          "cloudrouter: the mcp admin surface, the memory admin surface, GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices stay excluded from the gateway contracts and route to their owning modules; generated contracts and route manifests pass --check (139 backend, 37 app, 219 open routes)",
+          "verification: 0.1.136 is upgraded on the local production-shaped embedded stack with /healthz, /readyz and the model-catalog readiness probe before the remote production host is touched, with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.135",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.135",
+        "summary": "Inner build, never deployed. It carried the workspace sync (cloudrouter 24 commits with the body-loss fix, company 39, webserver 3, iam 2, web-framework 2, agents 1) and the gateway dependency-error body preservation, but the local production-parity upgrade failed during company database bootstrap: the merged 0001 baseline had gained exchange venues, industry standards, the sector tree, business segments and the securities-master columns after it was already applied, so the seed aborted on relation company_market_venue while the gateway restart-looped. Superseded by 0.1.136, which ships that delta as the additive company 0003 migration.",
+        "highlights": [
+          "sibling sync: sdkwork-cloudrouter origin/main head (24 commits, body-loss fix included), sdkwork-company 39 commits, sdkwork-iam JSONB scan-login fix, sdkwork-web-framework body_contract rule, sdkwork-webserver body preservation and sdkwork-agents",
+          "gateway: the dependency error observer keeps a dependency error body whose size cannot be proven instead of replacing it, covered by the dependency error body test",
+          "failure: the 0.1.135 image was built and then failed the local production-parity upgrade - the company module seed stopped on relation company_market_venue does not exist, because the folded baseline delta was never migrated into installed databases; the gateway never became healthy and 0.1.135 was not deployed anywhere"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
