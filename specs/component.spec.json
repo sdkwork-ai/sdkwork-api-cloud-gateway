@@ -4541,6 +4541,7 @@
       "node ../sdkwork-specs/tools/check-app-manifest-standard.mjs --root .",
       "node ../sdkwork-specs/tools/check-api-assembly-integration-closure.mjs --root .",
       "node ../sdkwork-specs/tools/check-pnpm-script-standard.mjs --root .",
+      "node ../sdkwork-specs/tools/check-body-read-contract.mjs --root .",
       "pnpm check",
       "pnpm verify",
       "pnpm workflow:validate",
