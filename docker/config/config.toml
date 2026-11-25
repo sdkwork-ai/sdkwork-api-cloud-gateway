@@ -154,5 +154,8 @@ rules = [
   # Media uploads stream through Drive; allow large payloads there only.
   { id = "media-upload-limit", matchPathPrefix = "/backend/v3/api/drive", maxBodyBytes = 67108864 },
   # Every other write surface stays under the global request cap.
-  { id = "default-write-limit", maxBodyBytes = 16777216 },
+  # Model prompts carry long agent context; the cloudrouter invocation buffer
+  # accepts 25 MiB, so the edge must not be the tighter ceiling. Bodies above
+  # the global 32 MiB request cap are rejected earlier by request.maxBodyBytes.
+  { id = "default-write-limit", maxBodyBytes = 26214400 },
 ]

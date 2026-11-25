@@ -421,12 +421,22 @@ async fn build_embedded_router(
         .filter(|surface| normalized_surface_name(surface.surface.as_str()) == "open")
         .map(|surface| surface.api_prefix.clone())
         .collect();
-    let mut framework = sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes(
-        resolver,
-        framework_manifest,
-        public_path_prefixes,
-        open_api_prefixes,
-    );
+    // The vendor-compatibility prefixes carry an upstream protocol's own request
+    // vocabulary, so their top-level JSON keys are payload rather than SDKWork
+    // context selectors. Declaring them keeps the framework's client-context guard
+    // from buffering a model prompt — the guard reads the whole body, and reading
+    // it is the one step in the request path that can strand a large payload
+    // before the dependent service ever sees it.
+    let external_protocol_prefixes =
+        crate::vendor_open_api_auth::vendor_open_api_prefixes(&config);
+    let mut framework =
+        sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes_and_external_protocols(
+            resolver,
+            framework_manifest,
+            public_path_prefixes,
+            open_api_prefixes,
+            external_protocol_prefixes,
+        );
     if is_production_like_environment(&config) {
         let postgres_pool = pool.as_postgres().cloned().ok_or_else(|| {
             GatewayRuntimeError::ApiAssemblyComposition {
@@ -1379,6 +1389,9 @@ fn failure_class_for_response(response: &Response) -> Option<&'static str> {
         .map(|failure_class| failure_class.0)
 }
 
+/// One rejected request body: the status and problem title the caller sees, plus
+/// the correlation ids the rejection has to carry.
+#[derive(Debug)]
 struct RequestBodyRejection {
     status: StatusCode,
     title: &'static str,
@@ -1402,10 +1415,10 @@ impl RequestBodyRejection {
 /// Request headers that describe the inbound connection rather than the message
 /// it carries.
 ///
-/// RFC 9110 搂7.6.1 makes these hop-by-hop: a proxy consumes them and never
+/// RFC 9110 §7.6.1 makes these hop-by-hop: a proxy consumes them and never
 /// forwards them. The composed dependency this gateway hands the request to runs
 /// in-process, so forwarding them would hand it connection semantics that no
-/// longer exist 鈥?`Connection: upgrade` in particular announces a protocol
+/// longer exist — `Connection: upgrade` in particular announces a protocol
 /// upgrade the composed router never performs, and `transfer-encoding` describes
 /// framing the buffered body no longer has.
 const HOP_BY_HOP_REQUEST_HEADERS: [&str; 9] = [
@@ -1455,8 +1468,9 @@ async fn enforce_request_body_limit(
     };
 
     // The buffered bytes are now the whole message. Drop the inbound connection's
-    // hop-by-hop vocabulary and state the buffered length, so every later stage 鈥?    // the Web Framework context guard, the invocation body limit, and the
-    // provider rewrite 鈥?measures exactly the bytes the handler receives instead
+    // hop-by-hop vocabulary and state the buffered length, so every later stage —
+    // the Web Framework context guard, the invocation body limit, and the
+    // provider rewrite — measures exactly the bytes the handler receives instead
     // of trusting framing from a connection that has already ended.
     for name in HOP_BY_HOP_REQUEST_HEADERS {
         parts.headers.remove(name);
@@ -1969,6 +1983,71 @@ mod tests {
     use super::*;
     use axum::http::HeaderValue;
     use serde_json::Value;
+
+    #[tokio::test]
+    async fn body_limit_buffering_strips_hop_by_hop_headers_and_states_the_buffered_length() {
+        let request = Request::builder()
+            .method("POST")
+            .uri("/v1/chat/completions")
+            .header(header::CONTENT_TYPE, "application/json")
+            // Deliberately wrong: the buffered body decides the real length.
+            .header(header::CONTENT_LENGTH, "17")
+            .header("connection", "upgrade")
+            .header("upgrade", "h2c")
+            .header("keep-alive", "timeout=5")
+            .header("te", "trailers")
+            .header("transfer-encoding", "chunked")
+            .header("x-request-id", "req-body-limit")
+            .body(Body::from(r#"{"model":"m","x":1}"#))
+            .expect("request");
+
+        let request = enforce_request_body_limit(request, 1024)
+            .await
+            .expect("a body inside the cap is forwarded");
+
+        for hop_by_hop in [
+            "connection",
+            "upgrade",
+            "keep-alive",
+            "te",
+            "transfer-encoding",
+        ] {
+            assert!(
+                request.headers().get(hop_by_hop).is_none(),
+                "`{hop_by_hop}` must not survive the in-process handoff"
+            );
+        }
+        assert_eq!(
+            request.headers().get(header::CONTENT_LENGTH).expect("length"),
+            "19",
+            "the buffered body states its own length"
+        );
+        assert_eq!(
+            request.headers().get("x-request-id").expect("end-to-end header"),
+            "req-body-limit",
+            "end-to-end headers are preserved"
+        );
+        let body = to_bytes(request.into_body(), 1024).await.expect("body");
+        assert_eq!(body.as_ref(), br#"{"model":"m","x":1}"#);
+    }
+
+    #[tokio::test]
+    async fn body_limit_buffering_rejects_a_body_beyond_the_cap() {
+        let request = Request::builder()
+            .method("POST")
+            .uri("/v1/chat/completions")
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::CONTENT_LENGTH, "32")
+            .body(Body::from(vec![b'x'; 32]))
+            .expect("request");
+
+        let rejection = enforce_request_body_limit(request, 16)
+            .await
+            .expect_err("a body beyond the cap is rejected");
+
+        assert_eq!(rejection.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert_eq!(rejection.title, "request_body_too_large");
+    }
 
     #[test]
     fn log_sampling_honors_disabled_and_full_rate() {
