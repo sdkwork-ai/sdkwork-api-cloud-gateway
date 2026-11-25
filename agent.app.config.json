@@ -187,24 +187,57 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.135",
+    "currentVersion": "0.1.137",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.135"
+      "BETA": "0.1.137"
     },
     "notes": [
       {
-        "version": "0.1.135",
+        "version": "0.1.137",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.135",
-        "summary": "Corrected release carrying the IAM JSONB scan-login settings fix. Two build-side blockers found on the way to production are fixed: packaged migration SQL is normalized to LF (a Windows checkout staged CRLF and every migration failed the startup checksum gate), and the applied sdkwork-iam 0048 / sdkwork-agents 0009 migrations are restored to their applied comment text (comment-only edits had changed their checksums).",
+        "title": "sdkwork-api-cloud-gateway-v0.1.137",
+        "summary": "Fix-forward for the 0.1.136 build. The seed security gate matched the XP_ injection pattern as a plain substring, so the company profile-normalization seed - which calls regexp_replace - was rejected as a SQL Server extended-procedure call and the gateway never bootstrapped its databases. The scanner now matches extended procedures by identifier (a token that starts with XP_), which still blocks XP_CMDSHELL while allowing ordinary PostgreSQL functions. It also relaxes company_relation.to_company_id to nullable so unresolved relation targets can be stored. Everything else matches 0.1.136: the company 0003 schema delta, the cloudrouter body-loss fix, the IAM JSONB scan-login fix, the web-framework body contract and the gateway dependency-error body observation.",
         "highlights": [
-          "0.1.133/0.1.134 boot loop: migration checksums are content hashes; the deployed schema history recorded LF forms while the Windows build context carried CRLF (knowledgebase 0001 current=2e5cebeb applied=ac2e0766; cloudrouter pricing 0009 current=5d7891f4 applied=db135d3f). Production was restored to 0.1.132 each time and stayed healthy",
-          "build fix: scripts/build-api-cloud-gateway-container.mjs normalizes packaged database-modules .sql assets to LF after staging (475 files) and before checksums/docker build; the workspace is untouched",
-          "migration immutability: applied sdkwork-iam 0048_iam_login_follow_qr and sdkwork-agents 0009_builtin_chat_agent_tenant_visibility are back to the applied comment text (LF hashes f81c08e4 / ed0a0343); DDL was never changed by those edits",
-          "pre-deploy gate: every applied migration present in the image was hashed against sdkwork_ai_prod.ops_schema_migration_history before deployment; the remaining differences were heuristic mismatches whose real module files matched",
-          "carried forward from 0.1.133: sdkwork-iam backend-api and app-api scan-login settings decode the JSONB server_ips column instead of panicking into 50301, and every body-reading stage either replays exact bytes or leaves the body untouched"
+          "sdkwork-database: the seed security gate detects XP_ extended procedures by identifier instead of substring, so regexp_replace and other names ending in xp_ are no longer flagged, while XP_CMDSHELL stays blocked",
+          "sdkwork-database: two unit tests pin the behaviour - the profile-normalization regexp_replace statement is safe and EXEC XP_CMDSHELL is refused",
+          "company: the additive 0003 migration still delivers the folded-baseline delta (exchange venues, industry standards, the sector tree, business segments, profile sectors, the sector map, company events, and the securities-master, financing-round and relation columns) with nineteen dependent indexes",
+          "company: migration 0004 relaxes company_relation.to_company_id to nullable, so relations whose target company is not in the catalog yet are stored with to_company_name and to_company_isin instead of failing the 029 seed; seeds 022-030 were then dry-run end to end in a rolled-back transaction against the production-shaped database",
+          "company: all seed catalogs were pre-scanned with the fixed rules and the paren balance walk before the image rebuild, so the 016-030 seeds run without another gate failure",
+          "sibling sync: the 0.1.135 workspace merges are unchanged - cloudrouter (24 commits with the body-loss fix), company (39), webserver (3), iam (2), web-framework (2) and agents (1)",
+          "cloudrouter: the mcp admin surface, the memory admin surface, GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices stay excluded from the gateway contracts and route to their owning modules; generated contracts and route manifests pass --check (139 backend, 37 app, 219 open routes)",
+          "verification: 0.1.137 is upgraded on the local production-shaped embedded stack with /healthz, /readyz and the model-catalog readiness probe before the remote production host is touched, with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.136",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.136",
+        "summary": "Inner build, never deployed. It carried the additive company 0003 schema delta, but the local production-parity upgrade then stopped one step later: the seed security gate rejected the company profile-normalization seed because the PostgreSQL function regexp_replace ends in xp_ and the scanner treated any xp_ substring as a SQL Server extended-procedure call. The gateway restart-looped and 0.1.136 was not deployed anywhere. Superseded by 0.1.137.",
+        "highlights": [
+          "company: the additive 0003 migration delivered the folded-baseline delta (seven tables, twenty-nine columns, nineteen indexes) and the 016-030 seeds passed schema validation",
+          "failure: the 0.1.136 image was built and then failed the local production-parity upgrade - the seed security gate reported a potential SQL injection pattern XP_ for the profile-normalization seed, because regexp_replace contains xp_",
+          "verification: no 0.1.136 deployment happened; the local stack stayed on the failing candidate only long enough to capture this error"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.135",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.135",
+        "summary": "Inner build, never deployed. It carried the workspace sync (cloudrouter 24 commits with the body-loss fix, company 39, webserver 3, iam 2, web-framework 2, agents 1) and the gateway dependency-error body preservation, but the local production-parity upgrade failed during company database bootstrap: the merged 0001 baseline had gained exchange venues, industry standards, the sector tree, business segments and the securities-master columns after it was already applied, so the seed aborted on relation company_market_venue while the gateway restart-looped. Superseded by 0.1.136, which ships that delta as the additive company 0003 migration.",
+        "highlights": [
+          "sibling sync: sdkwork-cloudrouter origin/main head (24 commits, body-loss fix included), sdkwork-company 39 commits, sdkwork-iam JSONB scan-login fix, sdkwork-web-framework body_contract rule, sdkwork-webserver body preservation and sdkwork-agents",
+          "gateway: the dependency error observer keeps a dependency error body whose size cannot be proven instead of replacing it, covered by the dependency error body test",
+          "failure: the 0.1.135 image was built and then failed the local production-parity upgrade - the company module seed stopped on relation company_market_venue does not exist, because the folded baseline delta was never migrated into installed databases; the gateway never became healthy and 0.1.135 was not deployed anywhere"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
@@ -228,6 +261,215 @@
           "contract: sdkwork_web_core::body_contract::may_buffer_whole decides BEFORE the first poll; WEB_FRAMEWORK_SPEC section 11.1 and WEB_FRAMEWORK_STANDARD section 10.1 make the rule normative, with a regression requirement for every reader",
           "knobs: request-log capture budget is now 1 MiB by default and configurable via SDKWORK_LOG_CAPTURE_BODY_MAX_BYTES; it is a retention budget, never an acceptance limit",
           "regression: web-core 258 unit tests, log tower adapter 11 (1 MiB and 8 MiB bodies forwarded byte for byte), log assembly 3, plus Linux (WSL) cargo check for cloudrouter-http, cloudrouter-assembly, cloudgateway and the webserver data plane"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.132",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.132",
+        "summary": "Route-ownership fix for the 0.1.129 workspace-sync release. The 0.1.129 image never reached health: the merged sdkwork-cloudrouter contracts re-declared surfaces that their owners mount, so the gateway failed route assembly and restart-looped. The backend contract re-declared the MCP admin surface (GET /backend/v3/api/mcp/categories) owned by sdkwork-mcp and the memory admin surface owned by sdkwork-memory; the app contract re-declared GET /app/v3/api/ai/agents owned by sdkwork-agents and GET /app/v3/api/iot/devices owned by sdkwork-aiot. The cloudrouter backend SDK now declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk, and the app SDK declares sdkwork-agents-app-sdk and sdkwork-aiot-app-sdk, as consumer-sdk dependencies, so the canonical OpenAPI generator drops their operations instead of re-declaring them; the contracts, the route-manifest sources and http_route_manifest.rs were regenerated. Gateway URLs are unchanged: those paths route to the owning module. Everything else matches 0.1.129 (workspace sync, seed-balance PostgreSQL string rules, company identity migration, agents 0009 checksum restore).",
+        "highlights": [
+          "cloudrouter: the backend SDK declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk as consumer-sdk dependencies, so the canonical OpenAPI generator excludes the MCP admin surface (9 paths) and the memory admin surface (2 paths) instead of re-declaring them",
+          "cloudrouter: the app SDK declares sdkwork-agents-app-sdk and sdkwork-aiot-app-sdk as consumer-sdk dependencies, so the duplicated GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices operations leave the app contract and are served by the sdkwork-agents and sdkwork-aiot mounts",
+          "cloudrouter: the backend and app OpenAPI contracts, the route-manifest sources, and http_route_manifest.rs are regenerated from that dependency-clean source (139 backend routes, 37 app routes, 219 open routes)",
+          "cloudrouter: the app contract also drops the IAM-owned POST /app/v3/api/iam/api_keys/{apiKeyId}/reveal operation, which the iam consumer-sdk dependency already owns",
+          "cloudrouter: the assembly collision test is aligned with the promotion assembly's optional-credential offers profile (guest storefront browsing), which the merged app manifest already preserves",
+          "gateway: app and backend manifest composition now merge the mounted dependency manifests without an ownership collision, verified by the cloudrouter assembly collision test before the image was built",
+          "cloudrouter: no URL changes; /backend/v3/api/mcp/*, /backend/v3/api/memory/*, /app/v3/api/ai/agents and /app/v3/api/iot/devices route to their owning modules exactly as deployed clients already use them",
+          "verification: gateway rebuilt as 0.1.132, upgraded on the local production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.129",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.129",
+        "summary": "Workspace-sync release: every sdkwork-space sibling repository was refreshed and merged, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.124 this carries the upstream vendor-protocol body path (vendor prefixes are declared as external protocols so the client-context guard stops buffering a model prompt, and only end-to-end headers are forwarded), the edge connection-semantics alignment with a 25 MiB default write ceiling, the cloudrouter membership/billing surface with end-to-end relay response headers, the IAM reporting-line and position-headcount migrations, and the Web Framework external-protocol prefix guard. The inner 0.1.125 to 0.1.128 builds were never released: they surfaced a checksum-ledger break in the sdkwork-agents 0009 migration, a missing company identity/tag schema upgrade, and seed balance false positives on the dsh-market and api-surface catalog payloads, all of which this release fixes forward.",
+        "highlights": [
+          "migrations: the sdkwork-agents 0009 baseline SQL is restored byte-for-byte to the applied revision (ed0a0343); the inner 0.1.125 image had picked up an in-place header edit (23cd7b63) and the production ledger rejected it at startup, while the 0010 expert catalog migration stays additive",
+          "migrations: sdkwork-company gains the additive 0002 identity/tag/relation/IPO migration, so databases that already applied the 0001 baseline receive the six new tables, the company_product and company_job_position columns and the thirteen indexes before the 014/015 seeds run",
+          "seeds: the shared balance check follows PostgreSQL string rules (a doubled quote is one literal quote, backslashes are data, and dollar-quoted bodies are opaque), so the dsh-market catalog payload with Windows paths and the api-surface catalog regex text no longer desync the scan",
+          "gateway: vendor compatibility prefixes are declared as external protocols, so the Web Framework client-context guard no longer reads (and cannot strand) a large model prompt before the embedded CloudRouter sees it",
+          "gateway: buffered request bodies still drop hop-by-hop headers and state the buffered content-length before the in-process dependency handoff, and only end-to-end headers are forwarded on the vendor path",
+          "gateway: default write ceiling raised to 26214400 bytes (the CloudRouter invocation buffer size) so the edge is not the tighter limit; bodies above the global 32 MiB request cap are still rejected by request.maxBodyBytes",
+          "edge snippets: the /api/ location no longer announces Connection: upgrade (no WebSocket surface lives there) and forwards the client's own connection semantics elsewhere, with buffering/cache/gzip disabled and 3600s streaming timeouts",
+          "readiness: the model-catalog readiness probe now asserts the app-api profile routes (voices, video profiles) as well as the pricing catalog",
+          "cloudrouter: membership token plan surface, provider error envelopes, billing recharge records, end-to-end header relay on responses, and the empty-invocation-body warning are merged in",
+          "iam: reporting lines and position headcount (migrations 0052/0053) plus the WeChat MP and component authorization flows are merged in",
+          "web-framework: the client-context guard skips external protocol prefixes, matching the gateway declaration",
+          "deployments: the certificate ARI-window migration stays at 0021 from 0.1.124 so the production ledger keeps upgrading cleanly",
+          "build: server packaging and image builds share one cargo target directory, and container packaging asserts the required Linux toolchain packages",
+          "verification: gateway rebuilt and reimaged as 0.1.129, upgraded locally on the production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.124",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.124",
+        "summary": "Fix-forward release for the workspace sync. The 0.1.123 build failed local production validation because the refreshed sdkwork-deployments module introduced two migrations with version 0020 (deploy_certificate_ari_window alongside the existing domain_verification_drive_objects). The migration ledger is keyed by module/version, so the gateway applied the new ARI-window migration first, then rejected the pre-existing 0020 with a checksum_mismatch and restart-looped. The ARI-window migration is renumbered to 0021 and its forward/rollback ids follow, so the ledger no longer collides; 0.1.124 otherwise carries the same workspace-sync content as 0.1.123.",
+        "highlights": [
+          "sdkwork-deployments: 0020_deploy_certificate_ari_window renamed to 0021_deploy_certificate_ari_window (up and down), with the embedded migration ids updated to match",
+          "existing 0020_domain_verification_drive_objects keeps its version and checksum, so databases that already applied it (including remote production) upgrade cleanly",
+          "local production validation: the erroneous 0020 ARI ledger row created by the failed 0.1.123 attempt was removed so the ledger replays 0020 domain-verification then 0021 ARI window",
+          "no runtime behavior change beyond the migration ordering fix; the gateway and knowledgebase RPC images carry the same workspace-sync content as 0.1.123"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.123",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.123",
+        "summary": "Workspace-sync release: refreshed the sdkwork-space sibling repositories with fast-forward pulls and rebuilt the embedded gateway from the updated foundation assemblies. Over the 0.1.122 baseline this carries the sdkwork-documents playground request-helper alignment (c7ab233), the sdkwork-log admin request-log surface with trimmed captured payloads (9cbb026), the sdkwork-deployments certificate renewal-window and presentation tracking (74fda43) and the sdkwork-sdk-generator refresh (b744256), together with the 0.1.122 hop-by-hop request-header fix. The container image version label is also corrected to the release tag (the 0.1.122 image carried 0.1.121 because package.json had not been bumped).",
+        "highlights": [
+          "sdkwork-documents: app playground requests now go through the shared request helper so the desktop and web clients build the same document request shape",
+          "sdkwork-log: backend admin request-log surface added; captured payloads trimmed so log rows stay bounded",
+          "sdkwork-deployments: certificate renewal window is tracked and certificate presentation/status archived, so the ACME plan and TLS status are visible from the deploy surface",
+          "sdkwork-sdk-generator: generator refresh pulled with the workspace sync",
+          "preserved from 0.1.122: buffered request bodies drop inbound hop-by-hop headers and declare the buffered content-length before the in-process dependency handoff, and CloudRouter reports an empty invocation body as an empty body instead of a missing model",
+          "version honesty: package.json is bumped with the release so the container image org.opencontainers.image.version matches the deployed tag",
+          "verification: gateway rebuilt and reimaged as 0.1.123, upgraded locally on the production-shaped embedded stack and then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.122",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.122",
+        "summary": "Fix-forward for the intermittent 400 40002 'model is required for openai.chat_completions' that rejected large chat requests. Evidence from production showed the client sent a full payload (content-length 263409-327125 bytes) while the embedded CloudRouter invocation received an empty body (body_bytes=0) and therefore reported a missing model, blaming the caller. This release strips hop-by-hop request headers before the in-process dependency handoff (RFC 9110 搂7.6.1) and states the buffered body length explicitly, and makes CloudRouter report an empty request body as an empty body instead of a missing model.",
+        "highlights": [
+          "symptom: POST /v1/chat/completions answered 400 40002 model is required for openai.chat_completions while the same client's requests under 262144 bytes succeeded (40x 200 up to 261389 bytes vs 4x 400 at 263409/326691/327065/327125 bytes in one day)",
+          "root cause evidence: the gateway access event recorded content-length 263409 with content-type application/json and the request was authenticated (api_key_name_snapshot=auth-token-session, user_id present, account_group=default-group), while the CloudRouter payload stage logged body_bytes=0 - the payload never reached the invocation, so the 40002 text described a transport fact as a caller omission",
+          "fix in gateway: enforce_request_body_limit now drops the inbound connection's hop-by-hop headers (connection, keep-alive, proxy-connection, proxy-authenticate, proxy-authorization, te, trailer, transfer-encoding, upgrade) after buffering and rewrites content-length to the buffered length, so the composed dependency never inherits an upgrade announcement or stale framing from a connection that has already ended",
+          "fix in cloudrouter: an empty invocation body is reported as 'request body is empty for <api_code>' with a structured warning carrying declared_content_length and body_bytes, so this class of failure is self-identifying instead of sending every investigation at the client's request builder",
+          "verification: a 300 KiB JSON prompt now reaches a Web Framework handler byte-for-byte on both declared-length and chunked framing (new regression test in sdkwork-web-axum/tests/integration.rs); cargo check passes for sdkwork-cloudrouter-router-service and sdkwork-api-cloud-gateway",
+          "ops: the gateway edge vhost no longer sends Connection: upgrade on ordinary API traffic (map $http_upgrade $connection_upgrade added in /etc/nginx/conf.d, nginx -t + reload applied)"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.121",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.121",
+        "summary": "Fix-forward for the models app-api 404: the CloudRouter app router mounted only the pricing-catalog half of the embedded sdkwork-models capability while the composed route manifest advertised the voice-catalog and video-profile half too, so the BirdCoder client's GET /app/v3/api/ai/video_profiles (and /app/v3/api/ai/voices plus both per-model variants) answered 404/40401 from the dispatcher even though the same paths were registered behind /backend/v3/api/ai. Rebuilt and redeployed with the live model-catalog readiness probe extended to cover the app-api profile reads.",
+        "highlights": [
+          "symptom: a BirdCoder desktop call to GET /app/v3/api/ai/video_profiles returned HTTP 404 code 40401 (operationId videoProfiles.list) with route_target=dependency service_id=sdkwork-cloudrouter-app-api, while GET /backend/v3/api/ai/video_profiles and /backend/v3/api/ai/voices answered 401 (registered, credentials required) — so the defect was the app-api dispatch composition, not authentication and not the frontend",
+          "root cause: crates/sdkwork-routes-cloudrouter-app-api/src/routes.rs composed the sdkwork-models capability by merging only app_model_catalog_router (model vendors, models, access channels, presets); the voice-catalog and video-profile routers ship as separate companion routers, so the four profile routes that sdkwork-routes-models-catalog-app-api::app_route_manifest() advertises were authorized by the bound manifest and still unrouted, which is why the 404 carried the correct operationId",
+          "fix in sdkwork-models: the app-api route crate now owns the pairing — load_profile_catalog() resolves SDKWORK_MODELS_CATALOG_ROOT/bundled tree once per process, merge_profile_catalog_routers() pairs the two companion routers, merge_profile_catalog_routers_from_env() is the host entrypoint, and gateway_mount reuses the same pairing so the two halves can never drift again",
+          "fix in sdkwork-cloudrouter: all four app-api composition sites (pure-catalog router_with_product_catalog, router_with_postgres_product_catalog, router_with_postgres_shared_runtime used by the embedded cloud assembly, and the startup-install path) now merge the profile routers through with_models_profile_catalog_routers(), failing closed at bootstrap when the portable catalog cannot load instead of publishing manifest-authorized paths that nothing answers",
+          "regression coverage: the models route crate asserts the merged router answers 200 with a {code:0,data.items} envelope on all four advertised profile routes (and that the manifest still advertises them); cloudrouter asserts the composition helper mounts them; scripts/verify-model-catalog-readiness.mjs now probes the six app-api catalog reads so a future under-mount fails the live probe as MISSING (40401) instead of silently regressing",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.121 inside gw-build-023 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel; verification covers live 200 on /app/v3/api/ai/video_profiles, /app/v3/api/ai/voices and both per-model variants, /healthz, /readyz and the extended readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.120",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.120",
+        "summary": "Forward fix for the 0.1.119 startup panic: the CloudRouter backend OpenAPI is realigned with the memory module's canonical operation ids, then rebuilt for the local production-parity check and the state-preserving remote upgrade with backup retention at exactly 5 sets.",
+        "highlights": [
+          "0.1.119 restart-looped locally at startup: `sdkwork-cloudrouter-app-api route manifest and OpenAPI inventories differ (manifest=614, OpenAPI=614); manifest-only: [backend-api GET /backend/v3/api/memory/memories (memories.list, dual-token), GET /backend/v3/api/memory/spaces (spaces.list, dual-token)]; OpenAPI-only: [... memoryAdmin.records.list / memoryAdmin.spaces.list]`",
+          "root cause: the legacy sdkwork-memory admin frontend surface was still declared in CloudRouter's authored backend contract (docs/schema-registry/frontend-field-contracts.yaml, generated/api/api-contract-manifest.json and the generated OpenAPI) with the retired operation ids memoryAdmin.records.list / memoryAdmin.spaces.list, while the embedded sdkwork-memory contribution now owns those routes as memories.list / spaces.list",
+          "forward fix in sdkwork-cloudrouter: align the four contract layers with the memory module's canonical ids (operationId, x-sdkwork-resource, schema x-operation-id) and re-materialize the API authority document with pnpm api:materialize:write; the paths and dual-token auth are unchanged, so clients are unaffected",
+          "validation: pnpm api:materialize:check passes; the resulting authority document advertises 163 operations including the Agent/MCP surfaces previously missing, and no memoryAdmin ids remain",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.120 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.119",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.119",
+        "summary": "Forward fix for the 0.1.118 startup panic: the CloudRouter backend manifest is regenerated from a dependency-clean source so the gateway no longer re-declares the Agent and MCP admin surfaces owned by sdkwork-agents and sdkwork-mcp, then rebuilt for the local production-parity check and the state-preserving remote upgrade with backup retention at exactly 5 sets.",
+        "highlights": [
+          "0.1.118 was abandoned before any remote use: its local production-parity upgrade restart-looped on `cloud router backend-api manifest composition failed: composed route collision for GET /backend/v3/api/ai/agent_categories: sdkwork-agents (agentCategories.list) conflicts with sdkwork-cloudrouter (agentCategories.list)`",
+          "root cause: a4c88f50 regenerated http_route_manifest.rs from the backend route-manifest source, which still advertised the six Agent admin paths (agent_categories GET/PUT, agents GET/POST, agents/{agentId} GET/PATCH, restore, status) and the nine MCP admin paths (14 operations) already released to their owning modules; 0d1bd76f had removed the MCP surface only from the generated artifact, so every regeneration resurrected it",
+          "forward fix in sdkwork-cloudrouter 1f9c4699: remove the dependency-owned operations from both authored inputs (the canonical backend OpenAPI document and sdks/_route-manifests/backend-api/...route-manifest.json), then regenerate the Rust manifest with tools/generate-cloudrouter-http-route-manifest-rs.mjs --apply; the deployed URLs keep routing to the agents and MCP module handlers, so clients are unaffected",
+          "validation: the generator --check reports the derived manifest in sync (143 backend routes), and check-cross-module-api-collisions.mjs --workspace .. passes with no CloudRouter finding",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.119 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel",
+          "pricing safety carried over from 0.1.118: CloudRouter pricing 0011 / billing 0005 backfill holidayDates/holidayOnly on pre-0009 schedules behind temporarily disabled immutability and payload triggers, so the catalog refresh soft-delete passes the tightened 0009/0004 validation"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.118",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.118",
+        "summary": "Workspace-sync rebuild and production redeploy of the api.noaper.com gateway: ff-only pull across sdkwork-space, the diverged gateway/IAM/kernel checkouts merged forward, the models document_page and holiday-window catalog contract adopted by CloudRouter, full gate run in the gw-build-023 container, then local production-parity verification before the state-preserving remote upgrade with backup retention at exactly 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-space ff-only pull of 104 repositories — sdkwork-documents, sdkwork-im, sdkwork-models, sdkwork-promotion, sdkwork-specs and sdkwork-test advanced; 6 dirty checkouts skipped as-is (sdkwork-agents, sdkwork-birdcoder2, sdkwork-cloudrouter, sdkwork-daxuedazi, sdkwork-webserver, sdkwork-kernel external/rig pointer), never reset",
+          "diverged checkouts merged forward on main: sdkwork-api-cloud-gateway absorbed 4c50905 (stop signature-inspecting prompt bodies on model-inference routes) and f5b9df9 (lockfile refresh); sdkwork-iam absorbed the personnel-management/data-scope wave (migrations 0049-0051); sdkwork-kernel absorbed 1781903 (rig structured HTTP contracts) via fast-forward",
+          "forward fix required to boot: sdkwork-models added BillingMeter::DocumentPage and PricingSchedule.holiday_dates / PricingWeeklyWindow.holiday_only; CloudRouter had no arm or field for them, so its catalog import, Postgres row mapping, settlement ordinals (42), usage quantity buckets and edge-runtime ordinal table were completed in sdkwork-cloudrouter 5492dff7 before the gateway build was accepted",
+          "gate: cargo fmt --check, cargo metadata --locked, cargo test --workspace --locked (rc=0) and pnpm check (rc=0: standards, topology, API closure 3929 routes, process-shared pool, model-catalog assets, CORS carriers, workflow validate, all-features/foundation-suite checks) in the gw-build-023 bookworm build container",
+          "release artifacts: image built via bin/docker-image.sh build --image-tag 0.1.118 and packaged as a self-contained install bundle with image.tar.gz for the offline remote load channel",
+          "build-context guard: the 0.1.116 candidate was abandoned before any remote use because a concurrent sibling sync landed CloudRouter 01f917ae (pricing migrations 0009/0010, holiday-only windows) after its staging copy, so the image shipped the models holiday schedule writer against the old pricing_rate trigger; 0.1.117 rebuilt the image from the settled tree and the local production-parity upgrade then exposed the remaining upstream defect — 0009 tightened the payload guard without normalizing the 72 pre-existing four-key schedules, so the catalog refresh soft-delete failed validation and bootstrap aborted",
+          "0.1.118 is the deploy candidate: CloudRouter 5c0fb7a8 adds pricing 0011 / billing 0005, which disable the immutability and payload triggers for the migration transaction (the 0003 pattern), add holidayDates/holidayOnly to pre-0009 schedules and re-enable the guards; the backfill is idempotent and was dry-run inside a rolled-back transaction on the production-parity database (0 rows left malformed)"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.115",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.115",
+        "summary": "Workspace-sync rebuild and production redeploy of the api.noaper.com gateway: ff-only pull across sdkwork-space (104 repositories pulled, 1 frontend-only update, 5 dirty and 1 diverged checkout recorded and skipped without resetting work), full gate run in the gw-build-023 container, local production-parity upgrade first, then state-preserving bundle upgrade on production with backup retention at exactly 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-space ff-only pull — sdkwork-appstore advanced 85d42f2..a6c4cf8 (MCP category label read from the filter copy, PC markets frontend only, no Rust surface); 5 dirty checkouts skipped as-is (sdkwork-agents, sdkwork-birdcoder2, sdkwork-cloudrouter, sdkwork-daxuedazi, sdkwork-webserver); sdkwork-iam diverged (local f2a65a1f ahead 1 / behind 14) recorded and left untouched per the no-reset rule",
+          "impact: no Rust dependency delta for the gateway in this cycle, so the 0.1.115 image carries the same embedded assembly set as 0.1.114 while the release gate is repaired forward (the previous note set left release.notes without a current entry, which the source-config standard rejects)",
+          "gate: cargo metadata --locked, cargo fmt --check, cargo test --workspace --locked and pnpm check all exit 0 in the gw-build-023 bookworm build container; image built via bin/docker-image.sh build --image-tag 0.1.115",
+          "local production parity: 0.1.115 bundle upgraded in place on the local embedded-deps production stack before touching the remote target — 4 containers healthy, healthz/readyz 200 on 3913, doctor 7 PASS / 1 WARN / 1 FAIL (localhost /var/lib/docker 96% full, host capacity only), 5 backup sets retained",
+          "remote production evidence: api.noaper.com upgraded in place from 0.1.114 to 0.1.115 on 2026-11-23 via bundle image load in 3m19s (deps postgres/redis untouched; gateway + knowledgebase-rpc recreated healthy, restart count 0) — internal healthz/readyz 200 on host 3913, public https://api.noaper.com healthz/readyz 200, and a 1s-interval public sampler recorded 502/502 HTTP 200 samples across the recreate window (no observed external interruption)",
+          "backup and rollback: pre-change backup sdkwork-api-cloud-gateway-production-20261123T073800Z carries a 42MB database dump plus config/secrets/data/volume archives, sha256 verification passed, and retention pruning leaves exactly 5 production sets; the previous 0.1.114 image stays loaded on the host as the explicit rollback target",
+          "remote doctor: 6 PASS / 1 WARN / 2 FAIL — image 0.1.115, probe and health pass; the two failures are the pre-existing example-declared GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED MISSING drift and /var/lib/docker at 91% (host capacity, no service impact); the log WARN is the benign scan matching 'errors=0' inside an INFO line"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.114",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.114",
+        "summary": "Workspace-sync production redeploy of the api.noaper.com production gateway: ff-only pull across sdkwork-space, upstream convergence gaps repaired forward (IAM applied-migration checksum, cloudrouter backend route/OpenAPI inventory drift, gateway API closure coverage, Cargo.lock drift), verified on the local production-parity embedded stack, then state-preserving remote upgrade with backup retention at 5 sets.",
+        "highlights": [
+          "sibling sync: sdkwork-space ff-only pull (dirty checkouts recorded and skipped, never reset); sdkwork-iam, sdkwork-cloudrouter and deployment templates advanced to the 2026-11-23 upstream heads (incl. retired cashier KEK wiring 79fb412)",
+          "forward fixes required to boot: (1) sdkwork-iam migration 0048 comment restored so the applied sha256 (f81c…) still matches ops_schema_migration_history; (2) sdkwork-cloudrouter backend runtime manifest drops the 6 /backend/v3/api/ai/agents* rows that collide with the mounted sdkwork-agents module; (3) cloudrouter backend OpenAPI operationIds aligned to the mounted memories.list/spaces.list inventory; (4) gateway component.spec.json adds the /app/v3/api/iot dependency surface and drops the duplicate mcp prefix; (5) check-gateway-api-closure.mjs merges route-crate runtime manifests so OpenAPI/runtime drift is detected correctly; (6) Cargo.lock regenerated for the self-healed birdcoder2 manifest (async-trait removal only)",
+          "gate: cargo metadata --locked, cargo fmt --check, cargo test --workspace, pnpm check (gateway:api:validate, closure checker + unit test, foundation suite) all exit 0 in the gw-build-023 bookworm build container; image built via bin/docker-image.sh build --image-tag 0.1.114",
+          "local production parity: 0.1.114 bundle upgraded in place on the local embedded-deps production stack — gateway healthy, healthz 200, readyz 200, doctor 8 PASS / 1 FAIL (localhost /var/lib/docker 96% full, host disk limit, no service impact), 5 backup sets retained",
+          "remote production evidence: api.noaper.com (49.233.93.219) upgraded in place from 0.1.107 to 0.1.114 on 2026-11-23 via bundle upgrade (deps postgres/redis untouched; gateway + knowledgebase-rpc recreated healthy in ~50s) — 4 containers up, restart count 0, image 0.1.114, host 3913; internal healthz/readyz 200 and public https://api.noaper.com healthz/readyz 200 through the edge",
+          "known-benign doctor findings (unchanged posture, not image regressions): config FAIL counts longstanding empty optional keys (CORS dynamic, vault, drive COS, discovery) as placeholders and the example-declared GATEWAY_COMMERCE_CASHIER_TOKEN_SECRET_RETIRED is absent from the live env while compose defaults it to empty; logs WARN is the log scan matching 'errors=0' inside an INFO line",
+          "backup and rollback: fold of the upgrade's automatic pre-change set leaves exactly 5 production sets (newest 20261123T035231Z, sha256 verified; config+database+postgres/redis data+secrets+tls complete); explicit rollback target 0.1.107 is still loaded on the host"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
