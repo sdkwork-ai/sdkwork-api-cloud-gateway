@@ -491,6 +491,12 @@
       "repository": "sdkwork-ai/sdkwork-sandbox",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN",
       "ref": "main"
+    },
+    {
+      "id": "sdkwork-specs",
+      "repository": "sdkwork-ai/sdkwork-specs",
+      "tokenSecret": "SDKWORK_RELEASE_TOKEN",
+      "ref": "main"
     }
   ],
   "toolchains": {
