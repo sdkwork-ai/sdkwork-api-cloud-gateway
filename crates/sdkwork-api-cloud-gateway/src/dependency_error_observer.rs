@@ -117,3 +117,73 @@ pub async fn observe_dependency_server_errors(request: Request, next: Next) -> R
 
     Response::from_parts(parts, Body::from(bytes))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::routing::get;
+    use axum::Router;
+    use tower::ServiceExt;
+
+    async fn server_error_with_body(len: usize) -> Response {
+        let mut body = b"{\"detail\":\"".to_vec();
+        body.extend(std::iter::repeat(b'x').take(len));
+        body.extend_from_slice(b"\"}");
+        Response::builder()
+            .status(axum::http::StatusCode::INTERNAL_SERVER_ERROR)
+            .header(axum::http::header::CONTENT_TYPE, "application/problem+json")
+            .body(Body::from(body))
+            .expect("response")
+    }
+
+    async fn call_with_body(len: usize) -> (axum::http::StatusCode, Vec<u8>) {
+        let app = Router::new()
+            .route(
+                "/boom",
+                get(move || async move { server_error_with_body(len).await }),
+            )
+            .layer(axum::middleware::from_fn(observe_dependency_server_errors));
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/boom")
+                    .body(Body::empty())
+                    .expect("request"),
+            )
+            .await
+            .expect("call");
+        let status = response.status();
+        let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .expect("body");
+        (status, bytes.to_vec())
+    }
+
+    /// The observer must never cost the caller its error detail: a 5xx body that
+    /// cannot be buffered inside the observation budget is forwarded untouched.
+    #[tokio::test]
+    async fn oversized_server_error_body_reaches_the_client_unchanged() {
+        let len = MAX_BUFFERED_ERROR_BODY_BYTES * 4;
+        let (status, bytes) = call_with_body(len).await;
+
+        assert_eq!(axum::http::StatusCode::INTERNAL_SERVER_ERROR, status);
+        assert_eq!(
+            b"{\"detail\":\"".len() + len + b"\"}".len(),
+            bytes.len(),
+            "an oversized 5xx body must not be truncated or emptied"
+        );
+        assert!(bytes.starts_with(b"{\"detail\":\""));
+        assert!(bytes.ends_with(b"\"}"));
+    }
+
+    /// A body inside the budget is observed and still replayed byte for byte.
+    #[tokio::test]
+    async fn observed_server_error_body_is_replayed_unchanged() {
+        let len = 32;
+        let (status, bytes) = call_with_body(len).await;
+
+        assert_eq!(axum::http::StatusCode::INTERNAL_SERVER_ERROR, status);
+        let expected = format!("{{\"detail\":\"{}\"}}", "x".repeat(len));
+        assert_eq!(expected.into_bytes(), bytes);
+    }
+}
