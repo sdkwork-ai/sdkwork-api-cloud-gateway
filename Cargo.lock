@@ -7658,6 +7658,7 @@ dependencies = [
  "sdkwork-api-assets-assembly",
  "sdkwork-database-sqlx",
  "sdkwork-generations-database-host",
+ "sdkwork-generations-delivery-adapter",
  "sdkwork-generations-provider-adapter",
  "sdkwork-iam-database-host",
  "sdkwork-iam-embedded-application-bootstrap",
@@ -10920,6 +10921,20 @@ dependencies = [
  "dotenvy",
  "sdkwork-database-config",
  "sdkwork-database-sqlx",
+]
+
+[[package]]
+name = "sdkwork-generations-delivery-adapter"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "reqwest 0.13.1",
+ "sdkwork-intelligence-generations-service",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -16301,6 +16316,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
