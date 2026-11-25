@@ -187,24 +187,24 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.134",
+    "currentVersion": "0.1.135",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.134"
+      "BETA": "0.1.135"
     },
     "notes": [
       {
-        "version": "0.1.134",
+        "version": "0.1.135",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.134",
-        "summary": "Build-only correction of 0.1.133: the container build now packages database migration SQL with canonical LF endings. A Windows checkout staged CRLF, so every packaged migration failed the startup checksum gate (`checksum_mismatch`) and the 0.1.133 image crash-looped instead of serving; production was restored to 0.1.132 while this was diagnosed. Runtime code is identical to 0.1.133, which carries the IAM JSONB scan-login settings fix and the non-destructive body observation contract.",
+        "title": "sdkwork-api-cloud-gateway-v0.1.135",
+        "summary": "Corrected release carrying the IAM JSONB scan-login settings fix. Two build-side blockers found on the way to production are fixed: packaged migration SQL is normalized to LF (a Windows checkout staged CRLF and every migration failed the startup checksum gate), and the applied sdkwork-iam 0048 / sdkwork-agents 0009 migrations are restored to their applied comment text (comment-only edits had changed their checksums).",
         "highlights": [
-          "root cause of the 0.1.133 boot loop: migration checksums are content hashes; the deployed schema history recorded LF forms while the Windows build context carried CRLF (e.g. sdkwork-knowledgebase 0001 current=2e5cebeb applied=ac2e0766, sdkwork-cloudrouter pricing 0009 current=5d7891f4 applied=db135d3f)",
-          "build fix: scripts/build-api-cloud-gateway-container.mjs normalizes packaged .sql assets under database-modules to LF after staging and before checksums/ docker build; the workspace is not modified",
-          "verification: the packaged knowledgebase 0001 and cloudrouter pricing 0009 SQL now hash to the applied checksums before deployment; production regression is attempted only after those hashes match",
-          "rollback evidence: 0.1.133 crash-looped the gateway and knowledgebase-rpc (restart loop); re-applying 0.1.132 restored healthz/readyz and both containers healthy within a minute",
-          "carried forward from 0.1.133: sdkwork-iam oauth scan-login settings decode the JSONB server_ips column instead of panicking into 50301, and every body-reading stage either replays exact bytes or leaves the body untouched"
+          "0.1.133/0.1.134 boot loop: migration checksums are content hashes; the deployed schema history recorded LF forms while the Windows build context carried CRLF (knowledgebase 0001 current=2e5cebeb applied=ac2e0766; cloudrouter pricing 0009 current=5d7891f4 applied=db135d3f). Production was restored to 0.1.132 each time and stayed healthy",
+          "build fix: scripts/build-api-cloud-gateway-container.mjs normalizes packaged database-modules .sql assets to LF after staging (475 files) and before checksums/docker build; the workspace is untouched",
+          "migration immutability: applied sdkwork-iam 0048_iam_login_follow_qr and sdkwork-agents 0009_builtin_chat_agent_tenant_visibility are back to the applied comment text (LF hashes f81c08e4 / ed0a0343); DDL was never changed by those edits",
+          "pre-deploy gate: every applied migration present in the image was hashed against sdkwork_ai_prod.ops_schema_migration_history before deployment; the remaining differences were heuristic mismatches whose real module files matched",
+          "carried forward from 0.1.133: sdkwork-iam backend-api and app-api scan-login settings decode the JSONB server_ips column instead of panicking into 50301, and every body-reading stage either replays exact bytes or leaves the body untouched"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
