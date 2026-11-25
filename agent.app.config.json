@@ -187,16 +187,58 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.132",
+    "currentVersion": "0.1.135",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.132"
+      "BETA": "0.1.135"
     },
     "notes": [
       {
-        "version": "0.1.132",
+        "version": "0.1.135",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.135",
+        "summary": "Workspace-sync release: every sdkwork-space sibling repository was fetched and the diverged ones merged forward, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.133 this carries the sdkwork-cloudrouter upstream head (24 commits: the request-log capture tees the stream so an oversized body survives localization, h5 team membership and seats, the pc cloud-account workspace, provider error envelopes and billing recharge records), sdkwork-company (39 commits), sdkwork-webserver (3 commits: CGI-cache fill and subrequest splice keep bodies they could not buffer), sdkwork-iam (the JSONB scan-login fix), sdkwork-web-framework (the body_contract may_buffer_whole rule and problem enrichment) and sdkwork-agents. The gateway dependency-error observer now keeps a dependency error body whose size cannot be proven instead of replacing it, and the cloudrouter route-ownership exclusions are preserved so no mounted surface is re-declared.",
+        "highlights": [
+          "sibling sync: sdkwork-cloudrouter merged its origin/main head (24 commits) including the body-loss fix (request-log capture tees every frame and retains a bounded prefix, the response-observation stages skip a body they cannot buffer, and an oversized problem body survives localization), h5 team membership/seats, the pc cloud-account workspace, provider error envelopes and billing recharge records",
+          "sibling sync: sdkwork-company merged 39 upstream commits, sdkwork-iam merged the JSONB scan-login settings fix, sdkwork-web-framework merged the sdkwork_web_core::body_contract::may_buffer_whole rule plus problem enrichment, sdkwork-webserver merged the CGI-cache and subrequest splice body-preservation changes, and sdkwork-agents advanced its apps submodule to the upstream pointer",
+          "gateway: the dependency error observer keeps the dependency error body when its size is not provable, so the gateway no longer replaces a body it could not buffer (covered by the new gateway test that proves dependency error bodies survive observation)",
+          "cloudrouter: the mcp admin surface, the memory admin surface, GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices stay excluded from the gateway contracts and route to their owning modules; the generated OpenAPI contracts, the route-manifest sources and http_route_manifest.rs all pass --check (139 backend routes, 37 app routes, 219 open routes)",
+          "assembly: the merged app and backend manifests pass the standalone gateway surface auth validation test before the image is built, so route composition cannot collide at startup",
+          "workflow: the release gate checks out sdkwork-specs so the body read contract verification resolves in CI",
+          "verification: gateway rebuilt as 0.1.135, upgraded on the local production-shaped embedded stack with /healthz, /readyz and the model-catalog readiness probe, then deployed to the remote production host with the same probes and backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.133",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.133",
+        "summary": "Embedded sdkwork-iam fix: the backend-api and app-api scan-login settings handlers decoded the JSONB iam_oauth_scan_login_config.server_ips column as TEXT, panicked inside sqlx, and the framework answered 503/50301 for every GET /backend/v3/api/iam/oauth/scan_login_settings. The column is now decoded as JSONB with a TEXT compatibility fallback and written as JSONB. Also ships the non-destructive body observation contract: every stage that reads a request or streamed response body now either replays the exact bytes or leaves the body untouched, closing the relay failure where every POST /v1/* payload above 256 KiB reached CloudRouter as an empty body ('400 40002 request body is empty for openai.chat_completions').",
+        "highlights": [
+          "root cause: sqlx ColumnDecode panic at sdkwork-iam oauth_handlers.impl.rs:6466 (Rust String/TEXT is not compatible with SQL type JSONB) surfaced as 50301 on the admin scan-login page; confirmed from the production container log panic text",
+          "fix: JSON-first decode helper with a TEXT fallback for the backend-api scan-login settings retrieve/update and the app-api official-account settings retrieve; the upsert now binds Json<Value> so the write path cannot fail on the same mismatch",
+          "coverage: normalization unit test plus a PostgreSQL-backed regression that seeds a JSONB allowlist and reads it through scan_login_settings_json",
+          "regression: scan-login settings keep provider_catalog, integrations, login_follow_qr and the remaining IAM backend routes unchanged",
+          "root cause: the CloudRouter open-api router is wrapped in the request-log capture layer (sdkwork-cloudrouter-edge-runtime runtime.rs); that layer only buffered the body when its declared size fit the 256 KiB capture cap, and otherwise forwarded an EMPTY body while the headers still carried the real content-length",
+          "request logging: capture now tees the stream (every frame forwarded unchanged, bounded prefix retained); bounded bodies keep the previous full-body recording, and a bounded body whose read fails answers 502 instead of an empty payload",
+          "response observation: problem enrichment, idempotency response capture, gateway dependency-error observation, cloudrouter problem localization, subrequest splice and CGI-cache fill no longer replace a body they could not buffer; they skip observation or answer an explicit 5xx",
+          "registration flow: account provisioning reads the signup response body; an unprovable body is forwarded untouched instead of returning an empty 2xx",
+          "contract: sdkwork_web_core::body_contract::may_buffer_whole decides BEFORE the first poll; WEB_FRAMEWORK_SPEC section 11.1 and WEB_FRAMEWORK_STANDARD section 10.1 make the rule normative, with a regression requirement for every reader",
+          "knobs: request-log capture budget is now 1 MiB by default and configurable via SDKWORK_LOG_CAPTURE_BODY_MAX_BYTES; it is a retention budget, never an acceptance limit",
+          "regression: web-core 258 unit tests, log tower adapter 11 (1 MiB and 8 MiB bodies forwarded byte for byte), log assembly 3, plus Linux (WSL) cargo check for cloudrouter-http, cloudrouter-assembly, cloudgateway and the webserver data plane"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.132",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.132",
         "summary": "Route-ownership fix for the 0.1.129 workspace-sync release. The 0.1.129 image never reached health: the merged sdkwork-cloudrouter contracts re-declared surfaces that their owners mount, so the gateway failed route assembly and restart-looped. The backend contract re-declared the MCP admin surface (GET /backend/v3/api/mcp/categories) owned by sdkwork-mcp and the memory admin surface owned by sdkwork-memory; the app contract re-declared GET /app/v3/api/ai/agents owned by sdkwork-agents and GET /app/v3/api/iot/devices owned by sdkwork-aiot. The cloudrouter backend SDK now declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk, and the app SDK declares sdkwork-agents-app-sdk and sdkwork-aiot-app-sdk, as consumer-sdk dependencies, so the canonical OpenAPI generator drops their operations instead of re-declaring them; the contracts, the route-manifest sources and http_route_manifest.rs were regenerated. Gateway URLs are unchanged: those paths route to the owning module. Everything else matches 0.1.129 (workspace sync, seed-balance PostgreSQL string rules, company identity migration, agents 0009 checksum restore).",
         "highlights": [
