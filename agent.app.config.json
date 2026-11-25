@@ -187,27 +187,27 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.131",
+    "currentVersion": "0.1.132",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.131"
+      "BETA": "0.1.132"
     },
     "notes": [
       {
-        "version": "0.1.131",
+        "version": "0.1.132",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.131",
-        "summary": "Route-ownership fix for the 0.1.129 workspace-sync release. The 0.1.129 image never reached health: the merged sdkwork-cloudrouter contracts re-declared surfaces that their owners mount, so the gateway's manifest composition panicked and restart-looped. The backend contract re-declared the MCP admin surface (GET /backend/v3/api/mcp/categories) owned by sdkwork-mcp and the memory admin surface owned by sdkwork-memory; the app contract re-declared GET /app/v3/api/ai/agents owned by sdkwork-agents. The cloudrouter backend SDK now declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk, and the app SDK declares sdkwork-agents-app-sdk, as consumer-sdk dependencies, so the canonical OpenAPI generator drops their operations instead of re-declaring them; the contracts, the route-manifest sources and http_route_manifest.rs were regenerated. Gateway URLs are unchanged: those paths route to the owning module. Everything else matches 0.1.129 (workspace sync, seed-balance PostgreSQL string rules, company identity migration, agents 0009 checksum restore).",
+        "title": "sdkwork-api-cloud-gateway-v0.1.132",
+        "summary": "Route-ownership fix for the 0.1.129 workspace-sync release. The 0.1.129 image never reached health: the merged sdkwork-cloudrouter contracts re-declared surfaces that their owners mount, so the gateway failed route assembly and restart-looped. The backend contract re-declared the MCP admin surface (GET /backend/v3/api/mcp/categories) owned by sdkwork-mcp and the memory admin surface owned by sdkwork-memory; the app contract re-declared GET /app/v3/api/ai/agents owned by sdkwork-agents and GET /app/v3/api/iot/devices owned by sdkwork-aiot. The cloudrouter backend SDK now declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk, and the app SDK declares sdkwork-agents-app-sdk and sdkwork-aiot-app-sdk, as consumer-sdk dependencies, so the canonical OpenAPI generator drops their operations instead of re-declaring them; the contracts, the route-manifest sources and http_route_manifest.rs were regenerated. Gateway URLs are unchanged: those paths route to the owning module. Everything else matches 0.1.129 (workspace sync, seed-balance PostgreSQL string rules, company identity migration, agents 0009 checksum restore).",
         "highlights": [
           "cloudrouter: the backend SDK declares sdkwork-mcp-backend-sdk and sdkwork-memory-backend-sdk as consumer-sdk dependencies, so the canonical OpenAPI generator excludes the MCP admin surface (9 paths) and the memory admin surface (2 paths) instead of re-declaring them",
-          "cloudrouter: the app SDK declares sdkwork-agents-app-sdk as a consumer-sdk dependency, so the duplicated GET /app/v3/api/ai/agents operation leaves the app contract and is served by the sdkwork-agents mount",
-          "cloudrouter: the backend and app OpenAPI contracts, the route-manifest sources, and http_route_manifest.rs are regenerated from that dependency-clean source (139 backend routes, 38 app routes, 219 open routes)",
+          "cloudrouter: the app SDK declares sdkwork-agents-app-sdk and sdkwork-aiot-app-sdk as consumer-sdk dependencies, so the duplicated GET /app/v3/api/ai/agents and GET /app/v3/api/iot/devices operations leave the app contract and are served by the sdkwork-agents and sdkwork-aiot mounts",
+          "cloudrouter: the backend and app OpenAPI contracts, the route-manifest sources, and http_route_manifest.rs are regenerated from that dependency-clean source (139 backend routes, 37 app routes, 219 open routes)",
           "cloudrouter: the app contract also drops the IAM-owned POST /app/v3/api/iam/api_keys/{apiKeyId}/reveal operation, which the iam consumer-sdk dependency already owns",
           "cloudrouter: the assembly collision test is aligned with the promotion assembly's optional-credential offers profile (guest storefront browsing), which the merged app manifest already preserves",
           "gateway: app and backend manifest composition now merge the mounted dependency manifests without an ownership collision, verified by the cloudrouter assembly collision test before the image was built",
-          "cloudrouter: no URL changes; /backend/v3/api/mcp/* is served by sdkwork-mcp, /backend/v3/api/memory/* by sdkwork-memory and /app/v3/api/ai/agents by sdkwork-agents exactly as deployed clients already use them",
-          "verification: gateway rebuilt as 0.1.131, upgraded on the local production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+          "cloudrouter: no URL changes; /backend/v3/api/mcp/*, /backend/v3/api/memory/*, /app/v3/api/ai/agents and /app/v3/api/iot/devices route to their owning modules exactly as deployed clients already use them",
+          "verification: gateway rebuilt as 0.1.132, upgraded on the local production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
