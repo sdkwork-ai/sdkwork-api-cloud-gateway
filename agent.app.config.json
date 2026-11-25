@@ -187,16 +187,69 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.121",
+    "currentVersion": "0.1.124",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.121"
+      "BETA": "0.1.124"
     },
     "notes": [
       {
-        "version": "0.1.121",
+        "version": "0.1.124",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.124",
+        "summary": "Fix-forward release for the workspace sync. The 0.1.123 build failed local production validation because the refreshed sdkwork-deployments module introduced two migrations with version 0020 (deploy_certificate_ari_window alongside the existing domain_verification_drive_objects). The migration ledger is keyed by module/version, so the gateway applied the new ARI-window migration first, then rejected the pre-existing 0020 with a checksum_mismatch and restart-looped. The ARI-window migration is renumbered to 0021 and its forward/rollback ids follow, so the ledger no longer collides; 0.1.124 otherwise carries the same workspace-sync content as 0.1.123.",
+        "highlights": [
+          "sdkwork-deployments: 0020_deploy_certificate_ari_window renamed to 0021_deploy_certificate_ari_window (up and down), with the embedded migration ids updated to match",
+          "existing 0020_domain_verification_drive_objects keeps its version and checksum, so databases that already applied it (including remote production) upgrade cleanly",
+          "local production validation: the erroneous 0020 ARI ledger row created by the failed 0.1.123 attempt was removed so the ledger replays 0020 domain-verification then 0021 ARI window",
+          "no runtime behavior change beyond the migration ordering fix; the gateway and knowledgebase RPC images carry the same workspace-sync content as 0.1.123"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.123",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.123",
+        "summary": "Workspace-sync release: refreshed the sdkwork-space sibling repositories with fast-forward pulls and rebuilt the embedded gateway from the updated foundation assemblies. Over the 0.1.122 baseline this carries the sdkwork-documents playground request-helper alignment (c7ab233), the sdkwork-log admin request-log surface with trimmed captured payloads (9cbb026), the sdkwork-deployments certificate renewal-window and presentation tracking (74fda43) and the sdkwork-sdk-generator refresh (b744256), together with the 0.1.122 hop-by-hop request-header fix. The container image version label is also corrected to the release tag (the 0.1.122 image carried 0.1.121 because package.json had not been bumped).",
+        "highlights": [
+          "sdkwork-documents: app playground requests now go through the shared request helper so the desktop and web clients build the same document request shape",
+          "sdkwork-log: backend admin request-log surface added; captured payloads trimmed so log rows stay bounded",
+          "sdkwork-deployments: certificate renewal window is tracked and certificate presentation/status archived, so the ACME plan and TLS status are visible from the deploy surface",
+          "sdkwork-sdk-generator: generator refresh pulled with the workspace sync",
+          "preserved from 0.1.122: buffered request bodies drop inbound hop-by-hop headers and declare the buffered content-length before the in-process dependency handoff, and CloudRouter reports an empty invocation body as an empty body instead of a missing model",
+          "version honesty: package.json is bumped with the release so the container image org.opencontainers.image.version matches the deployed tag",
+          "verification: gateway rebuilt and reimaged as 0.1.123, upgraded locally on the production-shaped embedded stack and then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.122",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.122",
+        "summary": "Fix-forward for the intermittent 400 40002 'model is required for openai.chat_completions' that rejected large chat requests. Evidence from production showed the client sent a full payload (content-length 263409-327125 bytes) while the embedded CloudRouter invocation received an empty body (body_bytes=0) and therefore reported a missing model, blaming the caller. This release strips hop-by-hop request headers before the in-process dependency handoff (RFC 9110 搂7.6.1) and states the buffered body length explicitly, and makes CloudRouter report an empty request body as an empty body instead of a missing model.",
+        "highlights": [
+          "symptom: POST /v1/chat/completions answered 400 40002 model is required for openai.chat_completions while the same client's requests under 262144 bytes succeeded (40x 200 up to 261389 bytes vs 4x 400 at 263409/326691/327065/327125 bytes in one day)",
+          "root cause evidence: the gateway access event recorded content-length 263409 with content-type application/json and the request was authenticated (api_key_name_snapshot=auth-token-session, user_id present, account_group=default-group), while the CloudRouter payload stage logged body_bytes=0 - the payload never reached the invocation, so the 40002 text described a transport fact as a caller omission",
+          "fix in gateway: enforce_request_body_limit now drops the inbound connection's hop-by-hop headers (connection, keep-alive, proxy-connection, proxy-authenticate, proxy-authorization, te, trailer, transfer-encoding, upgrade) after buffering and rewrites content-length to the buffered length, so the composed dependency never inherits an upgrade announcement or stale framing from a connection that has already ended",
+          "fix in cloudrouter: an empty invocation body is reported as 'request body is empty for <api_code>' with a structured warning carrying declared_content_length and body_bytes, so this class of failure is self-identifying instead of sending every investigation at the client's request builder",
+          "verification: a 300 KiB JSON prompt now reaches a Web Framework handler byte-for-byte on both declared-length and chunked framing (new regression test in sdkwork-web-axum/tests/integration.rs); cargo check passes for sdkwork-cloudrouter-router-service and sdkwork-api-cloud-gateway",
+          "ops: the gateway edge vhost no longer sends Connection: upgrade on ordinary API traffic (map $http_upgrade $connection_upgrade added in /etc/nginx/conf.d, nginx -t + reload applied)"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.121",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.121",
         "summary": "Fix-forward for the models app-api 404: the CloudRouter app router mounted only the pricing-catalog half of the embedded sdkwork-models capability while the composed route manifest advertised the voice-catalog and video-profile half too, so the BirdCoder client's GET /app/v3/api/ai/video_profiles (and /app/v3/api/ai/voices plus both per-model variants) answered 404/40401 from the dispatcher even though the same paths were registered behind /backend/v3/api/ai. Rebuilt and redeployed with the live model-catalog readiness probe extended to cover the app-api profile reads.",
         "highlights": [

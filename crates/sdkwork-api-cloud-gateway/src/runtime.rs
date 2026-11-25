@@ -1399,11 +1399,32 @@ impl RequestBodyRejection {
     }
 }
 
+/// Request headers that describe the inbound connection rather than the message
+/// it carries.
+///
+/// RFC 9110 搂7.6.1 makes these hop-by-hop: a proxy consumes them and never
+/// forwards them. The composed dependency this gateway hands the request to runs
+/// in-process, so forwarding them would hand it connection semantics that no
+/// longer exist 鈥?`Connection: upgrade` in particular announces a protocol
+/// upgrade the composed router never performs, and `transfer-encoding` describes
+/// framing the buffered body no longer has.
+const HOP_BY_HOP_REQUEST_HEADERS: [&str; 9] = [
+    "connection",
+    "keep-alive",
+    "proxy-connection",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
+];
+
 async fn enforce_request_body_limit(
     request: Request<Body>,
     max_body_bytes: usize,
 ) -> Result<Request<Body>, RequestBodyRejection> {
-    let (parts, body) = request.into_parts();
+    let (mut parts, body) = request.into_parts();
     let request_id = request_id_for_headers(&parts.headers);
     let instance = format!("{} {}", parts.method.as_str(), parts.uri.path());
     let body_bytes = match to_bytes(body, max_body_bytes).await {
@@ -1432,6 +1453,23 @@ async fn enforce_request_body_limit(
             });
         }
     };
+
+    // The buffered bytes are now the whole message. Drop the inbound connection's
+    // hop-by-hop vocabulary and state the buffered length, so every later stage 鈥?    // the Web Framework context guard, the invocation body limit, and the
+    // provider rewrite 鈥?measures exactly the bytes the handler receives instead
+    // of trusting framing from a connection that has already ended.
+    for name in HOP_BY_HOP_REQUEST_HEADERS {
+        parts.headers.remove(name);
+    }
+    match HeaderValue::from_str(body_bytes.len().to_string().as_str()) {
+        Ok(length) => {
+            parts.headers.insert(header::CONTENT_LENGTH, length);
+        }
+        // Unreachable: a length string is always a valid header value.
+        Err(_) => {
+            parts.headers.remove(header::CONTENT_LENGTH);
+        }
+    }
 
     Ok(Request::from_parts(parts, Body::from(body_bytes)))
 }
