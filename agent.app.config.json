@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.138",
+    "currentVersion": "0.1.139",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.138"
+      "BETA": "0.1.139"
     },
     "notes": [
       {
-        "version": "0.1.138",
+        "version": "0.1.139",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.139",
+        "summary": "Rebuild of the 0.1.138 fixes. The 0.1.138 image linked a stale sdkwork-database-lifecycle artifact: its release build started before sdkwork-database f568daf (the XP_ extended-procedure fix) was restored in the shared checkout, so the company module's seed 022_company_profile_normalization.sql (which calls regexp_replace) was rejected as XP_ and the container crash-looped on database bootstrap (17 restarts; production was restored to 0.1.137 while this rebuild was prepared). 0.1.139 compiles that crate from the fixed source and carries the same two production fixes: the deploy applications-page 40301 (console user sessions are not application-bound machine credentials; sdkwork-deployments 3177eff + b7b3d39) and the domain verification-file 500 (deploy migration 0022 restoring updated_by + the Drive uploading-app ownership repair).",
+        "highlights": [
+          "sdkwork-database: the image now contains f568daf - the seed security gate detects XP_ extended procedures by whole identifier, so regexp_replace is not flagged and the company 022 seed boots",
+          "sdkwork-deployments: console user sessions keep the tenant/RBAC + owner-gate boundary; machine credentials keep the application binding, with the decimal-anchor-versus-uuid case decided against the retrieved row (3177eff, b7b3d39)",
+          "sdkwork-deployments: migration 0022 restores deploy_dns_zone_verification_file.updated_by on upgraded databases (906c530), and the Drive verification-file write owns its space as the uploading app (b4e25de)",
+          "verification: deploy service 219 unit tests, 55 contract tests, 9 cross-application gate tests and the app router web-framework suite pass; the 0.1.138 image was observed crash-looping and production was restored to 0.1.137 before this rebuild",
+          "release hygiene: 0.1.138 is retained as the broken image tag; 0.1.139 is a new tag because the binary content changed"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.138",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.138",
         "summary": "Fixes the production 500 on the domain verification file endpoint and the production 40301 on the deployments applications page. The 500: deploy_dns_zone_verification_file on an upgraded database carried only created_by, because the table had been created by migration 0006, whose IF NOT EXISTS mirror kept the pre-0006 shape after the audit column reached the consolidated baseline, while the verification-file upsert writes both audit columns — so every POST /app/v3/api/domain_zones/{zoneId}/verification_files answered `column updated_by of relation deploy_dns_zone_verification_file does not exist` (traceId ca43ad9c-c190-474e-a006-2332bd4f0740 and 8 more in the production log). Migration 0022_deploy_dns_zone_verification_file_updated_by_reconciliation restores the column on every shape, and the Drive write that was failing behind it now owns its space as the uploading app instead of the check-constraint-rejected tenant owner type. The 40301: the deploy app-api's application-scope gate treated the tenant console operator's user session as an application-bound machine credential, so every GET /app/v3/api/apps/{appId}/resource_links on platform.birdcoder.com answered 403 'a credential bound to one application cannot act on another application' (100 of 100 requests in the production log, while apps.list answered 200). The console is itself a deploy application: its user session proves the console's app claim, which is the decimal deploy application anchor, while the page addresses the target application's uuid. sdkwork-deployments now carries DeployCredentialKind, derived from the verified principal at the host boundary: a dual-token user session keeps the tenant/RBAC + owner-gate boundary, and a machine credential keeps the application binding (with the anchor-versus-uuid case decided against the retrieved row instead of by string equality).",
         "highlights": [
