@@ -39,6 +39,24 @@ pub async fn observe_dependency_server_errors(request: Request, next: Next) -> R
         return response;
     }
 
+    // Observation must not cost the caller its error detail. Decide before
+    // polling: a body that cannot be proven to fit the observation budget cannot
+    // be replayed once it has been read, so it is forwarded untouched instead of
+    // being replaced with nothing.
+    if !sdkwork_web_core::body_contract::may_buffer_whole(
+        response.body(),
+        MAX_BUFFERED_ERROR_BODY_BYTES,
+    ) {
+        tracing::error!(
+            target: LOG_TARGET,
+            method = %method,
+            path = %path,
+            status = response.status().as_u16(),
+            "embedded dependency returned a server error; body exceeds the observation budget and is forwarded unread"
+        );
+        return response;
+    }
+
     let status = response.status();
     let (parts, body) = response.into_parts();
     let bytes = match axum::body::to_bytes(body, MAX_BUFFERED_ERROR_BODY_BYTES).await {
@@ -52,7 +70,14 @@ pub async fn observe_dependency_server_errors(request: Request, next: Next) -> R
                 body_buffer_error = %error,
                 "embedded dependency returned a server error; response body could not be buffered"
             );
-            return Response::from_parts(parts, Body::empty());
+            // Never hand the client an empty body where a real one was: state the
+            // transport failure explicitly instead.
+            return Response::from_parts(
+                parts,
+                Body::from(
+                    r#"{"type":"about:blank","title":"Bad gateway","status":502,"detail":"the dependency response body could not be read"}"#,
+                ),
+            );
         }
     };
 
