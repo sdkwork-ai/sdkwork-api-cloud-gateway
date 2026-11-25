@@ -187,22 +187,22 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.128",
+    "currentVersion": "0.1.129",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.128"
+      "BETA": "0.1.129"
     },
     "notes": [
       {
-        "version": "0.1.128",
+        "version": "0.1.129",
         "channel": "BETA",
         "current": true,
-        "title": "sdkwork-api-cloud-gateway-v0.1.128",
-        "summary": "Workspace-sync release: every sdkwork-space sibling repository was refreshed and merged, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.124 this carries the upstream vendor-protocol body path (vendor prefixes are declared as external protocols so the client-context guard stops buffering a model prompt, and only end-to-end headers are forwarded), the edge connection-semantics alignment with a 25 MiB default write ceiling, the cloudrouter membership/billing surface with end-to-end relay response headers, the IAM reporting-line and position-headcount migrations, and the Web Framework external-protocol prefix guard. The inner 0.1.125 to 0.1.127 builds were never released: they surfaced a checksum-ledger break in the sdkwork-agents 0009 migration, a missing company identity/tag schema upgrade, and a seed balance false positive on the dsh-market catalog payload, all of which this release fixes forward.",
+        "title": "sdkwork-api-cloud-gateway-v0.1.129",
+        "summary": "Workspace-sync release: every sdkwork-space sibling repository was refreshed and merged, then the gateway was rebuilt from the updated foundation assemblies. Over 0.1.124 this carries the upstream vendor-protocol body path (vendor prefixes are declared as external protocols so the client-context guard stops buffering a model prompt, and only end-to-end headers are forwarded), the edge connection-semantics alignment with a 25 MiB default write ceiling, the cloudrouter membership/billing surface with end-to-end relay response headers, the IAM reporting-line and position-headcount migrations, and the Web Framework external-protocol prefix guard. The inner 0.1.125 to 0.1.128 builds were never released: they surfaced a checksum-ledger break in the sdkwork-agents 0009 migration, a missing company identity/tag schema upgrade, and seed balance false positives on the dsh-market and api-surface catalog payloads, all of which this release fixes forward.",
         "highlights": [
           "migrations: the sdkwork-agents 0009 baseline SQL is restored byte-for-byte to the applied revision (ed0a0343); the inner 0.1.125 image had picked up an in-place header edit (23cd7b63) and the production ledger rejected it at startup, while the 0010 expert catalog migration stays additive",
           "migrations: sdkwork-company gains the additive 0002 identity/tag/relation/IPO migration, so databases that already applied the 0001 baseline receive the six new tables, the company_product and company_job_position columns and the thirteen indexes before the 014/015 seeds run",
-          "seeds: the shared balance check follows PostgreSQL string rules (a doubled quote is one literal quote, backslashes are data), so the generated dsh-market catalog payload with Windows paths no longer desyncs the scan and the plugins 003 seed applies",
+          "seeds: the shared balance check follows PostgreSQL string rules (a doubled quote is one literal quote, backslashes are data, and dollar-quoted bodies are opaque), so the dsh-market catalog payload with Windows paths and the api-surface catalog regex text no longer desync the scan",
           "gateway: vendor compatibility prefixes are declared as external protocols, so the Web Framework client-context guard no longer reads (and cannot strand) a large model prompt before the embedded CloudRouter sees it",
           "gateway: buffered request bodies still drop hop-by-hop headers and state the buffered content-length before the in-process dependency handoff, and only end-to-end headers are forwarded on the vendor path",
           "gateway: default write ceiling raised to 26214400 bytes (the CloudRouter invocation buffer size) so the edge is not the tighter limit; bodies above the global 32 MiB request cap are still rejected by request.maxBodyBytes",
@@ -213,7 +213,7 @@
           "web-framework: the client-context guard skips external protocol prefixes, matching the gateway declaration",
           "deployments: the certificate ARI-window migration stays at 0021 from 0.1.124 so the production ledger keeps upgrading cleanly",
           "build: server packaging and image builds share one cargo target directory, and container packaging asserts the required Linux toolchain packages",
-          "verification: gateway rebuilt and reimaged as 0.1.128, upgraded locally on the production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
+          "verification: gateway rebuilt and reimaged as 0.1.129, upgraded locally on the production-shaped embedded stack, then deployed to the remote production host with /healthz, /readyz and the model-catalog readiness probe"
         ],
         "packageIds": [
           "container-x64-standalone-container-oci"
