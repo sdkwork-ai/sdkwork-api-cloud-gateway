@@ -187,16 +187,33 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.137",
+    "currentVersion": "0.1.138",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.137"
+      "BETA": "0.1.138"
     },
     "notes": [
       {
-        "version": "0.1.137",
+        "version": "0.1.138",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.138",
+        "summary": "Fixes the production 40301 on the deployments applications page. The deploy app-api's application-scope gate treated the tenant console operator's user session as an application-bound machine credential, so every GET /app/v3/api/apps/{appId}/resource_links on platform.birdcoder.com answered 403 'a credential bound to one application cannot act on another application' (100 of 100 requests in the production log, while apps.list answered 200). The console is itself a deploy application: its user session proves the console's app claim, which is the decimal deploy application anchor, while the page addresses the target application's uuid. sdkwork-deployments now carries DeployCredentialKind, derived from the verified principal at the host boundary: a dual-token user session keeps the tenant/RBAC + owner-gate boundary, and a machine credential keeps the application binding (with the anchor-versus-uuid case decided against the retrieved row instead of by string equality).",
+        "highlights": [
+          "sdkwork-deployments: DeployAppRequestContext carries DeployCredentialKind (UserSession | Application) projected from the verified principal; only a machine credential's app_id binds data access",
+          "sdkwork-deployments: the path gate refuses a same-form mismatch before any I/O and defers the decimal-anchor-versus-uuid case to assert_app_reachable, which compares the claim against deploy_application_id and id",
+          "sdkwork-deployments: the console's user session now passes the scope gate for every reachable application (the owner gate still applies); machine credentials of another application are still refused with 40301",
+          "verification: 219 deploy service unit tests, 55 contract tests, 9 cross-application gate tests and the app router web-framework suite pass; production log evidence captured before the fix",
+          "sibling sync: sdkwork-deployments 3177eff (fix/deploy: stop binding console user sessions to the addressed application); the rest of the tree is 0.1.137"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.137",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.137",
         "summary": "Fix-forward for the 0.1.136 build. The seed security gate matched the XP_ injection pattern as a plain substring, so the company profile-normalization seed - which calls regexp_replace - was rejected as a SQL Server extended-procedure call and the gateway never bootstrapped its databases. The scanner now matches extended procedures by identifier (a token that starts with XP_), which still blocks XP_CMDSHELL while allowing ordinary PostgreSQL functions. It also relaxes company_relation.to_company_id to nullable so unresolved relation targets can be stored. Everything else matches 0.1.136: the company 0003 schema delta, the cloudrouter body-loss fix, the IAM JSONB scan-login fix, the web-framework body contract and the gateway dependency-error body observation.",
         "highlights": [
