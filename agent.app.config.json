@@ -187,16 +187,32 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.107",
+    "currentVersion": "0.1.133",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.107"
+      "BETA": "0.1.133"
     },
     "notes": [
       {
-        "version": "0.1.107",
+        "version": "0.1.133",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.133",
+        "summary": "Embedded sdkwork-iam fix: the backend-api and app-api scan-login settings handlers decoded the JSONB iam_oauth_scan_login_config.server_ips column as TEXT, panicked inside sqlx, and the framework answered 503/50301 for every GET /backend/v3/api/iam/oauth/scan_login_settings. The column is now decoded as JSONB with a TEXT compatibility fallback and written as JSONB.",
+        "highlights": [
+          "root cause: sqlx ColumnDecode panic at sdkwork-iam oauth_handlers.impl.rs:6466 (Rust String/TEXT is not compatible with SQL type JSONB) surfaced as 50301 on the admin scan-login page; confirmed from the production container log panic text",
+          "fix: JSON-first decode helper with a TEXT fallback for the backend-api scan-login settings retrieve/update and the app-api official-account settings retrieve; the upsert now binds Json<Value> so the write path cannot fail on the same mismatch",
+          "coverage: normalization unit test plus a PostgreSQL-backed regression that seeds a JSONB allowlist and reads it through scan_login_settings_json",
+          "regression: scan-login settings keep provider_catalog, integrations, login_follow_qr and the remaining IAM backend routes unchanged"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.107",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.107",
         "summary": "Workspace-sync redeploy carrying the sdkwork-iam installation readiness assessment and reconcile repair lane (c8a8a74a), the iam-pc app authorization surface with desktop launch handling (b4142a8d), and the hosted auth brand lockup reuse (be7c065a); same verified pipeline as 0.1.106 — container gates, local production-parity fresh install, state-preserving remote upgrade on api.noaper.com.",
         "highlights": [
