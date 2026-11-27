@@ -139,6 +139,9 @@ foundation-notes = ["dep:sdkwork-api-notes-assembly"]
 foundation-search = ["dep:sdkwork-api-search-assembly"]
 foundation-settings = ["dep:sdkwork-api-settings-assembly"]
 foundation-plugins = ["dep:sdkwork-api-plugins-assembly"]
+# Per-user VM instances (`/app/v3/api/sandbox/sandbox_instances`) consumed by
+# the Cloud Router `VM 实例` console; served by sdkwork-sandbox's app-api face.
+foundation-sandbox = ["dep:sdkwork-api-sandbox-assembly"]
 # Container images deliberately omit foundation-webserver: reverse proxy and
 # site edge belong to host nginx / the separate sdkwork-webserver product, not
 # the gateway container process (see docker/README.md).
@@ -153,6 +156,7 @@ platform-foundation-suite-container = [
     "foundation-voice",
     "foundation-aiot",
     "foundation-aiot-realtime",
+    "foundation-sandbox",
     "foundation-appstore",
     "foundation-forum",
     "foundation-cloudrouter",
@@ -235,7 +239,12 @@ sdkwork-web-axum.workspace = true
 sdkwork-web-bootstrap = { workspace = true, features = ["redis"] }
 sdkwork-utils-rust = { workspace = true, features = ["redis"] }
 sdkwork-discovery-client.workspace = true
-sqlx.workspace = true
+# `macros` supplies the `sqlx::FromRow` derive used by `cors_dynamic.rs`. It was
+# previously satisfied only transitively through `sdkwork-web-store-sqlx`
+# (pulled in by `foundation-appbase`), so any feature set without appbase
+# accidentally lost the derive and failed to compile. Declare the capability
+# here, where it is used (NAMING_SPEC section 3.2).
+sqlx = { workspace = true, features = ["macros"] }
 url.workspace = true
 sdkwork-database-config.workspace = true
 sdkwork-database-sqlx.workspace = true
@@ -267,6 +276,7 @@ sdkwork-api-rtc-assembly = { workspace = true, optional = true }
 sdkwork-api-notary-assembly = { workspace = true, optional = true }
 sdkwork-api-mail-assembly = { workspace = true, optional = true }
 sdkwork-api-aiot-assembly = { workspace = true, optional = true }
+sdkwork-api-sandbox-assembly = { workspace = true, optional = true }
 sdkwork-aiot-device-edge-runtime = { workspace = true, optional = true }
 sdkwork-api-appstore-assembly = { workspace = true, optional = true }
 sdkwork-api-agents-assembly = { workspace = true, optional = true }

@@ -461,6 +461,14 @@
           ]
         },
         {
+          "module": "sdkwork-sandbox",
+          "ownerAssembly": "sdkwork-api-sandbox-assembly",
+          "poolMode": "injected",
+          "evidence": [
+            "crates/sdkwork-api-cloud-gateway/src/embedded_dependency_routes.rs"
+          ]
+        },
+        {
           "module": "sdkwork-search",
           "ownerAssembly": "sdkwork-api-search-assembly",
           "poolMode": "installed-process-pool",

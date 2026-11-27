@@ -333,6 +333,25 @@ pub async fn bootstrap_embedded_dependency_contributions(
         modules.push(module);
     }
 
+    #[cfg(feature = "foundation-sandbox")]
+    if workspace_surface_enabled(config, "sdkwork-sandbox") {
+        // The sandbox instance registry is PostgreSQL-authoritative; the
+        // assembly owns its schema lifecycle, repositories, readiness and both
+        // served faces (app-api + internal-api) behind one module, so the
+        // gateway only supplies the process-shared pool.
+        if pool.as_postgres().is_none() {
+            return Err(workspace_build_error(
+                config,
+                "sdkwork-sandbox",
+                "sandbox authoritative server requires a PostgreSQL pool".to_owned(),
+            ));
+        }
+        let module = sdkwork_api_sandbox_assembly::web_module_with_pool(pool.clone())
+            .await
+            .map_err(|error| workspace_build_error(config, "sdkwork-sandbox", error.to_string()))?;
+        modules.push(module);
+    }
+
     #[cfg(feature = "foundation-payment")]
     if workspace_surface_enabled(config, "sdkwork-payment") {
         let module = sdkwork_api_payment_assembly::web_module_with_pool(pool.clone())

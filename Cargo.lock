@@ -7318,6 +7318,7 @@ dependencies = [
  "sdkwork-api-promotion-assembly",
  "sdkwork-api-prompts-assembly",
  "sdkwork-api-rtc-assembly",
+ "sdkwork-api-sandbox-assembly",
  "sdkwork-api-search-assembly",
  "sdkwork-api-settings-assembly",
  "sdkwork-api-shop-assembly",

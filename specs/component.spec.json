@@ -358,6 +358,13 @@
       "routeGeneration": "dependency-surface-prefix-route"
     },
     {
+      "surface": "app",
+      "prefix": "/app/v3/api/sandbox",
+      "ownership": "dependency",
+      "dependencyServiceId": "sdkwork-sandbox-app-api",
+      "routeGeneration": "dependency-surface-prefix-route"
+    },
+    {
       "surface": "backend",
       "prefix": "/backend/v3/api/iot",
       "ownership": "dependency",
@@ -3004,6 +3011,19 @@
         "embedded"
       ],
       "executableExport": "sdkwork_api_aiot_assembly::web_module_with_pool"
+    },
+    {
+      "serviceId": "sdkwork-sandbox-app-api",
+      "workspace": "sdkwork-sandbox",
+      "apiAuthority": "sdkwork-sandbox-app-api",
+      "sdkFamily": "sdkwork-intelligence-internal-sdk",
+      "cargoFeature": "foundation-sandbox",
+      "cargoDependency": "sdkwork-api-sandbox-assembly",
+      "coverage": "sdkwork-sandbox-app-api-embedded-assembly-routes",
+      "runtimeModes": [
+        "embedded"
+      ],
+      "executableExport": "sdkwork_api_sandbox_assembly::web_module_with_pool"
     },
     {
       "serviceId": "sdkwork-aiot-realtime-plane",
