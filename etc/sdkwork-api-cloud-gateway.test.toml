@@ -48,6 +48,7 @@ tenantId = "0"
 
 [request]
 maxBodyBytes = 33554432
+timeoutSeconds = 900
 
 [observability]
 accessLogEnabled = false

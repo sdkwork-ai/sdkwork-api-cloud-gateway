@@ -427,8 +427,7 @@ async fn build_embedded_router(
     // from buffering a model prompt — the guard reads the whole body, and reading
     // it is the one step in the request path that can strand a large payload
     // before the dependent service ever sees it.
-    let external_protocol_prefixes =
-        crate::vendor_open_api_auth::vendor_open_api_prefixes(&config);
+    let external_protocol_prefixes = crate::vendor_open_api_auth::vendor_open_api_prefixes(&config);
     let mut framework =
         sdkwork_iam_web_adapter::build_web_framework_builder_with_open_api_prefixes_and_external_protocols(
             resolver,
@@ -513,6 +512,16 @@ async fn build_embedded_router(
     }
     let dynamic_cors_source: Arc<dyn sdkwork_web_core::DynamicCorsPolicySource> = cors.clone();
     let framework = framework.dynamic_cors_policy_source(dynamic_cors_source);
+    // The IAM adapter assembles a production framework with
+    // `production_defaults()`, whose 30-second request budget is the platform's
+    // request/response default. This gateway also relays the OpenAI-compatible
+    // `open-api` surface, where a buffered non-streaming completion routinely
+    // exceeds 30 seconds; the platform default aborted it and answered
+    // `408` / `40801`, which callers saw as a failed chat completion. The
+    // gateway therefore declares its own budget explicitly (longer than the
+    // Cloud Router relay budget, shorter than the edge read timeout).
+    let framework =
+        framework.request_timeout(std::time::Duration::from_secs(config.request.timeout_secs));
     let hosted = composed.into_hosted(framework);
     let bridge_config = config.clone();
     let router = GatewayRuntime::with_registry_and_composed_router(config, registry, hosted.router)
@@ -2018,12 +2027,18 @@ mod tests {
             );
         }
         assert_eq!(
-            request.headers().get(header::CONTENT_LENGTH).expect("length"),
+            request
+                .headers()
+                .get(header::CONTENT_LENGTH)
+                .expect("length"),
             "19",
             "the buffered body states its own length"
         );
         assert_eq!(
-            request.headers().get("x-request-id").expect("end-to-end header"),
+            request
+                .headers()
+                .get("x-request-id")
+                .expect("end-to-end header"),
             "req-body-limit",
             "end-to-end headers are preserved"
         );

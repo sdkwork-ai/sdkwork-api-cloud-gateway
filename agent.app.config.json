@@ -187,16 +187,198 @@
     }
   },
   "release": {
-    "currentVersion": "0.1.139",
+    "currentVersion": "0.1.152",
     "defaultChannel": "BETA",
     "latest": {
-      "BETA": "0.1.139"
+      "BETA": "0.1.152"
     },
     "notes": [
       {
-        "version": "0.1.139",
+        "version": "0.1.152",
         "channel": "BETA",
         "current": true,
+        "title": "sdkwork-api-cloud-gateway-v0.1.152",
+        "summary": "Repairs three production defects behind the reported chat-completion failure. (1) The gateway is assembled by the IAM web adapter with production_defaults(), whose 30-second request budget is the platform request/response default; the buffered /v1/chat/completions relay exceeds it on long turns and was aborted with a 288-byte ProblemDetail 40801 (operationId createChatCompletion), exactly what the production edge logged 14 times. The gateway now declares request.timeoutSeconds (SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS, default 900 s, bounded 30-3600 s) above the Cloud Router relay budget instead of inheriting 30 s. (2) The Cloud Router rating-decision upsert bound 42 parameters for 43 placeholders, so every usage accounting write failed with SQLSTATE 08P01, retried, exhausted and dead-lettered 370 records; the dead-letter backlog then latched /readyz at 503 and left the container unhealthy. The missing pricing_layer bind is fixed, a test pins placeholder/bind symmetry for every accounting upsert, and a drained dead-letter queue now clears readiness degradation instead of pinning it. (3) The account expired-hold sweep decoded the BIGINT acct_hold.amount as text, which silently yields the empty string, so parse_amount_minor rejected the sweep and no expired hold was ever released - 33 holds stayed frozen and later requests answered 402 insufficient balance. All monetary columns are read numerically, with a guard test.",
+        "highlights": [
+          "root cause of the 408: sdkwork-iam-web-adapter assembles the gateway with WebFrameworkBuilder::production_defaults(), which sets PRODUCTION_DEFAULT_REQUEST_TIMEOUT_SECS = 30 and applies it as a router-wide handler timeout; a buffered non-streaming chat completion that runs longer is answered with HTTP 408 code 40801 title \"Request timeout\" detail \"request timed out\"",
+          "evidence: the production edge (sdkwork-api-gateway.access.log) logged 14 POST /v1/chat/completions 408 responses with a 288-byte body, byte-identical to the web-framework request-timeout ProblemDetail including operationId createChatCompletion, retried roughly every 30 s",
+          "fix: GatewayRequestConfig gains timeoutSeconds (env SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS), default DEFAULT_REQUEST_TIMEOUT_SECS = 900, validated in [30, 3600]; runtime.rs applies it explicitly over the platform default so the relay budget is the gateway's own decision rather than an inherited request/response default",
+          "root cause of the unhealthy container: the Cloud Router UPSERT_RATING_DECISION declared 43 placeholders while upsert_rating_decision bound 42 (pricing_layer was never bound), so every write failed with SQLSTATE 08P01 and the accounting retry dead-lettered the records after 7 attempts",
+          "fix: the missing pricing_layer bind is restored; a new test derives every accounting upsert's placeholder count from its SQL and requires an equal number of .bind(..) calls, so a column added without a binding fails in CI instead of on the production wire",
+          "fix: a dead-letter backlog is now recoverable health state - it is cleared once dead_letter_depth() returns zero, while a record lost outright (primary write and durable enqueue both failed) keeps the sticky unreconciled flag",
+          "root cause of the 402: sweep_expired_holds (and the per-tenant expire_expired_holds path) read the BIGINT acct_hold.amount through string_cell, which is try_get::<String> and degrades to \"\" on an INT8 cell; parse_amount_minor(\"\") then failed with \"money amount must be a non-negative number with up to 6 decimal places\" and rolled the whole sweep transaction back, leaving 33 expired holds frozen and the wallet unable to pay",
+          "fix: every monetary column (acct_hold.amount, acct_transfer.amount, acct_ledger_entry.amount/balance_before/balance_after) is decoded with integer_cell+format_i64, guarded by a test that rejects a text read of those columns",
+          "verification: production image rebuild and in-place upgrade, then /readyz 200, a drained dead-letter queue, no 08P01 lines, released expired holds, and a chat completion that runs past 30 s answering 200 instead of 408"
+        ],
+        "packageIds": [
+          "linux-x64-standalone-server-tar-gz",
+          "linux-x64-cloud-server-tar-gz",
+          "windows-x64-standalone-server-tar-gz",
+          "windows-x64-cloud-server-tar-gz",
+          "macos-arm64-standalone-server-tar-gz",
+          "macos-arm64-cloud-server-tar-gz"
+        ]
+      },
+      {
+        "version": "0.1.151",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.151",
+        "summary": "Second seed-replay repair. Replaying a production backup through the bootstrap pass reached the messaging module and cleared the email sender seed, then failed on the SMS signature seed for the same reason: the seeded signatures referenced the reserved seed account ids while an operator-owned account with the same scope and name occupied the unique index, so the account row was skipped and the signature insert violated fk_messaging_sms_signature_account. Signatures now resolve their account through the seeded uuid. A full replay of the restored production snapshot then ran all sixty database modules to completion (seven pending migrations, six pending messaging seeds, no other module pending), so this image is the one cleared for the production upgrade.",
+        "highlights": [
+          "messaging: common seed 003_sms_provider_defaults resolves messaging_sms_signature.account_id by joining messaging_sms_account on the seeded uuid instead of assuming the reserved account id exists, matching the email sender repair in 0.1.150",
+          "verification: the production snapshot was restored into a local pg18 instance and the full bootstrap ran to completion (60 modules, 319 migrations, 273 seeds) with the fixed seeds mounted, so the production upgrade applies only messaging 002/003 plus the five locale seeds",
+          "cloudrouter: carries the 0.1.149 catalog-activation repair and the 0.1.150 email sender seed repair unchanged",
+          "gateway: carries the 0.1.148 sandbox module root and dependency surface declarations unchanged"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.150",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.150",
+        "summary": "Seed-replay repair on top of 0.1.149. Replaying a production backup through the bootstrap pass reached the messaging module and failed: the default email sender seed inserted senders that referenced the reserved seed account ids, but an operator-owned email account with the same scope and name already occupies the unique partial index, so `ON CONFLICT DO NOTHING` skipped the reserved account row and the sender insert violated `fk_messaging_email_sender_account`. Senders are now resolved through the seeded account uuid, so a deployment that already carries same-named accounts seeds its senders against the account it created instead of a non-existent reserved id. This release also carries the 0.1.149 catalog-activation repair, the 0.1.148 sandbox route surface declaration, and the sandbox module root in the container image, so a 0.1.143 deployment upgrades in one step.",
+        "highlights": [
+          "messaging: common seed 002_email_provider_defaults inserts email senders by joining messaging_email_account on the seeded account uuid; the seed no longer assumes the reserved account id exists, so a deployment whose operators already own accounts named aliyun/amazon_ses/mailgun/enterprise_mail (unique per scope and name while not soft-deleted) seeds senders against the surviving account row instead of raising fk_messaging_email_sender_account",
+          "cloudrouter: inherits the 0.1.149 catalog-activation repair (cloudrouter-billing 0008 trigger argument casts, pricing_rate.metering_mode projection in the official pricing sync, pricing 0014 tier-guard lifecycle scope)",
+          "gateway: inherits the 0.1.148 declarations that let the embedded sandbox assembly load and route (SDKWORK_SANDBOX_APP_ROOT in the container image and the /internal/v3/api/intelligence/sandbox dependency surface in specs/component.spec.json)",
+          "verification: the 0.1.150 image was replayed against a restored production backup in the local production-shaped stack before the production upgrade; /healthz, /readyz, the sandbox app/internal prefixes and the pricing catalog snapshot were checked on the upgraded local instance"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.149",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.149",
+        "summary": "Catalog-activation repair on top of 0.1.146. The 0.1.146 catalog refresh could not activate: the pricing trigger cast a `name` argument the published bump function did not accept, the official pricing sync inserted catalog rates without their charge model, and the new tier-semantics guard rejected the lifecycle updates that retire a superseded price book. The embedded sdkwork-cloudrouter now declares the charge model from the payload, migration 0008 re-creates the catalog generation trigger with explicit argument casts, and migration 0014 scopes the tier guard to authoring writes, and the container declares the sandbox module discovery key so the embedded sandbox assembly can load its schema.",
+        "highlights": [
+          "cloudrouter: cloudrouter-billing migration 0008 re-creates cloudrouter_trigger_catalog_generation so cloudrouter_bump_catalog_generation receives explicit casts; a trigger's `name` argument allows one implicit conversion and the published signature only accepted `varchar`, so every pricing write raised 'function ... does not exist'",
+          "cloudrouter: the official pricing sync now binds pricing_rate.metering_mode, projected from the rate payload exactly as migration 0012 backfilled it (formula, volume/graduated for a tier scale, flat, otherwise per_quantity), so a catalog rate that carries tiers no longer violates ck_pricing_rate_metering_mode_payload",
+          "cloudrouter: pricing migration 0014 keeps the 0013 tier-semantics predicate for INSERT and for condition rewrites, returns early when an UPDATE leaves conditions untouched or performs a soft delete, and matches a bare time-window token instead of any value that contains one, so superseding a previous price-book version no longer aborts the sync",
+          "models: the embedded catalog keeps catalogVersion 2026.11.26.3; the Flux 2 graduated scale activates as calculation_mode graduated through the projected charge model",
+          "gateway: the container image declares SDKWORK_SANDBOX_APP_ROOT beside the other packaged module discovery keys, so the embedded sandbox assembly resolves its database module instead of failing the router build with 'load sandbox database module failed'",
+          "gateway: the component contract declares the sandbox internal-api prefix /internal/v3/api/intelligence/sandbox against the same embedded service id, so the sandbox internal route registers instead of failing the router build with 'route ... is not declared by a matching dependency API surface'",
+          "verification: 0.1.149 is upgraded on the local production-shaped stack with /healthz, /readyz, the model-catalog readiness probe and the pricing, cloudrouter-billing and sandbox migration history before the remote production upgrade"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.146",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.146",
+        "summary": "Workspace-sync release. After 0.1.143 the gateway took the two upstream main commits it was missing (the sandbox app-api dependency surface declaration and comments resolution through the shared registry) and merged them with the local release line. Fifteen embedded repositories moved: sdkwork-sandbox added the instance runtime kind with migration 0003, sdkwork-payment added payer requirements, notification signing and the test-payment console, sdkwork-messaging expanded the template seeds and added the template-center diagnostic, sdkwork-deployments added the application detail package with usage trends, sdkwork-models reworked catalog pricing into charge models with refreshed Flux 2 prices, and sdkwork-iam, sdkwork-im, sdkwork-mail, sdkwork-order, sdkwork-feeds, sdkwork-community, sdkwork-generations and sdkwork-cloudrouter now resolve their peer backends through the shared HTTP service registry. The gateway embeds all of them, so it is rebuilt and sandbox migration 0003 applies through the one-time migration pass before the remote upgrade.",
+        "highlights": [
+          "workspace: all 110 sdkwork-space repositories fetched; fifteen advanced (sdkwork-assets, sdkwork-community, sdkwork-deployments, sdkwork-drive, sdkwork-feeds, sdkwork-generations, sdkwork-iam, sdkwork-im, sdkwork-mail, sdkwork-messaging, sdkwork-models, sdkwork-order, sdkwork-payment, sdkwork-sandbox, sdkwork-specs) and sdkwork-cloudrouter was merged after its one local test fixture was committed; the three remaining dirty checkouts (sdkwork-agents, sdkwork-birdcoder2, sdkwork-daxuedazi) hold submodule-pointer and plugin changes only and were recorded without resetting local work",
+          "gateway: the sandbox app-api dependency surface is declared in the component contract, the process-shared database pool spec and the router export, and the registry test asserts the advertised surface",
+          "gateway: the comments surface resolves through the shared HTTP service registry instead of a static base URL, and Cargo.lock is resynced for the merged crate graph",
+          "sandbox: instances carry an explicit runtime kind and migration 0003 adds the column; the statements are ADD COLUMN IF NOT EXISTS with a canonical down-migration",
+          "payment: payer requirements are declared on checkout scenes, payment notifications are signed, and the test-payment console drives settle/cancel against the embedded payment assembly",
+          "messaging: the template seeds expand, the template-center diagnostic reports missing template variables, the default SMS signature resolution stays on migration 0015, and the channel pages keep their selects interactive",
+          "deployments: the application detail package ships usage trends, the IAM backend resolves through the shared registry, and the certificate archive index from migration 0023 is unchanged",
+          "models: catalog pricing moves to charge models with refreshed Flux 2 prices inside catalogVersion 2026.11.26.3, so the installed catalog stays coherent with the embedded modelkit",
+          "registry: sdkwork-iam, sdkwork-im, sdkwork-mail, sdkwork-order, sdkwork-feeds, sdkwork-community, sdkwork-generations, sdkwork-models and sdkwork-deployments resolve peer backends through the shared HTTP service registry, which the gateway advertises for every declared dependency surface",
+          "cloudrouter: the embedded assembly picks up group resource prices, the settle/cancel test-payment actions and the deployment app detail route",
+          "cloudrouter: the applied pricing migration 0011 keeps its original bytes, so the checksum of an already-migrated database stays valid; the paired no-op down script is declared through the checksum-external metadata sidecar instead of rewriting the applied file, and the stray 'success' line ahead of the 0012 header is removed while 0012 and 0013 remain pending and additive",
+          "cloudrouter: the 0012 charge-model trigger projects metering_mode 'per_quantity' onto the published calculation_mode 'per_unit' instead of copying it verbatim, so the backfill no longer violates ck_pricing_rate_calculation_mode on the 8,599 existing pricing_rate rows, and the applied cloudrouter-billing migration 0005 keeps its original bytes with the same checksum-external correction",
+          "not embedded: sdkwork-assets regenerated its Rust app SDK, sdkwork-drive annotated the outbox webhook destination, and sdkwork-specs advanced its standards bodies",
+          "verification: 0.1.146 is upgraded on the local production-shaped stack with /healthz, /readyz, the model-catalog readiness probe and the sandbox and pricing migration history, then deployed to the remote production host with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.143",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.143",
+        "summary": "Workspace-sync release. Four embedded repositories moved after 0.1.142: sdkwork-deployments added the certificate archive port (attempt, bounded retry and drain of a certificate version's drive archive), operator-named certificate hostnames with manual DNS-01 presentation, and migration 0023 widening the archive due-index; sdkwork-messaging added migration 0015 (is_default singleton per tenant/organization on messaging_sms_signature) plus refreshed SMS provider seeds and message-template locale seeds; sdkwork-payment added checkout scene policies, payment audit events and the test-payment settle/cancel actions; sdkwork-order reads the capture status before settling a compensated payment attempt. The gateway embeds all four, so it is rebuilt and the new migrations (messaging 0015, deploy 0023) apply through the one-time migration pass before the remote upgrade.",
+        "highlights": [
+          "workspace: all 110 sdkwork-space repositories fetched and every checkout now reports behind=0; the five dirty checkouts (sdkwork-agents, sdkwork-birdcoder2, sdkwork-daxuedazi, sdkwork-api-cloud-gateway) and the diverged sdkwork-cloudrouter (ahead=1, behind=2, frontend-only commits) were recorded and skipped without resetting or discarding local work",
+          "deployments: the new sdkwork-deploy-certificate-archive-port crate attempts, retries with a bounded budget and drains each certificate version's drive archive, a failed row becomes claimable again after an operator retry, and a certificate version queues its drive archive in its own transaction",
+          "deployments: operators can name certificate hostnames and present DNS-01 records by hand; the block-manifest and app SDK were regenerated for that surface",
+          "deploy: migration 0023 replaces idx_deploy_certificate_archive_due with a PENDING/STORING/FAILED predicate and adds idx_deploy_certificate_archive_current_version; both statements are idempotent (DROP INDEX IF EXISTS / CREATE INDEX IF NOT EXISTS) and the down-migration uses the canonical token",
+          "messaging: migration 0015 adds messaging_sms_signature.is_default with a partial unique index per (tenant_id, organization_id) and a lookup index, so the send chain resolves its head from an explicit default instead of chain order; the statements are ADD COLUMN/INDEX IF NOT EXISTS and the seed marks the Tencent Cloud signature as the default",
+          "messaging: SMS provider defaults and the en-US/zh-CN message-template locale seeds are refreshed, and the admin channel pages keep their selects interactive while explaining locked provider accounts",
+          "payment: checkout scene policies (upsert, list and resolution), payment audit events and the test-payment settle/cancel actions ship in the embedded payment assembly with the regenerated backend OpenAPI and SDK",
+          "order: the payment compensation path reads the capture status before settling a compensated attempt instead of settling blindly",
+          "gateway: Cargo.lock is resynced for sdkwork-deploy-certificate-archive-port so the locked build graph matches the advanced sibling crates",
+          "not embedded: sdkwork-account, sdkwork-cloudrouter, sdkwork-daxuedazi and sdkwork-birdcoder2 advanced with frontend, packaging or plugin changes only",
+          "verification: 0.1.143 is upgraded on the local production-shaped stack with /healthz, /readyz, the model-catalog readiness probe and the messaging/deploy migration history, then deployed to the remote production host with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.142",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.142",
+        "summary": "Workspace-sync release. Four repositories moved after 0.1.141: sdkwork-messaging added migrations 0011-0014 (email and SMS provider-account bindings plus more enterprise mailbox vendors) and verification-policy locale seeds, sdkwork-models published the 2026.11.26.3 catalog with the voice profile catalog, sdkwork-cloudrouter made the AI routing seed idempotent and grouped console API key accounts, and sdkwork-birdcoder2 advanced its mobile connect entry. The gateway embeds the model catalog, the messaging module and the cloudrouter assembly, so it is rebuilt: the new catalog installs under data/sdkwork-models, the messaging migrations apply at bootstrap, and the cloudrouter seed change ships in the embedded database modules.",
+        "highlights": [
+          "workspace: all 110 sdkwork-space repositories fetched; four were behind (sdkwork-messaging=3, sdkwork-birdcoder2=2, sdkwork-models=1, sdkwork-cloudrouter=1) and were fast-forwarded, and the one transient fetch failure (sdkwork-modelkit) cleared on retry, so every repository now reports behind=0",
+          "messaging: migrations 0011-0014 bind email and SMS provider accounts to IAM cloud accounts (provider_account_id columns, check constraints and partial indexes) and extend the enterprise-mailbox vendor set to twelve first-class providers; all four migrations are idempotent (ADD COLUMN/INDEX IF NOT EXISTS and DROP CONSTRAINT IF EXISTS) so a bootstrap re-apply is safe",
+          "messaging: new verification-policy locale seeds (en-US/zh-CN 003_verification_policies.sql) ship with the module",
+          "models: the 2026.11.26.3 catalog (voice profile catalog, zhipu TTS voices and refreshed vendor sources) is installed under data/sdkwork-models in the image",
+          "cloudrouter: the AI routing seed is now idempotent and groups console API key accounts; the change ships inside the embedded sdkwork-api-cloudrouter assembly and database modules",
+          "gateway: the image is rebuilt so the embedded module set, the installed model catalog (catalogVersion 2026.11.26.3) and the messaging schema are coherent; the local production-shaped embedded stack applies migrations 0011-0014 and the new catalog before the remote host is touched",
+          "sync: sdkwork-birdcoder2 also advanced; it is not embedded in the gateway image",
+          "verification: 0.1.142 is upgraded on the local production-shaped stack with /healthz, /readyz and the model-catalog readiness probe, then deployed to the remote production host with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.141",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.141",
+        "summary": "Workspace-sync release. Three repositories moved after 0.1.140: sdkwork-models published the 2026.11.26.1 catalog with audio, video and image additions, sdkwork-messaging bound SMS signatures to IAM provider accounts (migration 0010) and refreshed its provider defaults, and sdkwork-birdcoder2 added the mobile connect rail entry. The gateway embeds the model catalog and the messaging module, so it is rebuilt: the new catalog is installed under data/sdkwork-models and the messaging migration is applied at bootstrap, with the send path falling back to the signature's own credential while an account is unbound.",
+        "highlights": [
+          "models: the 2026.11.26.1 catalog (audio, video and image additions, refreshed vendor sources and the official verification policy) is installed under data/sdkwork-models in the image",
+          "messaging: migration 0010 adds a nullable messaging_sms_signature.provider_account_id with a syntactic check constraint and a partial lookup index, so a signature can reference an IAM cloud account while existing rows and the local-ciphertext fallback keep working",
+          "messaging: the provider default seeds now create one signature row per supported provider, leave provider_account_id NULL (credentials are never pre-seeded) and stay idempotent; the messaging SDK is refreshed",
+          "gateway: the image is rebuilt so the embedded module set, the installed model catalog and the messaging schema are coherent again; the local production-shaped embedded stack applies migration 0010 before the remote host is touched",
+          "sync: sdkwork-birdcoder2 also advanced (mobile connect rail entry package); it is not embedded in the gateway image",
+          "verification: 0.1.141 is upgraded on the local production-shaped stack with /healthz, /readyz and the model-catalog readiness probe, then deployed to the remote production host with backup retention at 5 sets"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.140",
+        "channel": "BETA",
+        "current": false,
+        "title": "sdkwork-api-cloud-gateway-v0.1.140",
+        "summary": "Coherent rebuild and redeploy of the 0.1.139 source tree. A full workspace sync across all 110 sdkwork-space repositories found no upstream delta, but the production install bundle was stale: its image.tar.gz carried the 0.1.137 image while the running container was 0.1.139, so a host restart or bundle re-run would have rolled the service back. This release rebuilds the current source into a fresh image, packages it with the matching bundle metadata, verifies it on the local production-shaped stack, then upgrades the remote production host and re-syncs the bundle so artifact, bundle and running container all agree.",
+        "highlights": [
+          "workspace: all 110 sdkwork-space repositories fetched; every repository reports behind=0 and no fetch failures, so 0.1.139 already carried the newest source",
+          "deploy: the remote install bundle at /opt/deploy/sdkwork-api-cloud-gateway/bundle was stale - image.env named 0.1.139 while image.tar.gz held the 0.1.137 image (verified by sha256 and docker load), so the bundle and the running container disagreed",
+          "verification: the stale bundle image was loaded locally and identified as 0.1.137, which is why this release rebuilds instead of reusing the deployed bundle",
+          "gateway: rebuilt from HEAD with the 0.1.139 fixes (the 40301 upload-limit response and the verification-file handling), then upgraded on the local production-shaped embedded stack with /healthz, /readyz and the model-catalog readiness probe",
+          "deploy: remote production upgraded to 0.1.140, the bundle re-synced with the matching image.env and image.tar.gz, and backup retention kept at 5 sets",
+          "housekeeping: stale remote backup sets beyond the newest 5 were removed and unused 0.1.120/0.1.121/0.1.124 images dropped, which raised the remote free space from 3.2G to 10G before the deployment"
+        ],
+        "packageIds": [
+          "container-x64-standalone-container-oci"
+        ]
+      },
+      {
+        "version": "0.1.139",
+        "channel": "BETA",
+        "current": false,
         "title": "sdkwork-api-cloud-gateway-v0.1.139",
         "summary": "Rebuild of the 0.1.138 fixes. The 0.1.138 image linked a stale sdkwork-database-lifecycle artifact: its release build started before sdkwork-database f568daf (the XP_ extended-procedure fix) was restored in the shared checkout, so the company module's seed 022_company_profile_normalization.sql (which calls regexp_replace) was rejected as XP_ and the container crash-looped on database bootstrap (17 restarts; production was restored to 0.1.137 while this rebuild was prepared). 0.1.139 compiles that crate from the fixed source and carries the same two production fixes: the deploy applications-page 40301 (console user sessions are not application-bound machine credentials; sdkwork-deployments 3177eff + b7b3d39) and the domain verification-file 500 (deploy migration 0022 restoring updated_by + the Drive uploading-app ownership repair).",
         "highlights": [
@@ -2084,9 +2266,9 @@
           "packageId": "linux-x64-standalone-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.13-linux-x64-standalone-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.152-linux-x64-standalone-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.13-linux-x64-standalone-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.152-linux-x64-standalone-server.tar.gz"
             }
           ]
         },
@@ -2096,9 +2278,9 @@
           "packageId": "linux-x64-cloud-server-tar-gz",
           "outputs": [
             {
-              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.13-linux-x64-cloud-server.tar.gz",
+              "path": "dist/server/sdkwork-api-cloud-gateway-0.1.152-linux-x64-cloud-server.tar.gz",
               "type": "file",
-              "fileName": "sdkwork-api-cloud-gateway-0.1.13-linux-x64-cloud-server.tar.gz"
+              "fileName": "sdkwork-api-cloud-gateway-0.1.152-linux-x64-cloud-server.tar.gz"
             }
           ]
         }

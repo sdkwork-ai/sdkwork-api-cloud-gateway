@@ -91,6 +91,17 @@ pub const MAIL_BACKEND_API_SERVICE_ID: &str = "sdkwork-mail-backend-api";
 pub const MCP_APP_API_SERVICE_ID: &str = "sdkwork-mcp-app-api";
 pub const MCP_BACKEND_API_SERVICE_ID: &str = "sdkwork-mcp-backend-api";
 pub const DEFAULT_MAX_REQUEST_BODY_BYTES: usize = 32 * 1024 * 1024;
+/// Default per-request wall-clock budget (`request.timeoutSeconds`).
+///
+/// Sized for the buffered OpenAI-compatible relay: Cloud Router's own upstream
+/// budget is 300 s by default, and the edge proxy allows 3600 s, so the gateway
+/// must sit above the relay budget instead of the platform's 30 s
+/// request/response default.
+pub const DEFAULT_REQUEST_TIMEOUT_SECS: u64 = 900;
+/// A shorter budget than the platform default would reintroduce the `408`
+/// regression this gateway declares its way out of.
+pub const MIN_REQUEST_TIMEOUT_SECS: u64 = 30;
+pub const MAX_REQUEST_TIMEOUT_SECS: u64 = 3600;
 
 #[derive(Debug, Error)]
 pub enum GatewayConfigError {
@@ -316,6 +327,20 @@ pub struct CorsDynamicConfig {
 pub struct GatewayRequestConfig {
     #[serde(default = "default_max_request_body_bytes")]
     pub max_body_bytes: usize,
+    /// Wall-clock budget for a single gateway request, in seconds.
+    ///
+    /// The platform Web Framework applies a 30-second request timeout whenever a
+    /// service is assembled with `production_defaults()`. That default is right
+    /// for a request/response API and wrong for this gateway: the OpenAI-compatible
+    /// `open-api` relay buffers a whole non-streaming completion, and a long
+    /// reasoning/model turn legitimately exceeds 30 seconds. With the platform
+    /// default the relay was aborted mid-flight and answered `408` / `40801`
+    /// ("request timed out"), which callers saw as a failed chat completion.
+    /// The gateway therefore declares its own budget, longer than the Cloud
+    /// Router upstream relay budget (`SDKWORK_CLOUDROUTER_GATEWAY_REQUEST_TIMEOUT_MILLIS`,
+    /// 300 s by default) and shorter than the edge proxy read timeout (3600 s).
+    #[serde(default = "default_request_timeout_secs")]
+    pub timeout_secs: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -831,6 +856,12 @@ impl GatewayRuntimeConfig {
             self.request.max_body_bytes =
                 parse_usize_env("SDKWORK_API_CLOUD_GATEWAY_MAX_BODY_BYTES", max_body_bytes)?;
         }
+        if let Some(timeout_secs) = env.get("SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS") {
+            self.request.timeout_secs = parse_u64_env(
+                "SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS",
+                timeout_secs,
+            )?;
+        }
         if let Some(enabled) = env.get("SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED") {
             self.observability.access_log_enabled =
                 parse_bool_env("SDKWORK_API_CLOUD_GATEWAY_ACCESS_LOG_ENABLED", enabled)?;
@@ -1001,6 +1032,7 @@ impl GatewayRuntimeConfig {
             self.observability.audit_log_sample_rate_basis_points,
         )?;
         validate_positive_usize("request.maxBodyBytes", self.request.max_body_bytes)?;
+        validate_request_timeout_secs("request.timeoutSeconds", self.request.timeout_secs)?;
 
         // The registered console host pattern is validated in every environment,
         // production included: it is a closed registry, so an invalid pattern is
@@ -1273,6 +1305,7 @@ impl Default for GatewayRequestConfig {
     fn default() -> Self {
         Self {
             max_body_bytes: default_max_request_body_bytes(),
+            timeout_secs: default_request_timeout_secs(),
         }
     }
 }
@@ -1453,6 +1486,10 @@ fn default_max_request_body_bytes() -> usize {
     DEFAULT_MAX_REQUEST_BODY_BYTES
 }
 
+fn default_request_timeout_secs() -> u64 {
+    DEFAULT_REQUEST_TIMEOUT_SECS
+}
+
 fn default_otel_endpoint() -> String {
     "http://localhost:4317".to_string()
 }
@@ -1576,6 +1613,16 @@ fn parse_usize_env(key: &str, value: &str) -> Result<usize, GatewayConfigError> 
         })
 }
 
+fn parse_u64_env(key: &str, value: &str) -> Result<u64, GatewayConfigError> {
+    value
+        .trim()
+        .parse::<u64>()
+        .map_err(|_| GatewayConfigError::InvalidInteger {
+            key: key.to_string(),
+            value: value.to_string(),
+        })
+}
+
 fn parse_csv_env(value: &str) -> Vec<String> {
     value
         .split(',')
@@ -1602,6 +1649,19 @@ fn validate_positive_usize(key: &str, value: usize) -> Result<(), GatewayConfigE
     }
 
     Err(invalid_value(key, "must be greater than 0"))
+}
+
+fn validate_request_timeout_secs(key: &str, value: u64) -> Result<(), GatewayConfigError> {
+    if (MIN_REQUEST_TIMEOUT_SECS..=MAX_REQUEST_TIMEOUT_SECS).contains(&value) {
+        return Ok(());
+    }
+
+    Err(invalid_value(
+        key,
+        format!(
+            "must be between {MIN_REQUEST_TIMEOUT_SECS} and {MAX_REQUEST_TIMEOUT_SECS} seconds"
+        ),
+    ))
 }
 
 fn validate_non_empty(key: &str, value: &str) -> Result<(), GatewayConfigError> {

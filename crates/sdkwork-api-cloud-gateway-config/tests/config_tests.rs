@@ -1199,3 +1199,66 @@ fn aiot_realtime_config_parses_and_env_overrides() {
     );
     assert!(!overridden.aiot_realtime.mqtt_bridge_enabled);
 }
+
+/// The gateway relays the OpenAI-compatible `open-api` surface, whose buffered
+/// non-streaming completions legitimately outlive the Web Framework's 30-second
+/// production request budget. The gateway must therefore declare a budget above
+/// that platform default, otherwise long chat completions are aborted with
+/// `408` / `40801` ("request timed out").
+#[test]
+fn request_timeout_default_outlives_the_platform_request_budget() {
+    let config = GatewayRuntimeConfig::default();
+    assert_eq!(
+        config.request.timeout_secs,
+        sdkwork_api_cloud_gateway_config::DEFAULT_REQUEST_TIMEOUT_SECS
+    );
+    assert!(
+        config.request.timeout_secs > 30,
+        "the gateway request budget must exceed the platform 30s production default"
+    );
+    assert_eq!(
+        30,
+        sdkwork_api_cloud_gateway_config::MIN_REQUEST_TIMEOUT_SECS
+    );
+}
+
+#[test]
+fn request_timeout_parses_from_toml_and_env_and_is_bounded() {
+    let config = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [request]
+        timeoutSeconds = 600
+    "#,
+    )
+    .expect("request timeout config");
+    assert_eq!(600, config.request.timeout_secs);
+
+    let env = HashMap::from([(
+        "SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS".to_string(),
+        "1200".to_string(),
+    )]);
+    let overridden = GatewayRuntimeConfig::default()
+        .with_env_overrides(&env)
+        .expect("env override");
+    assert_eq!(1200, overridden.request.timeout_secs);
+
+    // Freezing the gate back onto the platform default (or below it) is the
+    // regression this budget exists to prevent, so the bound is enforced.
+    let too_small = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [request]
+        timeoutSeconds = 5
+    "#,
+    )
+    .expect("parse");
+    assert!(too_small.validate().is_err());
+
+    let too_large = GatewayRuntimeConfig::from_toml_str(
+        r#"
+        [request]
+        timeoutSeconds = 7200
+    "#,
+    )
+    .expect("parse");
+    assert!(too_large.validate().is_err());
+}

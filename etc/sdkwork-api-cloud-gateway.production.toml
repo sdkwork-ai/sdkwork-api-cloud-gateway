@@ -43,6 +43,13 @@ tenantId = "0"
 
 [request]
 maxBodyBytes = 33554432
+# Per-request wall-clock budget. Must stay above the platform Web Framework's
+# 30s production default and above the Cloud Router relay budget (300s), because
+# the buffered OpenAI-compatible `open-api` relay answers long chat completions
+# in one response; a shorter budget aborts them with 408 / 40801. Keep it below
+# the edge proxy read timeout (3600s). Overridable with
+# SDKWORK_API_CLOUD_GATEWAY_REQUEST_TIMEOUT_SECS.
+timeoutSeconds = 900
 
 [observability]
 accessLogEnabled = true
