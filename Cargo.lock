@@ -9252,6 +9252,7 @@ dependencies = [
  "sdkwork-cloudrouter-http",
  "sdkwork-cloudrouter-license",
  "sdkwork-cloudrouter-observability",
+ "sdkwork-cloudrouter-open-recharge-repository-sqlx",
  "sdkwork-cloudrouter-provider-adapter-contract",
  "sdkwork-cloudrouter-provider-adapter-http",
  "sdkwork-cloudrouter-provider-adapter-registry",
@@ -9357,6 +9358,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-cloudrouter-open-recharge-repository-sqlx"
+version = "0.4.7"
+dependencies = [
+ "sdkwork-cloudrouter-router-service",
+ "sdkwork-contract-service",
+ "sdkwork-order-repository-sqlx",
+ "sdkwork-order-service",
+ "sdkwork-utils-rust",
+ "sqlx",
+]
+
+[[package]]
 name = "sdkwork-cloudrouter-paas-plugin"
 version = "0.4.7"
 dependencies = [
@@ -9459,8 +9472,6 @@ dependencies = [
  "sdkwork-models 0.1.0",
  "sdkwork-models-catalog-service",
  "sdkwork-models-contract-service",
- "sdkwork-order-repository-sqlx",
- "sdkwork-order-service",
  "sdkwork-payment-service",
  "sdkwork-sdk-generator-client",
  "sdkwork-utils-rust",
