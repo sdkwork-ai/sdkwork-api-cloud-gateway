@@ -553,6 +553,35 @@ mod tests {
         }
     }
 
+    /// The assets catalog surface must be discoverable under the name its
+    /// consumers look up.
+    ///
+    /// `sdkwork-generations` resolves `/app/v3/api/assets` through the registry
+    /// entry `sdkwork-assets` (derived from `component.spec.json`
+    /// `workspace`/`serviceId`, per `DISCOVERY_SPEC.md` §12.1). If this
+    /// registration ever stops emitting that name, the asset save silently loses
+    /// its target — the failure mode that produced a 502 before the fix.
+    #[test]
+    fn registers_the_assets_surface_under_the_name_generations_resolves() {
+        let config = GatewayRuntimeConfig {
+            dependency_surfaces: vec![surface(
+                "sdkwork-assets",
+                "sdkwork-assets-app-api",
+                "/app/v3/api/assets",
+            )],
+            ..GatewayRuntimeConfig::default()
+        };
+
+        let names = service_names_for_test(&config);
+
+        for expected in ["sdkwork-assets", "assets", "sdkwork-assets-app-api"] {
+            assert!(
+                names.iter().any(|name| name == expected),
+                "missing registry service `{expected}`: {names:?}"
+            );
+        }
+    }
+
     #[test]
     fn registers_the_gateway_and_every_surface_with_its_sdk_alias_once() {
         let config = GatewayRuntimeConfig {

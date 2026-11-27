@@ -7,12 +7,23 @@ use axum::{
 const COMMENTS_RUNTIME_DEFAULT: &str = "http://127.0.0.1:3901";
 const COMMENTS_PATH_PREFIXES: [&str; 2] = ["/app/v3/api/comments", "/app/v3/api/engagement"];
 
+/// The comments runtime origin for one proxied request.
+///
+/// identity:service pure-proxy — this is a transparent reverse proxy: every
+/// inbound header (including the caller's `Authorization` / `Access-Token`) is
+/// copied onto the upstream request below, so the caller's identity reaches the
+/// destination unchanged. The proxy itself must not mint or substitute one.
+///
+/// `APP_SDK_INTEGRATION_SPEC.md` §5.2.2: the comments app-api is another SDKWork
+/// surface, so a healthy registry instance wins and the configured/loopback
+/// value is only the degradation tier.
 fn comments_runtime_base() -> String {
-    std::env::var("SDKWORK_COMMENTS_RUNTIME_URL")
+    let configured = std::env::var("SDKWORK_COMMENTS_RUNTIME_URL")
         .ok()
         .map(|value| value.trim().trim_end_matches('/').to_owned())
         .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| COMMENTS_RUNTIME_DEFAULT.to_owned())
+        .unwrap_or_else(|| COMMENTS_RUNTIME_DEFAULT.to_owned());
+    sdkwork_utils_rust::service_base_url::registry_base_url_or("sdkwork-comments", &configured)
 }
 
 pub(crate) fn is_comments_path(path: &str) -> bool {

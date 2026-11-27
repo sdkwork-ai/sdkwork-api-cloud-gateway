@@ -7655,8 +7655,8 @@ dependencies = [
  "async-trait",
  "axum 0.8.9",
  "chrono",
- "sdkwork-api-assets-assembly",
  "sdkwork-database-sqlx",
+ "sdkwork-discovery-client",
  "sdkwork-generations-database-host",
  "sdkwork-generations-delivery-adapter",
  "sdkwork-generations-provider-adapter",
@@ -8654,6 +8654,17 @@ dependencies = [
  "serde_json",
  "tracing",
  "uuid",
+]
+
+[[package]]
+name = "sdkwork-assets-app-sdk-generated-rust"
+version = "0.1.0"
+dependencies = [
+ "http",
+ "reqwest 0.13.1",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -10142,6 +10153,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "sdkwork-deploy-certificate-archive-port"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "sdkwork-database-id",
+ "sdkwork-deploy-certificate-material",
+ "sdkwork-deploy-contract",
+ "sdkwork-drive-object-runtime",
+ "sdkwork-drive-storage-contract",
+ "sdkwork-drive-workspace-service",
+ "sdkwork-utils-rust",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tracing",
+]
+
+[[package]]
 name = "sdkwork-deploy-certificate-material"
 version = "0.1.0"
 dependencies = [
@@ -10298,6 +10330,7 @@ dependencies = [
  "rustls-pki-types",
  "sdkwork-database-id",
  "sdkwork-database-sqlx",
+ "sdkwork-deploy-certificate-archive-port",
  "sdkwork-deploy-certificate-material",
  "sdkwork-deploy-cloud-account-port",
  "sdkwork-deploy-content-provider-port",
@@ -10772,6 +10805,7 @@ dependencies = [
  "sdkwork-content-feeds-service",
  "sdkwork-content-news-service",
  "sdkwork-database-sqlx",
+ "sdkwork-utils-rust",
  "serde",
  "serde_json",
  "sqlx",
@@ -10929,6 +10963,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "reqwest 0.13.1",
+ "sdkwork-assets-app-sdk-generated-rust",
  "sdkwork-intelligence-generations-service",
  "sdkwork-utils-rust",
  "serde",
@@ -10967,6 +11002,7 @@ dependencies = [
  "sdkwork-utils-rust",
  "serde",
  "serde_json",
+ "thiserror 1.0.69",
  "tracing",
  "uuid",
 ]
@@ -11659,6 +11695,7 @@ dependencies = [
  "psl",
  "reqwest 0.13.1",
  "sdkwork-database-id",
+ "sdkwork-deploy-certificate-archive-port",
  "sdkwork-deploy-certificate-material",
  "sdkwork-deploy-cloud-account-port",
  "sdkwork-deploy-content-provider-port",
